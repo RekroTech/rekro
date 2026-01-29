@@ -1,5 +1,30 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 🔐 Authentication Setup
+
+This project includes **Supabase authentication** with login, signup, and protected routes!
+
+### Quick Start (5 minutes)
+
+1. **Set up Supabase**: See [`QUICKSTART.md`](./QUICKSTART.md) for step-by-step instructions
+2. **Configure environment**: Update `.env.local` with your Supabase credentials
+3. **Run the app**: `npm run dev`
+
+### Documentation
+
+- 📖 [`QUICKSTART.md`](./QUICKSTART.md) - Get started in 5 minutes
+- 📚 [`SETUP_COMPLETE.md`](./SETUP_COMPLETE.md) - Complete overview of what's implemented
+- 🔧 [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md) - Detailed Supabase configuration guide
+- 🔄 [`PROXY_MIGRATION.md`](./PROXY_MIGRATION.md) - Info about Next.js 16+ proxy convention
+
+### Features Included
+
+- ✅ Email/password authentication via Supabase
+- ✅ Protected routes with automatic redirection
+- ✅ Login, signup, and logout functionality
+- ✅ Session management with cookie-based tokens
+- ✅ TypeScript support throughout
+
 ## Getting Started
 
 First, run the development server:
