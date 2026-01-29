@@ -1,26 +1,312 @@
 @import "tailwindcss";
 
+/* ---------------------------
+   Base tokens (light)
+---------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    /* Core */
+    --background: #ffffff;
+    --foreground: #171717;
+
+    /* Surfaces */
+    --surface: #ffffff;
+    --surface-subtle: #f9fafb;
+    --surface-muted: #f3f4f6;
+
+    /* App-level neutrals matching mobile pages */
+    --app-bg: #f9fafb; /* most mobile screens use this as page background */
+    --card: #ffffff; /* card background */
+    --panel: #f3f4f6; /* inner info blocks like studyBox */
+    --input-bg: #fafafa; /* login + modal input background */
+    --input-border: #dddddd; /* login + modal input border */
+    --overlay: rgba(0, 0, 0, 0.45); /* modal overlay */
+
+    /* Success / Beta banner (mobile) */
+    --success-bg: #ecfdf5; /* beta banner bg */
+    --success-soft: #f0fdf4; /* beta action button bg */
+
+    /* Text */
+    --text: #222222;
+    --text-muted: #666666;
+    --text-subtle: #888888;
+
+    /* Borders */
+    --border: #e5e7eb;
+
+    /* Brand (based on your RN token usage + logo teal direction) */
+    --primary-50: #eaf2f1;
+    --primary-100: #d6e5e3;
+    --primary-200: #b0cfca;
+    --primary-300: #86b6b0;
+    --primary-400: #5e9c95;
+    --primary-500: #3a7f79;
+    --primary-600: #2f6a65;
+    --primary-700: #255553;
+    --primary-800: #1c3f3e;
+    --primary-900: #132a29;
+
+    /* Secondary (matches your hard-coded icon color #3A4A6B usage) */
+    --secondary-50: #eef2ff;
+    --secondary-100: #e0e7ff;
+    --secondary-200: #c7d2fe;
+    --secondary-300: #a5b4fc;
+    --secondary-400: #818cf8;
+    --secondary-500: #3a4a6b;
+    --secondary-600: #2f3b56;
+    --secondary-700: #252f45;
+    --secondary-800: #1b2334;
+    --secondary-900: #121826;
+
+    /* Status */
+    --danger-500: #ff3b30;
+    --danger-600: #d32f2f;
+    --like: #e74c3c;
+
+    /* Radius (RN: card 16-20, input ~10-12, pill 30, tag 14) */
+    --radius-card: 16px;
+    --radius-card-lg: 20px;
+    --radius-input: 12px;
+    --radius-input-rn: 10px;
+    --radius-pill: 30px;
+    --radius-tag: 14px;
+
+    /* Shadows (soft mobile-like) */
+    --shadow-card: 0 3px 12px rgba(0, 0, 0, 0.08);
+    --shadow-soft: 0 1px 6px rgba(0, 0, 0, 0.06);
+    --shadow-lift: 0 6px 18px rgba(0, 0, 0, 0.12);
+    --shadow-pill: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* ---------------------------
+   Dark tokens
+---------------------------- */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+
+        --surface: #0f0f10;
+        --surface-subtle: #141416;
+        --surface-muted: #1b1b1f;
+
+        --app-bg: #141416;
+        --card: #0f0f10;
+        --panel: #1b1b1f;
+        --input-bg: #141416;
+        --input-border: #2a2a2f;
+        --overlay: rgba(0, 0, 0, 0.55);
+
+        --success-bg: rgba(16, 185, 129, 0.12);
+        --success-soft: rgba(16, 185, 129, 0.1);
+
+        --text: #ededed;
+        --text-muted: #bdbdbd;
+        --text-subtle: #9a9a9a;
+
+        --auth-note: #9a9a9a;
+        --auth-support: #9a9a9a;
+        --auth-text-strong: #cfcfcf;
+
+        --border: #2a2a2f;
+    }
+}
+
+/* ---------------------------
+   Tailwind v4 theme mapping
+---------------------------- */
+@theme inline {
+    /* Core */
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    /* Font vars from next/font (fallbacks silence tooling warnings) */
+    --font-sans: var(--font-geist-sans, ui-sans-serif);
+    --font-mono: var(--font-geist-mono, ui-monospace);
+
+    /* Surfaces + text */
+    --color-surface: var(--surface);
+    --color-surface-subtle: var(--surface-subtle);
+    --color-surface-muted: var(--surface-muted);
+
+    --color-app-bg: var(--app-bg);
+    --color-card: var(--card);
+    --color-panel: var(--panel);
+    --color-input-bg: var(--input-bg);
+    --color-input-border: var(--input-border);
+    --color-overlay: var(--overlay);
+
+    --color-success-bg: var(--success-bg);
+    --color-success-soft: var(--success-soft);
+
+    --color-text: var(--text);
+    --color-text-muted: var(--text-muted);
+    --color-text-subtle: var(--text-subtle);
+
+    --color-auth-note: var(--auth-note);
+    --color-auth-support: var(--auth-support);
+    --color-auth-text-strong: var(--auth-text-strong);
+
+    --color-border: var(--border);
+
+    /* Brand scales */
+    --color-primary-50: var(--primary-50);
+    --color-primary-100: var(--primary-100);
+    --color-primary-200: var(--primary-200);
+    --color-primary-300: var(--primary-300);
+    --color-primary-400: var(--primary-400);
+    --color-primary-500: var(--primary-500);
+    --color-primary-600: var(--primary-600);
+    --color-primary-700: var(--primary-700);
+    --color-primary-800: var(--primary-800);
+    --color-primary-900: var(--primary-900);
+
+    --color-secondary-50: var(--secondary-50);
+    --color-secondary-100: var(--secondary-100);
+    --color-secondary-200: var(--secondary-200);
+    --color-secondary-300: var(--secondary-300);
+    --color-secondary-400: var(--secondary-400);
+    --color-secondary-500: var(--secondary-500);
+    --color-secondary-600: var(--secondary-600);
+    --color-secondary-700: var(--secondary-700);
+    --color-secondary-800: var(--secondary-800);
+    --color-secondary-900: var(--secondary-900);
+
+    /* Status */
+    --color-danger-500: var(--danger-500);
+    --color-danger-600: var(--danger-600);
+    --color-like: var(--like);
+
+    /* Radius tokens */
+    --radius-card: var(--radius-card);
+    --radius-card-lg: var(--radius-card-lg);
+    --radius-input: var(--radius-input);
+    --radius-input-rn: var(--radius-input-rn);
+    --radius-pill: var(--radius-pill);
+    --radius-tag: var(--radius-tag);
+
+    /* Shadows */
+    --shadow-card: var(--shadow-card);
+    --shadow-soft: var(--shadow-soft);
+    --shadow-lift: var(--shadow-lift);
+    --shadow-pill: var(--shadow-pill);
+}
+
+/* ---------------------------
+   Component helpers (optional but very useful)
+---------------------------- */
+@layer components {
+    .page {
+        @apply bg-app-bg text-foreground;
+    }
+
+    .card {
+        @apply bg-card shadow-[var(--shadow-card)];
+        border-radius: var(--radius-card);
+    }
+
+    .card-lg {
+        @apply bg-card shadow-[var(--shadow-card)];
+        border-radius: var(--radius-card-lg);
+    }
+
+    .pill {
+        @apply bg-card shadow-[var(--shadow-pill)];
+        border-radius: var(--radius-pill);
+    }
+
+    .chip {
+        @apply text-white;
+        background: var(--secondary-500);
+        border-radius: var(--radius-tag);
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+
+    .input {
+        @apply w-full bg-input-bg border border-input-border text-text placeholder:text-text-subtle outline-none;
+        border-radius: var(--radius-input-rn);
+        padding: 12px 16px;
+    }
+
+    .input:focus {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--primary-100);
+    }
+
+    .btn-primary-pill {
+        @apply text-white font-semibold;
+        background: var(--primary-500);
+        border-radius: var(--radius-pill);
+        padding: 12px 16px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .modal-overlay {
+        background: var(--overlay);
+    }
+
+    .modal-card {
+        @apply bg-card;
+        border-radius: var(--radius-card-lg);
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .banner-success {
+        background: var(--success-bg);
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .banner-action {
+        background: var(--success-soft);
+        border: 1px solid var(--primary-500);
+        border-radius: 12px;
+        padding: 8px 12px;
+    }
+}
+
+/* ---------------------------
+   Base styles
+---------------------------- */
+html {
+    font-family: var(--font-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ===========================
+   Auth theme (login / signup)
+=========================== */
+.auth-theme {
+    /* Page background */
+    --app-bg: #f0fdf4;            /* soft green wash (mobile-like) */
+
+    /* Card */
+    --card: #ffffff;
+    --surface: #ffffff;
+
+    /* Inputs */
+    --input-bg: #fafafa;
+    --input-border: #d1fae5;
+
+    /* Subtle accents */
+    --shadow-card: 0 6px 18px rgba(16, 185, 129, 0.18);
+    --shadow-soft: 0 1px 6px rgba(16, 185, 129, 0.12);
+}
+
+/* Dark auth (optional, safe default) */
+@media (prefers-color-scheme: dark) {
+    .auth-theme {
+        --app-bg: #0f1f1a;
+        --card: #0f2a22;
+        --surface: #0f2a22;
+        --input-bg: #102e25;
+        --input-border: #134e4a;
+    }
 }

@@ -1,134 +1,139 @@
-'use client';
+"use client";
 
-import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import React, { Suspense, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useLogin } from "@/lib/react-query/hooks/useAuth";
 
 function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+    const { mutate: login, isPending, error } = useLogin();
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        login({ email, password });
+    };
 
-      const data = await response.json();
+    return (
+        <div className="auth-theme flex min-h-screen items-center justify-center bg-app-bg px-5 py-10 text-foreground">
+            <div className="w-full max-w-md">
+                {/* Top notice (matches mobile) */}
+                <div className="mb-7 px-2 text-center">
+                    <p className="text-[13px] italic text-auth-note">
+                        Designed to connect, make friends, and find your next home.
+                    </p>
+                </div>
 
-      if (!response.ok) {
-        setError(data.error || 'Login failed');
-        setIsLoading(false);
-        return;
-      }
+                {/* Card */}
+                <div className="card border border-emerald-100 px-6 py-7">
+                    {/* Mascot - file should be in /public/Roro.png */}
+                    <div className="mb-3 flex justify-center">
+                        <div className="h-[120px] w-[120px]">
+                            <Image
+                                src="/reKro.png"
+                                alt="Roro"
+                                width={120}
+                                height={120}
+                                className="h-full w-full object-contain"
+                                priority
+                            />
+                        </div>
+                    </div>
 
-      // Redirect to the page user was trying to access, or dashboard
-      const redirect = searchParams.get('redirect') || '/dashboard';
-      router.push(redirect);
-      router.refresh();
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-      setIsLoading(false);
-    }
-  };
+                    <h1 className="mb-4 text-center text-[28px] font-bold text-primary-600">
+                        Welcome to reKro
+                    </h1>
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-900">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg dark:bg-zinc-800">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-zinc-600 dark:text-zinc-400">
-            Enter your credentials to access your account
-          </p>
+                    <form className="space-y-4" onSubmit={handleSubmit}>
+                        <div>
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Email"
+                                className="input"
+                            />
+                        </div>
+
+                        <div>
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                autoComplete="current-password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Password"
+                                className="input"
+                            />
+                        </div>
+
+                        {error && (
+                            <div className="rounded-[10px] bg-danger-500/10 p-3">
+                                <p className="text-sm text-danger-600">
+                                    {error.message || "An error occurred"}
+                                </p>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isPending}
+                            className="mt-2 w-full rounded-[10px] bg-primary-500 py-3.5 text-[17px] font-semibold text-white transition hover:bg-primary-600 disabled:opacity-60"
+                            style={{ boxShadow: "0 4px 10px rgba(58, 127, 121, 0.30)" }}
+                        >
+                            {isPending ? "Signing In..." : "Sign In"}
+                        </button>
+
+                        <div className="pt-1 text-center">
+                            <Link
+                                href="/forgot-password"
+                                className="text-[14px] font-medium text-secondary-500 hover:opacity-80"
+                            >
+                                Forgot Password?
+                            </Link>
+                        </div>
+                    </form>
+                </div>
+
+                {/* Signup + support note */}
+                <div className="mt-6 text-center">
+                    <p className="text-[15px] text-auth-text-strong">
+                        Don&apos;t have an account?{" "}
+                        <Link
+                            href="/signup"
+                            className="font-bold text-secondary-500 hover:opacity-80"
+                        >
+                            Sign up
+                        </Link>
+                    </p>
+
+                    <p className="mt-4 text-[13px] text-auth-support">
+                        If you have trouble registering, please contact admin@rekro.com.au
+                    </p>
+                </div>
+            </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4 rounded-md shadow-sm">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white dark:placeholder-zinc-500"
-                placeholder="Email address"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white dark:placeholder-zinc-500"
-                placeholder="Password"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
-              <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
-            </div>
-          )}
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative flex w-full justify-center rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-            >
-              {isLoading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
-
-          <div className="text-center text-sm text-zinc-600 dark:text-zinc-400">
-            <p>
-              Don't have an account?{' '}
-              <Link href="/signup" className="font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-50 dark:hover:text-zinc-300">
-                Sign up
-              </Link>
-            </p>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+    );
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-900">
-        <div className="text-zinc-900 dark:text-white">Loading...</div>
-      </div>
-    }>
-      <LoginForm />
-    </Suspense>
-  );
+    return (
+        <Suspense
+            fallback={
+                <div className="auth-theme flex min-h-screen items-center justify-center bg-app-bg">
+                    <div className="text-text-muted">Loading...</div>
+                </div>
+            }
+        >
+            <LoginForm />
+        </Suspense>
+    );
 }
