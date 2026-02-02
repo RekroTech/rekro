@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { logout } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST() {
     try {
-        const { error } = await logout();
+        const supabase = await createClient();
+        const { error } = await supabase.auth.signOut();
 
         if (error) {
-            return NextResponse.json({ error }, { status: 500 });
+            return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
         return NextResponse.json({ success: true }, { status: 200 });

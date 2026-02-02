@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signup } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 type SignupBody = {
     email?: unknown;
@@ -30,11 +30,36 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { user, error } = await signup(email, password, name);
+        const supabase = await createClient();
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    name: name ?? email.split("@")[0],
+                },
+            },
+        });
 
-        if (error || !user) {
-            return NextResponse.json({ error: error || "Signup failed" }, { status: 400 });
+        if (error || !data.user) {
+            return NextResponse.json({ error: error?.message ?? "Signup failed" }, { status: 400 });
         }
+
+        // Normalize to your app User shape
+        const user = {
+            id: data.user.id,
+            email: data.user.email ?? "",
+            name:
+                (typeof data.user.user_metadata?.name === "string"
+                    ? data.user.user_metadata.name
+                    : undefined) ??
+                data.user.email?.split("@")[0] ??
+                "User",
+            avatar_url:
+                typeof data.user.user_metadata?.avatar_url === "string"
+                    ? data.user.user_metadata.avatar_url
+                    : null,
+        };
 
         return NextResponse.json({ user }, { status: 200 });
     } catch (err) {

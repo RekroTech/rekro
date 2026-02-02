@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { login } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 type LoginBody = {
     email?: unknown;
@@ -21,11 +21,31 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
         }
 
-        const { user, error } = await login(email, password);
+        const supabase = await createClient();
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-        if (error || !user) {
-            return NextResponse.json({ error: error || "Invalid credentials" }, { status: 401 });
+        if (error || !data.user) {
+            return NextResponse.json(
+                { error: error?.message ?? "Invalid credentials" },
+                { status: 401 }
+            );
         }
+
+        // Return the user shape you want the client to use
+        const user = {
+            id: data.user.id,
+            email: data.user.email ?? "",
+            name:
+                (typeof data.user.user_metadata?.name === "string"
+                    ? data.user.user_metadata.name
+                    : undefined) ??
+                data.user.email?.split("@")[0] ??
+                "User",
+            avatar_url:
+                typeof data.user.user_metadata?.avatar_url === "string"
+                    ? data.user.user_metadata.avatar_url
+                    : null,
+        };
 
         return NextResponse.json({ user }, { status: 200 });
     } catch (err) {
