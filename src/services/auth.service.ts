@@ -1,7 +1,22 @@
-import { SignupCredentials, LoginCredentials, AuthResponse } from "@/types/auth.types";
+import type {
+    SignupCredentials,
+    LoginCredentials,
+    AuthSuccess,
+    LogoutSuccess,
+    ApiError,
+} from "@/types/auth.types";
+
+function isApiError(x: unknown): x is ApiError {
+    return (
+        typeof x === "object" &&
+        x !== null &&
+        "error" in x &&
+        typeof (x as { error?: unknown }).error === "string"
+    );
+}
 
 export const authService = {
-    signup: async (credentials: SignupCredentials): Promise<AuthResponse> => {
+    signup: async (credentials: SignupCredentials): Promise<AuthSuccess> => {
         const response = await fetch("/api/auth/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -9,14 +24,14 @@ export const authService = {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || "Signup failed");
+            const body: unknown = await response.json().catch(() => null);
+            throw new Error(isApiError(body) ? body.error : "Signup failed");
         }
 
-        return response.json();
+        return (await response.json()) as AuthSuccess;
     },
 
-    login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
+    login: async (credentials: LoginCredentials): Promise<AuthSuccess> => {
         const response = await fetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -24,20 +39,21 @@ export const authService = {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || "Login failed");
+            const body: unknown = await response.json().catch(() => null);
+            throw new Error(isApiError(body) ? body.error : "Login failed");
         }
 
-        return response.json();
+        return (await response.json()) as AuthSuccess;
     },
 
-    logout: async (): Promise<void> => {
-        const response = await fetch("/api/auth/logout", {
-            method: "POST",
-        });
+    logout: async (): Promise<LogoutSuccess> => {
+        const response = await fetch("/api/auth/logout", { method: "POST" });
 
         if (!response.ok) {
-            throw new Error("Logout failed");
+            const body: unknown = await response.json().catch(() => null);
+            throw new Error(isApiError(body) ? body.error : "Logout failed");
         }
+
+        return (await response.json()) as LogoutSuccess;
     },
 };

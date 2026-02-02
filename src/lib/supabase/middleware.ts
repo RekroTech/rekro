@@ -1,34 +1,41 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
-import type { User } from '@supabase/supabase-js';
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+import type { User } from "@supabase/supabase-js";
 
-export async function updateSession(request: NextRequest): Promise<{ supabaseResponse: NextResponse; user: User | null }> {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+export async function updateSession(
+    request: NextRequest
+): Promise<{ supabaseResponse: NextResponse; user: User | null }> {
+    const supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-            supabaseResponse.cookies.set(name, value, options);
-          });
-        },
-      },
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() {
+                    return request.cookies.getAll();
+                },
+                setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        request.cookies.set(name, value);
+                        supabaseResponse.cookies.set(name, value, options);
+                    });
+                },
+            },
+        }
+    );
+
+    const { data, error } = await supabase.auth.getUser();
+
+    // ✅ Logged-out is normal (no session cookie)
+    if (error?.message === "Auth session missing!") {
+        return { supabaseResponse, user: null };
     }
-  );
 
-  // Refreshing the auth token
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    // ✅ Any other error is genuinely unexpected
+    if (error) {
+        throw error;
+    }
 
-  return { supabaseResponse, user };
+    return { supabaseResponse, user: data.user ?? null };
 }

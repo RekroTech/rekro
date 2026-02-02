@@ -1,18 +1,45 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLogin } from "@/lib/react-query/hooks/useAuth";
 
-function LoginForm() {
+export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const { mutate: login, isPending, error } = useLogin();
+    const router = useRouter();
+    const searchParams = useSearchParams();
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const { mutate: login, isPending, error, isSuccess } = useLogin();
+
+    // Read query params once per render and derive safe redirect target
+    const nextParam = useMemo(() => searchParams.get("next"), [searchParams]);
+    const sessionError = useMemo(() => searchParams.get("error") === "session", [searchParams]);
+
+    // Prevent open-redirects: allow only internal absolute paths
+    const safeNext = useMemo(() => {
+        if (nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")) {
+            return nextParam;
+        }
+        return "/dashboard";
+    }, [nextParam]);
+
+    useEffect(() => {
+        if (isSuccess) {
+            // replace prevents going "back" to /login after signing in
+            router.replace(safeNext);
+        }
+    }, [isSuccess, router, safeNext]);
+
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Client-side validation
+        if (!email || !password) return;
+
         login({ email, password });
     };
 
@@ -28,12 +55,12 @@ function LoginForm() {
 
                 {/* Card */}
                 <div className="card border border-emerald-100 px-6 py-7">
-                    {/* Mascot - file should be in /public/Roro.png */}
+                    {/* Mascot - file should be in /public/reKro.png */}
                     <div className="mb-3 flex justify-center">
                         <div className="h-[120px] w-[120px]">
                             <Image
                                 src="/reKro.png"
-                                alt="Roro"
+                                alt="reKro mascot"
                                 width={120}
                                 height={120}
                                 className="h-full w-full object-contain"
@@ -54,6 +81,7 @@ function LoginForm() {
                                 type="email"
                                 autoComplete="email"
                                 required
+                                disabled={isPending}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Email"
@@ -68,6 +96,7 @@ function LoginForm() {
                                 type="password"
                                 autoComplete="current-password"
                                 required
+                                disabled={isPending}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password"
@@ -75,11 +104,17 @@ function LoginForm() {
                             />
                         </div>
 
+                        {sessionError && (
+                            <div className="rounded-[10px] bg-warning-500/10 p-3">
+                                <p className="text-sm text-warning-600">
+                                    Your session has expired. Please log in again.
+                                </p>
+                            </div>
+                        )}
+
                         {error && (
                             <div className="rounded-[10px] bg-danger-500/10 p-3">
-                                <p className="text-sm text-danger-600">
-                                    {error.message || "An error occurred"}
-                                </p>
+                                <p className="text-sm text-danger-600">{error.message}</p>
                             </div>
                         )}
 
@@ -121,19 +156,5 @@ function LoginForm() {
                 </div>
             </div>
         </div>
-    );
-}
-
-export default function LoginPage() {
-    return (
-        <Suspense
-            fallback={
-                <div className="auth-theme flex min-h-screen items-center justify-center bg-app-bg">
-                    <div className="text-text-muted">Loading...</div>
-                </div>
-            }
-        >
-            <LoginForm />
-        </Suspense>
     );
 }

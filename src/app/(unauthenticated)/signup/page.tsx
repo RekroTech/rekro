@@ -1,20 +1,64 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSignup } from "@/lib/react-query/hooks/useAuth";
 
 export default function SignupPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
+    const [validationError, setValidationError] = useState("");
+
+    const router = useRouter();
+    const redirectTimerRef = useRef<number | null>(null);
 
     const { mutate: signup, isPending, isSuccess, error } = useSignup();
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    useEffect(() => {
+        if (!isSuccess) return;
+
+        // Redirect after successful signup (with cleanup)
+        redirectTimerRef.current = window.setTimeout(() => {
+            router.replace("/dashboard");
+        }, 2000);
+
+        return () => {
+            if (redirectTimerRef.current !== null) {
+                window.clearTimeout(redirectTimerRef.current);
+                redirectTimerRef.current = null;
+            }
+        };
+    }, [isSuccess, router]);
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        signup({ email, password, name });
+        setValidationError("");
+
+        const trimmedEmail = email.trim();
+        const trimmedName = name.trim();
+
+        // Client-side validation
+        if (!trimmedEmail || !password) {
+            setValidationError("Email and password are required");
+            return;
+        }
+
+        if (password.length < 6) {
+            setValidationError("Password must be at least 6 characters");
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+            setValidationError("Please enter a valid email address");
+            return;
+        }
+
+        signup({ email: trimmedEmail, password, name: trimmedName });
     };
+
+    const isDisabled = isPending || isSuccess;
 
     return (
         <div className="auth-theme flex min-h-screen items-center justify-center bg-app-bg px-5 py-10 text-foreground">
@@ -48,6 +92,7 @@ export default function SignupPage() {
                                 name="name"
                                 type="text"
                                 value={name}
+                                disabled={isDisabled}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Your name"
                                 className="input"
@@ -68,6 +113,7 @@ export default function SignupPage() {
                                 autoComplete="email"
                                 required
                                 value={email}
+                                disabled={isDisabled}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Email"
                                 className="input"
@@ -88,17 +134,22 @@ export default function SignupPage() {
                                 autoComplete="new-password"
                                 required
                                 value={password}
+                                disabled={isDisabled}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password (min 6 characters)"
                                 className="input"
                             />
                         </div>
 
-                        {error && (
+                        {validationError && (
+                            <div className="rounded-[10px] bg-warning-500/10 p-3">
+                                <p className="text-sm text-warning-600">{validationError}</p>
+                            </div>
+                        )}
+
+                        {error?.message && (
                             <div className="rounded-[10px] bg-danger-500/10 p-3">
-                                <p className="text-sm text-danger-600">
-                                    {error.message || "An error occurred"}
-                                </p>
+                                <p className="text-sm text-danger-600">{error.message}</p>
                             </div>
                         )}
 
@@ -112,7 +163,7 @@ export default function SignupPage() {
 
                         <button
                             type="submit"
-                            disabled={isPending || isSuccess}
+                            disabled={isDisabled}
                             className="mt-2 w-full rounded-[10px] bg-primary-500 py-3.5 text-[17px] font-semibold text-white transition hover:bg-primary-600 disabled:opacity-60"
                             style={{ boxShadow: "0 4px 10px rgba(58, 127, 121, 0.30)" }}
                         >

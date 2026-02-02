@@ -1,43 +1,54 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
-import { SignupCredentials, LoginCredentials, User } from "@/types/auth.types";
+import type { SignupCredentials, LoginCredentials, User } from "@/types/auth.types";
 import { createClient } from "@/lib/supabase/client";
 
 export function useUser() {
-    return useQuery({
+    return useQuery<User | null, Error>({
         queryKey: ["user"],
-        queryFn: async (): Promise<User | null> => {
+        queryFn: async () => {
             const supabase = createClient();
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
+            const { data, error } = await supabase.auth.getUser();
 
-            if (!user) {
-                return null;
-            }
+            // Logged-out is normal
+            if (error?.message === "Auth session missing!") return null;
+            if (error) throw new Error(error.message);
+
+            const user = data.user;
+            if (!user) return null;
 
             return {
                 id: user.id,
-                email: user.email || "",
-                name: user.user_metadata?.name || user.email?.split("@")[0] || "User",
-                avatar_url: user.user_metadata?.avatar_url || null,
+                email: user.email ?? "",
+                name:
+                    (typeof user.user_metadata?.name === "string"
+                        ? user.user_metadata.name
+                        : undefined) ??
+                    user.email?.split("@")[0] ??
+                    "User",
+                avatar_url:
+                    typeof user.user_metadata?.avatar_url === "string"
+                        ? user.user_metadata.avatar_url
+                        : null,
             };
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+        retry: false,
     });
 }
 
 export function useSignup() {
     const router = useRouter();
 
-    return useMutation({
-        mutationFn: (credentials: SignupCredentials) => authService.signup(credentials),
+    return useMutation<void, Error, SignupCredentials>({
+        mutationFn: async (credentials) => {
+            // authService should throw on failure
+            await authService.signup(credentials);
+        },
         onSuccess: () => {
-            setTimeout(() => {
-                router.push("/dashboard");
-                router.refresh();
-            }, 1000);
+            router.replace("/dashboard");
         },
     });
 }
@@ -45,11 +56,13 @@ export function useSignup() {
 export function useLogin() {
     const router = useRouter();
 
-    return useMutation({
-        mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
+    return useMutation<void, Error, LoginCredentials>({
+        mutationFn: async (credentials) => {
+            // authService should throw on failure
+            await authService.login(credentials);
+        },
         onSuccess: () => {
-            router.push("/dashboard");
-            router.refresh();
+            router.replace("/dashboard");
         },
     });
 }
@@ -57,11 +70,13 @@ export function useLogin() {
 export function useLogout() {
     const router = useRouter();
 
-    return useMutation({
-        mutationFn: () => authService.logout(),
+    return useMutation<void, Error, void>({
+        mutationFn: async () => {
+            // authService should throw on failure
+            await authService.logout();
+        },
         onSuccess: () => {
-            router.push("/login");
-            router.refresh();
+            router.replace("/login");
         },
     });
 }
