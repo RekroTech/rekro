@@ -14,8 +14,13 @@ import {
     checkUnitLiked,
     toggleUnitLike,
 } from "@/services/unit.service";
+import {
+    createUnitAvailabilityClient,
+    updateUnitAvailabilityClient,
+    getUnitAvailabilityByUnitIdClient,
+} from "@/services/unit_availability.service";
 import { uploadPropertyImages } from "@/services/storage.service";
-import { PropertyInsert, UnitInsert } from "@/types/db";
+import { PropertyInsert, UnitInsert, UnitAvailabilityInsert } from "@/types/db";
 
 export function useProperties(params: Omit<GetPropertiesParams, "offset"> = {}) {
     return useInfiniteQuery({
@@ -57,6 +62,7 @@ export function useUnits(propertyId: string) {
 export interface CreatePropertyInput {
     propertyData: Omit<PropertyInsert, "id" | "created_at" | "updated_at" | "images" | "video_url">;
     unitsData: Omit<UnitInsert, "id" | "created_at" | "property_id">[];
+    availabilityData: Omit<UnitAvailabilityInsert, "id" | "created_at" | "unit_id">[];
     mediaFiles: File[];
 }
 
@@ -64,7 +70,12 @@ export function useCreateProperty() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ propertyData, unitsData, mediaFiles }: CreatePropertyInput) => {
+        mutationFn: async ({
+            propertyData,
+            unitsData,
+            availabilityData,
+            mediaFiles,
+        }: CreatePropertyInput) => {
             // First create property without images/video to get the propertyId
             const property = await createPropertyClient({
                 ...propertyData,
@@ -74,7 +85,7 @@ export function useCreateProperty() {
 
             // Create all units for this property
             if (unitsData && unitsData.length > 0) {
-                await Promise.all(
+                const createdUnits = await Promise.all(
                     unitsData.map((unitData) => {
                         return createUnitClient({
                             ...unitData,
@@ -82,6 +93,22 @@ export function useCreateProperty() {
                         });
                     })
                 );
+
+                // Create availability records for each unit
+                if (availabilityData && availabilityData.length > 0) {
+                    await Promise.all(
+                        createdUnits.map((unit, index) => {
+                            const availability = availabilityData[index];
+                            if (availability) {
+                                return createUnitAvailabilityClient({
+                                    ...availability,
+                                    unit_id: unit.id,
+                                });
+                            }
+                            return Promise.resolve();
+                        })
+                    );
+                }
             }
 
             // Upload photos with propertyId
@@ -112,6 +139,7 @@ export interface UpdatePropertyInput {
         Omit<PropertyInsert, "id" | "created_at" | "updated_at" | "images" | "created_by">
     >;
     unitsData?: Omit<UnitInsert, "id" | "created_at" | "property_id">[];
+    availabilityData?: Omit<UnitAvailabilityInsert, "id" | "created_at" | "unit_id">[];
     mediaFiles?: File[];
     existingImages?: string[];
 }
@@ -124,6 +152,7 @@ export function useUpdateProperty() {
             propertyId,
             propertyData,
             unitsData = [],
+            availabilityData = [],
             mediaFiles = [],
             existingImages = [],
         }: UpdatePropertyInput) => {
@@ -136,16 +165,46 @@ export function useUpdateProperty() {
                 for (let i = 0; i < unitsData.length; i++) {
                     const unitData = unitsData[i];
                     const existingUnit = existingUnits[i];
+                    const availability = availabilityData[i];
 
                     if (existingUnit) {
                         // Update existing unit
                         await updateUnitClient(existingUnit.id, unitData);
+
+                        // Update or create availability record for this unit
+                        if (availability) {
+                            const existingAvailability = await getUnitAvailabilityByUnitIdClient(
+                                existingUnit.id
+                            );
+
+                            if (existingAvailability) {
+                                // Update existing availability
+                                await updateUnitAvailabilityClient(
+                                    existingAvailability.id,
+                                    availability
+                                );
+                            } else {
+                                // Create new availability record
+                                await createUnitAvailabilityClient({
+                                    ...availability,
+                                    unit_id: existingUnit.id,
+                                });
+                            }
+                        }
                     } else {
                         // Create new unit (this happens when bedroom count increased)
-                        await createUnitClient({
+                        const newUnit = await createUnitClient({
                             ...unitData,
                             property_id: propertyId,
                         });
+
+                        // Create availability record for new unit
+                        if (availability) {
+                            await createUnitAvailabilityClient({
+                                ...availability,
+                                unit_id: newUnit.id,
+                            });
+                        }
                     }
                 }
             }

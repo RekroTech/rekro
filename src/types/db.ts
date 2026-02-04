@@ -157,6 +157,33 @@ export interface Database {
                     is_active?: boolean | null;
                 };
             };
+            unit_availability: {
+                Row: {
+                    id: string;
+                    unit_id: string;
+                    available_from: string | null;
+                    available_to: string | null;
+                    is_available: boolean | null;
+                    notes: string | null;
+                    created_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    unit_id: string;
+                    available_from?: string | null;
+                    available_to?: string | null;
+                    is_available?: boolean | null;
+                    notes?: string | null;
+                    created_at?: string;
+                };
+                Update: {
+                    unit_id?: string;
+                    available_from?: string | null;
+                    available_to?: string | null;
+                    is_available?: boolean | null;
+                    notes?: string | null;
+                };
+            };
             // Add more tables as needed
         };
     };
@@ -175,3 +202,7 @@ export type Unit = Database["public"]["Tables"]["units"]["Row"];
 export type UnitInsert = Database["public"]["Tables"]["units"]["Insert"];
 export type UnitUpdate = Database["public"]["Tables"]["units"]["Update"];
 export type ListingType = "entire_home" | "room";
+
+export type UnitAvailability = Database["public"]["Tables"]["unit_availability"]["Row"];
+export type UnitAvailabilityInsert = Database["public"]["Tables"]["unit_availability"]["Insert"];
+export type UnitAvailabilityUpdate = Database["public"]["Tables"]["unit_availability"]["Update"];
