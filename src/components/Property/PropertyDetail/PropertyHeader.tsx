@@ -2,17 +2,9 @@ import { Property } from "@/types/db";
 
 interface PropertyHeaderProps {
     property: Property;
-    isLiked: boolean;
-    onToggleLike: () => void;
-    isPending: boolean;
 }
 
-export function PropertyHeader({
-    property,
-    isLiked,
-    onToggleLike,
-    isPending,
-}: PropertyHeaderProps) {
+export function PropertyHeader({ property }: PropertyHeaderProps) {
     const { title, property_type, bedrooms, bathrooms, car_spaces, furnished, address } = property;
 
     const addressText =
@@ -30,31 +22,6 @@ export function PropertyHeader({
 
             <div className="flex items-start justify-between gap-4 mb-3">
                 <h1 className="text-3xl md:text-4xl font-bold text-text flex-1">{title}</h1>
-
-                <button
-                    onClick={onToggleLike}
-                    disabled={isPending}
-                    className={`flex-shrink-0 p-3 rounded-full transition-all ${
-                        isLiked
-                            ? "bg-red-50 text-red-600 hover:bg-red-100"
-                            : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-red-500"
-                    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
-                    aria-label={isLiked ? "Unsave property" : "Save property"}
-                >
-                    <svg
-                        className="w-6 h-6"
-                        fill={isLiked ? "currentColor" : "none"}
-                        stroke="currentColor"
-                        strokeWidth={isLiked ? 0 : 2}
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                        />
-                    </svg>
-                </button>
             </div>
 
             <p className="text-lg text-text-muted flex items-center gap-2 mb-4">

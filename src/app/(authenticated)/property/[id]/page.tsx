@@ -132,21 +132,7 @@ export default function PropertyDetailPage() {
             </div>
 
             {/* Property Header */}
-            <PropertyHeader
-                property={property}
-                isLiked={isLiked}
-                onToggleLike={handleToggleLike}
-                isPending={toggleLikeMutation.isPending}
-            />
-
-            {/* Units Section */}
-            {showUnitsSelector && (
-                <UnitsSelector
-                    units={units}
-                    selectedUnitId={selectedUnitId}
-                    onUnitSelect={handleUnitSelect}
-                />
-            )}
+            <PropertyHeader property={property} />
 
             {/* Main Grid: Image Gallery (2/3) + Sidebar (1/3) */}
             <div className="grid gap-6 mb-8 grid-cols-3">
@@ -166,6 +152,14 @@ export default function PropertyDetailPage() {
                         onSelect={setSelectedImageIndex}
                     />
 
+                    {/* Units Section */}
+                    {showUnitsSelector && (
+                        <UnitsSelector
+                            units={units}
+                            selectedUnitId={selectedUnitId}
+                            onUnitSelect={handleUnitSelect}
+                        />
+                    )}
                     {/* Content */}
                     <div className="space-y-8 mt-8">
                         <PropertyDescription description={property.description} />

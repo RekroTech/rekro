@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import { Button } from "@/components/common";
 import { Property, Unit } from "@/types/db";
+import { EnquiryModal } from "./EnquiryModal";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
@@ -18,9 +22,41 @@ export function PropertySidebar({
     isPending,
     property,
 }: PropertySidebarProps) {
+    const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
+
     return (
         <div className="col-span-1">
             <div className="bg-white border border-border rounded-lg p-6 shadow-lg sticky top-4">
+                {/* Like Button - Top Right */}
+                <button
+                    onClick={onToggleLike}
+                    disabled={isPending}
+                    className={`absolute top-4 right-4 p-2 rounded-full transition-all ${
+                        isLiked
+                            ? "bg-red-50 text-red-600 hover:bg-red-100"
+                            : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-red-500"
+                    } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+                    aria-label={
+                        isLiked
+                            ? `Unsave ${isEntireHome ? "property" : "room"}`
+                            : `Save ${isEntireHome ? "property" : "room"}`
+                    }
+                >
+                    <svg
+                        className="w-5 h-5"
+                        fill={isLiked ? "currentColor" : "none"}
+                        stroke="currentColor"
+                        strokeWidth={isLiked ? 0 : 2}
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        />
+                    </svg>
+                </button>
+
                 {selectedUnit && (
                     <div className="mb-4 pb-4 border-b border-border">
                         <h3 className="text-sm font-semibold text-text-muted mb-1">
@@ -45,7 +81,11 @@ export function PropertySidebar({
                 </p>
 
                 <div className="space-y-3">
-                    <Button variant="primary" className="w-full">
+                    <Button
+                        variant="primary"
+                        className="w-full"
+                        onClick={() => setIsEnquiryModalOpen(true)}
+                    >
                         <svg
                             className="w-5 h-5 mr-2"
                             fill="none"
@@ -59,7 +99,7 @@ export function PropertySidebar({
                                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                             />
                         </svg>
-                        Contact Landlord
+                        Enquire Now
                     </Button>
 
                     <Button variant="secondary" className="w-full">
@@ -76,29 +116,7 @@ export function PropertySidebar({
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                             />
                         </svg>
-                        Schedule Viewing
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={onToggleLike}
-                        disabled={isPending}
-                    >
-                        <svg
-                            className={`w-5 h-5 mr-2 ${isLiked ? "fill-red-500 stroke-red-500" : ""}`}
-                            fill={isLiked ? "currentColor" : "none"}
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                            />
-                        </svg>
-                        {isLiked ? "Saved" : "Save"} {isEntireHome ? "Property" : "Room"}
+                        Check Availability
                     </Button>
                 </div>
 
@@ -184,6 +202,15 @@ export function PropertySidebar({
                     </div>
                 </div>
             </div>
+
+            <EnquiryModal
+                isOpen={isEnquiryModalOpen}
+                onClose={() => setIsEnquiryModalOpen(false)}
+                propertyTitle={property.title}
+                propertyId={property.id}
+                unitId={selectedUnit?.id}
+                isEntireHome={isEntireHome}
+            />
         </div>
     );
 }

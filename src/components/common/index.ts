@@ -19,6 +19,9 @@ export type { LoaderProps, LoaderSize } from "./Loader";
 export { Modal } from "./Modal";
 export type { ModalProps } from "./Modal";
 
+export { Textarea } from "./Textarea";
+export type { TextareaProps } from "./Textarea";
+
 export { FileUpload } from "./FileUpload";
 export type { FileUploadProps } from "./FileUpload";
 

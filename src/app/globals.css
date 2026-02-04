@@ -176,6 +176,9 @@
     --color-danger-600: var(--danger-600);
     --color-like: var(--like);
 
+    /* Modal backdrop */
+    --color-backdrop: #000000;
+
     /* Radius tokens */
     --radius-card: var(--radius-card);
     --radius-card-lg: var(--radius-card-lg);
