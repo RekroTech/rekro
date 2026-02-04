@@ -1,10 +1,11 @@
 "use client";
 
 import { Property } from "@/types/db";
-import Image from "next/image";
+import { PropertyMedia } from "@/components/common";
 import Link from "next/link";
 import { useState } from "react";
 import { PropertyModal } from "@/components";
+import { getPropertyFileUrl } from "@/services/storage.service";
 
 interface PropertyCardProps {
     property: Property;
@@ -13,7 +14,6 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, showEditButton = false }: PropertyCardProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [imageError, setImageError] = useState(false);
 
     const {
         id,
@@ -29,7 +29,8 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
     } = property;
 
     // Get the first image or use a placeholder
-    const imageUrl = !imageError && images && images.length > 0 ? images[0] : "/window.svg";
+    const imagePath = images && images.length > 0 ? images[0] : null;
+    const imageUrl = imagePath ? getPropertyFileUrl(imagePath, id) : "/window.svg";
 
     // Format address
     const addressText =
@@ -41,15 +42,13 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
         <>
             <div className="group relative block rounded-[var(--radius-lg)] border border-border bg-card overflow-hidden shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-deep)] transition-all duration-200">
                 {/* Property Image */}
-                <Link href={`/properties/${id}`} className="block">
+                <Link href={`/property/${id}`} className="block">
                     <div className="relative h-48 w-full bg-surface-muted overflow-hidden">
-                        <Image
+                        <PropertyMedia
                             src={imageUrl}
                             alt={title}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={() => setImageError(true)}
-                            unoptimized={imageUrl === "/window.svg"}
+                            className="group-hover:scale-105 transition-transform duration-300"
                         />
                         {furnished && (
                             <div className="absolute top-3 right-3 bg-primary-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">

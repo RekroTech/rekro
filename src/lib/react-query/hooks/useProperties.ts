@@ -1,11 +1,12 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     getPropertiesClient,
     GetPropertiesParams,
     createPropertyClient,
     updatePropertyClient,
+    getPropertyByIdClient,
 } from "@/services/property.service";
-import { uploadPropertyImages, uploadPropertyVideo } from "@/services/storage.service";
+import { uploadPropertyImages } from "@/services/storage.service";
 import { PropertyInsert } from "@/types/db";
 
 export function useProperties(params: Omit<GetPropertiesParams, "offset"> = {}) {
@@ -21,43 +22,45 @@ export function useProperties(params: Omit<GetPropertiesParams, "offset"> = {}) 
     });
 }
 
+export function useProperty(id: string) {
+    return useQuery({
+        queryKey: ["property", id],
+        queryFn: () => getPropertyByIdClient(id),
+        enabled: !!id,
+    });
+}
+
 export interface CreatePropertyInput {
     propertyData: Omit<PropertyInsert, "id" | "created_at" | "updated_at" | "images" | "video_url">;
-    photoFiles: File[];
-    videoFile: File | null;
-    userId: string;
+    mediaFiles: File[];
 }
 
 export function useCreateProperty() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({
-            propertyData,
-            photoFiles,
-            videoFile,
-            userId,
-        }: CreatePropertyInput) => {
-            // Upload photos
-            let imageUrls: string[] = [];
-            if (photoFiles.length > 0) {
-                imageUrls = await uploadPropertyImages(photoFiles, userId);
-            }
-
-            // Upload video
-            let videoUrl: string | null = null;
-            if (videoFile) {
-                videoUrl = await uploadPropertyVideo(videoFile, userId);
-            }
-
-            // Create property with uploaded file URLs
-            const fullPropertyData: Omit<PropertyInsert, "id" | "created_at" | "updated_at"> = {
+        mutationFn: async ({ propertyData, mediaFiles }: CreatePropertyInput) => {
+            // First create property without images/video to get the propertyId
+            const property = await createPropertyClient({
                 ...propertyData,
-                images: imageUrls.length > 0 ? imageUrls : null,
-                video_url: videoUrl,
-            };
+                images: null,
+                video_url: null,
+            });
 
-            return createPropertyClient(fullPropertyData);
+            // Upload photos with propertyId
+            let imageUrls: string[] = [];
+            if (mediaFiles.length > 0) {
+                imageUrls = await uploadPropertyImages(mediaFiles, property.id);
+            }
+
+            // Update property with uploaded file URLs
+            if (imageUrls.length > 0) {
+                return updatePropertyClient(property.id, {
+                    images: imageUrls.length > 0 ? imageUrls : null,
+                });
+            }
+
+            return property;
         },
         onSuccess: () => {
             // Invalidate all properties queries to refetch the list
@@ -69,16 +72,10 @@ export function useCreateProperty() {
 export interface UpdatePropertyInput {
     propertyId: string;
     propertyData: Partial<
-        Omit<
-            PropertyInsert,
-            "id" | "created_at" | "updated_at" | "images" | "video_url" | "created_by"
-        >
+        Omit<PropertyInsert, "id" | "created_at" | "updated_at" | "images" | "created_by">
     >;
-    photoFiles?: File[];
-    videoFile?: File | null;
-    userId: string;
+    mediaFiles?: File[];
     existingImages?: string[];
-    existingVideoUrl?: string | null;
 }
 
 export function useUpdateProperty() {
@@ -88,42 +85,25 @@ export function useUpdateProperty() {
         mutationFn: async ({
             propertyId,
             propertyData,
-            photoFiles = [],
-            videoFile,
-            userId,
+            mediaFiles = [],
             existingImages = [],
-            existingVideoUrl = null,
         }: UpdatePropertyInput) => {
             // Upload new photos if provided
-            let imageUrls: string[] = [...existingImages];
-            if (photoFiles.length > 0) {
-                const newImageUrls = await uploadPropertyImages(photoFiles, userId);
-                imageUrls = [...imageUrls, ...newImageUrls];
+            let imagePaths: string[] = [...existingImages];
+            if (mediaFiles.length > 0) {
+                const newImagePaths = await uploadPropertyImages(mediaFiles, propertyId);
+                imagePaths = [...imagePaths, ...newImagePaths];
             }
 
-            // Upload new video if provided
-            let videoUrl: string | null = existingVideoUrl;
-            if (videoFile !== undefined) {
-                if (videoFile) {
-                    videoUrl = await uploadPropertyVideo(videoFile, userId);
-                } else {
-                    videoUrl = null;
-                }
-            }
-
-            // Update property with file URLs
+            // Update property with file paths
             const fullPropertyData: Partial<
                 Omit<PropertyInsert, "id" | "created_at" | "updated_at" | "created_by">
             > = {
                 ...propertyData,
             };
 
-            if (photoFiles.length > 0 || existingImages.length > 0) {
-                fullPropertyData.images = imageUrls.length > 0 ? imageUrls : null;
-            }
-
-            if (videoFile !== undefined) {
-                fullPropertyData.video_url = videoUrl;
+            if (mediaFiles.length > 0 || existingImages.length > 0) {
+                fullPropertyData.images = imagePaths.length > 0 ? imagePaths : null;
             }
 
             return updatePropertyClient(propertyId, fullPropertyData);

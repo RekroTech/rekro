@@ -21,3 +21,6 @@ export type { ModalProps } from "./Modal";
 
 export { FileUpload } from "./FileUpload";
 export type { FileUploadProps } from "./FileUpload";
+
+export { PropertyMedia } from "./PropertyMedia";
+export type { PropertyMediaProps } from "./PropertyMedia";
