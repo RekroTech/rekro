@@ -6,8 +6,16 @@ import {
     updatePropertyClient,
     getPropertyByIdClient,
 } from "@/services/property.service";
+import {
+    createUnitClient,
+    updateUnitClient,
+    getUnitByPropertyIdClient,
+    getUnitsByPropertyIdClient,
+    checkUnitLiked,
+    toggleUnitLike,
+} from "@/services/unit.service";
 import { uploadPropertyImages } from "@/services/storage.service";
-import { PropertyInsert } from "@/types/db";
+import { PropertyInsert, UnitInsert } from "@/types/db";
 
 export function useProperties(params: Omit<GetPropertiesParams, "offset"> = {}) {
     return useInfiniteQuery({
@@ -30,8 +38,25 @@ export function useProperty(id: string) {
     });
 }
 
+export function useUnit(propertyId: string) {
+    return useQuery({
+        queryKey: ["unit", propertyId],
+        queryFn: () => getUnitByPropertyIdClient(propertyId),
+        enabled: !!propertyId,
+    });
+}
+
+export function useUnits(propertyId: string) {
+    return useQuery({
+        queryKey: ["units", propertyId],
+        queryFn: () => getUnitsByPropertyIdClient(propertyId),
+        enabled: !!propertyId,
+    });
+}
+
 export interface CreatePropertyInput {
     propertyData: Omit<PropertyInsert, "id" | "created_at" | "updated_at" | "images" | "video_url">;
+    unitsData: Omit<UnitInsert, "id" | "created_at" | "property_id">[];
     mediaFiles: File[];
 }
 
@@ -39,13 +64,25 @@ export function useCreateProperty() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ propertyData, mediaFiles }: CreatePropertyInput) => {
+        mutationFn: async ({ propertyData, unitsData, mediaFiles }: CreatePropertyInput) => {
             // First create property without images/video to get the propertyId
             const property = await createPropertyClient({
                 ...propertyData,
                 images: null,
                 video_url: null,
             });
+
+            // Create all units for this property
+            if (unitsData && unitsData.length > 0) {
+                await Promise.all(
+                    unitsData.map((unitData) => {
+                        return createUnitClient({
+                            ...unitData,
+                            property_id: property.id,
+                        });
+                    })
+                );
+            }
 
             // Upload photos with propertyId
             let imageUrls: string[] = [];
@@ -74,6 +111,7 @@ export interface UpdatePropertyInput {
     propertyData: Partial<
         Omit<PropertyInsert, "id" | "created_at" | "updated_at" | "images" | "created_by">
     >;
+    unitsData?: Omit<UnitInsert, "id" | "created_at" | "property_id">[];
     mediaFiles?: File[];
     existingImages?: string[];
 }
@@ -85,9 +123,33 @@ export function useUpdateProperty() {
         mutationFn: async ({
             propertyId,
             propertyData,
+            unitsData = [],
             mediaFiles = [],
             existingImages = [],
         }: UpdatePropertyInput) => {
+            // Handle units creation/update if unitsData is provided
+            if (unitsData && unitsData.length > 0) {
+                // Get all existing units for this property
+                const existingUnits = await getUnitsByPropertyIdClient(propertyId);
+
+                // Update existing units and create new ones
+                for (let i = 0; i < unitsData.length; i++) {
+                    const unitData = unitsData[i];
+                    const existingUnit = existingUnits[i];
+
+                    if (existingUnit) {
+                        // Update existing unit
+                        await updateUnitClient(existingUnit.id, unitData);
+                    } else {
+                        // Create new unit (this happens when bedroom count increased)
+                        await createUnitClient({
+                            ...unitData,
+                            property_id: propertyId,
+                        });
+                    }
+                }
+            }
+
             // Upload new photos if provided
             let imagePaths: string[] = [...existingImages];
             if (mediaFiles.length > 0) {
@@ -111,6 +173,29 @@ export function useUpdateProperty() {
         onSuccess: () => {
             // Invalidate all properties queries to refetch the list
             void queryClient.invalidateQueries({ queryKey: ["properties"] });
+        },
+    });
+}
+
+// Unit Likes Hooks
+export function useUnitLike(unitId: string) {
+    return useQuery({
+        queryKey: ["unit-like", unitId],
+        queryFn: () => checkUnitLiked(unitId),
+        enabled: !!unitId,
+    });
+}
+
+export function useToggleUnitLike() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (unitId: string) => {
+            return toggleUnitLike(unitId);
+        },
+        onSuccess: (isLiked, unitId) => {
+            // Invalidate the specific unit like query
+            void queryClient.invalidateQueries({ queryKey: ["unit-like", unitId] });
         },
     });
 }

@@ -109,6 +109,54 @@ export interface Database {
                     updated_at?: string;
                 };
             };
+            units: {
+                Row: {
+                    id: string;
+                    property_id: string;
+                    listing_type: ListingType;
+                    name: string | null;
+                    description: string | null;
+                    price_per_week: number;
+                    bond_amount: number | null;
+                    bills_included: boolean | null;
+                    min_lease_weeks: number | null;
+                    max_lease_weeks: number | null;
+                    max_occupants: number | null;
+                    size_sqm: number | null;
+                    is_active: boolean | null;
+                    created_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    property_id: string;
+                    listing_type: ListingType;
+                    name?: string | null;
+                    description?: string | null;
+                    price_per_week: number;
+                    bond_amount?: number | null;
+                    bills_included?: boolean | null;
+                    min_lease_weeks?: number | null;
+                    max_lease_weeks?: number | null;
+                    max_occupants?: number | null;
+                    size_sqm?: number | null;
+                    is_active?: boolean | null;
+                    created_at?: string;
+                };
+                Update: {
+                    property_id?: string;
+                    listing_type: ListingType;
+                    name?: string | null;
+                    description?: string | null;
+                    price_per_week?: number;
+                    bond_amount?: number | null;
+                    bills_included?: boolean | null;
+                    min_lease_weeks?: number | null;
+                    max_lease_weeks?: number | null;
+                    max_occupants?: number | null;
+                    size_sqm?: number | null;
+                    is_active?: boolean | null;
+                };
+            };
             // Add more tables as needed
         };
     };
@@ -122,3 +170,8 @@ export type ProfileUpdate = Database["public"]["Tables"]["users"]["Update"];
 export type Property = Database["public"]["Tables"]["properties"]["Row"];
 export type PropertyInsert = Database["public"]["Tables"]["properties"]["Insert"];
 export type PropertyUpdate = Database["public"]["Tables"]["properties"]["Update"];
+
+export type Unit = Database["public"]["Tables"]["units"]["Row"];
+export type UnitInsert = Database["public"]["Tables"]["units"]["Insert"];
+export type UnitUpdate = Database["public"]["Tables"]["units"]["Update"];
+export type ListingType = "entire_home" | "room";

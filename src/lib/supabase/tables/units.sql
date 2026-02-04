@@ -1,3 +1,6 @@
+-- Create listing type enum
+create type public.listing_type as enum ('entire_home', 'room');
+
 create table public.units (
   id uuid not null default gen_random_uuid (),
   property_id uuid not null,

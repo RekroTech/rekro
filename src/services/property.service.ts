@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/client";
-import { Property, PropertyInsert } from "@/types/db";
+import { Property, PropertyInsert, Unit } from "@/types/db";
+
+export interface PropertyWithUnits extends Property {
+    units: Unit[];
+}
 
 export interface GetPropertiesParams {
     limit?: number;
@@ -86,17 +90,37 @@ export async function getPropertiesClient(
     };
 }
 
-export async function getPropertyByIdClient(id: string): Promise<Property> {
+export async function getPropertyByIdClient(id: string): Promise<PropertyWithUnits> {
     const supabase = createClient();
 
-    const { data, error } = await supabase.from("properties").select("*").eq("id", id).single();
+    const { data: property, error } = await supabase
+        .from("properties")
+        .select("*")
+        .eq("id", id)
+        .single();
 
     if (error) {
         console.error("Error fetching property:", error);
         throw new Error(error.message);
     }
 
-    return data;
+    // Fetch units for this property
+    const { data: units, error: unitsError } = await supabase
+        .from("units")
+        .select("*")
+        .eq("property_id", id)
+        .eq("is_active", true)
+        .order("listing_type", { ascending: true });
+
+    if (unitsError) {
+        console.error("Error fetching units:", unitsError);
+        // Don't throw, just return empty units array
+    }
+
+    return {
+        ...property,
+        units: units || [],
+    };
 }
 
 export async function createPropertyClient(
@@ -137,4 +161,80 @@ export async function updatePropertyClient(
     }
 
     return data;
+}
+
+// Property Likes Functions
+export async function checkPropertyLiked(propertyId: string): Promise<boolean> {
+    const supabase = createClient();
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return false;
+    }
+
+    const { data, error } = await supabase
+        .from("property_likes")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("unit_id", propertyId)
+        .single();
+
+    if (error && error.code !== "PGRST116") {
+        // PGRST116 is "not found" error
+        console.error("Error checking property like:", error);
+        return false;
+    }
+
+    return !!data;
+}
+
+export async function togglePropertyLike(propertyId: string): Promise<boolean> {
+    const supabase = createClient();
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error("User must be authenticated to like properties");
+    }
+
+    // Check if already liked
+    const { data: existingLike } = await supabase
+        .from("property_likes")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("unit_id", propertyId)
+        .single();
+
+    if (existingLike) {
+        // Unlike
+        const { error } = await supabase
+            .from("property_likes")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("unit_id", propertyId);
+
+        if (error) {
+            console.error("Error unliking property:", error);
+            throw new Error(error.message);
+        }
+
+        return false;
+    } else {
+        // Like
+        const { error } = await supabase
+            .from("property_likes")
+            .insert([{ user_id: user.id, unit_id: propertyId }]);
+
+        if (error) {
+            console.error("Error liking property:", error);
+            throw new Error(error.message);
+        }
+
+        return true;
+    }
 }

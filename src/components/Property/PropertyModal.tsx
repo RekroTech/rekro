@@ -3,9 +3,13 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button, Checkbox, Modal, Input, Select } from "@/components/common";
-import { useCreateProperty, useUpdateProperty } from "@/lib/react-query/hooks/useProperties";
+import {
+    useCreateProperty,
+    useUpdateProperty,
+    useUnits,
+} from "@/lib/react-query/hooks/useProperties";
 import { useUser } from "@/lib/react-query/hooks/useAuth";
-import { PropertyInsert, Property } from "@/types/db";
+import { PropertyInsert, Property, ListingType } from "@/types/db";
 import { deletePropertyFiles, getPropertyFileUrl } from "@/services/storage.service";
 
 export interface AddPropertyModalProps {
@@ -20,6 +24,7 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
     const createProperty = useCreateProperty();
     const updateProperty = useUpdateProperty();
     const { data: user } = useUser();
+    const { data: existingUnits = [] } = useUnits(property?.id || "");
     const [mediaFiles, setMediaFiles] = useState<File[]>([]);
     const [existingImages, setExistingImages] = useState<string[]>(
         property?.images && Array.isArray(property.images) ? property.images : []
@@ -80,6 +85,28 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
           };
 
     const [formData, setFormData] = useState(initialFormData);
+    const [listingType, setListingType] = useState<"entire_home" | "room">("entire_home");
+    const [activeRoomTab, setActiveRoomTab] = useState(0);
+
+    // Initialize units array based on listing type
+    const getInitialUnits = () => {
+        const bedroomCount = parseInt(formData.bedrooms) || 1;
+        const count = listingType === "room" ? Math.max(1, bedroomCount) : 1;
+
+        return Array.from({ length: count }, (_, index) => ({
+            name: listingType === "room" ? `Room ${index + 1}` : "",
+            unit_description: "",
+            price_per_week: "",
+            bond_amount: "",
+            bills_included: false,
+            min_lease_weeks: "",
+            max_lease_weeks: "",
+            max_occupants: listingType === "room" ? "1" : "",
+            size_sqm: "",
+        }));
+    };
+
+    const [units, setUnits] = useState(getInitialUnits());
 
     const propertyTypes = [
         { value: "", label: "Select property type" },
@@ -89,6 +116,11 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
         { value: "villa", label: "Villa" },
         { value: "studio", label: "Studio" },
         { value: "land", label: "Land" },
+    ];
+
+    const listingTypes = [
+        { value: "entire_home", label: "Entire Home (Whole Property)" },
+        { value: "room", label: "Room (Shared/Single Room)" },
     ];
 
     // Update state when modal opens or property changes
@@ -112,6 +144,23 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                 furnished: property.furnished || false,
                 ...parseAddress(property.address),
             });
+            // Set listing type and units data if they exist
+            if (existingUnits && existingUnits.length > 0) {
+                setListingType(existingUnits[0].listing_type || "entire_home");
+                setUnits(
+                    existingUnits.map((unit) => ({
+                        name: unit.name || "",
+                        unit_description: unit.description || "",
+                        price_per_week: unit.price_per_week?.toString() || "",
+                        bond_amount: unit.bond_amount?.toString() || "",
+                        bills_included: unit.bills_included || false,
+                        min_lease_weeks: unit.min_lease_weeks?.toString() || "",
+                        max_lease_weeks: unit.max_lease_weeks?.toString() || "",
+                        max_occupants: unit.max_occupants?.toString() || "",
+                        size_sqm: unit.size_sqm?.toString() || "",
+                    }))
+                );
+            }
         } else {
             // Reset for new property
             setExistingImages([]);
@@ -132,11 +181,44 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                 address_postcode: "",
                 address_country: "Australia",
             });
+            setListingType("entire_home");
+            setUnits(getInitialUnits());
         }
         setMediaFiles([]);
         setError(null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, property?.id]);
+    }, [isOpen, property?.id, existingUnits]);
+
+    // Update units array when listing type or bedrooms change
+    useEffect(() => {
+        const bedroomCount = parseInt(formData.bedrooms) || 1;
+        const requiredCount = listingType === "room" ? Math.max(1, bedroomCount) : 1;
+
+        if (units.length !== requiredCount) {
+            const newUnits = Array.from({ length: requiredCount }, (_, index) => {
+                // Preserve existing data if available
+                if (units[index]) {
+                    return units[index];
+                }
+                // Create new unit with defaults
+                return {
+                    name: listingType === "room" ? `Room ${index + 1}` : "",
+                    unit_description: "",
+                    price_per_week: "",
+                    bond_amount: "",
+                    bills_included: false,
+                    min_lease_weeks: "",
+                    max_lease_weeks: "",
+                    max_occupants: listingType === "room" ? "1" : "",
+                    size_sqm: "",
+                };
+            });
+            setUnits(newUnits);
+            // Reset active tab to 0 when units array changes
+            setActiveRoomTab(0);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [listingType, formData.bedrooms]);
 
     const handleRemoveExistingImage = (imageUrl: string) => {
         setRemovedImages([...removedImages, imageUrl]);
@@ -204,11 +286,26 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                     },
                 };
 
+                // Prepare units data array (all units for update)
+                const unitsData = units.map((unit) => ({
+                    listing_type: listingType as ListingType,
+                    name: unit.name || null,
+                    description: unit.unit_description || null,
+                    price_per_week: unit.price_per_week ? parseInt(unit.price_per_week) : 0,
+                    bond_amount: unit.bond_amount ? parseInt(unit.bond_amount) : null,
+                    bills_included: unit.bills_included,
+                    min_lease_weeks: unit.min_lease_weeks ? parseInt(unit.min_lease_weeks) : null,
+                    max_lease_weeks: unit.max_lease_weeks ? parseInt(unit.max_lease_weeks) : null,
+                    max_occupants: unit.max_occupants ? parseInt(unit.max_occupants) : null,
+                    size_sqm: unit.size_sqm ? parseFloat(unit.size_sqm) : null,
+                }));
+
                 await updateProperty.mutateAsync({
                     propertyId: property.id,
                     propertyData,
+                    unitsData,
                     mediaFiles,
-                    existingImages: existingImages, // Use the filtered list (removed images are already excluded)
+                    existingImages: existingImages,
                 });
             } else {
                 // Create new property
@@ -231,11 +328,26 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                         country: formData.address_country,
                     },
                     created_by: user.id,
-                    is_published: false, // Draft by default
+                    is_published: false,
                 };
+
+                // Prepare units data array
+                const unitsData = units.map((unit) => ({
+                    listing_type: listingType as ListingType,
+                    name: unit.name || null,
+                    description: unit.unit_description || null,
+                    price_per_week: unit.price_per_week ? parseInt(unit.price_per_week) : 0,
+                    bond_amount: unit.bond_amount ? parseInt(unit.bond_amount) : null,
+                    bills_included: unit.bills_included,
+                    min_lease_weeks: unit.min_lease_weeks ? parseInt(unit.min_lease_weeks) : null,
+                    max_lease_weeks: unit.max_lease_weeks ? parseInt(unit.max_lease_weeks) : null,
+                    max_occupants: unit.max_occupants ? parseInt(unit.max_occupants) : null,
+                    size_sqm: unit.size_sqm ? parseFloat(unit.size_sqm) : null,
+                }));
 
                 await createProperty.mutateAsync({
                     propertyData,
+                    unitsData,
                     mediaFiles,
                 });
             }
@@ -255,6 +367,8 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                 address_postcode: "",
                 address_country: "Australia",
             });
+            setListingType("entire_home");
+            setUnits(getInitialUnits());
             setMediaFiles([]);
 
             // Call success callback
@@ -367,7 +481,7 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                             value={formData.bedrooms}
                             onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
                             placeholder="0"
-                            min="0"
+                            min={listingType === "room" ? "1" : "0"}
                         />
 
                         <Input
@@ -391,6 +505,381 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                             placeholder="0"
                             min="0"
                         />
+                    </div>
+                </section>
+
+                {/* Listing Details (Unit Information) */}
+                <section className="rounded-lg border border-gray-200 bg-white/80 p-4 shadow-sm">
+                    <div className="mb-3">
+                        <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">
+                            Listing Details
+                        </h4>
+                    </div>
+
+                    <div className="space-y-4">
+                        {/* Listing Type Selection */}
+                        <Select
+                            label="Listing Type"
+                            value={listingType}
+                            onChange={(e) =>
+                                setListingType(e.target.value as "entire_home" | "room")
+                            }
+                            options={listingTypes}
+                            required
+                        />
+
+                        {/* Tab Navigation for Rooms */}
+                        {listingType === "room" && units.length > 1 && (
+                            <div className="border-b border-gray-200">
+                                <div className="flex gap-1 overflow-x-auto">
+                                    {units.map((unit, index) => (
+                                        <button
+                                            key={index}
+                                            type="button"
+                                            onClick={() => setActiveRoomTab(index)}
+                                            className={`whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+                                                activeRoomTab === index
+                                                    ? "border-primary-500 text-primary-600"
+                                                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                                            }`}
+                                        >
+                                            {unit.name || `Room ${index + 1}`}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Dynamic Unit Forms */}
+                        {listingType === "room" ? (
+                            // Show only the active tab's form for room listings
+                            <div className="space-y-4 rounded-md border border-gray-200 bg-gray-50/50 p-4">
+                                {(() => {
+                                    const index = activeRoomTab;
+                                    const unit = units[index];
+
+                                    return (
+                                        <>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <Input
+                                                    label="Room Name"
+                                                    type="text"
+                                                    value={unit.name}
+                                                    onChange={(e) => {
+                                                        const newUnits = [...units];
+                                                        newUnits[index] = {
+                                                            ...newUnits[index],
+                                                            name: e.target.value,
+                                                        };
+                                                        setUnits(newUnits);
+                                                    }}
+                                                    placeholder={`Room ${index + 1}`}
+                                                />
+
+                                                <Input
+                                                    label="Price per Week"
+                                                    type="number"
+                                                    value={unit.price_per_week}
+                                                    onChange={(e) => {
+                                                        const newUnits = [...units];
+                                                        newUnits[index] = {
+                                                            ...newUnits[index],
+                                                            price_per_week: e.target.value,
+                                                        };
+                                                        setUnits(newUnits);
+                                                    }}
+                                                    placeholder="0"
+                                                    min="0"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="mb-1 block text-sm font-medium text-gray-700">
+                                                    Unit Description (Optional)
+                                                </label>
+                                                <textarea
+                                                    value={unit.unit_description}
+                                                    onChange={(e) => {
+                                                        const newUnits = [...units];
+                                                        newUnits[index] = {
+                                                            ...newUnits[index],
+                                                            unit_description: e.target.value,
+                                                        };
+                                                        setUnits(newUnits);
+                                                    }}
+                                                    placeholder="Additional details about this specific room..."
+                                                    rows={2}
+                                                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/80"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <Input
+                                                    label="Bond Amount"
+                                                    type="number"
+                                                    value={unit.bond_amount}
+                                                    onChange={(e) => {
+                                                        const newUnits = [...units];
+                                                        newUnits[index] = {
+                                                            ...newUnits[index],
+                                                            bond_amount: e.target.value,
+                                                        };
+                                                        setUnits(newUnits);
+                                                    }}
+                                                    placeholder="0"
+                                                    min="0"
+                                                />
+
+                                                <Input
+                                                    label="Max Occupants"
+                                                    type="number"
+                                                    value={unit.max_occupants}
+                                                    onChange={(e) => {
+                                                        const newUnits = [...units];
+                                                        newUnits[index] = {
+                                                            ...newUnits[index],
+                                                            max_occupants: e.target.value,
+                                                        };
+                                                        setUnits(newUnits);
+                                                    }}
+                                                    placeholder="0"
+                                                    min="0"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-3 gap-4">
+                                                <Input
+                                                    label="Min Lease (weeks)"
+                                                    type="number"
+                                                    value={unit.min_lease_weeks}
+                                                    onChange={(e) => {
+                                                        const newUnits = [...units];
+                                                        newUnits[index] = {
+                                                            ...newUnits[index],
+                                                            min_lease_weeks: e.target.value,
+                                                        };
+                                                        setUnits(newUnits);
+                                                    }}
+                                                    placeholder="0"
+                                                    min="0"
+                                                />
+
+                                                <Input
+                                                    label="Max Lease (weeks)"
+                                                    type="number"
+                                                    value={unit.max_lease_weeks}
+                                                    onChange={(e) => {
+                                                        const newUnits = [...units];
+                                                        newUnits[index] = {
+                                                            ...newUnits[index],
+                                                            max_lease_weeks: e.target.value,
+                                                        };
+                                                        setUnits(newUnits);
+                                                    }}
+                                                    placeholder="0"
+                                                    min="0"
+                                                />
+
+                                                <Input
+                                                    label="Size (sqm)"
+                                                    type="number"
+                                                    value={unit.size_sqm}
+                                                    onChange={(e) => {
+                                                        const newUnits = [...units];
+                                                        newUnits[index] = {
+                                                            ...newUnits[index],
+                                                            size_sqm: e.target.value,
+                                                        };
+                                                        setUnits(newUnits);
+                                                    }}
+                                                    placeholder="0"
+                                                    min="0"
+                                                    step="0.1"
+                                                />
+                                            </div>
+
+                                            <div className="flex items-center">
+                                                <Checkbox
+                                                    label="Bills Included"
+                                                    checked={unit.bills_included}
+                                                    onChange={(e) => {
+                                                        const newUnits = [...units];
+                                                        newUnits[index] = {
+                                                            ...newUnits[index],
+                                                            bills_included: e.target.checked,
+                                                        };
+                                                        setUnits(newUnits);
+                                                    }}
+                                                />
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        ) : (
+                            // Show single form for entire home
+                            units.map((unit, index) => (
+                                <div
+                                    key={index}
+                                    className="space-y-4 rounded-md border border-gray-200 bg-gray-50/50 p-4"
+                                >
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Input
+                                            label="Unit/Room Name (Optional)"
+                                            type="text"
+                                            value={unit.name}
+                                            onChange={(e) => {
+                                                const newUnits = [...units];
+                                                newUnits[index] = {
+                                                    ...newUnits[index],
+                                                    name: e.target.value,
+                                                };
+                                                setUnits(newUnits);
+                                            }}
+                                            placeholder="e.g., Master Bedroom, Unit 1A"
+                                        />
+
+                                        <Input
+                                            label="Price per Week"
+                                            type="number"
+                                            value={unit.price_per_week}
+                                            onChange={(e) => {
+                                                const newUnits = [...units];
+                                                newUnits[index] = {
+                                                    ...newUnits[index],
+                                                    price_per_week: e.target.value,
+                                                };
+                                                setUnits(newUnits);
+                                            }}
+                                            placeholder="0"
+                                            min="0"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                                            Unit Description (Optional)
+                                        </label>
+                                        <textarea
+                                            value={unit.unit_description}
+                                            onChange={(e) => {
+                                                const newUnits = [...units];
+                                                newUnits[index] = {
+                                                    ...newUnits[index],
+                                                    unit_description: e.target.value,
+                                                };
+                                                setUnits(newUnits);
+                                            }}
+                                            placeholder="Additional details about this specific listing..."
+                                            rows={2}
+                                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/80"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Input
+                                            label="Bond Amount"
+                                            type="number"
+                                            value={unit.bond_amount}
+                                            onChange={(e) => {
+                                                const newUnits = [...units];
+                                                newUnits[index] = {
+                                                    ...newUnits[index],
+                                                    bond_amount: e.target.value,
+                                                };
+                                                setUnits(newUnits);
+                                            }}
+                                            placeholder="0"
+                                            min="0"
+                                        />
+
+                                        <Input
+                                            label="Max Occupants"
+                                            type="number"
+                                            value={unit.max_occupants}
+                                            onChange={(e) => {
+                                                const newUnits = [...units];
+                                                newUnits[index] = {
+                                                    ...newUnits[index],
+                                                    max_occupants: e.target.value,
+                                                };
+                                                setUnits(newUnits);
+                                            }}
+                                            placeholder="0"
+                                            min="0"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <Input
+                                            label="Min Lease (weeks)"
+                                            type="number"
+                                            value={unit.min_lease_weeks}
+                                            onChange={(e) => {
+                                                const newUnits = [...units];
+                                                newUnits[index] = {
+                                                    ...newUnits[index],
+                                                    min_lease_weeks: e.target.value,
+                                                };
+                                                setUnits(newUnits);
+                                            }}
+                                            placeholder="0"
+                                            min="0"
+                                        />
+
+                                        <Input
+                                            label="Max Lease (weeks)"
+                                            type="number"
+                                            value={unit.max_lease_weeks}
+                                            onChange={(e) => {
+                                                const newUnits = [...units];
+                                                newUnits[index] = {
+                                                    ...newUnits[index],
+                                                    max_lease_weeks: e.target.value,
+                                                };
+                                                setUnits(newUnits);
+                                            }}
+                                            placeholder="0"
+                                            min="0"
+                                        />
+
+                                        <Input
+                                            label="Size (sqm)"
+                                            type="number"
+                                            value={unit.size_sqm}
+                                            onChange={(e) => {
+                                                const newUnits = [...units];
+                                                newUnits[index] = {
+                                                    ...newUnits[index],
+                                                    size_sqm: e.target.value,
+                                                };
+                                                setUnits(newUnits);
+                                            }}
+                                            placeholder="0"
+                                            min="0"
+                                            step="0.1"
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center">
+                                        <Checkbox
+                                            label="Bills Included"
+                                            checked={unit.bills_included}
+                                            onChange={(e) => {
+                                                const newUnits = [...units];
+                                                newUnits[index] = {
+                                                    ...newUnits[index],
+                                                    bills_included: e.target.checked,
+                                                };
+                                                setUnits(newUnits);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </section>
 

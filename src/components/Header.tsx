@@ -60,7 +60,6 @@ export function Header() {
                                     label: "Profile",
                                     onClick: () => {
                                         // TODO: Navigate to profile page
-                                        console.log("Navigate to profile");
                                     },
                                     icon: (
                                         <svg
@@ -82,7 +81,6 @@ export function Header() {
                                     label: "Settings",
                                     onClick: () => {
                                         // TODO: Navigate to settings page
-                                        console.log("Navigate to settings");
                                     },
                                     icon: (
                                         <svg
