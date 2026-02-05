@@ -1,4 +1,5 @@
 import { Unit } from "@/types/db";
+import { useUnitAvailability } from "@/lib/react-query/hooks/useUnits";
 
 interface UnitsSelectorProps {
     units: Unit[];
@@ -6,11 +7,42 @@ interface UnitsSelectorProps {
     onUnitSelect: (id: string) => void;
 }
 
+function UnitAvailabilityBadge({ unitId }: { unitId: string }) {
+    const { data: availability } = useUnitAvailability(unitId);
+
+    if (!availability) return null;
+
+    const now = new Date();
+    const availableFrom = availability.available_from
+        ? new Date(availability.available_from)
+        : null;
+
+    let badgeColor: string;
+    let badgeText: string;
+
+    if (!availability.is_available) {
+        badgeColor = "bg-red-100 text-red-700";
+        badgeText = "Unavailable";
+    } else if (availableFrom && availableFrom > now) {
+        badgeColor = "bg-yellow-100 text-yellow-700";
+        badgeText = `From ${availableFrom.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+    } else {
+        badgeColor = "bg-green-100 text-green-700";
+        badgeText = "Available";
+    }
+
+    return (
+        <span className={`text-xs px-2 py-1 rounded-full ${badgeColor} font-medium`}>
+            {badgeText}
+        </span>
+    );
+}
+
 export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSelectorProps) {
     if (units.length === 0) return null;
 
     return (
-        <div className="mb-6">
+        <div className="my-6">
             <h2 className="text-xl font-bold text-text mb-3">Available Rooms ({units.length})</h2>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -34,7 +66,8 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
                                     </h3>
                                     <p className="text-sm text-text-muted">Private Room</p>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-right flex flex-col items-end gap-1">
+                                    <UnitAvailabilityBadge unitId={unit.id} />
                                     <p className="text-lg font-bold text-primary-600">
                                         ${unit.price_per_week}
                                         <span className="text-sm font-normal text-text-muted">

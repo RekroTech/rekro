@@ -21,9 +21,9 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
     }
 
     return (
-        <div className="min-h-screen bg-app-bg text-foreground">
+        <div className="h-screen overflow-hidden bg-app-bg text-foreground">
             <Header />
-            {children}
+            <div className="h-[calc(100vh-4rem)] overflow-y-auto mt-16">{children}</div>
         </div>
     );
 }

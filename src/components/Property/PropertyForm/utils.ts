@@ -31,6 +31,7 @@ export function getInitialFormData(property?: Property): PropertyFormData {
             bathrooms: "",
             car_spaces: "",
             furnished: false,
+            amenities: [],
             address_street: "",
             address_city: "",
             address_state: "",
@@ -47,6 +48,7 @@ export function getInitialFormData(property?: Property): PropertyFormData {
         bathrooms: property.bathrooms?.toString() || "",
         car_spaces: property.car_spaces?.toString() || "",
         furnished: property.furnished || false,
+        amenities: property.amenities || [],
         ...parseAddress(property.address),
     };
 }

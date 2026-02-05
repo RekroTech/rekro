@@ -2,11 +2,8 @@
 
 import React, { useState } from "react";
 import { Button, Modal } from "@/components/common";
-import {
-    useCreateProperty,
-    useUpdateProperty,
-    useUnits,
-} from "@/lib/react-query/hooks/useProperties";
+import { useCreateProperty, useUpdateProperty } from "@/lib/react-query/hooks/useProperties";
+import { useUnits } from "@/lib/react-query/hooks/useUnits";
 import { useUser } from "@/lib/react-query/hooks/useAuth";
 import { PropertyInsert, ListingType } from "@/types/db";
 import { deletePropertyFiles } from "@/services/storage.service";
@@ -19,7 +16,7 @@ import { ListingDetailsSection } from "./ListingDetailsSection";
 import { AddressSection } from "./AddressSection";
 import { MediaSection } from "./MediaSection";
 
-export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPropertyModalProps) {
+export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddPropertyModalProps) {
     const [error, setError] = useState<string | null>(null);
     const createProperty = useCreateProperty();
     const updateProperty = useUpdateProperty();
@@ -103,6 +100,7 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                     bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
                     car_spaces: formData.car_spaces ? parseInt(formData.car_spaces) : null,
                     furnished: formData.furnished,
+                    amenities: formData.amenities.length > 0 ? formData.amenities : null,
                     address: {
                         street: formData.address_street,
                         city: formData.address_city,
@@ -155,6 +153,7 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                     bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
                     car_spaces: formData.car_spaces ? parseInt(formData.car_spaces) : null,
                     furnished: formData.furnished,
+                    amenities: formData.amenities.length > 0 ? formData.amenities : null,
                     address: {
                         street: formData.address_street,
                         city: formData.address_city,
@@ -234,6 +233,9 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                 {/* Basic Information */}
                 <BasicInformationSection formData={formData} updateFormData={setFormData} />
 
+                {/* Address */}
+                <AddressSection formData={formData} updateFormData={setFormData} />
+
                 {/* Property Details */}
                 <PropertyDetailsSection
                     formData={formData}
@@ -250,9 +252,6 @@ export function PropertyModal({ isOpen, onClose, onSuccess, property }: AddPrope
                     onActiveRoomTabChange={setActiveRoomTab}
                     onUpdateUnit={updateUnit}
                 />
-
-                {/* Address */}
-                <AddressSection formData={formData} updateFormData={setFormData} />
 
                 {/* Media */}
                 <MediaSection

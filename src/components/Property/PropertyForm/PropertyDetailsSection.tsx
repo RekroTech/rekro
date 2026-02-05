@@ -1,6 +1,7 @@
 import React from "react";
 import { Input } from "@/components/common";
 import { PropertyFormData } from "./types";
+import { AmenitiesSection } from "./AmenitiesSection";
 
 interface PropertyDetailsSectionProps {
     formData: PropertyFormData;
@@ -48,6 +49,11 @@ export function PropertyDetailsSection({
                     placeholder="0"
                     min="0"
                 />
+            </div>
+
+            {/* Amenities */}
+            <div className="mt-6">
+                <AmenitiesSection formData={formData} updateFormData={updateFormData} />
             </div>
         </section>
     );

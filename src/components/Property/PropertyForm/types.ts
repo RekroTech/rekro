@@ -15,6 +15,7 @@ export interface PropertyFormData {
     bathrooms: string;
     car_spaces: string;
     furnished: boolean;
+    amenities: string[];
     address_street: string;
     address_city: string;
     address_state: string;

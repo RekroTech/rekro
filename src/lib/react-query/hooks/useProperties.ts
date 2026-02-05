@@ -9,10 +9,7 @@ import {
 import {
     createUnitClient,
     updateUnitClient,
-    getUnitByPropertyIdClient,
     getUnitsByPropertyIdClient,
-    checkUnitLiked,
-    toggleUnitLike,
 } from "@/services/unit.service";
 import {
     createUnitAvailabilityClient,
@@ -40,22 +37,6 @@ export function useProperty(id: string) {
         queryKey: ["property", id],
         queryFn: () => getPropertyByIdClient(id),
         enabled: !!id,
-    });
-}
-
-export function useUnit(propertyId: string) {
-    return useQuery({
-        queryKey: ["unit", propertyId],
-        queryFn: () => getUnitByPropertyIdClient(propertyId),
-        enabled: !!propertyId,
-    });
-}
-
-export function useUnits(propertyId: string) {
-    return useQuery({
-        queryKey: ["units", propertyId],
-        queryFn: () => getUnitsByPropertyIdClient(propertyId),
-        enabled: !!propertyId,
     });
 }
 
@@ -232,29 +213,6 @@ export function useUpdateProperty() {
         onSuccess: () => {
             // Invalidate all properties queries to refetch the list
             void queryClient.invalidateQueries({ queryKey: ["properties"] });
-        },
-    });
-}
-
-// Unit Likes Hooks
-export function useUnitLike(unitId: string) {
-    return useQuery({
-        queryKey: ["unit-like", unitId],
-        queryFn: () => checkUnitLiked(unitId),
-        enabled: !!unitId,
-    });
-}
-
-export function useToggleUnitLike() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async (unitId: string) => {
-            return toggleUnitLike(unitId);
-        },
-        onSuccess: (isLiked, unitId) => {
-            // Invalidate the specific unit like query
-            void queryClient.invalidateQueries({ queryKey: ["unit-like", unitId] });
         },
     });
 }

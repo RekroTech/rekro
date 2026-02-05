@@ -184,6 +184,30 @@ export interface Database {
                     notes?: string | null;
                 };
             };
+            property_shares: {
+                Row: {
+                    id: string;
+                    shared_by: string | null;
+                    unit_id: string | null;
+                    channel: string | null;
+                    to_value: string | null;
+                    created_at: string | null;
+                };
+                Insert: {
+                    id?: string;
+                    shared_by?: string | null;
+                    unit_id?: string | null;
+                    channel?: string | null;
+                    to_value?: string | null;
+                    created_at?: string | null;
+                };
+                Update: {
+                    shared_by?: string | null;
+                    unit_id?: string | null;
+                    channel?: string | null;
+                    to_value?: string | null;
+                };
+            };
             // Add more tables as needed
         };
     };
@@ -206,3 +230,7 @@ export type ListingType = "entire_home" | "room";
 export type UnitAvailability = Database["public"]["Tables"]["unit_availability"]["Row"];
 export type UnitAvailabilityInsert = Database["public"]["Tables"]["unit_availability"]["Insert"];
 export type UnitAvailabilityUpdate = Database["public"]["Tables"]["unit_availability"]["Update"];
+
+export type PropertyShare = Database["public"]["Tables"]["property_shares"]["Row"];
+export type PropertyShareInsert = Database["public"]["Tables"]["property_shares"]["Insert"];
+export type PropertyShareUpdate = Database["public"]["Tables"]["property_shares"]["Update"];

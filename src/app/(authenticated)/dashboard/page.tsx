@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PropertyList, PropertyModal } from "@/components";
+import { PropertyList, PropertyForm } from "@/components";
 import { Button } from "@/components/common";
 import { usePropertyFilters } from "./usePropertyFilters";
 
@@ -169,7 +169,7 @@ export default function DashboardPage() {
                 />
             </div>
 
-            <PropertyModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <PropertyForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </main>
     );
 }

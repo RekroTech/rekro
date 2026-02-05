@@ -122,9 +122,9 @@ export function PropertyList({
             </div>
 
             {/* Intersection Observer Target */}
-            <div ref={observerTarget} className="h-10 mt-8">
+            <div ref={observerTarget} className="mt-8">
                 {isFetchingNextPage && (
-                    <div className="flex justify-center items-center">
+                    <div className="flex justify-center items-center py-4">
                         <Loader size="md" />
                     </div>
                 )}

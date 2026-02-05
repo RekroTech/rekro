@@ -1,6 +1,7 @@
 "use client";
 
-import { useProperty, useUnitLike, useToggleUnitLike } from "@/lib/react-query/hooks/useProperties";
+import { useProperty } from "@/lib/react-query/hooks/useProperties";
+import { useUnitLike, useToggleUnitLike } from "@/lib/react-query/hooks/useUnits";
 import { Loader, Button } from "@/components/common";
 import {
     PropertyHeader,
@@ -11,7 +12,6 @@ import {
     PropertyAmenities,
     PropertySidebar,
 } from "@/components/Property/PropertyDetail";
-import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getPropertyFileUrls } from "@/services/storage.service";
@@ -114,22 +114,20 @@ export default function PropertyDetailPage() {
     return (
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             {/* Back Button */}
-            <div className="mb-6">
-                <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 transition-colors"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 19l-7-7 7-7"
-                        />
-                    </svg>
-                    Back to Properties
-                </Link>
-            </div>
+            <button
+                onClick={() => router.back()}
+                className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 transition-colors mb-6 cursor-pointer"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                    />
+                </svg>
+                Back
+            </button>
 
             {/* Property Header */}
             <PropertyHeader property={property} />

@@ -1,14 +1,16 @@
 "use client";
 
-import { Property } from "@/types/db";
+import { Property, Unit } from "@/types/db";
 import { PropertyMedia } from "@/components/common";
 import Link from "next/link";
 import { useState } from "react";
-import { PropertyModal } from "@/components";
+import { PropertyForm } from "@/components";
 import { getPropertyFileUrl } from "@/services/storage.service";
+import { useUnitAvailability } from "@/lib/react-query/hooks/useUnits";
+import { useUnits } from "@/lib/react-query/hooks/useUnits";
 
 interface PropertyCardProps {
-    property: Property;
+    property: Property & { units?: Unit[] };
     showEditButton?: boolean; // Optional prop to show edit button
 }
 
@@ -26,7 +28,16 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
         furnished,
         images,
         address,
+        units: providedUnits,
     } = property;
+
+    // Fetch units if not provided
+    const { data: fetchedUnits } = useUnits(id);
+    const units = providedUnits || fetchedUnits || [];
+
+    // Get the first unit for availability check
+    const firstUnit = units && units.length > 0 ? units[0] : null;
+    const { data: availability } = useUnitAvailability(firstUnit?.id || "");
 
     // Get the first image or use a placeholder
     const imagePath = images && images.length > 0 ? images[0] : null;
@@ -37,6 +48,37 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
         address !== null
             ? Object.values(address).filter(Boolean).join(", ")
             : "Location not specified";
+
+    // Determine availability badge
+    const getAvailabilityBadge = () => {
+        if (!availability || !firstUnit) return null;
+
+        const now = new Date();
+        const availableFrom = availability.available_from
+            ? new Date(availability.available_from)
+            : null;
+
+        if (!availability.is_available) {
+            return (
+                <div className="absolute bottom-3 left-3 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">
+                    Unavailable
+                </div>
+            );
+        } else if (availableFrom && availableFrom > now) {
+            return (
+                <div className="absolute bottom-3 left-3 bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">
+                    From{" "}
+                    {availableFrom.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </div>
+            );
+        } else {
+            return (
+                <div className="absolute bottom-3 left-3 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">
+                    Available Now
+                </div>
+            );
+        }
+    };
 
     return (
         <>
@@ -55,6 +97,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                                 Furnished
                             </div>
                         )}
+                        {getAvailabilityBadge()}
                         {showEditButton && (
                             <button
                                 onClick={(e) => {
@@ -193,7 +236,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
 
             {/* Edit Modal */}
             {showEditButton && (
-                <PropertyModal
+                <PropertyForm
                     isOpen={isEditModalOpen}
                     onClose={() => setIsEditModalOpen(false)}
                     property={property}
