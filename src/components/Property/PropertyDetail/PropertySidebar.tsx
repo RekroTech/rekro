@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import type { Property, Unit } from "@/types/db";
 import { Button } from "@/components/common";
-import { Property, Unit } from "@/types/db";
-import { EnquiryModal } from "./EnquiryModal";
-import { ApplicationModal } from "./ApplicationModal";
-import { ShareDropdown } from "./ShareDropdown";
 import { useUnitAvailability } from "@/lib/react-query/hooks/useUnits";
+import { EnquiryModal } from "./EnquiryModal";
+import { ApplicationForm } from "../ApplicationForm";
+import { ShareDropdown } from "./ShareDropdown";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
@@ -199,7 +199,7 @@ export function PropertySidebar({
 
                 <div className="space-y-3">
                     <Button
-                        variant="primary"
+                        variant="secondary"
                         className="w-full"
                         onClick={() => setIsEnquiryModalOpen(true)}
                     >
@@ -220,7 +220,7 @@ export function PropertySidebar({
                     </Button>
 
                     <Button
-                        variant="secondary"
+                        variant="primary"
                         className="w-full"
                         onClick={() => setIsApplicationModalOpen(true)}
                     >
@@ -333,7 +333,7 @@ export function PropertySidebar({
                 isEntireHome={isEntireHome}
             />
 
-            <ApplicationModal
+            <ApplicationForm
                 isOpen={isApplicationModalOpen}
                 onClose={() => setIsApplicationModalOpen(false)}
                 propertyTitle={property.title}

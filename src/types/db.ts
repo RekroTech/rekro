@@ -16,6 +16,18 @@ export interface Location {
     country: string;
 }
 
+export type ListingType = "entire_home" | "room";
+
+// Application enum types
+export type ApplicationType = "individual" | "group";
+export type ApplicationStatus =
+    | "draft"
+    | "submitted"
+    | "under_review"
+    | "approved"
+    | "rejected"
+    | "withdrawn";
+
 export interface Database {
     public: {
         Tables: {
@@ -208,6 +220,84 @@ export interface Database {
                     to_value?: string | null;
                 };
             };
+            applications: {
+                Row: {
+                    id: string;
+                    user_id: string;
+                    property_id: string;
+                    unit_id: string | null;
+                    application_type: ApplicationType;
+                    status: ApplicationStatus;
+                    message: string | null;
+                    created_at: string;
+                    submitted_at: string | null;
+                    updated_at: string;
+                    group_id: string | null;
+                };
+                Insert: {
+                    id?: string;
+                    user_id: string;
+                    property_id: string;
+                    unit_id?: string | null;
+                    application_type: ApplicationType;
+                    status?: ApplicationStatus;
+                    message?: string | null;
+                    created_at?: string;
+                    submitted_at?: string | null;
+                    updated_at?: string;
+                    group_id?: string | null;
+                };
+                Update: {
+                    user_id?: string;
+                    property_id?: string;
+                    unit_id?: string | null;
+                    application_type?: ApplicationType;
+                    status?: ApplicationStatus;
+                    message?: string | null;
+                    submitted_at?: string | null;
+                    updated_at?: string;
+                    group_id?: string | null;
+                };
+            };
+            application_details: {
+                Row: {
+                    application_id: string;
+                    move_in_date: string | null;
+                    rental_duration: string | null;
+                    employment_status: string | null;
+                    income_source: string | null;
+                    contact_phone: string | null;
+                    has_pets: boolean | null;
+                    smoker: boolean | null;
+                    notes: string | null;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    application_id: string;
+                    move_in_date?: string | null;
+                    rental_duration?: string | null;
+                    employment_status?: string | null;
+                    income_source?: string | null;
+                    contact_phone?: string | null;
+                    has_pets?: boolean | null;
+                    smoker?: boolean | null;
+                    notes?: string | null;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    move_in_date?: string | null;
+                    rental_duration?: string | null;
+                    employment_status?: string | null;
+                    income_source?: string | null;
+                    contact_phone?: string | null;
+                    has_pets?: boolean | null;
+                    smoker?: boolean | null;
+                    notes?: string | null;
+                    updated_at?: string;
+                };
+            };
             // Add more tables as needed
         };
     };
@@ -225,7 +315,6 @@ export type PropertyUpdate = Database["public"]["Tables"]["properties"]["Update"
 export type Unit = Database["public"]["Tables"]["units"]["Row"];
 export type UnitInsert = Database["public"]["Tables"]["units"]["Insert"];
 export type UnitUpdate = Database["public"]["Tables"]["units"]["Update"];
-export type ListingType = "entire_home" | "room";
 
 export type UnitAvailability = Database["public"]["Tables"]["unit_availability"]["Row"];
 export type UnitAvailabilityInsert = Database["public"]["Tables"]["unit_availability"]["Insert"];
@@ -234,3 +323,13 @@ export type UnitAvailabilityUpdate = Database["public"]["Tables"]["unit_availabi
 export type PropertyShare = Database["public"]["Tables"]["property_shares"]["Row"];
 export type PropertyShareInsert = Database["public"]["Tables"]["property_shares"]["Insert"];
 export type PropertyShareUpdate = Database["public"]["Tables"]["property_shares"]["Update"];
+
+export type Application = Database["public"]["Tables"]["applications"]["Row"];
+export type ApplicationInsert = Database["public"]["Tables"]["applications"]["Insert"];
+export type ApplicationUpdate = Database["public"]["Tables"]["applications"]["Update"];
+
+export type ApplicationDetails = Database["public"]["Tables"]["application_details"]["Row"];
+export type ApplicationDetailsInsert =
+    Database["public"]["Tables"]["application_details"]["Insert"];
+export type ApplicationDetailsUpdate =
+    Database["public"]["Tables"]["application_details"]["Update"];

@@ -1,3 +1,18 @@
+-- Enum types for applications
+
+-- Application type: individual or group application
+create type public.application_type as enum ('individual', 'group');
+
+-- Application status: workflow states
+create type public.application_status as enum (
+  'draft',
+  'submitted',
+  'under_review',
+  'approved',
+  'rejected',
+  'withdrawn'
+);
+
 create table public.applications (
   id uuid not null default gen_random_uuid (),
   user_id uuid not null,

@@ -6,6 +6,4 @@ export { PropertyDescription } from "./PropertyDescription";
 export { PropertyAmenities } from "./PropertyAmenities";
 export { PropertySidebar } from "./PropertySidebar";
 export { EnquiryModal } from "./EnquiryModal";
-export { ApplicationModal } from "./ApplicationModal";
-export { ShareModal } from "./ShareModal";
 export { ShareDropdown } from "./ShareDropdown";
