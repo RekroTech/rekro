@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PropertyList, PropertyForm } from "@/components";
-import { Button } from "@/components/common";
+import { Button, Icon } from "@/components/common";
 import { usePropertyFilters } from "./usePropertyFilters";
 
 export default function DashboardPage() {
@@ -21,19 +21,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-3xl font-bold text-text">Available Properties</h2>
                     <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-                        <svg
-                            className="h-5 w-5 mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 4v16m8-8H4"
-                            />
-                        </svg>
+                        <Icon name="plus" className="h-5 w-5 mr-2" />
                         Add Property
                     </Button>
                 </div>
@@ -43,19 +31,7 @@ export default function DashboardPage() {
                     {/* Search Bar */}
                     <div className="relative w-full">
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                />
-                            </svg>
+                            <Icon name="search" className="h-4 w-4" />
                         </div>
                         <input
                             id="search-input"
@@ -72,19 +48,7 @@ export default function DashboardPage() {
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                 aria-label="Clear search"
                             >
-                                <svg
-                                    className="h-4 w-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
+                                <Icon name="x" className="h-4 w-4" />
                             </button>
                         )}
                     </div>

@@ -25,5 +25,8 @@ export type { TextareaProps } from "./Textarea";
 export { FileUpload } from "./FileUpload";
 export type { FileUploadProps } from "./FileUpload";
 
-export { PropertyMedia } from "./PropertyMedia";
-export type { PropertyMediaProps } from "./PropertyMedia";
+export { Visual } from "./Visual";
+export type { PropertyMediaProps } from "./Visual";
+
+export { Icon } from "./Icon";
+export type { IconProps, IconName } from "./Icon";

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import clsx from "clsx";
 import { getMediaType } from "@/lib/utils/fileUtils";
+import { Icon } from "./Icon";
 
 export interface PropertyMediaProps {
     src: string;
@@ -36,7 +37,7 @@ export interface PropertyMediaProps {
     unoptimizedRemote?: boolean;
 }
 
-export function PropertyMedia({
+export function Visual({
     src,
     alt,
     fill = false,
@@ -114,9 +115,7 @@ export function PropertyMedia({
                 {showBadge && (
                     <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/25">
                         <div className="rounded-full bg-black/60 p-2 text-white">
-                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z" />
-                            </svg>
+                            <Icon name="play" className="w-8 h-8" />
                         </div>
                     </div>
                 )}
@@ -182,4 +181,4 @@ export function PropertyMedia({
     );
 }
 
-export default PropertyMedia;
+export default Visual;

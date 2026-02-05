@@ -1,4 +1,5 @@
 ﻿import React from "react";
+import { Icon } from "./Icon";
 
 export type SelectSize = "sm" | "md" | "lg";
 
@@ -87,19 +88,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                         ))}
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 9l-7 7-7-7"
-                            />
-                        </svg>
+                        <Icon name="chevron-down" className="w-5 h-5" />
                     </div>
                 </div>
                 {error && <p className="mt-1.5 text-sm text-danger-500">{error}</p>}

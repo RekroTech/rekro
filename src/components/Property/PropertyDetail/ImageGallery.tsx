@@ -1,4 +1,4 @@
-import { PropertyMedia } from "@/components/common";
+import { Icon, Visual } from "@/components/common";
 
 interface ImageGalleryProps {
     images: string[];
@@ -18,7 +18,7 @@ export function ImageGallery({ images, title, selectedIndex, onIndexChange }: Im
 
     return (
         <div className="bg-gray-100 rounded-lg overflow-hidden mb-4 group relative aspect-video">
-            <PropertyMedia
+            <Visual
                 src={images[selectedIndex]}
                 alt={`${title} - Image ${selectedIndex + 1}`}
                 fill
@@ -42,19 +42,7 @@ export function ImageGallery({ images, title, selectedIndex, onIndexChange }: Im
                         className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
                         aria-label="Previous image"
                     >
-                        <svg
-                            className="w-6 h-6"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 19l-7-7 7-7"
-                            />
-                        </svg>
+                        <Icon name="chevron-left" className="w-6 h-6" />
                     </button>
 
                     <button
@@ -62,19 +50,7 @@ export function ImageGallery({ images, title, selectedIndex, onIndexChange }: Im
                         className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
                         aria-label="Next image"
                     >
-                        <svg
-                            className="w-6 h-6"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5l7 7-7 7"
-                            />
-                        </svg>
+                        <Icon name="chevron-right" className="w-6 h-6" />
                     </button>
                 </>
             )}

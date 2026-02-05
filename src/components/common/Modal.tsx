@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Icon } from "@/components/common/Icon";
 
 export interface ModalProps {
     isOpen: boolean;
@@ -62,19 +63,7 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
                             onClick={onClose}
                             className="text-gray-400 hover:text-gray-500 transition-colors"
                         >
-                            <svg
-                                className="h-6 w-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            </svg>
+                            <Icon name="close" className="h-6 w-6" />
                         </button>
                     </div>
 

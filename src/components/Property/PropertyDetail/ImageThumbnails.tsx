@@ -1,4 +1,4 @@
-import { PropertyMedia } from "@/components/common";
+import { Visual, Icon } from "@/components/common";
 import { useState } from "react";
 
 interface ImageThumbnailsProps {
@@ -47,14 +47,7 @@ export function ImageThumbnails({
                     className="flex-shrink-0 bg-white hover:bg-gray-50 text-gray-800 p-2 rounded-full shadow-lg transition-all border border-gray-200"
                     aria-label="Previous thumbnails"
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 19l-7-7 7-7"
-                        />
-                    </svg>
+                    <Icon name="chevron-left" className="w-5 h-5" />
                 </button>
             )}
 
@@ -78,7 +71,7 @@ export function ImageThumbnails({
                                 aria-label={`Select image ${index + 1}`}
                                 aria-current={isSelected ? "true" : "false"}
                             >
-                                <PropertyMedia
+                                <Visual
                                     src={img}
                                     alt={`${title} thumbnail ${index + 1}`}
                                     fill
@@ -97,14 +90,7 @@ export function ImageThumbnails({
                     className="flex-shrink-0 bg-white hover:bg-gray-50 text-gray-800 p-2 rounded-full shadow-lg transition-all border border-gray-200"
                     aria-label="Next thumbnails"
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                        />
-                    </svg>
+                    <Icon name="chevron-right" className="w-5 h-5" />
                 </button>
             )}
         </div>

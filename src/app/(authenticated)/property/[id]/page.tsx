@@ -2,7 +2,7 @@
 
 import { useProperty } from "@/lib/react-query/hooks/useProperties";
 import { useUnitLike, useToggleUnitLike } from "@/lib/react-query/hooks/useUnits";
-import { Loader, Button } from "@/components/common";
+import { Loader, Button, Icon } from "@/components/common";
 import {
     PropertyHeader,
     UnitsSelector,
@@ -118,14 +118,7 @@ export default function PropertyDetailPage() {
                 onClick={() => router.back()}
                 className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 transition-colors mb-6 cursor-pointer"
             >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                    />
-                </svg>
+                <Icon name="chevron-left" className="w-5 h-5" />
                 Back
             </button>
 

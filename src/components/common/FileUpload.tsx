@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import { Icon } from "./Icon";
 
 export interface FileUploadProps {
     label: string;
@@ -124,19 +125,7 @@ export function FileUpload({
                 />
 
                 <div className="text-center">
-                    <svg
-                        className="mx-auto h-12 w-12 text-gray-400"
-                        stroke="currentColor"
-                        fill="none"
-                        viewBox="0 0 48 48"
-                    >
-                        <path
-                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                            strokeWidth={2}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                    </svg>
+                    <Icon name="image" className="mx-auto h-12 w-12 text-gray-400" />
                     <p className="mt-2 text-sm text-gray-600">
                         <span className="font-semibold text-primary-600">Click to upload</span> or
                         drag and drop
@@ -169,41 +158,11 @@ export function FileUpload({
                                     />
                                 ) : file.type.startsWith("video/") ? (
                                     <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
-                                        <svg
-                                            className="h-6 w-6 text-gray-500"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                                            />
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                            />
-                                        </svg>
+                                        <Icon name="play" className="h-6 w-6 text-gray-500" />
                                     </div>
                                 ) : (
                                     <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
-                                        <svg
-                                            className="h-6 w-6 text-gray-500"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                                            />
-                                        </svg>
+                                        <Icon name="file" className="h-6 w-6 text-gray-500" />
                                     </div>
                                 )}
                                 <div className="flex-1 min-w-0 overflow-hidden">
@@ -223,19 +182,7 @@ export function FileUpload({
                                 onClick={() => removeFile(index)}
                                 className="ml-3 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors flex-shrink-0"
                             >
-                                <svg
-                                    className="h-5 w-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
+                                <Icon name="x" className="h-5 w-5" />
                             </button>
                         </div>
                     ))}
