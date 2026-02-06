@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useProperties } from "@/lib/react-query/hooks/useProperties";
+import { useProperties } from "@/lib/react-query/hooks/property";
 import { PropertyCard } from "@/components";
 import { Icon, Loader } from "@/components/common";
 

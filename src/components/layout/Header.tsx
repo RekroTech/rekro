@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Dropdown, Icon } from "@/components/common";
-import { useLogout, useUser } from "@/lib/react-query/hooks/useAuth";
+import { useLogout, useUser } from "@/lib/react-query/hooks/auth/useAuth";
 
 export function Header() {
     const { data: user } = useUser();

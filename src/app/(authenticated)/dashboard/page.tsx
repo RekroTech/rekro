@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PropertyList, PropertyForm } from "@/components";
 import { Button, Icon } from "@/components/common";
-import { usePropertyFilters } from "./usePropertyFilters";
+import { usePropertyFilters } from "@/components/Property/hooks";
 
 export default function DashboardPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);

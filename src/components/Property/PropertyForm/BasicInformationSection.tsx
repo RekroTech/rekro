@@ -1,6 +1,6 @@
 import { Input, Checkbox, Select } from "@/components/common";
-import { PropertyFormData } from "./types";
-import { PROPERTY_TYPES } from "./constants";
+import { PropertyFormData } from "../types";
+import { PROPERTY_TYPES } from "../constants";
 
 interface BasicInformationSectionProps {
     formData: PropertyFormData;

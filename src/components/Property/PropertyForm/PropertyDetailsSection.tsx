@@ -1,5 +1,5 @@
 import { Input } from "@/components/common";
-import { PropertyFormData } from "./types";
+import { PropertyFormData } from "../types";
 import { AmenitiesSection } from "./AmenitiesSection";
 
 interface PropertyDetailsSectionProps {

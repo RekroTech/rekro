@@ -1,5 +1,5 @@
 import { Input, Checkbox } from "@/components/common";
-import { UnitFormData } from "./types";
+import { UnitFormData } from "../types";
 
 interface UnitFormProps {
     unit: UnitFormData;

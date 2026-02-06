@@ -4,7 +4,7 @@ import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useLogin } from "@/lib/react-query/hooks/useAuth";
+import { useLogin } from "@/lib/react-query/hooks/auth/useAuth";
 
 function LoginForm() {
     const [email, setEmail] = useState("");

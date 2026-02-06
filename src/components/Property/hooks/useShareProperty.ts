@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useCreatePropertyShare } from "./usePropertyShare";
-import { useUser } from "./useAuth";
+import { useCreatePropertyShare } from "@/lib/react-query/hooks/property";
+import { useUser } from "@/lib/react-query/hooks/auth";
 
 interface UseSharePropertyProps {
     propertyId: string;

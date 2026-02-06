@@ -6,8 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { PropertyForm } from "@/components";
 import { getPropertyFileUrl } from "@/services/storage.service";
-import { useUnitAvailability } from "@/lib/react-query/hooks/useUnits";
-import { useUnits } from "@/lib/react-query/hooks/useUnits";
+import { useUnits, useUnitAvailability } from "@/lib/react-query/hooks/property";
 
 interface PropertyCardProps {
     property: Property & { units?: Unit[] };

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { ListingType, Property, Unit } from "@/types/db";
-import { PropertyFormData, UnitFormData } from "./types";
-import { getInitialFormData } from "./utils";
-import { DEFAULT_UNIT_DATA } from "./constants";
+import { PropertyFormData, UnitFormData } from "@/components/Property/types";
+import { DEFAULT_UNIT_DATA } from "@/components/Property/constants";
+import { getInitialFormData } from "@/components/Property/utils";
 
 export function usePropertyForm(property?: Property, existingUnits: Unit[] = []) {
     const isEditMode = !!property;

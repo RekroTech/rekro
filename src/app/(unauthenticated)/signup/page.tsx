@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSignup } from "@/lib/react-query/hooks/useAuth";
+import { useSignup } from "@/lib/react-query/hooks/auth/useAuth";
 
 export default function SignupPage() {
     const [email, setEmail] = useState("");

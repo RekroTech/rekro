@@ -1,7 +1,6 @@
 "use client";
 
-import { useProperty } from "@/lib/react-query/hooks/useProperties";
-import { useUnitLike, useToggleUnitLike } from "@/lib/react-query/hooks/useUnits";
+import { useUnitLike, useToggleUnitLike, useProperty } from "@/lib/react-query/hooks/property";
 import { Loader, Button, Icon } from "@/components/common";
 import {
     PropertyHeader,

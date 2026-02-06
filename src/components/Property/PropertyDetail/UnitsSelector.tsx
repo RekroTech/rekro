@@ -1,5 +1,5 @@
 import { Unit } from "@/types/db";
-import { useUnitAvailability } from "@/lib/react-query/hooks/useUnits";
+import { useUnitAvailability } from "@/lib/react-query/hooks/property";
 import { Icon } from "@/components/common";
 
 interface UnitsSelectorProps {

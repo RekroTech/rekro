@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Property } from "@/types/db";
 import { getPropertyFileUrl } from "@/services/storage.service";
-import { isVideoFile } from "./utils";
+import { isVideoFile } from "../utils";
 import { Icon } from "@/components/common";
 
 interface MediaSectionProps {

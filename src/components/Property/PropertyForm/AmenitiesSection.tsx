@@ -1,5 +1,5 @@
 import { Checkbox } from "@/components/common";
-import { PropertyFormData } from "./types";
+import { PropertyFormData } from "../types";
 
 interface AmenitiesSectionProps {
     formData: PropertyFormData;

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button, Modal, Input, Textarea, Checkbox, Select } from "@/components/common";
-import { useSubmitApplication } from "@/lib/react-query/hooks/useApplications";
+import { useSubmitApplication } from "@/lib/react-query/hooks/application/useApplications";
 import { ApplicationType } from "@/types/db";
 
 interface ApplicationModalProps {

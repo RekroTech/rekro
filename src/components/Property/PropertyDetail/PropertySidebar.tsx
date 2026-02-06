@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Property, Unit } from "@/types/db";
 import { Button, Icon } from "@/components/common";
-import { useUnitAvailability } from "@/lib/react-query/hooks/useUnits";
+import { useUnitAvailability } from "@/lib/react-query/hooks/property";
 import { EnquiryModal } from "./EnquiryModal";
 import { ApplicationForm } from "../ApplicationForm";
 import { ShareDropdown } from "./ShareDropdown";

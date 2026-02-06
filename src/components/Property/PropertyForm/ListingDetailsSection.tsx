@@ -1,7 +1,7 @@
 import { Select } from "@/components/common";
-import { UnitFormData } from "./types";
+import { UnitFormData } from "../types";
 import { UnitForm } from "./UnitForm";
-import { LISTING_TYPES } from "./constants";
+import { LISTING_TYPES } from "../constants";
 
 interface ListingDetailsSectionProps {
     listingType: "entire_home" | "room";

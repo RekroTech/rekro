@@ -1,2 +1,2 @@
 export { PropertyForm } from "./PropertyForm";
-export type { AddPropertyModalProps } from "./types";
+export type { AddPropertyModalProps } from "../types";

@@ -2,14 +2,12 @@
 
 import React, { useState } from "react";
 import { Button, Modal } from "@/components/common";
-import { useCreateProperty, useUpdateProperty } from "@/lib/react-query/hooks/useProperties";
-import { useUnits } from "@/lib/react-query/hooks/useUnits";
-import { useUser } from "@/lib/react-query/hooks/useAuth";
+import { useUnits, useCreateProperty, useUpdateProperty } from "@/lib/react-query/hooks/property";
+import { useUser } from "@/lib/react-query/hooks/auth/useAuth";
 import { PropertyInsert, ListingType } from "@/types/db";
 import { deletePropertyFiles } from "@/services/storage.service";
-import { AddPropertyModalProps } from "./types";
-import { usePropertyForm } from "./usePropertyForm";
-import { useMediaFiles } from "./useMediaFiles";
+import { AddPropertyModalProps } from "../types";
+import { usePropertyForm, useMediaFiles } from "../hooks";
 import { BasicInformationSection } from "./BasicInformationSection";
 import { PropertyDetailsSection } from "./PropertyDetailsSection";
 import { ListingDetailsSection } from "./ListingDetailsSection";
