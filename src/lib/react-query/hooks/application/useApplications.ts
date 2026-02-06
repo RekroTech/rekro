@@ -12,6 +12,16 @@ interface ApplicationsResponse {
     data: ApplicationWithDetails[];
 }
 
+// Query keys for better cache management
+export const applicationKeys = {
+    all: ["applications"] as const,
+    lists: () => [...applicationKeys.all, "list"] as const,
+    list: (filters?: { status?: string; propertyId?: string }) =>
+        [...applicationKeys.lists(), filters] as const,
+    details: () => [...applicationKeys.all, "detail"] as const,
+    detail: (id: string) => [...applicationKeys.details(), id] as const,
+};
+
 /**
  * Hook to submit a new application
  */
@@ -36,21 +46,65 @@ export function useSubmitApplication() {
             const data: ApplicationResponse = await response.json();
             return data.data;
         },
-        onSuccess: () => {
-            // Invalidate applications list to refetch
-            queryClient.invalidateQueries({ queryKey: ["applications"] });
+        onMutate: async (newApplication) => {
+            // Cancel outgoing refetches
+            await queryClient.cancelQueries({ queryKey: applicationKeys.lists() });
+
+            // Snapshot the previous value
+            const previousApplications = queryClient.getQueryData(applicationKeys.lists());
+
+            // Optimistically update to the new value
+            queryClient.setQueryData<ApplicationWithDetails[]>(
+                applicationKeys.lists(),
+                (old = []) => {
+                    // Create optimistic application
+                    const optimisticApp: ApplicationWithDetails = {
+                        id: `temp-${Date.now()}`,
+                        user_id: "",
+                        property_id: newApplication.propertyId,
+                        unit_id: newApplication.unitId || null,
+                        application_type: newApplication.applicationType,
+                        status: "submitted",
+                        message: newApplication.formData.message || null,
+                        submitted_at: new Date().toISOString(),
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                        group_id: null,
+                        details: null,
+                    };
+                    return [optimisticApp, ...old];
+                }
+            );
+
+            return { previousApplications };
+        },
+        onError: (err, _newApplication, context) => {
+            // Rollback on error
+            if (context?.previousApplications) {
+                queryClient.setQueryData(applicationKeys.lists(), context.previousApplications);
+            }
+            console.error("Failed to submit application:", err);
+        },
+        onSettled: () => {
+            // Refetch after error or success
+            queryClient.invalidateQueries({ queryKey: applicationKeys.lists() });
         },
     });
 }
 
 /**
- * Hook to fetch user's applications
+ * Hook to fetch user's applications with optional filters
  */
-export function useApplications() {
+export function useApplications(filters?: { status?: string; propertyId?: string }) {
     return useQuery({
-        queryKey: ["applications"],
+        queryKey: applicationKeys.list(filters),
         queryFn: async () => {
-            const response = await fetch("/api/application");
+            const params = new URLSearchParams();
+            if (filters?.status) params.append("status", filters.status);
+            if (filters?.propertyId) params.append("propertyId", filters.propertyId);
+
+            const url = `/api/application${params.toString() ? `?${params.toString()}` : ""}`;
+            const response = await fetch(url);
 
             if (!response.ok) {
                 throw new Error("Failed to fetch applications");
@@ -59,6 +113,9 @@ export function useApplications() {
             const data: ApplicationsResponse = await response.json();
             return data.data;
         },
+        // Cache for 1 minute since applications don't change frequently
+        staleTime: 1 * 60 * 1000,
+        gcTime: 5 * 60 * 1000,
     });
 }
 

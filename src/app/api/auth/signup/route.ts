@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+// Disable caching for auth routes
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 type SignupBody = {
     email?: unknown;
     password?: unknown;
@@ -20,13 +24,16 @@ export async function POST(request: NextRequest) {
         const name = typeof body.name === "string" ? body.name.trim() : undefined;
 
         if (!email || !password) {
-            return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+            return NextResponse.json(
+                { error: "Email and password are required" },
+                { status: 400, headers: { "Cache-Control": "no-store" } }
+            );
         }
 
         if (password.length < 6) {
             return NextResponse.json(
                 { error: "Password must be at least 6 characters" },
-                { status: 400 }
+                { status: 400, headers: { "Cache-Control": "no-store" } }
             );
         }
 
@@ -42,7 +49,10 @@ export async function POST(request: NextRequest) {
         });
 
         if (error || !data.user) {
-            return NextResponse.json({ error: error?.message ?? "Signup failed" }, { status: 400 });
+            return NextResponse.json(
+                { error: error?.message ?? "Signup failed" },
+                { status: 400, headers: { "Cache-Control": "no-store" } }
+            );
         }
 
         // Normalize to your app User shape
@@ -61,9 +71,20 @@ export async function POST(request: NextRequest) {
                     : null,
         };
 
-        return NextResponse.json({ user }, { status: 200 });
+        return NextResponse.json(
+            { user },
+            {
+                status: 200,
+                headers: {
+                    "Cache-Control": "no-store",
+                },
+            }
+        );
     } catch (err) {
         console.error("Signup error:", err);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Internal server error" },
+            { status: 500, headers: { "Cache-Control": "no-store" } }
+        );
     }
 }

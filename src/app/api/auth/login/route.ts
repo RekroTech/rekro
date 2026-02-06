@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+// Disable caching for auth routes
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs"; // Auth operations require Node.js runtime
+
 type LoginBody = {
     email?: unknown;
     password?: unknown;
@@ -18,7 +22,10 @@ export async function POST(request: NextRequest) {
         const password = isNonEmptyString(body.password) ? body.password : "";
 
         if (!email || !password) {
-            return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+            return NextResponse.json(
+                { error: "Email and password are required" },
+                { status: 400, headers: { "Cache-Control": "no-store" } }
+            );
         }
 
         const supabase = await createClient();
@@ -27,7 +34,7 @@ export async function POST(request: NextRequest) {
         if (error || !data.user) {
             return NextResponse.json(
                 { error: error?.message ?? "Invalid credentials" },
-                { status: 401 }
+                { status: 401, headers: { "Cache-Control": "no-store" } }
             );
         }
 
@@ -47,9 +54,20 @@ export async function POST(request: NextRequest) {
                     : null,
         };
 
-        return NextResponse.json({ user }, { status: 200 });
+        return NextResponse.json(
+            { user },
+            {
+                status: 200,
+                headers: {
+                    "Cache-Control": "no-store",
+                },
+            }
+        );
     } catch (err) {
         console.error("Login error:", err);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Internal server error" },
+            { status: 500, headers: { "Cache-Control": "no-store" } }
+        );
     }
 }

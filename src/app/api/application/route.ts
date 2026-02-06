@@ -18,6 +18,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { CreateApplicationRequest } from "@/types/application.types";
 
+// Force dynamic for user-specific data
+export const dynamic = "force-dynamic";
+
 /**
  * POST /api/application
  *
@@ -42,7 +45,10 @@ export async function POST(request: NextRequest) {
         } = await supabase.auth.getUser();
 
         if (authError || !user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401, headers: { "Cache-Control": "no-store" } }
+            );
         }
 
         // Parse request body
@@ -51,7 +57,10 @@ export async function POST(request: NextRequest) {
 
         // Validate required fields
         if (!propertyId || !applicationType || !formData) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+            return NextResponse.json(
+                { error: "Missing required fields" },
+                { status: 400, headers: { "Cache-Control": "no-store" } }
+            );
         }
 
         // Create the application
@@ -73,7 +82,7 @@ export async function POST(request: NextRequest) {
             console.error("Application creation error:", applicationError);
             return NextResponse.json(
                 { error: applicationError?.message || "Failed to create application" },
-                { status: 500 }
+                { status: 500, headers: { "Cache-Control": "no-store" } }
             );
         }
 
@@ -100,7 +109,7 @@ export async function POST(request: NextRequest) {
             await supabase.from("applications").delete().eq("id", application.id);
             return NextResponse.json(
                 { error: detailsError?.message || "Failed to create application details" },
-                { status: 500 }
+                { status: 500, headers: { "Cache-Control": "no-store" } }
             );
         }
 
@@ -113,16 +122,29 @@ export async function POST(request: NextRequest) {
                     details,
                 },
             },
-            { status: 201 }
+            {
+                status: 201,
+                headers: {
+                    "Cache-Control": "no-store",
+                },
+            }
         );
     } catch (error) {
         console.error("Application submission error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Internal server error" },
+            { status: 500, headers: { "Cache-Control": "no-store" } }
+        );
     }
 }
 
-// TODO: Add query params support for filtering applications (e.g., by status, property_id, date range)
-export async function GET() {
+/**
+ * GET /api/application
+ *
+ * Fetch user's applications with optional filtering
+ * Query params: status, propertyId, limit
+ */
+export async function GET(request: NextRequest) {
     try {
         const supabase = await createClient();
 
@@ -133,24 +155,47 @@ export async function GET() {
         } = await supabase.auth.getUser();
 
         if (authError || !user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401, headers: { "Cache-Control": "no-store" } }
+            );
         }
 
-        // Get user's applications
-        const { data: applications, error } = await supabase
+        // Parse query parameters
+        const { searchParams } = request.nextUrl;
+        const status = searchParams.get("status");
+        const propertyId = searchParams.get("propertyId");
+        const limit = parseInt(searchParams.get("limit") || "50", 10);
+
+        // Build query
+        let query = supabase
             .from("applications")
             .select(
                 `
-        *,
-        details:application_details(*)
-      `
+                *,
+                details:application_details(*)
+            `
             )
             .eq("user_id", user.id)
-            .order("created_at", { ascending: false });
+            .order("created_at", { ascending: false })
+            .limit(limit);
+
+        // Apply filters
+        if (status) {
+            query = query.eq("status", status);
+        }
+        if (propertyId) {
+            query = query.eq("property_id", propertyId);
+        }
+
+        const { data: applications, error } = await query;
 
         if (error) {
             console.error("Error fetching applications:", error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json(
+                { error: error.message },
+                { status: 500, headers: { "Cache-Control": "no-store" } }
+            );
         }
 
         // Format the response
@@ -159,12 +204,23 @@ export async function GET() {
             details: Array.isArray(app.details) ? app.details[0] : app.details,
         }));
 
-        return NextResponse.json({
-            success: true,
-            data: formattedApplications,
-        });
+        return NextResponse.json(
+            {
+                success: true,
+                data: formattedApplications,
+            },
+            {
+                headers: {
+                    // Cache for 60 seconds, revalidate in background
+                    "Cache-Control": "private, max-age=60, stale-while-revalidate=120",
+                },
+            }
+        );
     } catch (error) {
         console.error("Error in GET /api/application:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Internal server error" },
+            { status: 500, headers: { "Cache-Control": "no-store" } }
+        );
     }
 }

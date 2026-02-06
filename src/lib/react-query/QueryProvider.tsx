@@ -10,20 +10,36 @@ export function QueryProvider({ children }: { children: ReactNode }) {
             new QueryClient({
                 defaultOptions: {
                     queries: {
-                        // Cache data for 5 minutes
+                        // Cache data for 5 minutes by default
                         staleTime: 5 * 60 * 1000,
                         // Keep unused data in cache for 10 minutes
                         gcTime: 10 * 60 * 1000,
-                        // Don't refetch on window focus in production
+                        // Refetch on window focus only in dev
                         refetchOnWindowFocus: process.env.NODE_ENV === "development",
+                        // Refetch on mount if data is stale
+                        refetchOnMount: true,
+                        // Refetch on reconnect
+                        refetchOnReconnect: true,
                         // Retry failed requests once
                         retry: 1,
+                        // Retry delay (exponential backoff)
+                        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
                         // Use structural sharing for better performance
                         structuralSharing: true,
+                        // Network mode: online only
+                        networkMode: "online",
                     },
                     mutations: {
                         // Retry failed mutations once
                         retry: 1,
+                        // Retry delay for mutations
+                        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+                        // Network mode: online only
+                        networkMode: "online",
+                        // Global error handler
+                        onError: (error) => {
+                            console.error("Mutation error:", error);
+                        },
                     },
                 },
             })

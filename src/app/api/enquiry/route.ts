@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 // import { createClient } from "@/lib/supabase/server";
 
+// Force dynamic for user-specific operations
+export const dynamic = "force-dynamic";
+
 type EnquiryBody = {
     name?: unknown;
     email?: unknown;
@@ -31,13 +34,19 @@ export async function POST(request: NextRequest) {
         const isEntireHome = typeof body.isEntireHome === "boolean" ? body.isEntireHome : false;
 
         if (!name || !email || !phone || !message) {
-            return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+            return NextResponse.json(
+                { error: "All fields are required" },
+                { status: 400, headers: { "Cache-Control": "no-store" } }
+            );
         }
 
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+            return NextResponse.json(
+                { error: "Invalid email format" },
+                { status: 400, headers: { "Cache-Control": "no-store" } }
+            );
         }
 
         // const supabase = await createClient();
@@ -103,10 +112,18 @@ export async function POST(request: NextRequest) {
                 success: true,
                 message: "Enquiry sent successfully",
             },
-            { status: 200 }
+            {
+                status: 200,
+                headers: {
+                    "Cache-Control": "no-store",
+                },
+            }
         );
     } catch (error) {
         console.error("Error processing enquiry:", error);
-        return NextResponse.json({ error: "Failed to process enquiry" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Failed to process enquiry" },
+            { status: 500, headers: { "Cache-Control": "no-store" } }
+        );
     }
 }

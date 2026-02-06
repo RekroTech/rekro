@@ -19,9 +19,19 @@ import {
 import { uploadPropertyImages } from "@/services/storage.service";
 import { PropertyInsert, UnitInsert, UnitAvailabilityInsert } from "@/types/db";
 
+// Query keys for better cache management
+export const propertyKeys = {
+    all: ["properties"] as const,
+    lists: () => [...propertyKeys.all, "list"] as const,
+    list: (filters: Omit<GetPropertiesParams, "offset">) =>
+        [...propertyKeys.lists(), filters] as const,
+    details: () => [...propertyKeys.all, "detail"] as const,
+    detail: (id: string) => [...propertyKeys.details(), id] as const,
+};
+
 export function useProperties(params: Omit<GetPropertiesParams, "offset"> = {}) {
     return useInfiniteQuery({
-        queryKey: ["properties", params],
+        queryKey: propertyKeys.list(params),
         queryFn: ({ pageParam = 0 }) =>
             getPropertiesClient({
                 ...params,
@@ -29,14 +39,20 @@ export function useProperties(params: Omit<GetPropertiesParams, "offset"> = {}) 
             }),
         getNextPageParam: (lastPage) => lastPage.nextOffset,
         initialPageParam: 0,
+        // Cache for 2 minutes as property listings don't change frequently
+        staleTime: 2 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
     });
 }
 
 export function useProperty(id: string) {
     return useQuery({
-        queryKey: ["property", id],
+        queryKey: propertyKeys.detail(id),
         queryFn: () => getPropertyByIdClient(id),
         enabled: !!id,
+        // Cache individual properties for 5 minutes
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
     });
 }
 
@@ -107,9 +123,14 @@ export function useCreateProperty() {
 
             return property;
         },
-        onSuccess: () => {
-            // Invalidate all properties queries to refetch the list
-            void queryClient.invalidateQueries({ queryKey: ["properties"] });
+        onSuccess: (newProperty) => {
+            // Invalidate all property list queries
+            queryClient.invalidateQueries({ queryKey: propertyKeys.lists() });
+            // Optionally set the new property in cache
+            queryClient.setQueryData(propertyKeys.detail(newProperty.id), newProperty);
+        },
+        onError: (error) => {
+            console.error("Failed to create property:", error);
         },
     });
 }
@@ -213,9 +234,14 @@ export function useUpdateProperty() {
 
             return updatePropertyClient(propertyId, fullPropertyData);
         },
-        onSuccess: () => {
-            // Invalidate all properties queries to refetch the list
-            void queryClient.invalidateQueries({ queryKey: ["properties"] });
+        onSuccess: (updatedProperty, { propertyId }) => {
+            // Update the specific property in cache
+            queryClient.setQueryData(propertyKeys.detail(propertyId), updatedProperty);
+            // Invalidate all property lists to refetch
+            queryClient.invalidateQueries({ queryKey: propertyKeys.lists() });
+        },
+        onError: (error) => {
+            console.error("Failed to update property:", error);
         },
     });
 }
