@@ -1,27 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
-import { Property, PropertyInsert, Unit } from "@/types/db";
-
-export interface PropertyWithUnits extends Property {
-    units: Unit[];
-}
-
-export interface GetPropertiesParams {
-    limit?: number;
-    offset?: number;
-    isPublished?: boolean;
-    // New optional filters
-    search?: string;
-    propertyType?: string;
-    minBedrooms?: number;
-    minBathrooms?: number;
-    furnished?: boolean;
-}
-
-export interface GetPropertiesResponse {
-    data: Property[];
-    nextOffset: number | null;
-    hasMore: boolean;
-}
+import { PropertyInsert } from "@/types/db";
+import { Property, GetPropertiesParams, GetPropertiesResponse, Unit } from "@/types/property.types";
 
 export async function getPropertiesClient(
     params: GetPropertiesParams = {}
@@ -31,16 +10,24 @@ export async function getPropertiesClient(
         limit = 12,
         offset = 0,
         isPublished = true,
+        userId,
         search,
         propertyType,
         minBedrooms,
         minBathrooms,
         furnished,
+        listingType,
     } = params;
+
+    // Always fetch units with properties to avoid N+1 query problem
+    // If listingType filter is applied, use inner join to filter
+    const selectQuery = listingType
+        ? "*, units!inner(id, listing_type, name, description, price_per_week, bond_amount, bills_included, min_lease_weeks, max_lease_weeks, max_occupants, size_sqm, is_active)"
+        : "*, units(id, listing_type, name, description, price_per_week, bond_amount, bills_included, min_lease_weeks, max_lease_weeks, max_occupants, size_sqm, is_active)";
 
     let query = supabase
         .from("properties")
-        .select("*", { count: "exact" })
+        .select(selectQuery, { count: "exact" })
         .order("created_at", { ascending: false });
 
     if (isPublished !== undefined) {
@@ -63,6 +50,11 @@ export async function getPropertiesClient(
         query = query.eq("furnished", true);
     }
 
+    // Filter by listing type from units table
+    if (listingType) {
+        query = query.eq("units.listing_type", listingType);
+    }
+
     if (search && search.trim() !== "") {
         const term = `%${search.trim()}%`;
         // Search in title, description, and address fields
@@ -79,24 +71,94 @@ export async function getPropertiesClient(
         throw new Error(error.message);
     }
 
+    // Process the data to handle units properly
+    let properties: Property[] = data ?? [];
+
+    if (listingType && properties.length > 0) {
+        // When using inner join for listing type filter, we may get duplicate properties
+        // Group by property ID and collect all units
+        const propertyMap = new Map<string, Property>();
+
+        properties.forEach((prop: Property) => {
+            if (!propertyMap.has(prop.id)) {
+                const { units, ...propertyData } = prop;
+                propertyMap.set(prop.id, {
+                    ...propertyData,
+                    units: Array.isArray(units) ? units : [units],
+                } as Property);
+            } else {
+                // Add units to existing property
+                const existingProp = propertyMap.get(prop.id)!;
+                const newUnits = Array.isArray(prop.units) ? prop.units : [prop.units];
+                existingProp.units.push(...newUnits);
+            }
+        });
+
+        properties = Array.from(propertyMap.values());
+    } else {
+        // Ensure all properties have units array (empty if none)
+        properties = properties.map((prop) => ({
+            ...prop,
+            units: prop.units || [],
+        }));
+    }
+
+    // Bulk fetch likes if userId is provided
+    if (userId && properties.length > 0) {
+        const allUnitIds = properties.flatMap(
+            (prop) => prop.units?.map((unit: Unit) => unit.id) || []
+        );
+
+        if (allUnitIds.length > 0) {
+            const likedUnitIds = await getBulkPropertyLikes(allUnitIds, userId);
+
+            // Add isLiked flag to all units
+            properties = properties.map((prop) => ({
+                ...prop,
+                units:
+                    prop.units?.map((unit: Unit) => ({
+                        ...unit,
+                        isLiked: likedUnitIds.has(unit.id),
+                    })) || [],
+            }));
+        }
+    }
+
     const total = count ?? 0;
     const nextOffset = offset + limit;
     const hasMore = nextOffset < total;
 
     return {
-        data: data ?? [],
+        data: properties,
         nextOffset: hasMore ? nextOffset : null,
         hasMore,
     };
 }
 
-export async function getPropertyByIdClient(id: string): Promise<PropertyWithUnits> {
+export async function getPropertyByIdClient(id: string): Promise<Property> {
     const supabase = createClient();
 
+    // Fetch property with units and unit availability in a single query
     const { data: property, error } = await supabase
         .from("properties")
-        .select("*")
+        .select(
+            `
+            *,
+            units!inner (
+                *,
+                unit_availability (
+                    id,
+                    available_from,
+                    available_to,
+                    is_available,
+                    notes
+                )
+            )
+        `
+        )
         .eq("id", id)
+        .eq("units.is_active", true)
+        .order("listing_type", { referencedTable: "units", ascending: true })
         .single();
 
     if (error) {
@@ -104,23 +166,7 @@ export async function getPropertyByIdClient(id: string): Promise<PropertyWithUni
         throw new Error(error.message);
     }
 
-    // Fetch units for this property
-    const { data: units, error: unitsError } = await supabase
-        .from("units")
-        .select("*")
-        .eq("property_id", id)
-        .eq("is_active", true)
-        .order("listing_type", { ascending: true });
-
-    if (unitsError) {
-        console.error("Error fetching units:", unitsError);
-        // Don't throw, just return empty units array
-    }
-
-    return {
-        ...property,
-        units: units || [],
-    };
+    return property;
 }
 
 export async function createPropertyClient(
@@ -164,7 +210,7 @@ export async function updatePropertyClient(
 }
 
 // Property Likes Functions
-export async function checkPropertyLiked(propertyId: string): Promise<boolean> {
+export async function checkPropertyLiked(unitId: string): Promise<boolean> {
     const supabase = createClient();
 
     const {
@@ -177,13 +223,12 @@ export async function checkPropertyLiked(propertyId: string): Promise<boolean> {
 
     const { data, error } = await supabase
         .from("property_likes")
-        .select("*")
+        .select("user_id")
         .eq("user_id", user.id)
-        .eq("unit_id", propertyId)
-        .single();
+        .eq("unit_id", unitId)
+        .maybeSingle();
 
-    if (error && error.code !== "PGRST116") {
-        // PGRST116 is "not found" error
+    if (error) {
         console.error("Error checking property like:", error);
         return false;
     }
@@ -191,7 +236,35 @@ export async function checkPropertyLiked(propertyId: string): Promise<boolean> {
     return !!data;
 }
 
-export async function togglePropertyLike(propertyId: string): Promise<boolean> {
+/**
+ * Bulk fetch likes for multiple units efficiently
+ * Used to add isLiked flags to property lists
+ */
+export async function getBulkPropertyLikes(
+    unitIds: string[],
+    userId: string
+): Promise<Set<string>> {
+    if (!unitIds.length || !userId) {
+        return new Set();
+    }
+
+    const supabase = createClient();
+
+    const { data: likes, error } = await supabase
+        .from("property_likes")
+        .select("unit_id")
+        .eq("user_id", userId)
+        .in("unit_id", unitIds);
+
+    if (error) {
+        console.error("Error fetching bulk property likes:", error);
+        return new Set();
+    }
+
+    return new Set(likes?.map((like) => like.unit_id) || []);
+}
+
+export async function togglePropertyLike(unitId: string): Promise<boolean> {
     const supabase = createClient();
 
     const {
@@ -203,20 +276,25 @@ export async function togglePropertyLike(propertyId: string): Promise<boolean> {
     }
 
     // Check if already liked
-    const { data: existingLike } = await supabase
+    const { data: existingLike, error: checkError } = await supabase
         .from("property_likes")
-        .select("*")
+        .select("user_id")
         .eq("user_id", user.id)
-        .eq("unit_id", propertyId)
-        .single();
+        .eq("unit_id", unitId)
+        .maybeSingle();
+
+    if (checkError) {
+        console.error("Error checking property like:", checkError);
+        throw new Error(checkError.message);
+    }
 
     if (existingLike) {
-        // Unlike
+        // Unlike - delete the record
         const { error } = await supabase
             .from("property_likes")
             .delete()
             .eq("user_id", user.id)
-            .eq("unit_id", propertyId);
+            .eq("unit_id", unitId);
 
         if (error) {
             console.error("Error unliking property:", error);
@@ -225,10 +303,10 @@ export async function togglePropertyLike(propertyId: string): Promise<boolean> {
 
         return false;
     } else {
-        // Like
+        // Like - insert new record
         const { error } = await supabase
             .from("property_likes")
-            .insert([{ user_id: user.id, unit_id: propertyId }]);
+            .insert({ user_id: user.id, unit_id: unitId });
 
         if (error) {
             console.error("Error liking property:", error);

@@ -19,8 +19,15 @@ export interface User {
     id: string;
     email: string;
     name?: string | null;
-    avatar_url?: string | null;
-    roles?: AppRole[]; // Array of roles the user has
+    phone?: string | null;
+    roles?: AppRole[];
+    full_name?: string | null;
+    image_url?: string | null;
+    current_location?: Record<string, unknown> | null;
+    max_budget_per_week?: number | null;
+    receive_marketing_email?: boolean;
+    created_at?: string;
+    updated_at?: string;
 }
 
 /**

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { PropertyForm } from "@/components";
 import { getPropertyFileUrl } from "@/services/storage.service";
-import { useUnits, useUnitAvailability } from "@/lib/react-query/hooks/property";
 
 interface PropertyCardProps {
     property: Property & { units?: Unit[] };
@@ -27,16 +26,12 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
         furnished,
         images,
         address,
-        units: providedUnits,
+        units,
     } = property;
 
-    // Fetch units if not provided
-    const { data: fetchedUnits } = useUnits(id);
-    const units = providedUnits || fetchedUnits || [];
-
-    // Get the first unit for availability check
+    // Units are now included in the property data from the API
+    // Get the first unit for price display
     const firstUnit = units && units.length > 0 ? units[0] : null;
-    const { data: availability } = useUnitAvailability(firstUnit?.id || "");
 
     // Get the first image or use a placeholder
     const imagePath = images && images.length > 0 ? images[0] : null;
@@ -48,36 +43,8 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
             ? Object.values(address).filter(Boolean).join(", ")
             : "Location not specified";
 
-    // Determine availability badge
-    const getAvailabilityBadge = () => {
-        if (!availability || !firstUnit) return null;
-
-        const now = new Date();
-        const availableFrom = availability.available_from
-            ? new Date(availability.available_from)
-            : null;
-
-        if (!availability.is_available) {
-            return (
-                <div className="absolute bottom-3 left-3 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">
-                    Unavailable
-                </div>
-            );
-        } else if (availableFrom && availableFrom > now) {
-            return (
-                <div className="absolute bottom-3 left-3 bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">
-                    From{" "}
-                    {availableFrom.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                </div>
-            );
-        } else {
-            return (
-                <div className="absolute bottom-3 left-3 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">
-                    Available Now
-                </div>
-            );
-        }
-    };
+    // Display price from the first unit if available
+    const pricePerWeek = firstUnit?.price_per_week;
 
     return (
         <>
@@ -96,7 +63,11 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                                 Furnished
                             </div>
                         )}
-                        {getAvailabilityBadge()}
+                        {pricePerWeek && (
+                            <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm text-gray-900 text-sm font-bold px-3 py-1.5 rounded-[var(--radius-md)] shadow-md">
+                                ${pricePerWeek}/week
+                            </div>
+                        )}
                         {showEditButton && (
                             <button
                                 onClick={(e) => {
@@ -104,7 +75,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                                     e.stopPropagation();
                                     setIsEditModalOpen(true);
                                 }}
-                                className="absolute top-3 left-3 bg-white hover:bg-gray-100 text-gray-800 p-3 rounded-full shadow-xl transition-all duration-200 hover:scale-110 z-10 border-2 border-gray-200 hover:border-gray-300"
+                                className="absolute top-3 left-3 bg-white hover:bg-gray-100 text-gray-800 p-1.5 rounded-full shadow-xl transition-all duration-200 hover:scale-110 z-10 border-2 border-gray-200 hover:border-gray-300"
                                 aria-label="Edit property"
                                 title="Edit property"
                             >
@@ -168,7 +139,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
             </div>
 
             {/* Edit Modal */}
-            {showEditButton && (
+            {showEditButton && isEditModalOpen && (
                 <PropertyForm
                     isOpen={isEditModalOpen}
                     onClose={() => setIsEditModalOpen(false)}

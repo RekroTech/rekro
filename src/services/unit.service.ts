@@ -73,26 +73,17 @@ export async function getUnitsByPropertyIdClient(propertyId: string): Promise<Un
     return data ?? [];
 }
 
-export async function checkUnitLiked(unitId: string): Promise<boolean> {
+export async function checkUnitLiked(unitId: string, userId: string): Promise<boolean> {
     const supabase = createClient();
-
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-        return false;
-    }
 
     const { data, error } = await supabase
         .from("property_likes")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("unit_id", unitId)
-        .single();
+        .maybeSingle();
 
-    if (error && error.code !== "PGRST116") {
-        // PGRST116 is "not found" error
+    if (error) {
         console.error("Error checking unit like:", error);
         return false;
     }
@@ -100,50 +91,60 @@ export async function checkUnitLiked(unitId: string): Promise<boolean> {
     return !!data;
 }
 
-export async function toggleUnitLike(unitId: string): Promise<boolean> {
+/**
+ * Add a like for a unit
+ */
+export async function addUnitLike(unitId: string, userId: string): Promise<void> {
     const supabase = createClient();
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const { error } = await supabase
+        .from("property_likes")
+        .insert([{ user_id: userId, unit_id: unitId }]);
 
-    if (!user) {
-        throw new Error("User must be authenticated to like units");
+    if (error) {
+        console.error("Error liking unit:", error);
+        throw new Error(error.message);
+    }
+}
+
+/**
+ * Remove a like for a unit
+ */
+export async function removeUnitLike(unitId: string, userId: string): Promise<void> {
+    const supabase = createClient();
+
+    const { error } = await supabase
+        .from("property_likes")
+        .delete()
+        .eq("user_id", userId)
+        .eq("unit_id", unitId);
+
+    if (error) {
+        console.error("Error unliking unit:", error);
+        throw new Error(error.message);
+    }
+}
+
+/**
+ * Toggle like for a unit - returns the new liked state
+ * @param unitId - The unit ID to toggle like for
+ * @param userId - The user ID
+ * @param checked - The current liked state (avoids extra network call to check)
+ */
+export async function toggleUnitLike(
+    unitId: string,
+    userId: string | undefined,
+    checked: boolean
+): Promise<boolean> {
+    if (!userId) {
+        throw new Error("User must be authenticated to toggle like");
     }
 
-    // Check if already liked
-    const { data: existingLike } = await supabase
-        .from("property_likes")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("unit_id", unitId)
-        .single();
-
-    if (existingLike) {
-        // Unlike
-        const { error } = await supabase
-            .from("property_likes")
-            .delete()
-            .eq("user_id", user.id)
-            .eq("unit_id", unitId);
-
-        if (error) {
-            console.error("Error unliking unit:", error);
-            throw new Error(error.message);
-        }
-
+    if (checked) {
+        await removeUnitLike(unitId, userId);
         return false;
     } else {
-        // Like
-        const { error } = await supabase
-            .from("property_likes")
-            .insert([{ user_id: user.id, unit_id: unitId }]);
-
-        if (error) {
-            console.error("Error liking unit:", error);
-            throw new Error(error.message);
-        }
-
+        await addUnitLike(unitId, userId);
         return true;
     }
 }

@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Header } from "@/components";
 import { getSession } from "@/lib/auth/server";
 
 // Force dynamic rendering for auth checks
@@ -14,7 +13,6 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
 
     return (
         <div className="h-screen overflow-hidden bg-app-bg text-foreground">
-            <Header />
             <div className="h-[calc(100vh-4rem)] overflow-y-auto mt-16">{children}</div>
         </div>
     );

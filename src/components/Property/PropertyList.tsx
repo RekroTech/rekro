@@ -11,6 +11,8 @@ export interface PropertyListProps {
     minBedrooms?: number;
     minBathrooms?: number;
     furnished?: boolean;
+    listingType?: string;
+    showEditButton?: boolean;
 }
 
 export function PropertyList({
@@ -19,9 +21,19 @@ export function PropertyList({
     minBedrooms,
     minBathrooms,
     furnished,
+    listingType,
+    showEditButton = false,
 }: PropertyListProps = {}) {
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
-        useProperties({ limit: 12, search, propertyType, minBedrooms, minBathrooms, furnished });
+        useProperties({
+            limit: 12,
+            search,
+            propertyType,
+            minBedrooms,
+            minBathrooms,
+            furnished,
+            listingType,
+        });
 
     const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -93,7 +105,11 @@ export function PropertyList({
             {/* Property Grid */}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {allProperties.map((property) => (
-                    <PropertyCard key={property.id} property={property} showEditButton={true} />
+                    <PropertyCard
+                        key={property.id}
+                        property={property}
+                        showEditButton={showEditButton}
+                    />
                 ))}
             </div>
 

@@ -1,5 +1,4 @@
-import { Unit } from "@/types/db";
-import { useUnitAvailability } from "@/lib/react-query/hooks/property";
+import { Unit } from "@/types/property.types";
 import { Icon } from "@/components/common";
 
 interface UnitsSelectorProps {
@@ -8,8 +7,8 @@ interface UnitsSelectorProps {
     onUnitSelect: (id: string) => void;
 }
 
-function UnitAvailabilityBadge({ unitId }: { unitId: string }) {
-    const { data: availability } = useUnitAvailability(unitId);
+function UnitAvailabilityBadge({ unit }: { unit: Unit }) {
+    const availability = unit.unit_availability?.[0];
 
     if (!availability) return null;
 
@@ -68,7 +67,7 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
                                     <p className="text-sm text-text-muted">Private Room</p>
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-1">
-                                    <UnitAvailabilityBadge unitId={unit.id} />
+                                    <UnitAvailabilityBadge unit={unit} />
                                     <p className="text-lg font-bold text-primary-600">
                                         ${unit.price_per_week}
                                         <span className="text-sm font-normal text-text-muted">

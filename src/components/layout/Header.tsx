@@ -17,9 +17,9 @@ export function Header() {
         >
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 <Link
-                    href="/dashboard"
+                    href="/"
                     className="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg"
-                    aria-label="Go to dashboard"
+                    aria-label="Go to home"
                 >
                     <div className="h-8 w-8 overflow-hidden rounded-[10px]">
                         <Image
@@ -35,7 +35,7 @@ export function Header() {
                 </Link>
 
                 <div className="flex items-center gap-4">
-                    {user && (
+                    {user ? (
                         <Dropdown
                             align="right"
                             trigger={
@@ -80,6 +80,21 @@ export function Header() {
                                 },
                             ]}
                         />
+                    ) : (
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href="/login"
+                                className="text-sm font-medium text-text hover:text-primary-600 transition-colors"
+                            >
+                                Login
+                            </Link>
+                            <Link
+                                href="/signup"
+                                className="flex h-10 items-center justify-center gap-2 rounded-lg bg-primary-500 px-4 text-sm font-medium text-white hover:bg-primary-600 transition-colors"
+                            >
+                                Sign Up
+                            </Link>
+                        </div>
                     )}
                 </div>
             </div>

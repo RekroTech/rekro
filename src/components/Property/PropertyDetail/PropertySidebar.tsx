@@ -1,35 +1,56 @@
 "use client";
 
 import { useState } from "react";
-import type { Property, Unit } from "@/types/db";
+import { useRouter } from "next/navigation";
+import type { Property, Unit } from "@/types/property.types";
 import { Button, Icon } from "@/components/common";
-import { useUnitAvailability } from "@/lib/react-query/hooks/property";
 import { EnquiryModal } from "./EnquiryModal";
 import { ApplicationForm } from "../ApplicationForm";
 import { ShareDropdown } from "./ShareDropdown";
+import { useAuth } from "@/lib/react-query/hooks/auth/useAuth";
+import { useToggleUnitLike, useUnitLike } from "@/lib/react-query/hooks/property";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
     isEntireHome: boolean;
-    isLiked: boolean;
-    onToggleLike: () => void;
-    isPending: boolean;
     property: Property;
 }
 
-export function PropertySidebar({
-    selectedUnit,
-    isEntireHome,
-    isLiked,
-    onToggleLike,
-    isPending,
-    property,
-}: PropertySidebarProps) {
+export function PropertySidebar({ selectedUnit, isEntireHome, property }: PropertySidebarProps) {
+    const { isAuthenticated } = useAuth();
+    const router = useRouter();
+
     const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
     const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
 
-    // Fetch availability data for the selected unit
-    const { data: availability } = useUnitAvailability(selectedUnit?.id || "");
+    const handleLoginRequired = () => {
+        router.push(`/login?redirect=/property/${property.id}`);
+    };
+
+    // Like functionality - only check for the currently selected unit
+    const activeUnitId = selectedUnit?.id;
+    const { data: isLiked = false, isLoading: isLikeLoading } = useUnitLike(activeUnitId ?? "", {
+        enabled: isAuthenticated && !!activeUnitId,
+    });
+    const toggleLikeMutation = useToggleUnitLike();
+
+    const handleToggleLike = async () => {
+        if (!isAuthenticated) {
+            handleLoginRequired();
+            return;
+        }
+        if (!activeUnitId) return;
+        if (isLikeLoading) return;
+
+        try {
+            await toggleLikeMutation.mutateAsync({ unitId: activeUnitId, currentLiked: isLiked });
+        } catch (error) {
+            console.error("Error toggling unit like:", error);
+        }
+    };
+
+    // Get availability data from the selected unit
+    const availability = selectedUnit?.unit_availability?.[0];
 
     // Format availability dates
     const formatDate = (dateString: string | null) => {
@@ -80,17 +101,23 @@ export function PropertySidebar({
                         unitId={selectedUnit?.id || ""}
                     />
                     <button
-                        onClick={onToggleLike}
-                        disabled={isPending}
+                        onClick={handleToggleLike}
+                        disabled={!activeUnitId || isLikeLoading || toggleLikeMutation.isPending}
                         className={`p-2 rounded-full transition-all ${
                             isLiked
                                 ? "bg-red-50 text-red-600 hover:bg-red-100"
                                 : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-red-500"
-                        } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+                        } ${
+                            !activeUnitId || isLikeLoading || toggleLikeMutation.isPending
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                        }`}
                         aria-label={
-                            isLiked
-                                ? `Unsave ${isEntireHome ? "property" : "room"}`
-                                : `Save ${isEntireHome ? "property" : "room"}`
+                            !activeUnitId
+                                ? `Select a ${isEntireHome ? "property" : "room"} to save`
+                                : isLiked
+                                  ? `Unsave ${isEntireHome ? "property" : "room"}`
+                                  : `Save ${isEntireHome ? "property" : "room"}`
                         }
                     >
                         <Icon
@@ -175,7 +202,7 @@ export function PropertySidebar({
 
                 <h3 className="text-xl font-bold text-text mb-4">Interested?</h3>
                 <p className="text-text-muted mb-6">
-                    Get in touch to kow more or apply now to secure this{" "}
+                    Get in touch to know more or apply now to secure this{" "}
                     {isEntireHome ? "property" : "room"}.
                 </p>
 
@@ -192,12 +219,27 @@ export function PropertySidebar({
                     <Button
                         variant="primary"
                         className="w-full"
-                        onClick={() => setIsApplicationModalOpen(true)}
+                        onClick={() => {
+                            if (!isAuthenticated) {
+                                handleLoginRequired();
+                            } else {
+                                setIsApplicationModalOpen(true);
+                            }
+                        }}
                     >
                         <Icon name="document" className="w-5 h-5 mr-2" />
-                        Apply
+                        {isAuthenticated ? "Apply" : "Login to Apply"}
                     </Button>
                 </div>
+
+                {!isAuthenticated && (
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs text-blue-800">
+                            <Icon name="info" className="w-4 h-4 inline mr-1" />
+                            Create an account to save properties and apply
+                        </p>
+                    </div>
+                )}
 
                 {/* Details */}
                 <div className="mt-6 pt-6 border-t border-border">

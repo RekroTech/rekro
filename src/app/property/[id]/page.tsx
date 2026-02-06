@@ -1,6 +1,6 @@
 "use client";
 
-import { useUnitLike, useToggleUnitLike, useProperty } from "@/lib/react-query/hooks/property";
+import { useProperty } from "@/lib/react-query/hooks/property";
 import { Loader, Button, Icon } from "@/components/common";
 import {
     PropertyHeader,
@@ -14,13 +14,14 @@ import {
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getPropertyFileUrls } from "@/services/storage.service";
-import { Unit } from "@/types/db";
+import { Unit } from "@/types/property.types";
 
 export default function PropertyDetailPage() {
     const params = useParams();
     const router = useRouter();
     const propertyId = params.id as string;
 
+    // Fetch property data (no longer includes likes)
     const { data: property, isLoading, error } = useProperty(propertyId);
 
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -42,7 +43,6 @@ export default function PropertyDetailPage() {
         if (units.length > 0 && !selectedUnitId) {
             const firstUnit = units[0];
             if (firstUnit) {
-                // Use requestAnimationFrame to avoid cascading renders
                 requestAnimationFrame(() => {
                     setSelectedUnitId(firstUnit.id);
                     setSelectedImageIndex(0);
@@ -65,20 +65,6 @@ export default function PropertyDetailPage() {
         return found ?? units[0] ?? null;
     }, [units, selectedUnitId]);
 
-    const activeUnitId = selectedUnit?.id || "";
-
-    const { data: isLiked = false } = useUnitLike(activeUnitId);
-    const toggleLikeMutation = useToggleUnitLike();
-
-    const handleToggleLike = async () => {
-        if (!activeUnitId) return;
-        try {
-            await toggleLikeMutation.mutateAsync(activeUnitId);
-        } catch (error) {
-            console.error("Error toggling unit like:", error);
-        }
-    };
-
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -95,8 +81,8 @@ export default function PropertyDetailPage() {
                     <p className="text-text-muted mb-6">
                         The property you&apos;re looking for doesn&apos;t exist or has been removed.
                     </p>
-                    <Button variant="primary" onClick={() => router.push("/dashboard")}>
-                        Back to Dashboard
+                    <Button variant="primary" onClick={() => router.push("/")}>
+                        Back to Properties
                     </Button>
                 </div>
             </div>
@@ -165,9 +151,6 @@ export default function PropertyDetailPage() {
                 <PropertySidebar
                     selectedUnit={selectedUnit}
                     isEntireHome={isEntireHome}
-                    isLiked={isLiked}
-                    onToggleLike={handleToggleLike}
-                    isPending={toggleLikeMutation.isPending}
                     property={property}
                 />
             </div>

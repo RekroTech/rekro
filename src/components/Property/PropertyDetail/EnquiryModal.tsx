@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal } from "@/components/common/Modal";
 import { Input } from "@/components/common/Input";
 import { Textarea } from "@/components/common/Textarea";
 import { Button } from "@/components/common/Button";
 import { Icon } from "@/components/common";
+import { useUser } from "@/lib/react-query/hooks/auth/useAuth";
 
 interface EnquiryModalProps {
     isOpen: boolean;
@@ -38,12 +39,27 @@ export function EnquiryModal({
     unitId,
     isEntireHome,
 }: EnquiryModalProps) {
+    const { data: user } = useUser();
+    const isLoggedIn = !!user;
+
     const [formData, setFormData] = useState<FormData>({
         name: "",
         email: "",
         phone: "",
         message: "",
     });
+
+    // Pre-fill name and email from user data if logged in
+    useEffect(() => {
+        if (isLoggedIn && user) {
+            setFormData((prev) => ({
+                ...prev,
+                name: user.name || "",
+                email: user.email || "",
+                phone: user.phone || "",
+            }));
+        }
+    }, [isLoggedIn, user]);
 
     const [errors, setErrors] = useState<FormErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,18 +68,24 @@ export function EnquiryModal({
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
 
-        if (!formData.name.trim()) {
-            newErrors.name = "Name is required";
+        // Only validate name and email if user is not logged in
+        if (!isLoggedIn) {
+            if (!formData.name.trim()) {
+                newErrors.name = "Name is required";
+            }
+
+            if (!formData.email.trim()) {
+                newErrors.email = "Email is required";
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+                newErrors.email = "Invalid email format";
+            }
         }
 
-        if (!formData.email.trim()) {
-            newErrors.email = "Email is required";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            newErrors.email = "Invalid email format";
-        }
-
-        if (!formData.phone.trim()) {
-            newErrors.phone = "Phone number is required";
+        // Validate phone only if not already available from user data
+        if (!isLoggedIn || !user?.phone) {
+            if (!formData.phone.trim()) {
+                newErrors.phone = "Phone number is required";
+            }
         }
 
         if (!formData.message.trim()) {
@@ -85,18 +107,31 @@ export function EnquiryModal({
         setSubmitStatus("idle");
 
         try {
+            // Only include name and email in body if user is not logged in
+            // Only include phone if user doesn't have it or provided a new one
+            const bodyData = isLoggedIn
+                ? {
+                      ...(user?.phone ? {} : { phone: formData.phone }),
+                      message: formData.message,
+                      propertyTitle,
+                      propertyId,
+                      unitId,
+                      isEntireHome,
+                  }
+                : {
+                      ...formData,
+                      propertyTitle,
+                      propertyId,
+                      unitId,
+                      isEntireHome,
+                  };
+
             const response = await fetch("/api/enquiry", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    ...formData,
-                    propertyTitle,
-                    propertyId,
-                    unitId,
-                    isEntireHome,
-                }),
+                body: JSON.stringify(bodyData),
             });
 
             if (!response.ok) {
@@ -172,40 +207,48 @@ export function EnquiryModal({
                         </div>
                     </div>
 
-                    <Input
-                        label="Full Name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        error={errors.name}
-                        placeholder="Enter your full name"
-                        disabled={isSubmitting}
-                        required
-                    />
+                    {/* Only show name and email fields if user is not logged in */}
+                    {!isLoggedIn && (
+                        <>
+                            <Input
+                                label="Full Name"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                error={errors.name}
+                                placeholder="Enter your full name"
+                                disabled={isSubmitting}
+                                required
+                            />
 
-                    <Input
-                        label="Email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        error={errors.email}
-                        placeholder="your.email@example.com"
-                        disabled={isSubmitting}
-                        required
-                    />
+                            <Input
+                                label="Email"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                error={errors.email}
+                                placeholder="your.email@example.com"
+                                disabled={isSubmitting}
+                                required
+                            />
+                        </>
+                    )}
 
-                    <Input
-                        label="Phone Number"
-                        name="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        error={errors.phone}
-                        placeholder="+1 (555) 000-0000"
-                        disabled={isSubmitting}
-                        required
-                    />
+                    {/* Only show phone field if user is not logged in OR logged in but has no phone */}
+                    {(!isLoggedIn || !user?.phone) && (
+                        <Input
+                            label="Phone Number"
+                            name="phone"
+                            type="tel"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            error={errors.phone}
+                            placeholder="+1 (555) 000-0000"
+                            disabled={isSubmitting}
+                            required
+                        />
+                    )}
 
                     <Textarea
                         label="Message"

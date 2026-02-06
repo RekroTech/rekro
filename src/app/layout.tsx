@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { clsx } from "clsx";
 import { QueryProvider } from "@/lib/react-query/QueryProvider";
+import { Header } from "@/components";
 
 import "./globals.css";
 
@@ -62,7 +63,10 @@ export default function RootLayout({
                 className={clsx(geistSans.variable, geistMono.variable, "antialiased")}
                 suppressHydrationWarning
             >
-                <QueryProvider>{children}</QueryProvider>
+                <QueryProvider>
+                    <Header />
+                    <div className="pt-16">{children}</div>
+                </QueryProvider>
             </body>
         </html>
     );

@@ -27,11 +27,14 @@ export async function GET(request: NextRequest) {
             ? parseInt(searchParams.get("minBathrooms")!, 10)
             : undefined;
         const furnished = searchParams.get("furnished") === "true" ? true : undefined;
+        const listingType = searchParams.get("listingType") || undefined;
 
-        // Build query
+        // Build query - if filtering by listing type, join with units
+        const selectQuery = listingType ? "*, units!inner(listing_type)" : "*";
+
         let query = supabase
             .from("properties")
-            .select("*", { count: "exact" })
+            .select(selectQuery, { count: "exact" })
             .order("created_at", { ascending: false });
 
         // Apply filters
@@ -55,6 +58,11 @@ export async function GET(request: NextRequest) {
             query = query.eq("furnished", true);
         }
 
+        // Filter by listing type from units table
+        if (listingType) {
+            query = query.eq("units.listing_type", listingType);
+        }
+
         if (search && search.trim() !== "") {
             const term = `%${search.trim()}%`;
             query = query.or(
@@ -69,13 +77,26 @@ export async function GET(request: NextRequest) {
             return errorResponse(error.message, 500);
         }
 
+        // If we joined with units, we need to remove the units data and get unique properties
+        let properties = data ?? [];
+        if (listingType && properties.length > 0) {
+            const uniquePropertyMap = new Map();
+            properties.forEach((prop: any) => {
+                if (!uniquePropertyMap.has(prop.id)) {
+                    const { units, ...propertyData } = prop;
+                    uniquePropertyMap.set(prop.id, propertyData);
+                }
+            });
+            properties = Array.from(uniquePropertyMap.values());
+        }
+
         const total = count ?? 0;
         const nextOffset = offset + limit;
         const hasMore = nextOffset < total;
 
         return successResponse(
             {
-                properties: data ?? [],
+                properties: properties,
                 nextOffset: hasMore ? nextOffset : null,
                 hasMore,
                 total,

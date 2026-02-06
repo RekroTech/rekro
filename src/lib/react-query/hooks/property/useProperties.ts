@@ -1,7 +1,10 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { PropertyInsert, UnitInsert, UnitAvailabilityInsert } from "@/types/db";
+import type { GetPropertiesParams } from "@/types/property.types";
+
 import {
     getPropertiesClient,
-    GetPropertiesParams,
     createPropertyClient,
     updatePropertyClient,
     getPropertyByIdClient,
@@ -17,7 +20,6 @@ import {
     getUnitAvailabilityByUnitIdClient,
 } from "@/services/unit_availability.service";
 import { uploadPropertyImages } from "@/services/storage.service";
-import { PropertyInsert, UnitInsert, UnitAvailabilityInsert } from "@/types/db";
 
 // Query keys for better cache management
 export const propertyKeys = {

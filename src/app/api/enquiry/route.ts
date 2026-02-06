@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-// import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 // Force dynamic for user-specific operations
 export const dynamic = "force-dynamic";
@@ -23,38 +23,88 @@ export async function POST(request: NextRequest) {
     try {
         const body = (await request.json()) as EnquiryBody;
 
-        // Validate required fields
-        const name = isNonEmptyString(body.name) ? body.name.trim() : "";
-        const email = isNonEmptyString(body.email) ? body.email.trim() : "";
-        const phone = isNonEmptyString(body.phone) ? body.phone.trim() : "";
+        const supabase = await createClient();
+
+        // Get current user if authenticated
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        // If user is logged in, get name and email from user data
+        // Otherwise, require them in the request body
+        let name: string;
+        let email: string;
+
+        if (user) {
+            // User is logged in - get data from session
+            name = (user.user_metadata?.name as string) || user.email?.split("@")[0] || "User";
+            email = user.email || "";
+        } else {
+            // Guest user - require name and email in body
+            name = isNonEmptyString(body.name) ? body.name.trim() : "";
+            email = isNonEmptyString(body.email) ? body.email.trim() : "";
+
+            if (!name || !email) {
+                return NextResponse.json(
+                    { error: "Name and email are required for guest enquiries" },
+                    { status: 400, headers: { "Cache-Control": "no-store" } }
+                );
+            }
+
+            // Validate email format for guest users
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return NextResponse.json(
+                    { error: "Invalid email format" },
+                    { status: 400, headers: { "Cache-Control": "no-store" } }
+                );
+            }
+        }
+
+        // Validate other required fields (same for both logged-in and guest users)
+        let phone = isNonEmptyString(body.phone) ? body.phone.trim() : "";
         const message = isNonEmptyString(body.message) ? body.message.trim() : "";
         const propertyTitle = isNonEmptyString(body.propertyTitle) ? body.propertyTitle : "";
         const propertyId = isNonEmptyString(body.propertyId) ? body.propertyId : "";
         const unitId = isNonEmptyString(body.unitId) ? body.unitId : null;
         const isEntireHome = typeof body.isEntireHome === "boolean" ? body.isEntireHome : false;
 
-        if (!name || !email || !phone || !message) {
+        // If user is logged in, try to get phone from user profile
+        if (user && !phone) {
+            const { data: userData } = await supabase
+                .from("users")
+                .select("phone")
+                .eq("id", user.id)
+                .single();
+
+            if (userData?.phone) {
+                phone = userData.phone;
+            }
+        }
+
+        if (!phone || !message) {
             return NextResponse.json(
-                { error: "All fields are required" },
+                { error: "Phone and message are required" },
                 { status: 400, headers: { "Cache-Control": "no-store" } }
             );
         }
 
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return NextResponse.json(
-                { error: "Invalid email format" },
-                { status: 400, headers: { "Cache-Control": "no-store" } }
-            );
+        // If user is logged in and provided a phone number, update their profile
+        if (user && isNonEmptyString(body.phone)) {
+            const { data: userData } = await supabase
+                .from("users")
+                .select("phone")
+                .eq("id", user.id)
+                .single();
+
+            // Only update if phone is different or not set
+            if (!userData?.phone || userData.phone !== phone) {
+                await supabase
+                    .from("users")
+                    .update({ phone, updated_at: new Date().toISOString() })
+                    .eq("id", user.id);
+            }
         }
-
-        // const supabase = await createClient();
-
-        // Get current user if authenticated
-        // const {
-        //     data: { user },
-        // } = await supabase.auth.getUser();
 
         // TODO: Store enquiry in database - create an 'enquiries' table and uncomment the code below
         // For now, we'll just log it and send email notification
@@ -90,6 +140,7 @@ export async function POST(request: NextRequest) {
 
         // For now, we'll simulate the email sending
         console.log("=== New Enquiry Received ===");
+        console.log("User ID:", user?.id || "Guest");
         console.log("Property:", propertyTitle);
         console.log("Type:", isEntireHome ? "Entire Home" : "Room");
         console.log("From:", name);
