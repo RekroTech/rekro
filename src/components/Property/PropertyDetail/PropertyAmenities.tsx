@@ -1,12 +1,11 @@
-﻿import React from "react";
-import { Icon, type IconName } from "@/components/common";
+﻿import { Icon, type IconName } from "@/components/common";
 
 interface PropertyAmenitiesProps {
     amenities: string[] | null;
 }
 
 // Icon mapping for common amenities
-const amenityIcons: Record<string, IconName> = {
+const amenityIcons = {
     wifi: "wifi",
     parking: "parking",
     pool: "pool",
@@ -18,36 +17,40 @@ const amenityIcons: Record<string, IconName> = {
     balcony: "balcony",
     garden: "garden",
     default: "check",
-};
+} as const;
 
 function getAmenityIcon(amenity: string): IconName {
     const normalized = amenity.toLowerCase().trim();
 
     // Check for common patterns
-    if (normalized.includes("wifi") || normalized.includes("internet")) return amenityIcons.wifi;
+    if (normalized.includes("wifi") || normalized.includes("internet"))
+        return amenityIcons.wifi as IconName;
     if (
         normalized.includes("parking") ||
         normalized.includes("garage") ||
         normalized.includes("carport")
     )
-        return amenityIcons.parking;
-    if (normalized.includes("pool") || normalized.includes("swimming")) return amenityIcons.pool;
-    if (normalized.includes("gym") || normalized.includes("fitness")) return amenityIcons.gym;
+        return amenityIcons.parking as IconName;
+    if (normalized.includes("pool") || normalized.includes("swimming"))
+        return amenityIcons.pool as IconName;
+    if (normalized.includes("gym") || normalized.includes("fitness"))
+        return amenityIcons.gym as IconName;
     if (normalized.includes("air") || normalized.includes("cooling") || normalized.includes("ac"))
-        return amenityIcons.aircon;
-    if (normalized.includes("heat")) return amenityIcons.heating;
+        return amenityIcons.aircon as IconName;
+    if (normalized.includes("heat")) return amenityIcons.heating as IconName;
     if (normalized.includes("laundry") || normalized.includes("washing"))
-        return amenityIcons.laundry;
-    if (normalized.includes("dishwasher")) return amenityIcons.dishwasher;
+        return amenityIcons.laundry as IconName;
+    if (normalized.includes("dishwasher")) return amenityIcons.dishwasher as IconName;
     if (
         normalized.includes("balcony") ||
         normalized.includes("patio") ||
         normalized.includes("terrace")
     )
-        return amenityIcons.balcony;
-    if (normalized.includes("garden") || normalized.includes("yard")) return amenityIcons.garden;
+        return amenityIcons.balcony as IconName;
+    if (normalized.includes("garden") || normalized.includes("yard"))
+        return amenityIcons.garden as IconName;
 
-    return amenityIcons.default;
+    return amenityIcons.default as IconName;
 }
 
 export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {

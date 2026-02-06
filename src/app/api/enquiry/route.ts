@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+// import { createClient } from "@/lib/supabase/server";
 
 type EnquiryBody = {
     name?: unknown;
@@ -40,32 +40,37 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
         }
 
-        const supabase = await createClient();
+        // const supabase = await createClient();
 
         // Get current user if authenticated
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
+        // const {
+        //     data: { user },
+        // } = await supabase.auth.getUser();
 
-        // Store enquiry in database (you can create an enquiries table)
-        // For now, we'll just log it and send email
+        // TODO: Store enquiry in database - create an 'enquiries' table and uncomment the code below
+        // For now, we'll just log it and send email notification
 
-        const enquiryData = {
-            user_id: user?.id || null,
-            property_id: propertyId,
-            unit_id: unitId,
-            name,
-            email,
-            phone,
-            message,
-            is_entire_home: isEntireHome,
-            created_at: new Date().toISOString(),
-        };
+        // const _enquiryData = {
+        //     user_id: user?.id || null,
+        //     property_id: propertyId,
+        //     unit_id: unitId,
+        //     name,
+        //     email,
+        //     phone,
+        //     message,
+        //     is_entire_home: isEntireHome,
+        //     created_at: new Date().toISOString(),
+        // };
 
-        // TODO: Store in database
+        // TODO: Uncomment when enquiries table is created
         // const { error: dbError } = await supabase
         //     .from('enquiries')
-        //     .insert([enquiryData]);
+        //     .insert([_enquiryData]);
+        //
+        // if (dbError) {
+        //     console.error("Database error:", dbError);
+        //     return NextResponse.json({ error: "Failed to store enquiry" }, { status: 500 });
+        // }
 
         // TODO: Send email to admin
         // This is where you would integrate with an email service like:

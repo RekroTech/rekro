@@ -1,4 +1,3 @@
-import React from "react";
 import { Input, Checkbox } from "@/components/common";
 import { UnitFormData } from "./types";
 

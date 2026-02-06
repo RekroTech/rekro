@@ -1,4 +1,3 @@
-import React from "react";
 import { Input } from "@/components/common";
 import { PropertyFormData } from "./types";
 

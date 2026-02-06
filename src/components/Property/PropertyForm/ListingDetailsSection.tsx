@@ -1,4 +1,3 @@
-import React from "react";
 import { Select } from "@/components/common";
 import { UnitFormData } from "./types";
 import { UnitForm } from "./UnitForm";
@@ -62,26 +61,26 @@ export function ListingDetailsSection({
                 )}
 
                 {/* Dynamic Unit Forms */}
-                {listingType === "room" ? (
-                    // Show only the active tab's form for room listings
-                    <UnitForm
-                        unit={units[activeRoomTab]}
-                        index={activeRoomTab}
-                        listingType={listingType}
-                        onUpdate={onUpdateUnit}
-                    />
-                ) : (
-                    // Show single form for entire home
-                    units.map((unit, index) => (
-                        <UnitForm
-                            key={index}
-                            unit={unit}
-                            index={index}
-                            listingType={listingType}
-                            onUpdate={onUpdateUnit}
-                        />
-                    ))
-                )}
+                {listingType === "room"
+                    ? // Show only the active tab's form for room listings
+                      units[activeRoomTab] && (
+                          <UnitForm
+                              unit={units[activeRoomTab]}
+                              index={activeRoomTab}
+                              listingType={listingType}
+                              onUpdate={onUpdateUnit}
+                          />
+                      )
+                    : // Show single form for entire home
+                      units.map((unit, index) => (
+                          <UnitForm
+                              key={index}
+                              unit={unit}
+                              index={index}
+                              listingType={listingType}
+                              onUpdate={onUpdateUnit}
+                          />
+                      ))}
             </div>
         </section>
     );

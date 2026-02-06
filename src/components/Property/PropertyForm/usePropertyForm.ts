@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Property, Unit } from "@/types/db";
+import { ListingType, Property, Unit } from "@/types/db";
 import { PropertyFormData, UnitFormData } from "./types";
 import { getInitialFormData } from "./utils";
 import { DEFAULT_UNIT_DATA } from "./constants";
@@ -9,10 +9,7 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
     const propertyId = property?.id;
     const prevPropertyIdRef = useRef<string | undefined>(undefined);
 
-    const getInitialUnits = (
-        bedroomCount: number,
-        type: "entire_home" | "room"
-    ): UnitFormData[] => {
+    const getInitialUnits = (bedroomCount: number, type: ListingType): UnitFormData[] => {
         const count = type === "room" ? Math.max(1, bedroomCount) : 1;
 
         return Array.from({ length: count }, (_, index) => ({
@@ -22,32 +19,36 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
         }));
     };
 
+    const mapExistingUnitsToFormData = (units: Unit[]): UnitFormData[] => {
+        return units.map((unit) => ({
+            name: unit.name || "",
+            unit_description: unit.description || "",
+            price_per_week: unit.price_per_week?.toString() || "",
+            bond_amount: unit.bond_amount?.toString() || "",
+            bills_included: unit.bills_included || false,
+            min_lease_weeks: unit.min_lease_weeks?.toString() || "",
+            max_lease_weeks: unit.max_lease_weeks?.toString() || "",
+            max_occupants: unit.max_occupants?.toString() || "",
+            size_sqm: unit.size_sqm?.toString() || "",
+            available_from: "",
+            available_to: "",
+            is_available: true,
+            availability_notes: "",
+        }));
+    };
+
     // Initialize state with lazy initialization to avoid unnecessary computations
     const [formData, setFormData] = useState<PropertyFormData>(() => getInitialFormData(property));
-    const [listingType, setListingType] = useState<"entire_home" | "room">(() => {
+    const [listingType, setListingType] = useState<ListingType>(() => {
         if (property && existingUnits.length > 0) {
-            return existingUnits[0].listing_type || "entire_home";
+            return existingUnits[0]?.listing_type || "entire_home";
         }
         return "entire_home";
     });
     const [activeRoomTab, setActiveRoomTab] = useState(0);
     const [units, setUnits] = useState<UnitFormData[]>(() => {
         if (property && existingUnits.length > 0) {
-            return existingUnits.map((unit) => ({
-                name: unit.name || "",
-                unit_description: unit.description || "",
-                price_per_week: unit.price_per_week?.toString() || "",
-                bond_amount: unit.bond_amount?.toString() || "",
-                bills_included: unit.bills_included || false,
-                min_lease_weeks: unit.min_lease_weeks?.toString() || "",
-                max_lease_weeks: unit.max_lease_weeks?.toString() || "",
-                max_occupants: unit.max_occupants?.toString() || "",
-                size_sqm: unit.size_sqm?.toString() || "",
-                available_from: "",
-                available_to: "",
-                is_available: true,
-                availability_notes: "",
-            }));
+            return mapExistingUnitsToFormData(existingUnits);
         }
         return getInitialUnits(1, "entire_home");
     });
@@ -63,22 +64,8 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
 
         if (property && existingUnits.length > 0) {
             const newFormData = getInitialFormData(property);
-            const newListingType = existingUnits[0].listing_type || "entire_home";
-            const newUnits = existingUnits.map((unit) => ({
-                name: unit.name || "",
-                unit_description: unit.description || "",
-                price_per_week: unit.price_per_week?.toString() || "",
-                bond_amount: unit.bond_amount?.toString() || "",
-                bills_included: unit.bills_included || false,
-                min_lease_weeks: unit.min_lease_weeks?.toString() || "",
-                max_lease_weeks: unit.max_lease_weeks?.toString() || "",
-                max_occupants: unit.max_occupants?.toString() || "",
-                size_sqm: unit.size_sqm?.toString() || "",
-                available_from: "",
-                available_to: "",
-                is_available: true,
-                availability_notes: "",
-            }));
+            const newListingType = existingUnits[0]?.listing_type || "entire_home";
+            const newUnits = mapExistingUnitsToFormData(existingUnits);
 
             setFormData(newFormData);
             setListingType(newListingType);
@@ -126,7 +113,7 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
     const updateUnit = (index: number, updates: Partial<UnitFormData>) => {
         setUnits((prev) => {
             const newUnits = [...prev];
-            newUnits[index] = { ...newUnits[index], ...updates };
+            newUnits[index] = { ...newUnits[index], ...updates } as UnitFormData;
             return newUnits;
         });
     };

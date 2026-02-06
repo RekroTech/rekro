@@ -1,4 +1,3 @@
-import React from "react";
 import Image from "next/image";
 import { Property } from "@/types/db";
 import { getPropertyFileUrl } from "@/services/storage.service";

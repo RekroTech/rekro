@@ -97,10 +97,12 @@ export async function uploadPropertyFiles(
 export async function uploadPropertyImages(files: File[], propertyId: string): Promise<string[]> {
     const results = await uploadPropertyFiles(files, propertyId);
     // Extract only the filename part from the full path: property/{id}/{filename}
-    return results.map((r) => {
-        const parts = r.path.split("/");
-        return parts[parts.length - 1]; // Return only the filename
-    });
+    return results
+        .map((r) => {
+            const parts = r.path.split("/");
+            return parts[parts.length - 1] || "";
+        })
+        .filter((filename): filename is string => filename !== "");
 }
 
 /**
@@ -187,7 +189,7 @@ export async function deletePropertyFiles(
             // If it's a full URL, extract the path
             if (pathOrUrl.includes("/storage/v1/object/public/rekro-s3/")) {
                 const match = pathOrUrl.match(/\/storage\/v1\/object\/public\/rekro-s3\/(.+)$/);
-                return match ? decodeURIComponent(match[1]) : null;
+                return match?.[1] ? decodeURIComponent(match[1]) : null;
             }
             // If it's a full path starting with "property/", use it as-is
             if (pathOrUrl.startsWith("property/")) {

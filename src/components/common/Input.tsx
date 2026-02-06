@@ -1,4 +1,5 @@
-import React from "react";
+import { forwardRef, useId } from "react";
+import { clsx } from "clsx";
 
 export type InputVariant = "default" | "auth";
 export type InputSize = "sm" | "md" | "lg";
@@ -14,7 +15,7 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
     fullWidth?: boolean;
 }
 
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+export const Input = forwardRef<HTMLInputElement, InputProps>(
     (
         {
             variant = "default",
@@ -25,14 +26,14 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             leftIcon,
             rightIcon,
             fullWidth = true,
-            className = "",
+            className,
             id,
             disabled,
             ...props
         },
         ref
     ) => {
-        const generatedId = React.useId();
+        const generatedId = useId();
         const inputId = id || generatedId;
 
         const baseClasses =
@@ -48,18 +49,17 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             variant === "auth"
                 ? "rounded-[var(--radius-input-rn)]"
                 : "rounded-[var(--radius-input)]";
-        const widthClass = fullWidth ? "w-full" : "";
+
         const errorClass = error
             ? "border-danger-500 focus:border-danger-600"
             : "focus:border-primary-500";
+
         const focusClass = error
             ? "focus:shadow-[0_0_0_4px_rgba(255,59,48,0.1)]"
             : "focus:shadow-[0_0_0_4px_var(--primary-100)]";
-        const iconPaddingLeft = leftIcon ? "pl-10" : "";
-        const iconPaddingRight = rightIcon ? "pr-10" : "";
 
         return (
-            <div className={fullWidth ? "w-full" : ""}>
+            <div className={clsx(fullWidth && "w-full")}>
                 {label && (
                     <label htmlFor={inputId} className="block text-sm font-medium text-text mb-2">
                         {label}
@@ -75,7 +75,25 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         ref={ref}
                         id={inputId}
                         disabled={disabled}
-                        className={`${baseClasses} ${sizeClasses[size]} ${radiusClass} ${widthClass} ${errorClass} ${focusClass} ${iconPaddingLeft} ${iconPaddingRight} ${className}`}
+                        aria-invalid={error ? "true" : "false"}
+                        aria-describedby={
+                            error
+                                ? `${inputId}-error`
+                                : helperText
+                                  ? `${inputId}-helper`
+                                  : undefined
+                        }
+                        className={clsx(
+                            baseClasses,
+                            sizeClasses[size],
+                            radiusClass,
+                            errorClass,
+                            focusClass,
+                            fullWidth && "w-full",
+                            leftIcon && "pl-10",
+                            rightIcon && "pr-10",
+                            className
+                        )}
                         {...props}
                     />
                     {rightIcon && (
@@ -84,9 +102,19 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         </div>
                     )}
                 </div>
-                {error && <p className="mt-1.5 text-sm text-danger-500">{error}</p>}
+                {error && (
+                    <p
+                        id={`${inputId}-error`}
+                        className="mt-1.5 text-sm text-danger-500"
+                        role="alert"
+                    >
+                        {error}
+                    </p>
+                )}
                 {helperText && !error && (
-                    <p className="mt-1.5 text-sm text-text-muted">{helperText}</p>
+                    <p id={`${inputId}-helper`} className="mt-1.5 text-sm text-text-muted">
+                        {helperText}
+                    </p>
                 )}
             </div>
         );

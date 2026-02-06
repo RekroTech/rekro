@@ -1,4 +1,5 @@
-import React from "react";
+import React, { forwardRef } from "react";
+import { clsx } from "clsx";
 import { Icon } from "./Icon";
 
 export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "outline";
@@ -13,7 +14,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     children: React.ReactNode;
 }
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     (
         {
             variant = "primary",
@@ -22,14 +23,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             fullWidth = false,
             loading = false,
             disabled,
-            className = "",
+            className,
             children,
+            type = "button",
             ...props
         },
         ref
     ) => {
         const baseClasses =
-            "inline-flex items-center justify-center font-semibold transition-all duration-200 outline-none disabled:opacity-50 disabled:cursor-not-allowed";
+            "inline-flex items-center justify-center font-semibold transition-all duration-200 outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
         const variantClasses: Record<ButtonVariant, string> = {
             primary:
@@ -49,13 +51,20 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         };
 
         const radiusClass = pill ? "rounded-[var(--radius-pill)]" : "rounded-[var(--radius-input)]";
-        const widthClass = fullWidth ? "w-full" : "";
 
         return (
             <button
                 ref={ref}
+                type={type}
                 disabled={disabled || loading}
-                className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${radiusClass} ${widthClass} ${className}`}
+                className={clsx(
+                    baseClasses,
+                    variantClasses[variant],
+                    sizeClasses[size],
+                    radiusClass,
+                    fullWidth && "w-full",
+                    className
+                )}
                 {...props}
             >
                 {loading && <Icon name="spinner" className="animate-spin -ml-1 mr-2 h-4 w-4" />}

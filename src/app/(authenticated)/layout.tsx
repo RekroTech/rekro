@@ -1,4 +1,3 @@
-import React from "react";
 import { redirect } from "next/navigation";
 import { Header } from "@/components";
 import { getSession } from "@/lib/auth/server";
@@ -7,14 +6,7 @@ import { getSession } from "@/lib/auth/server";
 export const dynamic = "force-dynamic";
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
-    let user = null;
-
-    try {
-        user = await getSession();
-    } catch (error) {
-        console.error("Auth layout error:", error);
-        redirect("/login?error=session");
-    }
+    const user = await getSession();
 
     if (!user) {
         redirect("/login");

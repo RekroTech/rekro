@@ -45,7 +45,7 @@ export function useToggleUnitLike() {
         mutationFn: async (unitId: string) => {
             return toggleUnitLike(unitId);
         },
-        onSuccess: (isLiked, unitId) => {
+        onSuccess: (_isLiked, unitId) => {
             // Invalidate the specific unit like query
             void queryClient.invalidateQueries({ queryKey: ["unit-like", unitId] });
         },

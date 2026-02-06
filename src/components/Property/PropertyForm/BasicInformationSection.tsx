@@ -1,4 +1,3 @@
-import React from "react";
 import { Input, Checkbox, Select } from "@/components/common";
 import { PropertyFormData } from "./types";
 import { PROPERTY_TYPES } from "./constants";

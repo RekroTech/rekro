@@ -16,6 +16,11 @@ export function ImageGallery({ images, title, selectedIndex, onIndexChange }: Im
         onIndexChange(selectedIndex === images.length - 1 ? 0 : selectedIndex + 1);
     };
 
+    // Safety check for empty images array
+    if (!images.length || !images[selectedIndex]) {
+        return null;
+    }
+
     return (
         <div className="bg-gray-100 rounded-lg overflow-hidden mb-4 group relative aspect-video">
             <Visual

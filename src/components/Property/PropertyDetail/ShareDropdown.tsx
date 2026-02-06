@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Dropdown, Icon } from "@/components/common";
 import { useShareProperty } from "@/lib/react-query/hooks/useShareProperty";
 

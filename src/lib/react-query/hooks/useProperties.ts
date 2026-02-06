@@ -149,8 +149,10 @@ export function useUpdateProperty() {
                     const availability = availabilityData[i];
 
                     if (existingUnit) {
-                        // Update existing unit
-                        await updateUnitClient(existingUnit.id, unitData);
+                        // Update existing unit (unitData should be defined since we're iterating unitsData)
+                        if (unitData) {
+                            await updateUnitClient(existingUnit.id, unitData);
+                        }
 
                         // Update or create availability record for this unit
                         if (availability) {
@@ -172,11 +174,12 @@ export function useUpdateProperty() {
                                 });
                             }
                         }
-                    } else {
+                    } else if (unitData) {
                         // Create new unit (this happens when bedroom count increased)
                         const newUnit = await createUnitClient({
                             ...unitData,
                             property_id: propertyId,
+                            listing_type: unitData.listing_type || "entire_home",
                         });
 
                         // Create availability record for new unit

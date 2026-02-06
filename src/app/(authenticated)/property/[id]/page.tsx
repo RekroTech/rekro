@@ -41,11 +41,14 @@ export default function PropertyDetailPage() {
     // Initialize selectedUnitId based on units or propertyId changes
     useEffect(() => {
         if (units.length > 0 && !selectedUnitId) {
-            // Use requestAnimationFrame to avoid cascading renders
-            requestAnimationFrame(() => {
-                setSelectedUnitId(units[0].id);
-                setSelectedImageIndex(0);
-            });
+            const firstUnit = units[0];
+            if (firstUnit) {
+                // Use requestAnimationFrame to avoid cascading renders
+                requestAnimationFrame(() => {
+                    setSelectedUnitId(firstUnit.id);
+                    setSelectedImageIndex(0);
+                });
+            }
         }
     }, [units, selectedUnitId]);
 
@@ -59,7 +62,8 @@ export default function PropertyDetailPage() {
 
     const selectedUnit = useMemo(() => {
         if (units.length === 0) return null;
-        return units.find((u: Unit) => u.id === selectedUnitId) ?? units[0];
+        const found = units.find((u: Unit) => u.id === selectedUnitId);
+        return found ?? units[0] ?? null;
     }, [units, selectedUnitId]);
 
     const activeUnitId = selectedUnit?.id || "";
