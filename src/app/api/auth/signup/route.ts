@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { userRolesService } from "@/services/user_roles.service";
 
 // Disable caching for auth routes
 export const dynamic = "force-dynamic";
@@ -9,6 +10,7 @@ type SignupBody = {
     email?: unknown;
     password?: unknown;
     name?: unknown;
+    role?: unknown;
 };
 
 function isNonEmptyString(v: unknown): v is string {
@@ -22,6 +24,7 @@ export async function POST(request: NextRequest) {
         const email = isNonEmptyString(body.email) ? body.email.trim() : "";
         const password = isNonEmptyString(body.password) ? body.password : "";
         const name = typeof body.name === "string" ? body.name.trim() : undefined;
+        const role = body.role === "landlord" ? "landlord" : "tenant"; // Default to tenant
 
         if (!email || !password) {
             return NextResponse.json(
@@ -55,6 +58,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Assign the default role to the new user
+        await userRolesService.addUserRole(data.user.id, role);
+
+        // Fetch user roles
+        const roles = await userRolesService.getUserRoles(data.user.id);
+
         // Normalize to your app User shape
         const user = {
             id: data.user.id,
@@ -69,6 +78,7 @@ export async function POST(request: NextRequest) {
                 typeof data.user.user_metadata?.avatar_url === "string"
                     ? data.user.user_metadata.avatar_url
                     : null,
+            roles,
         };
 
         return NextResponse.json(

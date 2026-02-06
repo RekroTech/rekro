@@ -1,3 +1,10 @@
+-- User roles enum
+CREATE TYPE public.app_role AS ENUM (
+  'tenant',      -- Regular users looking for properties
+  'landlord',    -- Property owners/managers
+  'admin'        -- System administrators
+);
+
 create table public.user_roles (
   user_id uuid not null,
   role public.app_role not null,

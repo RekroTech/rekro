@@ -30,3 +30,5 @@ export type { PropertyMediaProps } from "./Visual";
 
 export { Icon } from "./Icon";
 export type { IconProps, IconName } from "./Icon";
+
+export { RoleGuard, PermissionGuard } from "./RoleGuard";

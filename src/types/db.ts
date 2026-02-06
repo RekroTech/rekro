@@ -18,6 +18,9 @@ export interface Location {
 
 export type ListingType = "entire_home" | "room";
 
+// User role types matching database enum
+export type AppRole = "tenant" | "landlord" | "admin" | "super_admin";
+
 // Application enum types
 export type ApplicationType = "individual" | "group";
 export type ApplicationStatus =
@@ -298,6 +301,22 @@ export interface Database {
                     updated_at?: string;
                 };
             };
+            user_roles: {
+                Row: {
+                    user_id: string;
+                    role: AppRole;
+                    created_at: string | null;
+                };
+                Insert: {
+                    user_id: string;
+                    role: AppRole;
+                    created_at?: string | null;
+                };
+                Update: {
+                    user_id?: string;
+                    role?: AppRole;
+                };
+            };
             // Add more tables as needed
         };
     };
@@ -333,3 +352,7 @@ export type ApplicationDetailsInsert =
     Database["public"]["Tables"]["application_details"]["Insert"];
 export type ApplicationDetailsUpdate =
     Database["public"]["Tables"]["application_details"]["Update"];
+
+export type UserRole = Database["public"]["Tables"]["user_roles"]["Row"];
+export type UserRoleInsert = Database["public"]["Tables"]["user_roles"]["Insert"];
+export type UserRoleUpdate = Database["public"]["Tables"]["user_roles"]["Update"];

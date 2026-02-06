@@ -3,6 +3,7 @@ export interface SignupCredentials {
     email: string;
     password: string;
     name?: string;
+    role?: "tenant" | "landlord"; // Optional role selection during signup
 }
 
 export interface LoginCredentials {
@@ -10,12 +11,16 @@ export interface LoginCredentials {
     password: string;
 }
 
+// User roles matching database enum
+export type AppRole = "tenant" | "landlord" | "admin" | "super_admin";
+
 // User model used throughout the app (clean, internal)
 export interface User {
     id: string;
     email: string;
     name?: string | null;
     avatar_url?: string | null;
+    roles?: AppRole[]; // Array of roles the user has
 }
 
 /**
