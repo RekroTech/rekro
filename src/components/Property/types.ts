@@ -40,3 +40,5 @@ export interface UnitFormData {
     is_available: boolean;
     availability_notes: string;
 }
+
+export type FurniturePaymentOption = "add_to_rent" | "pay_total" | null;

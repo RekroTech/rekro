@@ -36,7 +36,7 @@ export const DEFAULT_UNIT_DATA = {
     price_per_week: "",
     bond_amount: "",
     bills_included: false,
-    min_lease: "12",
+    min_lease: "4",
     max_lease: "12",
     max_occupants: "",
     size_sqm: "",
@@ -45,3 +45,7 @@ export const DEFAULT_UNIT_DATA = {
     is_available: true,
     availability_notes: "",
 };
+
+// Add-on constants
+export const FURNITURE_COST = 1500;
+export const CLEANING_COST = 500;

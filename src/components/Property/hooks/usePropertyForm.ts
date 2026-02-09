@@ -44,7 +44,7 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
                 price_per_week: pricePerWeek,
                 bond_amount: calculatedBond,
                 bills_included: unit.bills_included || false,
-                min_lease: unit.min_lease?.toString() || "12",
+                min_lease: unit.min_lease?.toString() || "4",
                 max_lease: unit.max_lease?.toString() || "12",
                 max_occupants: unit.max_occupants?.toString() || "",
                 size_sqm: unit.size_sqm?.toString() || "",

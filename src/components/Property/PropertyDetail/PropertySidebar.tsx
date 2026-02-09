@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
@@ -10,6 +10,10 @@ import { useToggleUnitLike, useUnitLike } from "@/lib/react-query/hooks/property
 import { ApplicationForm } from "../ApplicationForm";
 import { EnquiryModal } from "./EnquiryModal";
 import { ShareDropdown } from "./ShareDropdown";
+import { AddOnsReviewModal, AddOnsData } from "./AddOnsReviewModal";
+import { FurniturePaymentOption } from "@/components/Property/types";
+import { getBillsCostPerWeek } from "@/components/Property/utils";
+import { CLEANING_COST, FURNITURE_COST } from "@/components/Property/constants";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
@@ -22,7 +26,21 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
     const router = useRouter();
 
     const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
+    const [isAddOnsReviewModalOpen, setIsAddOnsReviewModalOpen] = useState(false);
     const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+
+    // Lease period and start date state (period in months: 4, 6, 9, 12)
+    const [selectedLease, setSelectedLease] = useState<number>(12);
+    const [selectedStartDate, setSelectedStartDate] = useState<string>(
+        selectedUnit?.available_from || new Date().toISOString().split("T")[0] || ""
+    );
+
+    // Add-ons state (only for room units)
+    const [furnitureSelected, setFurnitureSelected] = useState(false);
+    const [furniturePaymentOption, setFurniturePaymentOption] =
+        useState<FurniturePaymentOption>(null);
+    const [billsIncluded, setBillsIncluded] = useState(false);
+    const [cleaningSelected, setCleaningSelected] = useState(false);
 
     const handleLoginRequired = () => {
         router.push(`/login?redirect=/property/${property.id}`);
@@ -106,8 +124,87 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
 
     const availabilityStatus = getAvailabilityStatus();
 
+    // Calculate adjusted rent based on lease period
+    const adjustedBaseRent = useMemo(() => {
+        if (!selectedUnit) return 0;
+
+        const baseRent = selectedUnit.price_per_week;
+
+        switch (selectedLease) {
+            case 4:
+                // 4 months: 1.5 times the 6-month rent
+                // First calculate 6-month rent (5% more than 12-month)
+                const sixMonthRent = baseRent * 1.05;
+                return sixMonthRent * 1.5;
+            case 6:
+                // 6 months: 5% more than 12-month rent
+                return baseRent * 1.05;
+            case 9:
+                // 9 months: 4/3 times the 12-month rent
+                return baseRent * (4 / 3);
+            case 12:
+            default:
+                // 12 months: base rent (no adjustment)
+                return baseRent;
+        }
+    }, [selectedUnit, selectedLease]);
+
+    // Calculate add-ons costs (only for room units)
+    const addOnsCosts = useMemo(() => {
+        if (isEntireHome || !selectedUnit) {
+            return {
+                furnitureCost: 0,
+                billsCost: 0,
+                cleaningCost: 0,
+                total: 0,
+                furniturePerWeek: 0,
+            };
+        }
+
+        let furnitureCost = 0;
+        let furniturePerWeek = 0;
+
+        if (furnitureSelected && furniturePaymentOption) {
+            if (furniturePaymentOption === "pay_total") {
+                furnitureCost = FURNITURE_COST;
+            } else if (furniturePaymentOption === "add_to_rent") {
+                // Calculate furniture cost per week based on selected lease period
+                // Convert months to weeks (approximately 4.33 weeks per month)
+                const leaseWeeks = selectedLease * 4.33;
+                furniturePerWeek = FURNITURE_COST / leaseWeeks;
+            }
+        }
+
+        const billsCost = billsIncluded ? getBillsCostPerWeek(property.bedrooms) : 0;
+        const cleaningCost = cleaningSelected ? CLEANING_COST : 0;
+
+        return {
+            furnitureCost,
+            billsCost,
+            cleaningCost,
+            total: furnitureCost + cleaningCost,
+            furniturePerWeek,
+        };
+    }, [
+        isEntireHome,
+        selectedUnit,
+        furnitureSelected,
+        furniturePaymentOption,
+        billsIncluded,
+        cleaningSelected,
+        property.bedrooms,
+        selectedLease,
+    ]);
+
+    // Calculate total weekly rent with add-ons
+    const totalWeeklyRent = useMemo(() => {
+        if (!selectedUnit) return 0;
+        return adjustedBaseRent + addOnsCosts.furniturePerWeek + addOnsCosts.billsCost;
+    }, [selectedUnit, adjustedBaseRent, addOnsCosts.furniturePerWeek, addOnsCosts.billsCost]);
+
     return (
-        <div className="col-span-1">
+        <div className="col-span-1 space-y-4">
+            {/* Top Section - Price and Actions */}
             <div className="bg-white border border-border rounded-lg p-6 shadow-lg sticky top-4">
                 {/* Like and Share Buttons - Top Right */}
                 <div className="absolute top-4 right-4 flex gap-2">
@@ -147,14 +244,19 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
                 </div>
 
                 {selectedUnit && (
-                    <div className="mb-4 pb-4 border-b border-border">
+                    <div className="mb-6">
                         <h3 className="text-sm font-semibold text-text-muted mb-1">
                             {isEntireHome ? "Price" : "Room Price"}
                         </h3>
                         <p className="text-3xl font-bold text-primary-600">
-                            ${selectedUnit.price_per_week}
+                            ${adjustedBaseRent.toFixed(2)}
                             <span className="text-base font-normal text-text-muted">/week</span>
                         </p>
+                        {selectedLease !== 12 && (
+                            <p className="text-xs text-text-muted mt-1">
+                                Base: ${selectedUnit.price_per_week}/week (12 months)
+                            </p>
+                        )}
                         {selectedUnit.bond_amount && (
                             <p className="text-sm text-text-muted mt-1">
                                 Bond: ${selectedUnit.bond_amount}
@@ -162,49 +264,101 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
                         )}
 
                         {/* Availability Information */}
-                        {selectedUnit && (
-                            <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-text-muted">Status:</span>
-                                        <span
-                                            className={`font-medium ${availabilityStatus.color} inline-flex items-center gap-1.5`}
-                                        >
-                                            <Icon name="dot" className="w-3 h-3" />
-                                            {selectedUnit.is_available
-                                                ? "Available"
-                                                : "Not Available"}
+                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-text-muted">Status:</span>
+                                    <span
+                                        className={`font-medium ${availabilityStatus.color} inline-flex items-center gap-1.5`}
+                                    >
+                                        <Icon name="dot" className="w-3 h-3" />
+                                        {selectedUnit.is_available ? "Available" : "Not Available"}
+                                    </span>
+                                </div>
+                                {availableFromFormatted && (
+                                    <div className="flex justify-between">
+                                        <span className="text-text-muted">Available from:</span>
+                                        <span className="text-text font-medium">
+                                            {availableFromFormatted}
                                         </span>
                                     </div>
-                                    {availableFromFormatted && (
-                                        <div className="flex justify-between">
-                                            <span className="text-text-muted">Available from:</span>
-                                            <span className="text-text font-medium">
-                                                {availableFromFormatted}
-                                            </span>
+                                )}
+                                {availableToFormatted && (
+                                    <div className="flex justify-between">
+                                        <span className="text-text-muted">Available until:</span>
+                                        <span className="text-text font-medium">
+                                            {availableToFormatted}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Lease Period and Start Date Selection */}
+                            <div className="mt-4 pt-4 border-t border-gray-300 space-y-3">
+                                <div>
+                                    <label
+                                        htmlFor="startDate"
+                                        className="block text-xs font-medium text-text-muted mb-1"
+                                    >
+                                        Preferred Start Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        id="startDate"
+                                        value={selectedStartDate}
+                                        onChange={(e) => setSelectedStartDate(e.target.value)}
+                                        min={
+                                            selectedUnit.available_from ||
+                                            new Date().toISOString().split("T")[0]
+                                        }
+                                        max={selectedUnit.available_to || undefined}
+                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label
+                                        htmlFor="leasePeriod"
+                                        className="block text-xs font-medium text-text-muted mb-1"
+                                    >
+                                        Lease Period (months)
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            id="leasePeriod"
+                                            value={selectedLease}
+                                            onChange={(e) =>
+                                                setSelectedLease(Number(e.target.value))
+                                            }
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none bg-white"
+                                        >
+                                            <option value={4}>4 months</option>
+                                            <option value={6}>6 months</option>
+                                            <option value={9}>9 months</option>
+                                            <option value={12}>12 months</option>
+                                        </select>
+                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                            <svg
+                                                className="fill-current h-4 w-4"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 20 20"
+                                            >
+                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                            </svg>
                                         </div>
-                                    )}
-                                    {availableToFormatted && (
-                                        <div className="flex justify-between">
-                                            <span className="text-text-muted">
-                                                Available until:
-                                            </span>
-                                            <span className="text-text font-medium">
-                                                {availableToFormatted}
-                                            </span>
-                                        </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
-                        )}
-                        {!selectedUnit && (
-                            <div className="mt-3 flex items-center gap-2">
-                                <div className="inline-flex items-center gap-1.5 text-gray-500 font-medium text-sm">
-                                    <Icon name="dot" className="w-4 h-4" />
-                                    Availability will be updated
-                                </div>
-                            </div>
-                        )}
+                        </div>
+                    </div>
+                )}
+
+                {!selectedUnit && (
+                    <div className="mb-6 flex items-center gap-2">
+                        <div className="inline-flex items-center gap-1.5 text-gray-500 font-medium text-sm">
+                            <Icon name="dot" className="w-4 h-4" />
+                            Availability will be updated
+                        </div>
                     </div>
                 )}
 
@@ -231,7 +385,13 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
                             if (!isAuthenticated) {
                                 handleLoginRequired();
                             } else {
-                                setIsApplicationModalOpen(true);
+                                // For room units, show add-ons review modal first
+                                // For entire homes, go directly to application form
+                                if (!isEntireHome) {
+                                    setIsAddOnsReviewModalOpen(true);
+                                } else {
+                                    setIsApplicationModalOpen(true);
+                                }
                             }
                         }}
                     >
@@ -248,87 +408,230 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
                         </p>
                     </div>
                 )}
-
-                {/* Details */}
-                <div className="mt-6 pt-6 border-t border-border">
-                    <h4 className="text-sm font-semibold text-text mb-3">
-                        {isEntireHome ? "Property" : "Room"} Details
-                    </h4>
-
-                    <div className="space-y-2 text-sm">
-                        {selectedUnit && (
-                            <>
-                                {selectedUnit.max_occupants && (
-                                    <div className="flex justify-between">
-                                        <span className="text-text-muted">Max Occupants:</span>
-                                        <span className="text-text font-medium">
-                                            {selectedUnit.max_occupants}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {selectedUnit.size_sqm && (
-                                    <div className="flex justify-between">
-                                        <span className="text-text-muted">Size:</span>
-                                        <span className="text-text font-medium">
-                                            {selectedUnit.size_sqm} sqm
-                                        </span>
-                                    </div>
-                                )}
-
-                                {selectedUnit.bills_included !== null && (
-                                    <div className="flex justify-between">
-                                        <span className="text-text-muted">Bills Included:</span>
-                                        <span className="text-text font-medium">
-                                            {selectedUnit.bills_included ? "Yes" : "No"}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {(selectedUnit.min_lease || selectedUnit.max_lease) && (
-                                    <div className="flex justify-between">
-                                        <span className="text-text-muted">Lease Term:</span>
-                                        <span className="text-text font-medium">
-                                            {selectedUnit.min_lease && `${selectedUnit.min_lease}w`}
-                                            {selectedUnit.min_lease &&
-                                                selectedUnit.max_lease &&
-                                                " - "}
-                                            {selectedUnit.max_lease && `${selectedUnit.max_lease}w`}
-                                        </span>
-                                    </div>
-                                )}
-                            </>
-                        )}
-
-                        {property.property_type && (
-                            <div className="flex justify-between">
-                                <span className="text-text-muted">Property Type:</span>
-                                <span className="text-text font-medium capitalize">
-                                    {property.property_type}
-                                </span>
-                            </div>
-                        )}
-
-                        {property.furnished !== undefined && (
-                            <div className="flex justify-between">
-                                <span className="text-text-muted">Furnished:</span>
-                                <span className="text-text font-medium">
-                                    {property.furnished ? "Yes" : "No"}
-                                </span>
-                            </div>
-                        )}
-
-                        {property.created_at && (
-                            <div className="flex justify-between">
-                                <span className="text-text-muted">Listed:</span>
-                                <span className="text-text font-medium">
-                                    {new Date(property.created_at).toLocaleDateString()}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                </div>
             </div>
+
+            {/* Bottom Section - Add-ons (Only for room units) */}
+            {!isEntireHome && selectedUnit && (
+                <div className="bg-white border border-border rounded-lg p-6 shadow-lg">
+                    <h3 className="text-lg font-bold text-text mb-4">Customize Your Stay</h3>
+
+                    <div className="space-y-4">
+                        {/* Furniture Add-on - Only if property is unfurnished */}
+                        {!property.furnished && (
+                            <div className="space-y-2">
+                                <label className="flex items-start gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={furnitureSelected}
+                                        onChange={(e) => {
+                                            setFurnitureSelected(e.target.checked);
+                                            if (!e.target.checked) {
+                                                setFurniturePaymentOption(null);
+                                            }
+                                        }}
+                                        className="mt-1 w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                                    />
+                                    <span className="text-sm text-text flex-1">
+                                        <span className="font-medium">Furnished package</span>
+                                        <span className="text-text-muted block text-xs">
+                                            ${FURNITURE_COST} total
+                                        </span>
+                                    </span>
+                                </label>
+
+                                {/* Payment options for furniture */}
+                                {furnitureSelected && (
+                                    <div className="ml-6 space-y-2 p-3 bg-gray-50 rounded-md">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="furniturePayment"
+                                                checked={furniturePaymentOption === "add_to_rent"}
+                                                onChange={() =>
+                                                    setFurniturePaymentOption("add_to_rent")
+                                                }
+                                                className="w-4 h-4 text-primary-600 focus:ring-2 focus:ring-primary-500"
+                                            />
+                                            <span className="text-sm text-text">
+                                                Add to rent{" "}
+                                                <span className="text-text-muted">
+                                                    ($
+                                                    {(
+                                                        FURNITURE_COST /
+                                                        (selectedLease * 4.33)
+                                                    ).toFixed(2)}
+                                                    /week)
+                                                </span>
+                                            </span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="furniturePayment"
+                                                checked={furniturePaymentOption === "pay_total"}
+                                                onChange={() =>
+                                                    setFurniturePaymentOption("pay_total")
+                                                }
+                                                className="w-4 h-4 text-primary-600 focus:ring-2 focus:ring-primary-500"
+                                            />
+                                            <span className="text-sm text-text">
+                                                Pay total upfront{" "}
+                                                <span className="text-text-muted">
+                                                    (${FURNITURE_COST})
+                                                </span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Bills Included Add-on */}
+                        <label className="flex items-start gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={billsIncluded}
+                                onChange={(e) => setBillsIncluded(e.target.checked)}
+                                className="mt-1 w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-text flex-1">
+                                <span className="font-medium">Bills included</span>
+                                <span className="text-text-muted block text-xs">
+                                    +${getBillsCostPerWeek(property.bedrooms)}/week
+                                </span>
+                            </span>
+                        </label>
+
+                        {/* Cleaning Add-on */}
+                        <label className="flex items-start gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={cleaningSelected}
+                                onChange={(e) => setCleaningSelected(e.target.checked)}
+                                className="mt-1 w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-text flex-1">
+                                <span className="font-medium">Cleaning service</span>
+                                <span className="text-text-muted block text-xs">
+                                    Regular + end of lease (${CLEANING_COST})
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+
+                    {/* Cost Summary */}
+                    {(furnitureSelected || billsIncluded || cleaningSelected) && (
+                        <div className="mt-6 p-4 bg-primary-50 rounded-lg border border-primary-200">
+                            <h5 className="text-sm font-semibold text-primary-900 mb-3">
+                                Cost Summary
+                            </h5>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-text-muted">Base rent:</span>
+                                    <span className="text-text font-medium">
+                                        ${adjustedBaseRent.toFixed(2)}/week
+                                    </span>
+                                </div>
+
+                                {furnitureSelected && furniturePaymentOption === "add_to_rent" && (
+                                    <div className="flex justify-between">
+                                        <span className="text-text-muted">Furniture:</span>
+                                        <span className="text-text font-medium">
+                                            +${addOnsCosts.furniturePerWeek.toFixed(2)}/week
+                                        </span>
+                                    </div>
+                                )}
+
+                                {billsIncluded && (
+                                    <div className="flex justify-between">
+                                        <span className="text-text-muted">Bills:</span>
+                                        <span className="text-text font-medium">
+                                            +${addOnsCosts.billsCost}/week
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className="border-t border-primary-300 pt-2 mt-2 flex justify-between">
+                                    <span className="font-semibold text-primary-900">
+                                        Total weekly:
+                                    </span>
+                                    <span className="font-bold text-primary-900 text-lg">
+                                        ${totalWeeklyRent.toFixed(2)}/week
+                                    </span>
+                                </div>
+
+                                {((furnitureSelected && furniturePaymentOption === "pay_total") ||
+                                    cleaningSelected) && (
+                                    <div className="border-t border-primary-300 pt-2 mt-2">
+                                        <div className="text-xs font-medium text-text-muted mb-2">
+                                            One-time fees:
+                                        </div>
+                                        {furnitureSelected &&
+                                            furniturePaymentOption === "pay_total" && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-text-muted">
+                                                        Furniture:
+                                                    </span>
+                                                    <span className="text-text font-medium">
+                                                        ${addOnsCosts.furnitureCost}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        {cleaningSelected && (
+                                            <div className="flex justify-between">
+                                                <span className="text-text-muted">Cleaning:</span>
+                                                <span className="text-text font-medium">
+                                                    ${addOnsCosts.cleaningCost}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between font-semibold mt-2 pt-2 border-t border-primary-200">
+                                            <span className="text-primary-900">
+                                                Total one-time:
+                                            </span>
+                                            <span className="text-primary-900">
+                                                ${addOnsCosts.total}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Add-ons Review Modal - Only for room units */}
+            {!isEntireHome && selectedUnit && (
+                <AddOnsReviewModal
+                    isOpen={isAddOnsReviewModalOpen}
+                    onClose={() => setIsAddOnsReviewModalOpen(false)}
+                    onNext={(addOns: AddOnsData) => {
+                        // Update the add-ons state with user's selections
+                        setFurnitureSelected(addOns.furnitureSelected);
+                        setFurniturePaymentOption(addOns.furniturePaymentOption);
+                        setBillsIncluded(addOns.billsIncluded);
+                        setCleaningSelected(addOns.cleaningSelected);
+                        setSelectedLease(addOns.selectedLease);
+                        setSelectedStartDate(addOns.selectedStartDate);
+
+                        // Close add-ons modal and open application form
+                        setIsAddOnsReviewModalOpen(false);
+                        setIsApplicationModalOpen(true);
+                    }}
+                    property={property}
+                    selectedUnit={selectedUnit}
+                    selectedLease={selectedLease}
+                    initialAddOns={{
+                        furnitureSelected,
+                        furniturePaymentOption,
+                        billsIncluded,
+                        cleaningSelected,
+                        selectedLease,
+                        selectedStartDate,
+                    }}
+                />
+            )}
 
             <EnquiryModal
                 isOpen={isEnquiryModalOpen}

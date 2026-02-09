@@ -60,9 +60,9 @@ export function PropertyHeader({ property }: PropertyHeaderProps) {
                 )}
 
                 {furnished && (
-                    <div className="flex items-center gap-2">
-                        <Icon name="check" className="w-5 h-5 md:w-6 md:h-6" />
-                        <span className="text-base md:text-lg font-semibold">Furnished</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-800 rounded-full border border-green-300">
+                        <Icon name="check" className="w-5 h-5" />
+                        <span className="text-sm md:text-base font-bold">Furnished</span>
                     </div>
                 )}
             </div>

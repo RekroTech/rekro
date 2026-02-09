@@ -129,11 +129,11 @@ export default function HomePage() {
                 </div>
 
                 {/* Listing type tabs */}
-                <div className="mb-6">
+                <div className="mb-6 flex justify-center">
                     <div
                         role="tablist"
                         aria-label="Listing type"
-                        className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-white p-1"
+                        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1"
                     >
                         {LISTING_TYPES.map((tab) => {
                             const isActive = listingType === tab.value;
@@ -146,7 +146,7 @@ export default function HomePage() {
                                     tabIndex={isActive ? 0 : -1}
                                     onClick={() => setListingType(tab.value)}
                                     className={
-                                        "rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 " +
+                                        "flex-1 rounded-md px-6 py-2 text-sm font-medium text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 whitespace-nowrap " +
                                         (isActive
                                             ? "bg-primary-600 text-white"
                                             : "bg-white text-gray-700 hover:bg-gray-50")

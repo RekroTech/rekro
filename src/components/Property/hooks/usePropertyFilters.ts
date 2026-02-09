@@ -15,7 +15,7 @@ export function usePropertyFilters() {
     const [propertyType, setPropertyType] = useState("");
     const [bedrooms, setBedrooms] = useState("");
     const [bathrooms, setBathrooms] = useState("");
-    const [listingType, setListingType] = useState("");
+    const [listingType, setListingType] = useState("all");
 
     // Debounce search query
     useEffect(() => {
@@ -31,7 +31,7 @@ export function usePropertyFilters() {
         setPropertyType("");
         setBedrooms("");
         setBathrooms("");
-        setListingType("");
+        setListingType("all");
     };
 
     const hasActiveFilters = !!(

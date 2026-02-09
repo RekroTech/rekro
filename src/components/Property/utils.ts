@@ -56,3 +56,12 @@ export function getInitialFormData(property?: Property): PropertyFormData {
 export function isVideoFile(file: File): boolean {
     return file.type.startsWith("video/");
 }
+
+// Bills cost per week based on property bedrooms
+export const getBillsCostPerWeek = (bedrooms: number | null): number => {
+    if (!bedrooms) return 10;
+    if (bedrooms === 1) return 20;
+    if (bedrooms === 2) return 15;
+    if (bedrooms === 4) return 7;
+    return 10; // 3 bed or default
+};
