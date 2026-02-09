@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Property, Unit } from "@/types/property.types";
+import type { Unit } from "@/types/db";
+import type { Property } from "@/types/property.types";
 import { Button, Icon } from "@/components/common";
-import { EnquiryModal } from "./EnquiryModal";
-import { ApplicationForm } from "../ApplicationForm";
-import { ShareDropdown } from "./ShareDropdown";
 import { useAuth } from "@/lib/react-query/hooks/auth/useAuth";
 import { useToggleUnitLike, useUnitLike } from "@/lib/react-query/hooks/property";
+import { ApplicationForm } from "../ApplicationForm";
+import { EnquiryModal } from "./EnquiryModal";
+import { ShareDropdown } from "./ShareDropdown";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
@@ -49,9 +50,7 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
         }
     };
 
-    // Get availability data from the selected unit
-    const availability = selectedUnit?.unit_availability?.[0];
-
+    // Get availability data directly from the selected unit
     // Format availability dates
     const formatDate = (dateString: string | null) => {
         if (!dateString) return null;
@@ -62,25 +61,42 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
         });
     };
 
-    const availableFromFormatted = formatDate(availability?.available_from || null);
-    const availableToFormatted = formatDate(availability?.available_to || null);
+    // Check if available_from is later than today
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Reset time to start of day for fair comparison
+
+    const availableFrom = selectedUnit?.available_from
+        ? new Date(selectedUnit.available_from)
+        : null;
+    if (availableFrom) {
+        availableFrom.setHours(0, 0, 0, 0);
+    }
+
+    const availableTo = selectedUnit?.available_to ? new Date(selectedUnit.available_to) : null;
+    if (availableTo) {
+        availableTo.setHours(0, 0, 0, 0);
+    }
+
+    // Only show "Available from" if it's a future date
+    const showAvailableFrom = availableFrom && availableFrom > now;
+    const availableFromFormatted = showAvailableFrom
+        ? formatDate(selectedUnit?.available_from || null)
+        : null;
+
+    // Always show "Available until" if it exists
+    const availableToFormatted = formatDate(selectedUnit?.available_to || null);
 
     // Determine availability status
     const getAvailabilityStatus = () => {
-        if (!availability) return { text: "Availability unknown", color: "text-gray-500" };
+        if (!selectedUnit) return { text: "Availability unknown", color: "text-gray-500" };
 
-        if (!availability.is_available) {
+        if (!selectedUnit.is_available) {
             return { text: "Not currently available", color: "text-red-600" };
         }
 
-        const now = new Date();
-        const availableFrom = availability.available_from
-            ? new Date(availability.available_from)
-            : null;
-
         if (availableFrom && availableFrom > now) {
             return {
-                text: `Available from ${availableFromFormatted}`,
+                text: `Available from ${formatDate(selectedUnit.available_from || null)}`,
                 color: "text-yellow-600",
             };
         }
@@ -146,7 +162,7 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
                         )}
 
                         {/* Availability Information */}
-                        {availability && (
+                        {selectedUnit && (
                             <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                                 <div className="space-y-2 text-sm">
                                     <div className="flex justify-between items-center">
@@ -155,7 +171,7 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
                                             className={`font-medium ${availabilityStatus.color} inline-flex items-center gap-1.5`}
                                         >
                                             <Icon name="dot" className="w-3 h-3" />
-                                            {availability.is_available
+                                            {selectedUnit.is_available
                                                 ? "Available"
                                                 : "Not Available"}
                                         </span>
@@ -178,18 +194,10 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
                                             </span>
                                         </div>
                                     )}
-                                    {availability.notes && (
-                                        <div className="mt-2 pt-2 border-t border-gray-200">
-                                            <p className="text-text-muted text-xs mb-1">Notes:</p>
-                                            <p className="text-text text-xs">
-                                                {availability.notes}
-                                            </p>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         )}
-                        {!availability && (
+                        {!selectedUnit && (
                             <div className="mt-3 flex items-center gap-2">
                                 <div className="inline-flex items-center gap-1.5 text-gray-500 font-medium text-sm">
                                     <Icon name="dot" className="w-4 h-4" />
@@ -277,17 +285,15 @@ export function PropertySidebar({ selectedUnit, isEntireHome, property }: Proper
                                     </div>
                                 )}
 
-                                {(selectedUnit.min_lease_weeks || selectedUnit.max_lease_weeks) && (
+                                {(selectedUnit.min_lease || selectedUnit.max_lease) && (
                                     <div className="flex justify-between">
                                         <span className="text-text-muted">Lease Term:</span>
                                         <span className="text-text font-medium">
-                                            {selectedUnit.min_lease_weeks &&
-                                                `${selectedUnit.min_lease_weeks}w`}
-                                            {selectedUnit.min_lease_weeks &&
-                                                selectedUnit.max_lease_weeks &&
+                                            {selectedUnit.min_lease && `${selectedUnit.min_lease}w`}
+                                            {selectedUnit.min_lease &&
+                                                selectedUnit.max_lease &&
                                                 " - "}
-                                            {selectedUnit.max_lease_weeks &&
-                                                `${selectedUnit.max_lease_weeks}w`}
+                                            {selectedUnit.max_lease && `${selectedUnit.max_lease}w`}
                                         </span>
                                     </div>
                                 )}

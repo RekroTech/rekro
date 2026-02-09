@@ -24,6 +24,10 @@ export function PropertyList({
     listingType,
     showEditButton = false,
 }: PropertyListProps = {}) {
+    // UI uses "all" as a sentinel meaning "no listing-type filter".
+    // The DB values are only things like "room" | "entire_home".
+    const normalizedListingType = listingType && listingType !== "all" ? listingType : undefined;
+
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
         useProperties({
             limit: 12,
@@ -32,7 +36,7 @@ export function PropertyList({
             minBedrooms,
             minBathrooms,
             furnished,
-            listingType,
+            listingType: normalizedListingType,
         });
 
     const observerTarget = useRef<HTMLDivElement>(null);

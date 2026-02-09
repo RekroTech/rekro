@@ -5,6 +5,8 @@ import {
     getUnitsByPropertyIdClient,
     toggleUnitLike,
 } from "@/services/unit.service";
+// NOTE: unit_availability hooks below are kept for future use but availability data
+// is now stored directly on the units table (available_from, available_to, is_available)
 import {
     createUnitAvailabilityClient,
     deleteUnitAvailabilityByUnitIdClient,

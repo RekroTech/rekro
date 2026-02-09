@@ -3,11 +3,11 @@
  * Use these to prefetch data on the server or in client components
  */
 
+import type { GetPropertiesParams } from "@/types/property.types";
 import { QueryClient } from "@tanstack/react-query";
 import { propertyKeys } from "./hooks/property/useProperties";
 import { applicationKeys } from "./hooks/application/useApplications";
 import { getPropertiesClient, getPropertyByIdClient } from "@/services/property.service";
-import { GetPropertiesParams } from "@/services/property.service";
 
 /**
  * Prefetch properties list on the server

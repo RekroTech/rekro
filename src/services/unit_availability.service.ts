@@ -61,6 +61,25 @@ export async function getUnitAvailabilityByUnitIdClient(
     return data;
 }
 
+export async function getUnitAvailabilitiesByUnitIdsClient(
+    unitIds: string[]
+): Promise<UnitAvailability[]> {
+    if (unitIds.length === 0) return [];
+
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+        .from("unit_availability")
+        .select("*")
+        .in("unit_id", unitIds);
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return data || [];
+}
+
 export async function deleteUnitAvailabilityByUnitIdClient(unitId: string): Promise<void> {
     const supabase = createClient();
 
@@ -69,4 +88,31 @@ export async function deleteUnitAvailabilityByUnitIdClient(unitId: string): Prom
     if (error) {
         throw new Error(error.message);
     }
+}
+
+/**
+ * Batch upsert unit availabilities (create new + update existing in one call)
+ * Availabilities with id will be updated, availabilities without id will be created
+ */
+export async function upsertUnitAvailabilitiesClient(
+    availabilitiesData: Partial<UnitAvailabilityInsert>[]
+): Promise<UnitAvailability[]> {
+    if (availabilitiesData.length === 0) return [];
+
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+        .from("unit_availability")
+        .upsert(availabilitiesData, {
+            onConflict: "unit_id", // Assuming one availability per unit
+            ignoreDuplicates: false,
+        })
+        .select();
+
+    if (error) {
+        console.error("Error upserting unit availabilities:", error);
+        throw new Error(error.message);
+    }
+
+    return data ?? [];
 }

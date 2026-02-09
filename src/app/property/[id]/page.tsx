@@ -14,7 +14,7 @@ import {
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getPropertyFileUrls } from "@/services/storage.service";
-import { Unit } from "@/types/property.types";
+import { Unit } from "@/types/db";
 
 export default function PropertyDetailPage() {
     const params = useParams();
@@ -34,9 +34,6 @@ export default function PropertyDetailPage() {
         if (units.length === 0) return false;
         return units.every((unit: Unit) => unit.listing_type === "entire_home");
     }, [units]);
-
-    // Show units section for all room listings (shared houses); never for entire_home
-    const showUnitsSelector = !isEntireHome && units.length > 0;
 
     // Initialize selectedUnitId based on units or propertyId changes
     useEffect(() => {
@@ -133,7 +130,7 @@ export default function PropertyDetailPage() {
                     />
 
                     {/* Units Section */}
-                    {showUnitsSelector && (
+                    {units.length > 1 && (
                         <UnitsSelector
                             units={units}
                             selectedUnitId={selectedUnitId}

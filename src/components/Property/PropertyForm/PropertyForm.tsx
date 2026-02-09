@@ -1,12 +1,10 @@
-"use client";
-
 import React, { useState } from "react";
+import type { PropertyInsert } from "@/types/db";
+import type { AddPropertyModalProps } from "../types";
 import { Button, Modal } from "@/components/common";
-import { useUnits, useCreateProperty, useUpdateProperty } from "@/lib/react-query/hooks/property";
+import { useCreateProperty, useUpdateProperty } from "@/lib/react-query/hooks/property";
 import { useUser } from "@/lib/react-query/hooks/auth/useAuth";
-import { PropertyInsert, ListingType } from "@/types/db";
 import { deletePropertyFiles } from "@/services/storage.service";
-import { AddPropertyModalProps } from "../types";
 import { usePropertyForm, useMediaFiles } from "../hooks";
 import { BasicInformationSection } from "./BasicInformationSection";
 import { PropertyDetailsSection } from "./PropertyDetailsSection";
@@ -19,7 +17,7 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
     const createProperty = useCreateProperty();
     const updateProperty = useUpdateProperty();
     const { data: user } = useUser();
-    const { data: existingUnits = [] } = useUnits(property?.id || "");
+    const existingUnits = property?.units || [];
 
     // Custom hooks for form state management
     const {
@@ -33,6 +31,7 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
         units,
         updateUnit,
         resetForm,
+        deletedUnitIds,
     } = usePropertyForm(property, existingUnits);
 
     const {
@@ -109,34 +108,53 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                 };
 
                 // Prepare units data array (all units for update)
-                const unitsData = units.map((unit) => ({
-                    listing_type: listingType as ListingType,
-                    name: unit.name || null,
-                    description: unit.unit_description || null,
-                    price_per_week: unit.price_per_week ? parseInt(unit.price_per_week) : 0,
-                    bond_amount: unit.bond_amount ? parseInt(unit.bond_amount) : null,
-                    bills_included: unit.bills_included,
-                    min_lease_weeks: unit.min_lease_weeks ? parseInt(unit.min_lease_weeks) : null,
-                    max_lease_weeks: unit.max_lease_weeks ? parseInt(unit.max_lease_weeks) : null,
-                    max_occupants: unit.max_occupants ? parseInt(unit.max_occupants) : null,
-                    size_sqm: unit.size_sqm ? parseFloat(unit.size_sqm) : null,
-                }));
+                const unitsData = units.map((unit) => {
+                    const unitData: {
+                        id?: string;
+                        listing_type: "entire_home" | "room";
+                        name?: string | null;
+                        description?: string | null;
+                        price_per_week: number;
+                        bond_amount?: number | null;
+                        bills_included?: boolean | null;
+                        min_lease?: number | null;
+                        max_lease?: number | null;
+                        max_occupants?: number | null;
+                        size_sqm?: number | null;
+                        available_from?: string | null;
+                        available_to?: string | null;
+                        is_available?: boolean;
+                    } = {
+                        listing_type: unit.listing_type || "entire_home",
+                        name: unit.name || null,
+                        description: unit.unit_description || null,
+                        price_per_week: unit.price_per_week ? parseInt(unit.price_per_week) : 0,
+                        bond_amount: unit.bond_amount ? parseInt(unit.bond_amount) : null,
+                        bills_included: unit.bills_included,
+                        min_lease: unit.min_lease ? parseInt(unit.min_lease) : null,
+                        max_lease: unit.max_lease ? parseInt(unit.max_lease) : null,
+                        max_occupants: unit.max_occupants ? parseInt(unit.max_occupants) : null,
+                        size_sqm: unit.size_sqm ? parseFloat(unit.size_sqm) : null,
+                        available_from: unit.available_from || null,
+                        available_to: unit.available_to || null,
+                        is_available: unit.is_available ?? true,
+                    };
 
-                // Prepare availability data for each unit
-                const availabilityData = units.map((unit) => ({
-                    available_from: unit.available_from || null,
-                    available_to: unit.available_to || null,
-                    is_available: unit.is_available ?? true,
-                    notes: unit.availability_notes || null,
-                }));
+                    // Only include id if it exists (for UPDATE), otherwise omit it (for CREATE)
+                    if (unit.id) {
+                        unitData.id = unit.id;
+                    }
+
+                    return unitData;
+                });
 
                 await updateProperty.mutateAsync({
                     propertyId: property.id,
                     propertyData,
                     unitsData,
-                    availabilityData,
                     mediaFiles,
                     existingImages: existingImages,
+                    deletedUnitIds,
                 });
             } else {
                 // Create new property
@@ -165,30 +183,24 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
 
                 // Prepare units data array
                 const unitsData = units.map((unit) => ({
-                    listing_type: listingType as ListingType,
+                    listing_type: unit.listing_type || "entire_home",
                     name: unit.name || null,
                     description: unit.unit_description || null,
                     price_per_week: unit.price_per_week ? parseInt(unit.price_per_week) : 0,
                     bond_amount: unit.bond_amount ? parseInt(unit.bond_amount) : null,
                     bills_included: unit.bills_included,
-                    min_lease_weeks: unit.min_lease_weeks ? parseInt(unit.min_lease_weeks) : null,
-                    max_lease_weeks: unit.max_lease_weeks ? parseInt(unit.max_lease_weeks) : null,
+                    min_lease: unit.min_lease ? parseInt(unit.min_lease) : null,
+                    max_lease: unit.max_lease ? parseInt(unit.max_lease) : null,
                     max_occupants: unit.max_occupants ? parseInt(unit.max_occupants) : null,
                     size_sqm: unit.size_sqm ? parseFloat(unit.size_sqm) : null,
-                }));
-
-                // Prepare availability data for each unit
-                const availabilityData = units.map((unit) => ({
                     available_from: unit.available_from || null,
                     available_to: unit.available_to || null,
                     is_available: unit.is_available ?? true,
-                    notes: unit.availability_notes || null,
                 }));
 
                 await createProperty.mutateAsync({
                     propertyData,
                     unitsData,
-                    availabilityData,
                     mediaFiles,
                 });
             }
@@ -235,17 +247,14 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                 <AddressSection formData={formData} updateFormData={setFormData} />
 
                 {/* Property Details */}
-                <PropertyDetailsSection
-                    formData={formData}
-                    updateFormData={setFormData}
-                    listingType={listingType}
-                />
+                <PropertyDetailsSection formData={formData} updateFormData={setFormData} />
 
                 {/* Listing Details (Unit Information) */}
                 <ListingDetailsSection
                     listingType={listingType}
                     units={units}
                     activeRoomTab={activeRoomTab}
+                    bedrooms={formData.bedrooms}
                     onListingTypeChange={setListingType}
                     onActiveRoomTabChange={setActiveRoomTab}
                     onUpdateUnit={updateUnit}

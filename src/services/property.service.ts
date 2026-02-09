@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
-import { PropertyInsert } from "@/types/db";
-import { Property, GetPropertiesParams, GetPropertiesResponse, Unit } from "@/types/property.types";
+import type { PropertyInsert, Unit } from "@/types/db";
+import type { Property, GetPropertiesParams, GetPropertiesResponse } from "@/types/property.types";
 
 export async function getPropertiesClient(
     params: GetPropertiesParams = {}
@@ -22,8 +22,8 @@ export async function getPropertiesClient(
     // Always fetch units with properties to avoid N+1 query problem
     // If listingType filter is applied, use inner join to filter
     const selectQuery = listingType
-        ? "*, units!inner(id, listing_type, name, description, price_per_week, bond_amount, bills_included, min_lease_weeks, max_lease_weeks, max_occupants, size_sqm, is_active)"
-        : "*, units(id, listing_type, name, description, price_per_week, bond_amount, bills_included, min_lease_weeks, max_lease_weeks, max_occupants, size_sqm, is_active)";
+        ? "*, units!inner(id, listing_type, name, description, price_per_week, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active)"
+        : "*, units(id, listing_type, name, description, price_per_week, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active)";
 
     let query = supabase
         .from("properties")
@@ -103,6 +103,22 @@ export async function getPropertiesClient(
         }));
     }
 
+    // Sort units within each property: entire_home first, then rooms by name
+    properties = properties.map((prop) => ({
+        ...prop,
+        units:
+            prop.units?.sort((a: Unit, b: Unit) => {
+                // First sort by listing_type: entire_home before room
+                if (a.listing_type !== b.listing_type) {
+                    return a.listing_type === "entire_home" ? -1 : 1;
+                }
+                // Then sort by name alphabetically (handles "Room 1", "Room 2", etc.)
+                const nameA = a.name || "";
+                const nameB = b.name || "";
+                return nameA.localeCompare(nameB, undefined, { numeric: true });
+            }) || [],
+    }));
+
     // Bulk fetch likes if userId is provided
     if (userId && properties.length > 0) {
         const allUnitIds = properties.flatMap(
@@ -138,27 +154,21 @@ export async function getPropertiesClient(
 export async function getPropertyByIdClient(id: string): Promise<Property> {
     const supabase = createClient();
 
-    // Fetch property with units and unit availability in a single query
+    // Fetch property with units (availability data is now directly on units table)
     const { data: property, error } = await supabase
         .from("properties")
         .select(
             `
             *,
             units!inner (
-                *,
-                unit_availability (
-                    id,
-                    available_from,
-                    available_to,
-                    is_available,
-                    notes
-                )
+                *
             )
         `
         )
         .eq("id", id)
         .eq("units.is_active", true)
         .order("listing_type", { referencedTable: "units", ascending: true })
+        .order("name", { referencedTable: "units", ascending: true })
         .single();
 
     if (error) {
@@ -198,7 +208,14 @@ export async function updatePropertyClient(
         .from("properties")
         .update(propertyData)
         .eq("id", id)
-        .select()
+        .select(
+            `
+            *,
+            units (
+                *
+            )
+        `
+        )
         .single();
 
     if (error) {

@@ -9,8 +9,9 @@ export const PROPERTY_TYPES = [
 ];
 
 export const LISTING_TYPES = [
-    { value: "entire_home", label: "Entire Home (Whole Property)" },
-    { value: "room", label: "Room (Shared/Single Room)" },
+    { value: "all", label: "All" },
+    { value: "entire_home", label: "Entire Home" },
+    { value: "room", label: "Private Room" },
 ];
 
 export const DEFAULT_FORM_DATA = {
@@ -29,13 +30,14 @@ export const DEFAULT_FORM_DATA = {
 };
 
 export const DEFAULT_UNIT_DATA = {
+    listing_type: "entire_home" as const,
     name: "",
     unit_description: "",
     price_per_week: "",
     bond_amount: "",
     bills_included: false,
-    min_lease_weeks: "",
-    max_lease_weeks: "",
+    min_lease: "12",
+    max_lease: "12",
     max_occupants: "",
     size_sqm: "",
     available_from: "",

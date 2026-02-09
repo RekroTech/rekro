@@ -1,9 +1,4 @@
-import { Property as BaseProperty, Unit as BaseUnit, UnitAvailability } from "@/types/db";
-
-export interface Unit extends BaseUnit {
-    unit_availability?: UnitAvailability[] | null;
-    isLiked?: boolean;
-}
+import { Property as BaseProperty, Unit } from "@/types/db";
 
 /**
  * Property with detailed units (includes availability and likes)

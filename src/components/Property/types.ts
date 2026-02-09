@@ -1,4 +1,4 @@
-import { Property } from "@/types/db";
+import { Property } from "@/types/property.types";
 
 export interface AddPropertyModalProps {
     isOpen: boolean;
@@ -24,13 +24,15 @@ export interface PropertyFormData {
 }
 
 export interface UnitFormData {
+    id?: string; // Existing unit ID, undefined for new units
+    listing_type: "entire_home" | "room";
     name: string;
     unit_description: string;
     price_per_week: string;
     bond_amount: string;
     bills_included: boolean;
-    min_lease_weeks: string;
-    max_lease_weeks: string;
+    min_lease: string;
+    max_lease: string;
     max_occupants: string;
     size_sqm: string;
     available_from: string;

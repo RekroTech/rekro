@@ -143,7 +143,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                 <PropertyForm
                     isOpen={isEditModalOpen}
                     onClose={() => setIsEditModalOpen(false)}
-                    property={property}
+                    property={{ ...property, units: property.units || [] }}
                 />
             )}
         </>

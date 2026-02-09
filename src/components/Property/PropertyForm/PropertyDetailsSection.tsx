@@ -1,18 +1,13 @@
-import { Input } from "@/components/common";
+import { Input, Checkbox } from "@/components/common";
 import { PropertyFormData } from "../types";
 import { AmenitiesSection } from "./AmenitiesSection";
 
 interface PropertyDetailsSectionProps {
     formData: PropertyFormData;
     updateFormData: (updates: Partial<PropertyFormData>) => void;
-    listingType: "entire_home" | "room";
 }
 
-export function PropertyDetailsSection({
-    formData,
-    updateFormData,
-    listingType,
-}: PropertyDetailsSectionProps) {
+export function PropertyDetailsSection({ formData, updateFormData }: PropertyDetailsSectionProps) {
     return (
         <section className="rounded-lg border border-gray-200 bg-white/80 p-4 shadow-sm">
             <div className="mb-3">
@@ -27,8 +22,8 @@ export function PropertyDetailsSection({
                     type="number"
                     value={formData.bedrooms}
                     onChange={(e) => updateFormData({ bedrooms: e.target.value })}
-                    placeholder="0"
-                    min={listingType === "room" ? "1" : "0"}
+                    placeholder="1"
+                    min="1"
                 />
 
                 <Input
@@ -36,8 +31,8 @@ export function PropertyDetailsSection({
                     type="number"
                     value={formData.bathrooms}
                     onChange={(e) => updateFormData({ bathrooms: e.target.value })}
-                    placeholder="0"
-                    min="0"
+                    placeholder="1"
+                    min="1"
                 />
 
                 <Input
@@ -47,6 +42,14 @@ export function PropertyDetailsSection({
                     onChange={(e) => updateFormData({ car_spaces: e.target.value })}
                     placeholder="0"
                     min="0"
+                />
+            </div>
+
+            <div className="mt-4 flex items-center">
+                <Checkbox
+                    label="Furnished"
+                    checked={formData.furnished}
+                    onChange={(e) => updateFormData({ furnished: e.target.checked })}
                 />
             </div>
 

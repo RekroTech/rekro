@@ -1,8 +1,9 @@
+import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { clsx } from "clsx";
 import { QueryProvider } from "@/lib/react-query/QueryProvider";
-import { Header } from "@/components";
+import AppShell from "./AppShell";
 
 import "./globals.css";
 
@@ -64,8 +65,7 @@ export default function RootLayout({
                 suppressHydrationWarning
             >
                 <QueryProvider>
-                    <Header />
-                    <div className="pt-16">{children}</div>
+                    <AppShell>{children}</AppShell>
                 </QueryProvider>
             </body>
         </html>

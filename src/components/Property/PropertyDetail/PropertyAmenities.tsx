@@ -28,7 +28,11 @@ function getAmenityIcon(amenity: string): IconName {
     if (
         normalized.includes("parking") ||
         normalized.includes("garage") ||
-        normalized.includes("carport")
+        normalized.includes("carport") ||
+        normalized.includes("underground") ||
+        normalized.includes("driveway") ||
+        normalized.includes("visitor") ||
+        normalized.includes("tandem")
     )
         return amenityIcons.parking as IconName;
     if (normalized.includes("pool") || normalized.includes("swimming"))
@@ -58,19 +62,61 @@ export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {
         return null;
     }
 
+    // Separate parking options from other amenities
+    const parkingAmenities = amenities.filter(
+        (amenity) =>
+            amenity.toLowerCase().includes("parking") ||
+            amenity.toLowerCase().includes("garage") ||
+            amenity.toLowerCase().includes("carport") ||
+            amenity.toLowerCase().includes("driveway")
+    );
+
+    const otherAmenities = amenities.filter(
+        (amenity) =>
+            !amenity.toLowerCase().includes("parking") &&
+            !amenity.toLowerCase().includes("garage") &&
+            !amenity.toLowerCase().includes("carport") &&
+            !amenity.toLowerCase().includes("driveway")
+    );
+
     return (
-        <div>
-            <h2 className="text-2xl font-bold text-text mb-6">Amenities</h2>
-            <div className="flex flex-row gap-x-6 gap-y-4">
-                {amenities.map((amenity: string, index: number) => (
-                    <div key={index} className="flex items-center gap-3 text-text group">
-                        <div className="text-primary-600 group-hover:text-primary-700 transition-colors flex-shrink-0">
-                            <Icon name={getAmenityIcon(amenity)} className="w-5 h-5" />
-                        </div>
-                        <span className="text-sm md:text-base leading-snug">{amenity}</span>
+        <div className="space-y-8">
+            {/* Parking Options Section */}
+            {parkingAmenities.length > 0 && (
+                <div>
+                    <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+                        <Icon name="parking" className="w-5 h-5 text-primary-600" />
+                        Parking Options
+                    </h3>
+                    <div className="flex flex-row gap-x-6 gap-y-4 pl-7">
+                        {parkingAmenities.map((amenity: string, index: number) => (
+                            <div key={index} className="flex items-center gap-3 text-text group">
+                                <div className="text-primary-600 group-hover:text-primary-700 transition-colors flex-shrink-0">
+                                    <Icon name={getAmenityIcon(amenity)} className="w-5 h-5" />
+                                </div>
+                                <span className="text-sm md:text-base leading-snug">{amenity}</span>
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>
+                </div>
+            )}
+
+            {/* Other Amenities Section */}
+            {otherAmenities.length > 0 && (
+                <div>
+                    <h3 className="text-lg font-semibold text-text mb-4">Other Amenities</h3>
+                    <div className="flex flex-row gap-x-6 gap-y-4">
+                        {otherAmenities.map((amenity: string, index: number) => (
+                            <div key={index} className="flex items-center gap-3 text-text group">
+                                <div className="text-primary-600 group-hover:text-primary-700 transition-colors flex-shrink-0">
+                                    <Icon name={getAmenityIcon(amenity)} className="w-5 h-5" />
+                                </div>
+                                <span className="text-sm md:text-base leading-snug">{amenity}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { PropertyList, PropertyForm } from "@/components";
-import { Button, Icon } from "@/components/common";
+import { PropertyList } from "@/components";
+import { Icon } from "@/components/common";
 import { usePropertyFilters } from "@/components/Property/hooks";
+import { LISTING_TYPES } from "@/components/Property/constants";
 import { useUser } from "@/lib/react-query/hooks/auth/useAuth";
 import { useCanManageProperties } from "@/hooks/useRoles";
 
@@ -11,7 +11,6 @@ import { useCanManageProperties } from "@/hooks/useRoles";
 export const dynamic = "force-dynamic";
 
 export default function HomePage() {
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: user } = useUser();
     const canManageProperties = useCanManageProperties(user ?? null);
 
@@ -31,19 +30,8 @@ export default function HomePage() {
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             {/* Property Listings Section */}
             <div className="mb-8">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-3xl font-bold text-text">Available Properties</h2>
-                    {canManageProperties && (
-                        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-                            <Icon name="plus" className="h-5 w-5 mr-2" />
-                            Add Property
-                        </Button>
-                    )}
-                </div>
-
                 {/* Search and Filters */}
-                <div className="mb-8 flex items-center gap-2 sm:gap-3">
+                <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
                     {/* Search Bar */}
                     <div className="relative w-full">
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -70,7 +58,7 @@ export default function HomePage() {
                     </div>
 
                     {/* Filters */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2">
                         {/* Property Type */}
                         <div className="relative">
                             <label
@@ -137,26 +125,37 @@ export default function HomePage() {
                                 <option value="3">3+ Baths</option>
                             </select>
                         </div>
+                    </div>
+                </div>
 
-                        {/* Listing Type */}
-                        <div className="relative">
-                            <label
-                                htmlFor="listing-type-filter"
-                                className="absolute left-3 px-1.5 bg-white text-xs font-medium text-gray-400 z-10 -translate-y-1/2"
-                            >
-                                Listing Type
-                            </label>
-                            <select
-                                id="listing-type-filter"
-                                value={listingType}
-                                onChange={(e) => setListingType(e.target.value)}
-                                className="flex-1 sm:flex-none sm:w-[140px] px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                            >
-                                <option value="">All</option>
-                                <option value="entire_home">Entire Home</option>
-                                <option value="room">Private Room</option>
-                            </select>
-                        </div>
+                {/* Listing type tabs */}
+                <div className="mb-6">
+                    <div
+                        role="tablist"
+                        aria-label="Listing type"
+                        className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-white p-1"
+                    >
+                        {LISTING_TYPES.map((tab) => {
+                            const isActive = listingType === tab.value;
+                            return (
+                                <button
+                                    key={tab.value}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={isActive}
+                                    tabIndex={isActive ? 0 : -1}
+                                    onClick={() => setListingType(tab.value)}
+                                    className={
+                                        "rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 " +
+                                        (isActive
+                                            ? "bg-primary-600 text-white"
+                                            : "bg-white text-gray-700 hover:bg-gray-50")
+                                    }
+                                >
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -170,11 +169,6 @@ export default function HomePage() {
                     showEditButton={canManageProperties}
                 />
             </div>
-
-            {/* Add Property Modal - Only for admin/landlord */}
-            {canManageProperties && (
-                <PropertyForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-            )}
         </main>
     );
 }

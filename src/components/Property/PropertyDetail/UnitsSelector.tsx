@@ -1,4 +1,4 @@
-import { Unit } from "@/types/property.types";
+import { Unit } from "@/types/db";
 import { Icon } from "@/components/common";
 
 interface UnitsSelectorProps {
@@ -8,19 +8,14 @@ interface UnitsSelectorProps {
 }
 
 function UnitAvailabilityBadge({ unit }: { unit: Unit }) {
-    const availability = unit.unit_availability?.[0];
-
-    if (!availability) return null;
-
+    // Availability data is now stored directly on the unit
     const now = new Date();
-    const availableFrom = availability.available_from
-        ? new Date(availability.available_from)
-        : null;
+    const availableFrom = unit.available_from ? new Date(unit.available_from) : null;
 
     let badgeColor: string;
     let badgeText: string;
 
-    if (!availability.is_available) {
+    if (!unit.is_available) {
         badgeColor = "bg-red-100 text-red-700";
         badgeText = "Unavailable";
     } else if (availableFrom && availableFrom > now) {
@@ -38,16 +33,33 @@ function UnitAvailabilityBadge({ unit }: { unit: Unit }) {
     );
 }
 
+function getUnitTypeLabel(unit: Unit) {
+    switch (unit.listing_type) {
+        case "entire_home":
+            return "Entire home";
+        case "room":
+            return "Room";
+        default:
+            return "Unit";
+    }
+}
+
+function getUnitName(unit: Unit, idx: number) {
+    const fallback = `${getUnitTypeLabel(unit)} ${idx + 1}`;
+    return unit.name || fallback;
+}
+
 export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSelectorProps) {
     if (units.length === 0) return null;
 
     return (
         <div className="my-6">
-            <h2 className="text-xl font-bold text-text mb-3">Available Rooms ({units.length})</h2>
+            <h2 className="text-xl font-bold text-text mb-3">Available Units ({units.length})</h2>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {units.map((unit: Unit, idx: number) => {
                     const isSelected = selectedUnitId === unit.id;
+                    const unitTypeLabel = getUnitTypeLabel(unit);
 
                     return (
                         <button
@@ -62,9 +74,9 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <h3 className="font-semibold text-text">
-                                        {unit.name || `Room ${idx + 1}`}
+                                        {getUnitName(unit, idx)}
                                     </h3>
-                                    <p className="text-sm text-text-muted">Private Room</p>
+                                    <p className="text-sm text-text-muted">{unitTypeLabel}</p>
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-1">
                                     <UnitAvailabilityBadge unit={unit} />
@@ -101,12 +113,11 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
                                 </p>
                             )}
 
-                            {(unit.min_lease_weeks || unit.max_lease_weeks) && (
+                            {(unit.min_lease || unit.max_lease) && (
                                 <p className="text-xs text-text-muted mt-1">
-                                    Lease:{" "}
-                                    {unit.min_lease_weeks && `${unit.min_lease_weeks} weeks min`}
-                                    {unit.min_lease_weeks && unit.max_lease_weeks && " - "}
-                                    {unit.max_lease_weeks && `${unit.max_lease_weeks} weeks max`}
+                                    Lease: {unit.min_lease && `${unit.min_lease} months min`}
+                                    {unit.min_lease && unit.max_lease && " - "}
+                                    {unit.max_lease && `${unit.max_lease} months max`}
                                 </p>
                             )}
                         </button>

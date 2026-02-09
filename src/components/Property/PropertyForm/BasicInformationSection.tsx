@@ -1,4 +1,4 @@
-import { Input, Checkbox, Select } from "@/components/common";
+import { Input, Select } from "@/components/common";
 import { PropertyFormData } from "../types";
 import { PROPERTY_TYPES } from "../constants";
 
@@ -38,14 +38,6 @@ export function BasicInformationSection({
                         onChange={(e) => updateFormData({ property_type: e.target.value })}
                         options={PROPERTY_TYPES}
                         required
-                    />
-                </div>
-
-                <div className="flex items-center">
-                    <Checkbox
-                        label="Furnished"
-                        checked={formData.furnished}
-                        onChange={(e) => updateFormData({ furnished: e.target.checked })}
                     />
                 </div>
 

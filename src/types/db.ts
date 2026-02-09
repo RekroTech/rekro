@@ -134,12 +134,15 @@ export interface Database {
                     price_per_week: number;
                     bond_amount: number | null;
                     bills_included: boolean | null;
-                    min_lease_weeks: number | null;
-                    max_lease_weeks: number | null;
+                    min_lease: number | null;
+                    max_lease: number | null;
                     max_occupants: number | null;
                     size_sqm: number | null;
                     is_active: boolean | null;
                     created_at: string;
+                    available_from: string | null;
+                    available_to: string | null;
+                    is_available: boolean;
                 };
                 Insert: {
                     id?: string;
@@ -150,26 +153,33 @@ export interface Database {
                     price_per_week: number;
                     bond_amount?: number | null;
                     bills_included?: boolean | null;
-                    min_lease_weeks?: number | null;
-                    max_lease_weeks?: number | null;
+                    min_lease?: number | null;
+                    max_lease?: number | null;
                     max_occupants?: number | null;
                     size_sqm?: number | null;
                     is_active?: boolean | null;
                     created_at?: string;
+                    available_from?: string | null;
+                    available_to?: string | null;
+                    is_available?: boolean;
                 };
                 Update: {
+                    id?: string;
                     property_id?: string;
-                    listing_type: ListingType;
+                    listing_type?: ListingType;
                     name?: string | null;
                     description?: string | null;
                     price_per_week?: number;
                     bond_amount?: number | null;
                     bills_included?: boolean | null;
-                    min_lease_weeks?: number | null;
-                    max_lease_weeks?: number | null;
+                    min_lease?: number | null;
+                    max_lease?: number | null;
                     max_occupants?: number | null;
                     size_sqm?: number | null;
                     is_active?: boolean | null;
+                    available_from?: string | null;
+                    available_to?: string | null;
+                    is_available?: boolean;
                 };
             };
             unit_availability: {

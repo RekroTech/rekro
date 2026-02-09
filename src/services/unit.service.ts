@@ -34,6 +34,42 @@ export async function updateUnitClient(
     return data;
 }
 
+export async function deleteUnitClient(id: string): Promise<void> {
+    const supabase = createClient();
+
+    const { error } = await supabase.from("units").delete().eq("id", id);
+
+    if (error) {
+        console.error("Error deleting unit:", error);
+        throw new Error(error.message);
+    }
+}
+
+/**
+ * Batch upsert units (create new + update existing in one call)
+ * Units with id will be updated, units without id will be created
+ */
+export async function upsertUnitsClient(unitsData: Partial<UnitInsert>[]): Promise<Unit[]> {
+    if (unitsData.length === 0) return [];
+
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+        .from("units")
+        .upsert(unitsData, {
+            onConflict: "id",
+            ignoreDuplicates: false,
+        })
+        .select();
+
+    if (error) {
+        console.error("Error upserting units:", error);
+        throw new Error(error.message);
+    }
+
+    return data ?? [];
+}
+
 export async function getUnitByPropertyIdClient(propertyId: string): Promise<Unit | null> {
     const supabase = createClient();
 

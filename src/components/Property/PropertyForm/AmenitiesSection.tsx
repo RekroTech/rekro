@@ -6,11 +6,21 @@ interface AmenitiesSectionProps {
     updateFormData: (updates: Partial<PropertyFormData>) => void;
 }
 
-const COMMON_AMENITIES = [
+const PARKING_OPTIONS = [
+    "Garage",
+    "Carport",
+    "Underground",
+    "Secure",
+    "Street",
+    "Driveway",
+    "Visitor",
+    "Tandem",
+];
+
+const OTHER_AMENITIES = [
     "Air Conditioning",
     "Heating",
     "Wi-Fi",
-    "Parking",
     "Pool",
     "Gym",
     "Laundry",
@@ -35,24 +45,37 @@ export function AmenitiesSection({ formData, updateFormData }: AmenitiesSectionP
     };
 
     return (
-        <div className="space-y-3">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="mt-0.5 text-sm text-gray-500">
-                        Select all amenities available at this property
-                    </p>
+        <div className="space-y-6">
+            {/* Parking Options Section */}
+            <div>
+                <h4 className="text-sm text-gray-500 mb-3 flex items-center gap-2">
+                    Parking Options
+                </h4>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
+                    {PARKING_OPTIONS.map((amenity) => (
+                        <Checkbox
+                            key={amenity}
+                            label={amenity}
+                            checked={formData.amenities?.includes(amenity) || false}
+                            onChange={() => handleAmenityToggle(amenity)}
+                        />
+                    ))}
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
-                {COMMON_AMENITIES.map((amenity) => (
-                    <Checkbox
-                        key={amenity}
-                        label={amenity}
-                        checked={formData.amenities?.includes(amenity) || false}
-                        onChange={() => handleAmenityToggle(amenity)}
-                    />
-                ))}
+            {/* Other Amenities Section */}
+            <div>
+                <h4 className="text-sm text-gray-500 mb-3">Amenities</h4>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
+                    {OTHER_AMENITIES.map((amenity) => (
+                        <Checkbox
+                            key={amenity}
+                            label={amenity}
+                            checked={formData.amenities?.includes(amenity) || false}
+                            onChange={() => handleAmenityToggle(amenity)}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
     );
