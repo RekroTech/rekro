@@ -7,3 +7,4 @@ export { PropertyAmenities } from "./PropertyAmenities";
 export { PropertySidebar } from "./PropertySidebar";
 export { EnquiryModal } from "./EnquiryModal";
 export { ShareDropdown } from "./ShareDropdown";
+export { LocationSection } from "./LocationSection";

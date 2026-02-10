@@ -1,70 +1,123 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { Modal, Button, Icon } from "@/components/common";
 import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
 import { FurniturePaymentOption } from "@/components/Property/types";
-import { getBillsCostPerWeek } from "@/components/Property/utils";
-import { CLEANING_COST, FURNITURE_COST } from "@/components/Property/constants";
+import {
+    getBillsCostPerWeek,
+    getRegularCleaningCostPerWeek,
+    getEntireHomeCleaningCosts,
+    getRoomFurnitureCost,
+} from "@/components/Property/utils";
+import {
+    FURNITURE_COST,
+    CARPARK_COST_PER_WEEK,
+    STORAGE_CAGE_COST_PER_WEEK,
+} from "@/components/Property/constants";
+
+// Helper function to check if property has parking amenities
+const hasCarpark = (amenities: string[] | null): boolean => {
+    if (!amenities) return false;
+    const parkingAmenities = [
+        "Garage",
+        "Carport",
+        "Underground",
+        "Secure",
+        "Street",
+        "Driveway",
+        "Visitor",
+        "Tandem",
+    ];
+    return amenities.some((amenity) => parkingAmenities.includes(amenity));
+};
+
+// Helper function to check if property has storage amenity
+const hasStorage = (amenities: string[] | null): boolean => {
+    if (!amenities) return false;
+    return amenities.includes("Storage");
+};
 
 interface AddOnsReviewModalProps {
     isOpen: boolean;
     onClose: () => void;
     onNext: (addOns: AddOnsData) => void;
+    onChange: (addOns: AddOnsData) => void;
     property: Property;
     selectedUnit: Unit;
     selectedLease: number;
-    initialAddOns?: AddOnsData;
+    addOns: AddOnsData;
+    isEntireHome: boolean;
 }
 
 export interface AddOnsData {
     furnitureSelected: boolean;
     furniturePaymentOption: FurniturePaymentOption;
     billsIncluded: boolean;
-    cleaningSelected: boolean;
+    regularCleaningSelected: boolean;
     selectedLease: number;
     selectedStartDate: string;
+    isDualOccupancy: boolean;
+    entireHomeOccupants: number;
+    carparkSelected: boolean;
+    storageCageSelected: boolean;
 }
 
 export function AddOnsReviewModal({
     isOpen,
     onClose,
     onNext,
+    onChange,
     property,
     selectedUnit,
-    selectedLease: initialLease,
-    initialAddOns,
+    addOns,
+    isEntireHome,
 }: AddOnsReviewModalProps) {
-    // Local state for add-ons
-    const [furnitureSelected, setFurnitureSelected] = useState(
-        initialAddOns?.furnitureSelected ?? false
-    );
-    const [furniturePaymentOption, setFurniturePaymentOption] = useState<FurniturePaymentOption>(
-        initialAddOns?.furniturePaymentOption ?? null
-    );
-    const [billsIncluded, setBillsIncluded] = useState(initialAddOns?.billsIncluded ?? false);
-    const [cleaningSelected, setCleaningSelected] = useState(
-        initialAddOns?.cleaningSelected ?? false
-    );
-    const [selectedLease, setSelectedLease] = useState(
-        initialAddOns?.selectedLease ?? initialLease
-    );
-    const [selectedStartDate, setSelectedStartDate] = useState(
-        initialAddOns?.selectedStartDate ??
-            selectedUnit?.available_from ??
-            new Date().toISOString().split("T")[0] ??
-            ""
-    );
+    const setState = (updater: AddOnsData | ((prev: AddOnsData) => AddOnsData)) => {
+        const next = typeof updater === "function" ? updater(addOns) : updater;
+        onChange(next);
+    };
+
+    // Occupancy only applies to non-entire-home rooms that support 2 occupants.
+    const occupancyApplies = !isEntireHome && selectedUnit?.max_occupants === 2;
+
+    // Effective occupancy value used for pricing.
+    const effectiveIsDualOccupancy = occupancyApplies ? addOns.isDualOccupancy : false;
+
+    // Clamp any stale dual-occupancy state when switching to units where it doesn't apply.
+    useEffect(() => {
+        if (!occupancyApplies && addOns.isDualOccupancy) {
+            setState((prev: AddOnsData) => ({ ...prev, isDualOccupancy: false }));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [occupancyApplies]);
+
+    const getDefaultStartDate = () =>
+        selectedUnit?.available_from ?? new Date().toISOString().split("T")[0] ?? "";
+
+    // Ensure start date is always populated (controlled state might come in empty).
+    useEffect(() => {
+        if (isOpen && !addOns.selectedStartDate) {
+            setState((p: AddOnsData) => ({ ...p, selectedStartDate: getDefaultStartDate() }));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
 
     // Calculate adjusted rent based on lease period
     const adjustedBaseRent = useMemo(() => {
-        const baseRent = selectedUnit.price_per_week;
+        let baseRent = selectedUnit.price_per_week;
 
-        switch (selectedLease) {
-            case 4:
+        // Add $100 for dual occupancy rooms
+        if (!isEntireHome && effectiveIsDualOccupancy) {
+            baseRent += 100;
+        }
+
+        switch (addOns.selectedLease) {
+            case 4: {
                 const sixMonthRent = baseRent * 1.05;
                 return sixMonthRent * 1.5;
+            }
             case 6:
                 return baseRent * 1.05;
             case 9:
@@ -73,54 +126,96 @@ export function AddOnsReviewModal({
             default:
                 return baseRent;
         }
-    }, [selectedUnit, selectedLease]);
+    }, [selectedUnit, addOns.selectedLease, isEntireHome, effectiveIsDualOccupancy]);
 
     // Calculate add-ons costs
     const addOnsCosts = useMemo(() => {
         let furnitureCost = 0;
         let furniturePerWeek = 0;
 
-        if (furnitureSelected && furniturePaymentOption) {
-            if (furniturePaymentOption === "pay_total") {
-                furnitureCost = FURNITURE_COST;
-            } else if (furniturePaymentOption === "add_to_rent") {
-                const leaseWeeks = selectedLease * 4.33;
-                furniturePerWeek = FURNITURE_COST / leaseWeeks;
+        if (addOns.furnitureSelected && addOns.furniturePaymentOption) {
+            // For entire homes: full $1500
+            // For individual rooms: $1500 divided by number of rooms
+            const effectiveFurnitureCost = isEntireHome
+                ? FURNITURE_COST
+                : getRoomFurnitureCost(property.units || [], FURNITURE_COST);
+
+            if (addOns.furniturePaymentOption === "pay_total") {
+                furnitureCost = effectiveFurnitureCost;
+            } else if (addOns.furniturePaymentOption === "add_to_rent") {
+                const leaseWeeks = addOns.selectedLease * 4.33;
+                furniturePerWeek = effectiveFurnitureCost / leaseWeeks;
             }
         }
 
-        const billsCost = billsIncluded ? getBillsCostPerWeek(property.bedrooms) : 0;
-        const cleaningCost = cleaningSelected ? CLEANING_COST : 0;
+        const billsCost = addOns.billsIncluded ? getBillsCostPerWeek(property.bedrooms) : 0;
+
+        // Calculate cleaning costs based on property type
+        let regularCleaningCost = 0;
+
+        if (addOns.regularCleaningSelected) {
+            if (isEntireHome) {
+                // For entire homes: calculate based on all room units and their max_occupants
+                const cleaningCosts = getEntireHomeCleaningCosts(property.units || []);
+                regularCleaningCost = cleaningCosts.regularWeekly;
+            } else {
+                // For rooms: $35/week regular for single, $60/week for dual occupancy
+                regularCleaningCost = getRegularCleaningCostPerWeek(effectiveIsDualOccupancy);
+            }
+        }
+
+        // Carpark and storage cage costs - only for rooms (not entire homes)
+        const carparkCost = !isEntireHome && addOns.carparkSelected ? CARPARK_COST_PER_WEEK : 0;
+        const storageCageCost =
+            !isEntireHome && addOns.storageCageSelected ? STORAGE_CAGE_COST_PER_WEEK : 0;
 
         return {
             furnitureCost,
             billsCost,
-            cleaningCost,
-            total: furnitureCost + cleaningCost,
+            regularCleaningCost,
+            carparkCost,
+            storageCageCost,
+            total: furnitureCost,
             furniturePerWeek,
         };
     }, [
-        furnitureSelected,
-        furniturePaymentOption,
-        billsIncluded,
-        cleaningSelected,
+        addOns.furnitureSelected,
+        addOns.furniturePaymentOption,
+        addOns.billsIncluded,
+        addOns.regularCleaningSelected,
+        addOns.carparkSelected,
+        addOns.storageCageSelected,
         property.bedrooms,
-        selectedLease,
+        property.units,
+        addOns.selectedLease,
+        effectiveIsDualOccupancy,
+        isEntireHome,
     ]);
 
     // Calculate total weekly rent
     const totalWeeklyRent = useMemo(() => {
-        return adjustedBaseRent + addOnsCosts.furniturePerWeek + addOnsCosts.billsCost;
-    }, [adjustedBaseRent, addOnsCosts.furniturePerWeek, addOnsCosts.billsCost]);
+        return (
+            adjustedBaseRent +
+            addOnsCosts.furniturePerWeek +
+            addOnsCosts.billsCost +
+            addOnsCosts.regularCleaningCost +
+            addOnsCosts.carparkCost +
+            addOnsCosts.storageCageCost
+        );
+    }, [
+        adjustedBaseRent,
+        addOnsCosts.furniturePerWeek,
+        addOnsCosts.billsCost,
+        addOnsCosts.regularCleaningCost,
+        addOnsCosts.carparkCost,
+        addOnsCosts.storageCageCost,
+    ]);
 
     const handleNext = () => {
         onNext({
-            furnitureSelected,
-            furniturePaymentOption,
-            billsIncluded,
-            cleaningSelected,
-            selectedLease,
-            selectedStartDate,
+            ...addOns,
+            // We only persist dual occupancy if it applies; otherwise force false.
+            isDualOccupancy: effectiveIsDualOccupancy,
         });
     };
 
@@ -142,12 +237,14 @@ export function AddOnsReviewModal({
                             <input
                                 type="date"
                                 id="modalStartDate"
-                                value={selectedStartDate}
-                                onChange={(e) => setSelectedStartDate(e.target.value)}
-                                min={
-                                    selectedUnit.available_from ||
-                                    new Date().toISOString().split("T")[0]
+                                value={addOns.selectedStartDate}
+                                onChange={(e) =>
+                                    setState((p: AddOnsData) => ({
+                                        ...p,
+                                        selectedStartDate: e.target.value,
+                                    }))
                                 }
+                                min={selectedUnit.available_from || getDefaultStartDate()}
                                 max={selectedUnit.available_to || undefined}
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             />
@@ -163,8 +260,13 @@ export function AddOnsReviewModal({
                             <div className="relative">
                                 <select
                                     id="modalLeasePeriod"
-                                    value={selectedLease}
-                                    onChange={(e) => setSelectedLease(Number(e.target.value))}
+                                    value={addOns.selectedLease}
+                                    onChange={(e) =>
+                                        setState((p: AddOnsData) => ({
+                                            ...p,
+                                            selectedLease: Number(e.target.value),
+                                        }))
+                                    }
                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none bg-white"
                                 >
                                     <option value={4}>4 months</option>
@@ -183,6 +285,31 @@ export function AddOnsReviewModal({
                                 </div>
                             </div>
                         </div>
+
+                        {/* Dual Occupancy Option - Only for rooms with max 2 occupants */}
+                        {occupancyApplies && (
+                            <div>
+                                <label className="flex items-start gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={addOns.isDualOccupancy}
+                                        onChange={(e) =>
+                                            setState((p: AddOnsData) => ({
+                                                ...p,
+                                                isDualOccupancy: e.target.checked,
+                                            }))
+                                        }
+                                        className="mt-1 w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                                    />
+                                    <span className="text-sm text-text flex-1">
+                                        <span className="font-medium">Dual occupancy</span>
+                                        <span className="text-text-muted block text-xs">
+                                            +$100/week for 2 people
+                                        </span>
+                                    </span>
+                                </label>
+                            </div>
+                        )}
 
                         <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-300">
                             <span className="text-text-muted">Base rent:</span>
@@ -204,32 +331,48 @@ export function AddOnsReviewModal({
                                 <label className="flex items-start gap-2 cursor-pointer">
                                     <input
                                         type="checkbox"
-                                        checked={furnitureSelected}
+                                        checked={addOns.furnitureSelected}
                                         onChange={(e) => {
-                                            setFurnitureSelected(e.target.checked);
-                                            if (!e.target.checked) {
-                                                setFurniturePaymentOption(null);
-                                            }
+                                            const checked = e.target.checked;
+                                            setState((p: AddOnsData) => ({
+                                                ...p,
+                                                furnitureSelected: checked,
+                                                furniturePaymentOption: checked
+                                                    ? p.furniturePaymentOption
+                                                    : null,
+                                            }));
                                         }}
                                         className="mt-1 w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
                                     />
                                     <span className="text-sm text-text flex-1">
                                         <span className="font-medium">Furnished package</span>
                                         <span className="text-text-muted block text-xs">
-                                            ${FURNITURE_COST} total
+                                            $
+                                            {isEntireHome
+                                                ? FURNITURE_COST
+                                                : getRoomFurnitureCost(
+                                                      property.units || [],
+                                                      FURNITURE_COST
+                                                  ).toFixed(0)}{" "}
+                                            total
                                         </span>
                                     </span>
                                 </label>
 
-                                {furnitureSelected && (
+                                {addOns.furnitureSelected && (
                                     <div className="ml-6 space-y-2 p-3 bg-white rounded-md border border-gray-200">
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input
                                                 type="radio"
                                                 name="modalFurniturePayment"
-                                                checked={furniturePaymentOption === "add_to_rent"}
+                                                checked={
+                                                    addOns.furniturePaymentOption === "add_to_rent"
+                                                }
                                                 onChange={() =>
-                                                    setFurniturePaymentOption("add_to_rent")
+                                                    setState((p: AddOnsData) => ({
+                                                        ...p,
+                                                        furniturePaymentOption: "add_to_rent",
+                                                    }))
                                                 }
                                                 className="w-4 h-4 text-primary-600 focus:ring-2 focus:ring-primary-500"
                                             />
@@ -238,8 +381,13 @@ export function AddOnsReviewModal({
                                                 <span className="text-text-muted">
                                                     ($
                                                     {(
-                                                        FURNITURE_COST /
-                                                        (selectedLease * 4.33)
+                                                        (isEntireHome
+                                                            ? FURNITURE_COST
+                                                            : getRoomFurnitureCost(
+                                                                  property.units || [],
+                                                                  FURNITURE_COST
+                                                              )) /
+                                                        (addOns.selectedLease * 4.33)
                                                     ).toFixed(2)}
                                                     /week)
                                                 </span>
@@ -249,16 +397,28 @@ export function AddOnsReviewModal({
                                             <input
                                                 type="radio"
                                                 name="modalFurniturePayment"
-                                                checked={furniturePaymentOption === "pay_total"}
+                                                checked={
+                                                    addOns.furniturePaymentOption === "pay_total"
+                                                }
                                                 onChange={() =>
-                                                    setFurniturePaymentOption("pay_total")
+                                                    setState((p: AddOnsData) => ({
+                                                        ...p,
+                                                        furniturePaymentOption: "pay_total",
+                                                    }))
                                                 }
                                                 className="w-4 h-4 text-primary-600 focus:ring-2 focus:ring-primary-500"
                                             />
                                             <span className="text-sm text-text">
                                                 Pay total upfront{" "}
                                                 <span className="text-text-muted">
-                                                    (${FURNITURE_COST})
+                                                    ($
+                                                    {isEntireHome
+                                                        ? FURNITURE_COST
+                                                        : getRoomFurnitureCost(
+                                                              property.units || [],
+                                                              FURNITURE_COST
+                                                          ).toFixed(0)}
+                                                    )
                                                 </span>
                                             </span>
                                         </label>
@@ -271,8 +431,13 @@ export function AddOnsReviewModal({
                         <label className="flex items-start gap-2 cursor-pointer">
                             <input
                                 type="checkbox"
-                                checked={billsIncluded}
-                                onChange={(e) => setBillsIncluded(e.target.checked)}
+                                checked={addOns.billsIncluded}
+                                onChange={(e) =>
+                                    setState((p: AddOnsData) => ({
+                                        ...p,
+                                        billsIncluded: e.target.checked,
+                                    }))
+                                }
                                 className="mt-1 w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
                             />
                             <span className="text-sm text-text flex-1">
@@ -283,21 +448,83 @@ export function AddOnsReviewModal({
                             </span>
                         </label>
 
-                        {/* Cleaning Add-on */}
+                        {/* Regular Cleaning Add-on */}
                         <label className="flex items-start gap-2 cursor-pointer">
                             <input
                                 type="checkbox"
-                                checked={cleaningSelected}
-                                onChange={(e) => setCleaningSelected(e.target.checked)}
+                                checked={addOns.regularCleaningSelected}
+                                onChange={(e) =>
+                                    setState((p: AddOnsData) => ({
+                                        ...p,
+                                        regularCleaningSelected: e.target.checked,
+                                    }))
+                                }
                                 className="mt-1 w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
                             />
                             <span className="text-sm text-text flex-1">
-                                <span className="font-medium">Cleaning service</span>
+                                <span className="font-medium">Regular cleaning service</span>
                                 <span className="text-text-muted block text-xs">
-                                    Regular + end of lease (${CLEANING_COST})
+                                    {isEntireHome ? (
+                                        <>
+                                            $
+                                            {
+                                                getEntireHomeCleaningCosts(property.units || [])
+                                                    .regularWeekly
+                                            }
+                                            /week
+                                        </>
+                                    ) : (
+                                        <>${effectiveIsDualOccupancy ? 60 : 35}/week</>
+                                    )}
                                 </span>
                             </span>
                         </label>
+
+                        {/* Carpark Add-on - Only for rooms (not entire homes) and if property has parking */}
+                        {!isEntireHome && hasCarpark(property.amenities) && (
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={addOns.carparkSelected}
+                                    onChange={(e) =>
+                                        setState((p: AddOnsData) => ({
+                                            ...p,
+                                            carparkSelected: e.target.checked,
+                                        }))
+                                    }
+                                    className="mt-1 w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                                />
+                                <span className="text-sm text-text flex-1">
+                                    <span className="font-medium">Carpark</span>
+                                    <span className="text-text-muted block text-xs">
+                                        +${CARPARK_COST_PER_WEEK}/week
+                                    </span>
+                                </span>
+                            </label>
+                        )}
+
+                        {/* Storage Cage Add-on - Only for rooms (not entire homes) and if property has storage */}
+                        {!isEntireHome && hasStorage(property.amenities) && (
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={addOns.storageCageSelected}
+                                    onChange={(e) =>
+                                        setState((p: AddOnsData) => ({
+                                            ...p,
+                                            storageCageSelected: e.target.checked,
+                                        }))
+                                    }
+                                    className="mt-1 w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                                />
+                                <span className="text-sm text-text flex-1">
+                                    <span className="font-medium">Storage cage</span>
+                                    <span className="text-text-muted block text-xs">
+                                        +${STORAGE_CAGE_COST_PER_WEEK}/week
+                                    </span>
+                                </span>
+                            </label>
+                        )}
                     </div>
                 </div>
 
@@ -314,20 +541,48 @@ export function AddOnsReviewModal({
                             </span>
                         </div>
 
-                        {furnitureSelected && furniturePaymentOption === "add_to_rent" && (
-                            <div className="flex justify-between">
-                                <span className="text-text-muted">Furniture:</span>
-                                <span className="text-text font-medium">
-                                    +${addOnsCosts.furniturePerWeek.toFixed(2)}/week
-                                </span>
-                            </div>
-                        )}
+                        {addOns.furnitureSelected &&
+                            addOns.furniturePaymentOption === "add_to_rent" && (
+                                <div className="flex justify-between">
+                                    <span className="text-text-muted">Furniture:</span>
+                                    <span className="text-text font-medium">
+                                        +${addOnsCosts.furniturePerWeek.toFixed(2)}/week
+                                    </span>
+                                </div>
+                            )}
 
-                        {billsIncluded && (
+                        {addOns.billsIncluded && (
                             <div className="flex justify-between">
                                 <span className="text-text-muted">Bills:</span>
                                 <span className="text-text font-medium">
                                     +${addOnsCosts.billsCost}/week
+                                </span>
+                            </div>
+                        )}
+
+                        {addOns.regularCleaningSelected && (
+                            <div className="flex justify-between">
+                                <span className="text-text-muted">Regular cleaning:</span>
+                                <span className="text-text font-medium">
+                                    +${addOnsCosts.regularCleaningCost}/week
+                                </span>
+                            </div>
+                        )}
+
+                        {!isEntireHome && addOns.carparkSelected && (
+                            <div className="flex justify-between">
+                                <span className="text-text-muted">Carpark:</span>
+                                <span className="text-text font-medium">
+                                    +${addOnsCosts.carparkCost}/week
+                                </span>
+                            </div>
+                        )}
+
+                        {!isEntireHome && addOns.storageCageSelected && (
+                            <div className="flex justify-between">
+                                <span className="text-text-muted">Storage cage:</span>
+                                <span className="text-text font-medium">
+                                    +${addOnsCosts.storageCageCost}/week
                                 </span>
                             </div>
                         )}
@@ -339,28 +594,22 @@ export function AddOnsReviewModal({
                             </span>
                         </div>
 
-                        {((furnitureSelected && furniturePaymentOption === "pay_total") ||
-                            cleaningSelected) && (
+                        {((addOns.furnitureSelected &&
+                            addOns.furniturePaymentOption === "pay_total") ||
+                            addOns.regularCleaningSelected) && (
                             <div className="border-t border-primary-300 pt-2 mt-2">
                                 <div className="text-xs font-medium text-text-muted mb-2">
                                     One-time fees:
                                 </div>
-                                {furnitureSelected && furniturePaymentOption === "pay_total" && (
-                                    <div className="flex justify-between">
-                                        <span className="text-text-muted">Furniture:</span>
-                                        <span className="text-text font-medium">
-                                            ${addOnsCosts.furnitureCost}
-                                        </span>
-                                    </div>
-                                )}
-                                {cleaningSelected && (
-                                    <div className="flex justify-between">
-                                        <span className="text-text-muted">Cleaning:</span>
-                                        <span className="text-text font-medium">
-                                            ${addOnsCosts.cleaningCost}
-                                        </span>
-                                    </div>
-                                )}
+                                {addOns.furnitureSelected &&
+                                    addOns.furniturePaymentOption === "pay_total" && (
+                                        <div className="flex justify-between">
+                                            <span className="text-text-muted">Furniture:</span>
+                                            <span className="text-text font-medium">
+                                                ${addOnsCosts.furnitureCost}
+                                            </span>
+                                        </div>
+                                    )}
                                 <div className="flex justify-between font-semibold mt-2 pt-2 border-t border-primary-200">
                                     <span className="text-primary-900">Total one-time:</span>
                                     <span className="text-primary-900">${addOnsCosts.total}</span>

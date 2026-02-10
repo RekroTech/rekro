@@ -56,10 +56,9 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
         <div className="my-6">
             <h2 className="text-xl font-bold text-text mb-3">Available Units ({units.length})</h2>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="flex gap-4 pb-2 overflow-x-auto">
                 {units.map((unit: Unit, idx: number) => {
                     const isSelected = selectedUnitId === unit.id;
-                    const unitTypeLabel = getUnitTypeLabel(unit);
 
                     return (
                         <button
@@ -76,7 +75,6 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
                                     <h3 className="font-semibold text-text">
                                         {getUnitName(unit, idx)}
                                     </h3>
-                                    <p className="text-sm text-text-muted">{unitTypeLabel}</p>
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-1">
                                     <UnitAvailabilityBadge unit={unit} />
@@ -110,14 +108,6 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
                             {unit.bond_amount && (
                                 <p className="text-xs text-text-muted mt-2">
                                     Bond: ${unit.bond_amount}
-                                </p>
-                            )}
-
-                            {(unit.min_lease || unit.max_lease) && (
-                                <p className="text-xs text-text-muted mt-1">
-                                    Lease: {unit.min_lease && `${unit.min_lease} months min`}
-                                    {unit.min_lease && unit.max_lease && " - "}
-                                    {unit.max_lease && `${unit.max_lease} months max`}
                                 </p>
                             )}
                         </button>

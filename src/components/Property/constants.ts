@@ -48,4 +48,10 @@ export const DEFAULT_UNIT_DATA = {
 
 // Add-on constants
 export const FURNITURE_COST = 1500;
-export const CLEANING_COST = 500;
+export const CARPARK_COST_PER_WEEK = 25;
+export const STORAGE_CAGE_COST_PER_WEEK = 15;
+
+// Cleaning costs
+export const REGULAR_CLEANING_COST_PER_ROOM_PER_WEEK = 35;
+export const REGULAR_CLEANING_COST_DUAL_OCCUPIED_PER_WEEK = 60;
+export const END_OF_LEASE_CLEANING_BASE = 200; // Per room for 2+ bed, base for studio/1bed

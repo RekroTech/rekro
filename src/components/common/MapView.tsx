@@ -7,6 +7,16 @@ interface MapViewProps {
     center?: { lat: number; lng: number };
     zoom?: number;
     markers?: Array<{ lat: number; lng: number; title?: string }>;
+    circles?: Array<{
+        lat: number;
+        lng: number;
+        radiusMeters: number;
+        fillColor?: string;
+        strokeColor?: string;
+        fillOpacity?: number;
+        strokeOpacity?: number;
+        strokeWeight?: number;
+    }>;
     onMapClick?: (lat: number, lng: number) => void;
     className?: string;
 }
@@ -15,12 +25,14 @@ export function MapView({
     center = { lat: -33.8688, lng: 151.2093 }, // Default to Sydney
     zoom = 12,
     markers = [],
+    circles = [],
     onMapClick,
     className = "h-96 w-full rounded-lg",
 }: MapViewProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
     const markersRef = useRef<google.maps.Marker[]>([]);
+    const circlesRef = useRef<google.maps.Circle[]>([]);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
     // Load Google Maps script
@@ -82,6 +94,33 @@ export function MapView({
             markersRef.current.push(marker);
         });
     }, [markers, isScriptLoaded]);
+
+    // Update circles
+    useEffect(() => {
+        if (!googleMapRef.current || !isScriptLoaded) {
+            return;
+        }
+
+        // Clear existing circles
+        circlesRef.current.forEach((circle) => circle.setMap(null));
+        circlesRef.current = [];
+
+        // Add new circles
+        circles.forEach((circleData) => {
+            const circle = new google.maps.Circle({
+                center: { lat: circleData.lat, lng: circleData.lng },
+                radius: circleData.radiusMeters,
+                map: googleMapRef.current!,
+                fillColor: circleData.fillColor || "#4F46E5",
+                fillOpacity: circleData.fillOpacity ?? 0.25,
+                strokeColor: circleData.strokeColor || "#4F46E5",
+                strokeOpacity: circleData.strokeOpacity ?? 0.5,
+                strokeWeight: circleData.strokeWeight ?? 2,
+                clickable: false,
+            });
+            circlesRef.current.push(circle);
+        });
+    }, [circles, isScriptLoaded]);
 
     // Update center
     useEffect(() => {

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { PropertyForm } from "@/components";
 import { getPropertyFileUrl } from "@/services/storage.service";
+import { getLocalityString } from "@/lib/utils/locationPrivacy";
 
 interface PropertyCardProps {
     property: Property & { units?: Unit[] };
@@ -37,11 +38,8 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
     const imagePath = images && images.length > 0 ? images[0] : null;
     const imageUrl = imagePath ? getPropertyFileUrl(imagePath, id) : "/window.svg";
 
-    // Format address
-    const addressText =
-        address !== null
-            ? Object.values(address).filter(Boolean).join(", ")
-            : "Location not specified";
+    // Format address to show only locality (suburb/city + state)
+    const addressText = address ? getLocalityString(address) : "Location not specified";
 
     // Display price from the first unit if available
     const pricePerWeek = firstUnit?.price_per_week;

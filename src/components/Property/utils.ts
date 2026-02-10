@@ -81,3 +81,48 @@ export const getBillsCostPerWeek = (bedrooms: number | null): number => {
     if (bedrooms === 4) return 7;
     return 10; // 3 bed or default
 };
+
+// Calculate regular cleaning cost per week for rooms (single occupancy)
+export const getRegularCleaningCostPerWeek = (isDualOccupied: boolean = false): number => {
+    return isDualOccupied ? 60 : 35;
+};
+
+// Calculate cleaning costs for entire homes based on individual room units only
+export const getEntireHomeCleaningCosts = (
+    units: Array<{ max_occupants: number | null; listing_type: string }>
+) => {
+    let regularWeekly = 0;
+    let endOfLease = 0;
+
+    // Only consider room-type units (individual bedrooms), not the entire_home unit
+    const roomUnits = units.filter((unit) => unit.listing_type === "room");
+
+    roomUnits.forEach((unit) => {
+        const maxOccupants = unit.max_occupants || 1;
+        // If max_occupants is 2, charge $60/week, otherwise $35/week
+        regularWeekly += maxOccupants === 2 ? 60 : 35;
+        // Each room costs $200 for end of lease cleaning
+        endOfLease += 200;
+    });
+
+    return {
+        regularWeekly,
+        endOfLease,
+    };
+};
+
+// Calculate furniture cost for individual rooms based on total room count
+// For entire homes: full $1500
+// For individual rooms: $1500 divided by number of rooms (e.g., $750 for 2 rooms, $500 for 3 rooms)
+export const getRoomFurnitureCost = (
+    units: Array<{ listing_type: string }>,
+    totalFurnitureCost: number
+): number => {
+    // Count room-type units (individual bedrooms), not the entire_home unit
+    const roomUnits = units.filter((unit) => unit.listing_type === "room");
+    const roomCount = roomUnits.length;
+
+    if (roomCount === 0) return totalFurnitureCost;
+
+    return totalFurnitureCost / roomCount;
+};

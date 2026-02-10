@@ -1,5 +1,6 @@
 import { Property } from "@/types/db";
 import { Icon } from "@/components/common";
+import { getLocalityString } from "@/lib/utils/locationPrivacy";
 
 interface PropertyHeaderProps {
     property: Property;
@@ -8,10 +9,7 @@ interface PropertyHeaderProps {
 export function PropertyHeader({ property }: PropertyHeaderProps) {
     const { title, property_type, bedrooms, bathrooms, car_spaces, furnished, address } = property;
 
-    const addressText =
-        address !== null
-            ? Object.values(address).filter(Boolean).join(", ")
-            : "Location not specified";
+    const addressText = address ? getLocalityString(address) : "Location not specified";
 
     return (
         <div className="mb-6">

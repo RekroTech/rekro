@@ -1,7 +1,7 @@
 "use client";
 
 import { useProperty } from "@/lib/react-query/hooks/property";
-import { Loader, Button, Icon, MapView } from "@/components/common";
+import { Loader, Button, Icon } from "@/components/common";
 import {
     PropertyHeader,
     UnitsSelector,
@@ -10,6 +10,7 @@ import {
     PropertyDescription,
     PropertyAmenities,
     PropertySidebar,
+    LocationSection,
 } from "@/components/Property/PropertyDetail";
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -29,32 +30,23 @@ export default function PropertyDetailPage() {
 
     const units = useMemo(() => property?.units || [], [property?.units]);
 
-    // Determine if this is an entire home listing (all units are entire_home type)
-    const isEntireHome = useMemo(() => {
-        if (units.length === 0) return false;
-        return units.every((unit: Unit) => unit.listing_type === "entire_home");
-    }, [units]);
-
-    // Initialize selectedUnitId based on units or propertyId changes
+    // Initialize selectedUnitId to first unit when units are available
     useEffect(() => {
-        if (units.length > 0 && !selectedUnitId) {
+        if (units.length > 0) {
             const firstUnit = units[0];
-            if (firstUnit) {
+            if (firstUnit && selectedUnitId !== firstUnit.id) {
                 requestAnimationFrame(() => {
                     setSelectedUnitId(firstUnit.id);
                     setSelectedImageIndex(0);
                 });
             }
+        } else if (selectedUnitId !== null) {
+            requestAnimationFrame(() => {
+                setSelectedUnitId(null);
+            });
         }
-    }, [units, selectedUnitId]);
-
-    // Reset state when property changes
-    useEffect(() => {
-        requestAnimationFrame(() => {
-            setSelectedUnitId(null);
-            setSelectedImageIndex(0);
-        });
-    }, [propertyId]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [units, propertyId]); // selectedUnitId intentionally excluded to prevent infinite loop
 
     const selectedUnit = useMemo(() => {
         if (units.length === 0) return null;
@@ -144,50 +136,18 @@ export default function PropertyDetailPage() {
 
                         {/* Location Map */}
                         {property.latitude && property.longitude && (
-                            <div className="space-y-4">
-                                <h2 className="text-2xl font-bold text-text-primary">Location</h2>
-                                <div className="bg-white rounded-lg shadow-sm p-4">
-                                    {property.address && (
-                                        <div className="mb-4 text-text-secondary">
-                                            <p className="text-sm font-medium">
-                                                {property.address.street}
-                                                {property.address.suburb &&
-                                                    `, ${property.address.suburb}`}
-                                            </p>
-                                            <p className="text-sm">
-                                                {property.address.city &&
-                                                    `${property.address.city}, `}
-                                                {property.address.state} {property.address.postcode}
-                                            </p>
-                                        </div>
-                                    )}
-                                    <MapView
-                                        center={{
-                                            lat: property.latitude,
-                                            lng: property.longitude,
-                                        }}
-                                        zoom={15}
-                                        markers={[
-                                            {
-                                                lat: property.latitude,
-                                                lng: property.longitude,
-                                                title: property.title,
-                                            },
-                                        ]}
-                                        className="h-96 w-full rounded-lg"
-                                    />
-                                </div>
-                            </div>
+                            <LocationSection
+                                latitude={property.latitude}
+                                longitude={property.longitude}
+                                title={property.title}
+                                address={property.address}
+                            />
                         )}
                     </div>
                 </div>
 
                 {/* Sidebar */}
-                <PropertySidebar
-                    selectedUnit={selectedUnit}
-                    isEntireHome={isEntireHome}
-                    property={property}
-                />
+                <PropertySidebar selectedUnit={selectedUnit} property={property} />
             </div>
         </main>
     );

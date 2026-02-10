@@ -85,7 +85,6 @@ export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {
             {parkingAmenities.length > 0 && (
                 <div>
                     <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-                        <Icon name="parking" className="w-5 h-5 text-primary-600" />
                         Parking Options
                     </h3>
                     <div className="flex flex-row gap-x-6 gap-y-4 pl-7">

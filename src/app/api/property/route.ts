@@ -77,18 +77,25 @@ export async function GET(request: NextRequest) {
             return errorResponse(error.message, 500);
         }
 
-        // If we joined with units, we need to remove the units data and get unique properties
-        let properties = data ?? [];
-        if (listingType && properties.length > 0) {
-            const uniquePropertyMap = new Map();
-            properties.forEach((prop: any) => {
-                if (!uniquePropertyMap.has(prop.id)) {
-                    const { units, ...propertyData } = prop;
-                    uniquePropertyMap.set(prop.id, propertyData);
-                }
-            });
-            properties = Array.from(uniquePropertyMap.values());
-        }
+        // If we joined with units, remove the units data and return unique properties.
+        // Supabase typing for dynamic select strings can be complex, so we treat the response as unknown records here.
+        const rawProperties = (data ?? []) as unknown as Array<Record<string, unknown>>;
+        const responseProperties =
+            listingType && rawProperties.length > 0
+                ? (() => {
+                      const uniquePropertyMap = new Map<string, Record<string, unknown>>();
+                      rawProperties.forEach((prop) => {
+                          const id = prop.id;
+                          if (typeof id === "string" && !uniquePropertyMap.has(id)) {
+                              // Drop `units` from the response if present.
+                              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                              const { units: _units, ...propertyData } = prop;
+                              uniquePropertyMap.set(id, propertyData);
+                          }
+                      });
+                      return Array.from(uniquePropertyMap.values());
+                  })()
+                : rawProperties;
 
         const total = count ?? 0;
         const nextOffset = offset + limit;
@@ -96,7 +103,7 @@ export async function GET(request: NextRequest) {
 
         return successResponse(
             {
-                properties: properties,
+                properties: responseProperties,
                 nextOffset: hasMore ? nextOffset : null,
                 hasMore,
                 total,
