@@ -57,6 +57,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                             alt={title}
                             fill
                             className="group-hover:scale-105 transition-transform duration-300"
+                            priority
                         />
                         {furnished && (
                             <div className="absolute top-3 right-3 bg-primary-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">

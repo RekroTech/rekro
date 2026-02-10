@@ -139,7 +139,7 @@ export function Visual({
                     onError={handleError}
                     unoptimized={shouldUnoptimize}
                     priority={priority}
-                    loading={priority ? undefined : loading}
+                    loading={priority ? "eager" : loading}
                     sizes={sizes}
                     fill={fill}
                     width={!fill ? width : undefined}
@@ -171,7 +171,7 @@ export function Visual({
                 onError={handleError}
                 unoptimized={shouldUnoptimize}
                 priority={priority}
-                loading={priority ? undefined : loading}
+                loading={priority ? "eager" : loading}
                 sizes={sizes}
                 fill={fill || !width || !height}
                 width={!fill && width ? width : undefined}

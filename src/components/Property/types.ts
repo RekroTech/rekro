@@ -16,11 +16,14 @@ export interface PropertyFormData {
     car_spaces: string;
     furnished: boolean;
     amenities: string[];
+    address_full: string; // Complete formatted address for display
     address_street: string;
     address_city: string;
     address_state: string;
     address_postcode: string;
     address_country: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 export interface UnitFormData {

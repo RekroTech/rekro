@@ -4,15 +4,26 @@ import { PropertyFormData } from "./types";
 export function parseAddress(address: unknown) {
     if (typeof address === "object" && address !== null) {
         const addr = address as Record<string, unknown>;
+        const street = (addr.street as string) || "";
+        const city = (addr.city as string) || "";
+        const state = (addr.state as string) || "";
+        const postcode = (addr.postcode as string) || "";
+        const country = (addr.country as string) || "Australia";
+
+        // Construct full address for display
+        const fullAddress = [street, city, state, postcode, country].filter(Boolean).join(", ");
+
         return {
-            address_street: (addr.street as string) || "",
-            address_city: (addr.city as string) || "",
-            address_state: (addr.state as string) || "",
-            address_postcode: (addr.postcode as string) || "",
-            address_country: (addr.country as string) || "Australia",
+            address_full: fullAddress,
+            address_street: street,
+            address_city: city,
+            address_state: state,
+            address_postcode: postcode,
+            address_country: country,
         };
     }
     return {
+        address_full: "",
         address_street: "",
         address_city: "",
         address_state: "",
@@ -32,11 +43,14 @@ export function getInitialFormData(property?: Property): PropertyFormData {
             car_spaces: "",
             furnished: false,
             amenities: [],
+            address_full: "",
             address_street: "",
             address_city: "",
             address_state: "",
             address_postcode: "",
             address_country: "Australia",
+            latitude: undefined,
+            longitude: undefined,
         };
     }
 
@@ -50,6 +64,8 @@ export function getInitialFormData(property?: Property): PropertyFormData {
         furnished: property.furnished || false,
         amenities: property.amenities || [],
         ...parseAddress(property.address),
+        latitude: property.latitude ?? undefined,
+        longitude: property.longitude ?? undefined,
     };
 }
 

@@ -9,7 +9,6 @@ import { usePropertyForm, useMediaFiles } from "../hooks";
 import { BasicInformationSection } from "./BasicInformationSection";
 import { PropertyDetailsSection } from "./PropertyDetailsSection";
 import { ListingDetailsSection } from "./ListingDetailsSection";
-import { AddressSection } from "./AddressSection";
 import { MediaSection } from "./MediaSection";
 
 export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddPropertyModalProps) {
@@ -105,6 +104,16 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                         postcode: formData.address_postcode,
                         country: formData.address_country,
                     },
+                    location:
+                        formData.address_city && formData.address_state
+                            ? {
+                                  city: formData.address_city,
+                                  state: formData.address_state,
+                                  country: formData.address_country || "Australia",
+                              }
+                            : null,
+                    latitude: formData.latitude ?? null,
+                    longitude: formData.longitude ?? null,
                 };
 
                 // Prepare units data array (all units for update)
@@ -177,6 +186,16 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                         postcode: formData.address_postcode,
                         country: formData.address_country,
                     },
+                    location:
+                        formData.address_city && formData.address_state
+                            ? {
+                                  city: formData.address_city,
+                                  state: formData.address_state,
+                                  country: formData.address_country || "Australia",
+                              }
+                            : null,
+                    latitude: formData.latitude ?? null,
+                    longitude: formData.longitude ?? null,
                     created_by: user.id,
                     is_published: false,
                 };
@@ -242,9 +261,6 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
 
                 {/* Basic Information */}
                 <BasicInformationSection formData={formData} updateFormData={setFormData} />
-
-                {/* Address */}
-                <AddressSection formData={formData} updateFormData={setFormData} />
 
                 {/* Property Details */}
                 <PropertyDetailsSection formData={formData} updateFormData={setFormData} />

@@ -313,3 +313,55 @@ body {
         --input-border: #134e4a;
     }
 }
+
+/* ---------------------------
+   Google Places (classic Autocomplete) dropdown styling
+   Google injects this into <body> as .pac-container.
+---------------------------- */
+.pac-container {
+    z-index: 1000003; /* above our inputs and most overlays */
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+    background: var(--card);
+    overflow: hidden;
+}
+
+.pac-container::after {
+    /* Remove the default 'powered by Google' background strip spacing.
+       Note: Attribution still appears via the inner markup. */
+    background: none !important;
+    height: 0 !important;
+}
+
+.pac-item {
+    padding: 10px 12px;
+    border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+.pac-item:first-child {
+    border-top: none;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+    background: var(--surface-muted);
+}
+
+.pac-item-query {
+    font-size: 14px;
+    color: var(--text);
+}
+
+.pac-matched {
+    font-weight: 600;
+}
+
+.pac-icon {
+    margin-top: 0;
+}

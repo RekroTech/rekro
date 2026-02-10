@@ -4,6 +4,10 @@ export type { ButtonProps, ButtonVariant, ButtonSize } from "./Button";
 export { Input } from "./Input";
 export type { InputProps, InputVariant, InputSize } from "./Input";
 
+export { Address } from "./Address";
+
+export { MapView } from "./MapView";
+
 export { Select } from "./Select";
 export type { SelectProps, SelectOption, SelectSize } from "./Select";
 
