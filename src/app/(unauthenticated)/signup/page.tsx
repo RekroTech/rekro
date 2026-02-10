@@ -8,7 +8,7 @@ import { useSignup } from "@/lib/react-query/hooks/auth/useAuth";
 export default function SignupPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [name, setName] = useState("");
+    const [role, setRole] = useState<"tenant" | "landlord">("tenant");
     const [validationError, setValidationError] = useState("");
 
     const router = useRouter();
@@ -37,7 +37,6 @@ export default function SignupPage() {
         setValidationError("");
 
         const trimmedEmail = email.trim();
-        const trimmedName = name.trim();
 
         // Client-side validation
         if (!trimmedEmail || !password) {
@@ -55,7 +54,7 @@ export default function SignupPage() {
             return;
         }
 
-        signup({ email: trimmedEmail, password, name: trimmedName });
+        signup({ email: trimmedEmail, password, role });
     };
 
     const isDisabled = isPending || isSuccess;
@@ -66,7 +65,9 @@ export default function SignupPage() {
                 {/* Top notice (consistent with login) */}
                 <div className="mb-7 px-2 text-center">
                     <p className="text-[13px] italic text-auth-note">
-                        Create your account to connect, make friends, and find your next home.
+                        {role === "tenant"
+                            ? "Create your account to connect, make friends, and find your next home."
+                            : "Create your account to list properties and connect with quality tenants."}
                     </p>
                 </div>
 
@@ -75,28 +76,35 @@ export default function SignupPage() {
                     <h1 className="mb-1 text-center text-[28px] font-bold text-primary-600">
                         Create your account
                     </h1>
-                    <p className="mb-5 text-center text-sm text-text-muted">
-                        Sign up to get started with reKro
-                    </p>
 
                     <form className="space-y-4" onSubmit={handleSubmit}>
-                        <div>
-                            <label
-                                htmlFor="name"
-                                className="mb-2 block text-sm font-medium text-text"
-                            >
-                                Name (optional)
-                            </label>
-                            <input
-                                id="name"
-                                name="name"
-                                type="text"
-                                value={name}
-                                disabled={isDisabled}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Your name"
-                                className="input"
-                            />
+                        <div className="mt-4">
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    disabled={isDisabled}
+                                    onClick={() => setRole("tenant")}
+                                    className={`flex-1 px-3 py-3 text-lg rounded-[10px] border transition-all ${
+                                        role === "tenant"
+                                            ? "bg-primary-600 text-white border-primary-600 font-medium"
+                                            : "bg-white text-gray-600 border-gray-300 hover:border-primary-400"
+                                    } disabled:opacity-60`}
+                                >
+                                    Tenant
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={isDisabled}
+                                    onClick={() => setRole("landlord")}
+                                    className={`flex-1 px-3 py-3 text-lg rounded-[10px] border transition-all ${
+                                        role === "landlord"
+                                            ? "bg-primary-600 text-white border-primary-600 font-medium"
+                                            : "bg-white text-gray-600 border-gray-300 hover:border-primary-400"
+                                    } disabled:opacity-60`}
+                                >
+                                    Landlord
+                                </button>
+                            </div>
                         </div>
 
                         <div>

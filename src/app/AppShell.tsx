@@ -17,6 +17,12 @@ export default function AppShell({ children }: AppShellProps) {
     const { data: user } = useUser();
     const canManageProperties = useCanManageProperties(user ?? null);
 
+    // Check if we're on an unauthenticated page (login, signup, forgot-password, etc.)
+    const isUnauthenticatedPage =
+        pathname?.startsWith("/login") ||
+        pathname?.startsWith("/signup") ||
+        pathname?.startsWith("/forgot-password");
+
     // Close global modals on route change to avoid stale UI.
     useEffect(() => {
         // Use setTimeout to avoid cascading renders
@@ -26,6 +32,11 @@ export default function AppShell({ children }: AppShellProps) {
 
         return () => clearTimeout(timer);
     }, [pathname]);
+
+    // Don't render Header on unauthenticated pages
+    if (isUnauthenticatedPage) {
+        return <>{children}</>;
+    }
 
     return (
         <>
