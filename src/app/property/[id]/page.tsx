@@ -1,7 +1,7 @@
 "use client";
 
 import { useProperty } from "@/lib/react-query/hooks/property";
-import { Loader, Button, Icon } from "@/components/common";
+import { Loader, Button, Icon, MapView } from "@/components/common";
 import {
     PropertyHeader,
     UnitsSelector,
@@ -141,6 +141,44 @@ export default function PropertyDetailPage() {
                     <div className="space-y-8 mt-8">
                         <PropertyDescription description={property.description} />
                         <PropertyAmenities amenities={property.amenities} />
+
+                        {/* Location Map */}
+                        {property.latitude && property.longitude && (
+                            <div className="space-y-4">
+                                <h2 className="text-2xl font-bold text-text-primary">Location</h2>
+                                <div className="bg-white rounded-lg shadow-sm p-4">
+                                    {property.address && (
+                                        <div className="mb-4 text-text-secondary">
+                                            <p className="text-sm font-medium">
+                                                {property.address.street}
+                                                {property.address.suburb &&
+                                                    `, ${property.address.suburb}`}
+                                            </p>
+                                            <p className="text-sm">
+                                                {property.address.city &&
+                                                    `${property.address.city}, `}
+                                                {property.address.state} {property.address.postcode}
+                                            </p>
+                                        </div>
+                                    )}
+                                    <MapView
+                                        center={{
+                                            lat: property.latitude,
+                                            lng: property.longitude,
+                                        }}
+                                        zoom={15}
+                                        markers={[
+                                            {
+                                                lat: property.latitude,
+                                                lng: property.longitude,
+                                                title: property.title,
+                                            },
+                                        ]}
+                                        className="h-96 w-full rounded-lg"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

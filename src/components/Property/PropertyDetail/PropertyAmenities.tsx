@@ -104,7 +104,7 @@ export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {
             {/* Other Amenities Section */}
             {otherAmenities.length > 0 && (
                 <div>
-                    <h3 className="text-lg font-semibold text-text mb-4">Other Amenities</h3>
+                    <h3 className="text-lg font-semibold text-text mb-4">Amenities</h3>
                     <div className="flex flex-row gap-x-6 gap-y-4">
                         {otherAmenities.map((amenity: string, index: number) => (
                             <div key={index} className="flex items-center gap-3 text-text group">
