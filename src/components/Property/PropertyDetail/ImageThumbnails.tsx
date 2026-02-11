@@ -44,14 +44,21 @@ export function ImageThumbnails({
             {showPrevious && (
                 <button
                     onClick={handlePrevious}
-                    className="flex-shrink-0 bg-white hover:bg-gray-50 text-gray-800 p-2 rounded-full shadow-lg transition-all border border-gray-200"
+                    className="hidden sm:inline-flex flex-shrink-0 bg-white hover:bg-gray-50 text-gray-800 p-1.5 sm:p-2 rounded-full shadow-lg transition-all border border-gray-200 active:scale-95"
                     aria-label="Previous thumbnails"
                 >
-                    <Icon name="chevron-left" className="w-5 h-5" />
+                    <Icon name="chevron-left" className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
             )}
 
-            <div className="flex-1 grid grid-cols-6 md:grid-cols-8 gap-2">
+            <div
+                className={
+                    "flex-1 " +
+                    "flex flex-nowrap gap-1.5 overflow-x-auto whitespace-nowrap py-0.5 " +
+                    "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
+                    "sm:grid sm:grid-cols-6 md:grid-cols-8 sm:gap-2 sm:overflow-x-visible sm:whitespace-normal sm:py-0"
+                }
+            >
                 {images
                     .slice(thumbnailStartIndex, thumbnailStartIndex + thumbnailsPerPage)
                     .map((img, relativeIndex) => {
@@ -63,7 +70,7 @@ export function ImageThumbnails({
                                 key={`${img}-${index}`}
                                 type="button"
                                 onClick={() => onSelect(index)}
-                                className={`relative block h-16 md:h-20 w-full rounded-lg overflow-hidden border-2 transition-all ${
+                                className={`relative block h-14 sm:h-16 md:h-20 w-20 sm:w-full rounded-lg overflow-hidden border-2 transition-all touch-manipulation active:scale-95 flex-shrink-0 sm:flex-shrink ${
                                     isSelected
                                         ? "border-primary-500 ring-2 ring-primary-200"
                                         : "border-gray-200 hover:border-gray-300"
@@ -75,7 +82,7 @@ export function ImageThumbnails({
                                     src={img}
                                     alt={`${title} thumbnail ${index + 1}`}
                                     fill
-                                    sizes="80px"
+                                    sizes="(max-width: 640px) 80px, (max-width: 768px) 100px, 120px"
                                     loading="lazy"
                                     objectFit="cover"
                                 />
@@ -87,10 +94,10 @@ export function ImageThumbnails({
             {showNext && (
                 <button
                     onClick={handleNext}
-                    className="flex-shrink-0 bg-white hover:bg-gray-50 text-gray-800 p-2 rounded-full shadow-lg transition-all border border-gray-200"
+                    className="hidden sm:inline-flex flex-shrink-0 bg-white hover:bg-gray-50 text-gray-800 p-1.5 sm:p-2 rounded-full shadow-lg transition-all border border-gray-200 active:scale-95"
                     aria-label="Next thumbnails"
                 >
-                    <Icon name="chevron-right" className="w-5 h-5" />
+                    <Icon name="chevron-right" className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
             )}
         </div>

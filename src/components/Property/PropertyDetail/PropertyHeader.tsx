@@ -12,28 +12,54 @@ export function PropertyHeader({ property }: PropertyHeaderProps) {
     const addressText = address ? getLocalityString(address) : "Location not specified";
 
     return (
-        <div className="mb-6">
-            {property_type && (
-                <div className="text-sm font-semibold text-primary-600 uppercase mb-2">
-                    {property_type}
+        <div className="mb-2 sm:mb-4">
+            {(property_type || furnished !== null) && (
+                <div className=" flex items-center justify-between">
+                    <div className="min-w-0">
+                        {property_type && (
+                            <div className="text-xs font-semibold uppercase tracking-wide text-primary-600 sm:text-sm">
+                                {property_type}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Furnishing badge (same row as property type) */}
+                    <div className="flex-shrink-0">
+                        {furnished ? (
+                            <div className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2 py-1 text-green-800 sm:px-2.5">
+                                <Icon name="check" className="h-4 w-4" />
+                                <span className="text-xs font-semibold">Furnished</span>
+                            </div>
+                        ) : (
+                            <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700 sm:px-2.5">
+                                <Icon name="x" className="h-4 w-4" />
+                                <span className="text-xs font-semibold">Unfurnished</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
-            <div className="flex items-start justify-between gap-4 mb-3">
-                <h1 className="text-3xl md:text-4xl font-bold text-text flex-1">{title}</h1>
+            <div className="">
+                <h1 className="min-w-0 flex-1 text-2xl font-bold leading-tight text-text sm:text-3xl sm:leading-tight md:text-4xl">
+                    {title}
+                </h1>
             </div>
 
-            <p className="text-lg text-text-muted flex items-center gap-2 mb-4">
-                <Icon name="location" className="w-5 h-5" />
-                {addressText}
+            <p className="mb-2 flex min-w-0 items-start gap-2 text-sm leading-snug text-text-muted sm:mb-4 sm:text-base">
+                <Icon
+                    name="location"
+                    className="mt-0.5 h-4 w-4 flex-shrink-0 sm:mt-0.5 sm:h-5 sm:w-5"
+                />
+                <span className="min-w-0 break-words">{addressText}</span>
             </p>
 
             {/* Property Features */}
-            <div className="flex flex-wrap items-center gap-4 md:gap-6 text-text-muted">
+            <div className="flex flex-wrap items-center gap-x-4 text-text-muted sm:gap-x-6">
                 {bedrooms !== null && bedrooms !== undefined && (
                     <div className="flex items-center gap-2">
-                        <Icon name="bed" className="w-5 h-5 md:w-6 md:h-6" />
-                        <span className="text-base md:text-lg font-semibold">
+                        <Icon name="bed" className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />
+                        <span className="text-sm font-semibold sm:text-base">
                             {bedrooms} Bed{bedrooms !== 1 ? "s" : ""}
                         </span>
                     </div>
@@ -41,8 +67,8 @@ export function PropertyHeader({ property }: PropertyHeaderProps) {
 
                 {bathrooms !== null && bathrooms !== undefined && (
                     <div className="flex items-center gap-2">
-                        <Icon name="bath" className="w-5 h-5 md:w-6 md:h-6" />
-                        <span className="text-base md:text-lg font-semibold">
+                        <Icon name="bath" className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />
+                        <span className="text-sm font-semibold sm:text-base">
                             {bathrooms} Bath{bathrooms !== 1 ? "s" : ""}
                         </span>
                     </div>
@@ -50,17 +76,10 @@ export function PropertyHeader({ property }: PropertyHeaderProps) {
 
                 {car_spaces !== null && car_spaces !== undefined && car_spaces > 0 && (
                     <div className="flex items-center gap-2">
-                        <Icon name="car" className="w-5 h-5 md:w-6 md:h-6" />
-                        <span className="text-base md:text-lg font-semibold">
+                        <Icon name="car" className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />
+                        <span className="text-sm font-semibold sm:text-base">
                             {car_spaces} Car{car_spaces !== 1 ? "s" : ""}
                         </span>
-                    </div>
-                )}
-
-                {furnished && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-800 rounded-full border border-green-300">
-                        <Icon name="check" className="w-5 h-5" />
-                        <span className="text-sm md:text-base font-bold">Furnished</span>
                     </div>
                 )}
             </div>

@@ -1,6 +1,9 @@
 export { Button } from "./Button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./Button";
 
+export { BackButton } from "./BackButton";
+export type { BackButtonProps } from "./BackButton";
+
 export { Input } from "./Input";
 export type { InputProps, InputVariant, InputSize } from "./Input";
 

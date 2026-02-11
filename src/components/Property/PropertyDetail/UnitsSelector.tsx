@@ -7,36 +7,10 @@ interface UnitsSelectorProps {
     onUnitSelect: (id: string) => void;
 }
 
-function UnitAvailabilityBadge({ unit }: { unit: Unit }) {
-    // Availability data is now stored directly on the unit
-    const now = new Date();
-    const availableFrom = unit.available_from ? new Date(unit.available_from) : null;
-
-    let badgeColor: string;
-    let badgeText: string;
-
-    if (!unit.is_available) {
-        badgeColor = "bg-red-100 text-red-700";
-        badgeText = "Unavailable";
-    } else if (availableFrom && availableFrom > now) {
-        badgeColor = "bg-yellow-100 text-yellow-700";
-        badgeText = `From ${availableFrom.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
-    } else {
-        badgeColor = "bg-green-100 text-green-700";
-        badgeText = "Available";
-    }
-
-    return (
-        <span className={`text-xs px-2 py-1 rounded-full ${badgeColor} font-medium`}>
-            {badgeText}
-        </span>
-    );
-}
-
 function getUnitTypeLabel(unit: Unit) {
     switch (unit.listing_type) {
         case "entire_home":
-            return "Entire home";
+            return "Entire Home";
         case "room":
             return "Room";
         default:
@@ -53,10 +27,8 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
     if (units.length === 0) return null;
 
     return (
-        <div className="my-6">
-            <h2 className="text-xl font-bold text-text mb-3">Available Units ({units.length})</h2>
-
-            <div className="flex gap-4 pb-2 overflow-x-auto">
+        <div className="my-4 sm:my-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
                 {units.map((unit: Unit, idx: number) => {
                     const isSelected = selectedUnitId === unit.id;
 
@@ -64,52 +36,67 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
                         <button
                             key={unit.id}
                             onClick={() => onUnitSelect(unit.id)}
-                            className={`text-left p-4 rounded-lg border-2 transition-all ${
+                            className={`relative text-left p-2 sm:p-4 rounded-lg border-2 transition-all ${
                                 isSelected
                                     ? "border-primary-500 bg-primary-50 shadow-md"
-                                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow"
+                                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
                             }`}
                         >
-                            <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <h3 className="font-semibold text-text">
-                                        {getUnitName(unit, idx)}
-                                    </h3>
-                                </div>
-                                <div className="text-right flex flex-col items-end gap-1">
-                                    <UnitAvailabilityBadge unit={unit} />
-                                    <p className="text-lg font-bold text-primary-600">
-                                        ${unit.price_per_week}
-                                        <span className="text-sm font-normal text-text-muted">
-                                            /week
-                                        </span>
-                                    </p>
+                            {/* Availability Badge - Top Right */}
+                            <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+                                {isSelected ? (
+                                    <div className="bg-primary-600 text-white rounded-full p-0.5">
+                                        <Icon name="check" className="w-3.5 h-3.5" />
+                                    </div>
+                                ) : (
+                                    <span
+                                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                                            unit.is_available
+                                                ? "bg-green-100 text-green-800"
+                                                : "bg-red-100 text-red-800"
+                                        }`}
+                                    >
+                                        {unit.is_available ? "Available" : "Unavailable"}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Unit Name */}
+                            <h3 className="font-bold text-base text-text">
+                                {getUnitName(unit, idx)}
+                            </h3>
+
+                            {/* Price */}
+                            <div className="mb-2">
+                                <div className="text-2xl font-bold text-primary-600">
+                                    ${unit.price_per_week}{" "}
+                                    <span className="text-xs font-normal text-gray-500">p/w</span>
                                 </div>
                             </div>
 
+                            {/* Description */}
                             {unit.description && (
-                                <p className="text-sm text-text-muted line-clamp-2 mb-2">
+                                <p className="text-xs text-text-muted mb-2 line-clamp-2">
                                     {unit.description}
                                 </p>
                             )}
 
-                            <div className="flex flex-wrap gap-2 text-xs text-text-muted">
-                                {unit.max_occupants && (
-                                    <span className="flex items-center gap-1">
-                                        <Icon name="users" className="w-4 h-4" />
-                                        Max {unit.max_occupants}{" "}
-                                        {unit.max_occupants === 1 ? "person" : "people"}
-                                    </span>
+                            {/* Details */}
+                            <div className="text-xs text-text-muted flex flex-row gap-2 items-center justify-between">
+                                {unit.bond_amount && (
+                                    <div className="flex items-center gap-1">
+                                        <Icon name="document" className="w-3.5 h-3.5" />$
+                                        {unit.bond_amount} bond
+                                    </div>
                                 )}
-                                {unit.size_sqm && <span>• {unit.size_sqm} sqm</span>}
-                                {unit.bills_included && <span>• Bills included</span>}
+                                {unit.max_occupants && (
+                                    <div className="flex items-center gap-1.5">
+                                        <Icon name="users" className="w-3.5 h-3.5" />
+                                        {unit.max_occupants}{" "}
+                                        {unit.max_occupants === 1 ? "person" : "people"}
+                                    </div>
+                                )}
                             </div>
-
-                            {unit.bond_amount && (
-                                <p className="text-xs text-text-muted mt-2">
-                                    Bond: ${unit.bond_amount}
-                                </p>
-                            )}
                         </button>
                     );
                 })}

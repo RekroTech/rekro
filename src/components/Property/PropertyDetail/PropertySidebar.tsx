@@ -315,63 +315,77 @@ export function PropertySidebar({ selectedUnit, property }: PropertySidebarProps
     ]);
 
     return (
-        <div className="col-span-1 space-y-4">
+        <div className="space-y-4">
             {/* Top Section - Price and Actions */}
-            <div className="bg-white border border-border rounded-lg p-6 shadow-lg">
-                {/* Like and Share Buttons - Top Right */}
-                <div className="absolute top-4 right-4 flex gap-2">
-                    <ShareDropdown
-                        propertyTitle={property.title}
-                        propertyId={property.id}
-                        unitId={selectedUnit?.id || ""}
-                    />
-                    <button
-                        onClick={handleToggleLike}
-                        disabled={!activeUnitId || isLikeLoading || toggleLikeMutation.isPending}
-                        className={`p-2 rounded-full transition-all ${
-                            isLiked
-                                ? "bg-red-50 text-red-600 hover:bg-red-100"
-                                : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-red-500"
-                        } ${
-                            !activeUnitId || isLikeLoading || toggleLikeMutation.isPending
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
-                        }`}
-                        aria-label={
-                            !activeUnitId
-                                ? `Select a ${isEntireHome ? "property" : "room"} to save`
-                                : isLiked
-                                  ? `Unsave ${isEntireHome ? "property" : "room"}`
-                                  : `Save ${isEntireHome ? "property" : "room"}`
-                        }
-                    >
-                        <Icon
-                            name="heart"
-                            className="w-5 h-5"
-                            fill={isLiked ? "currentColor" : "none"}
-                            stroke="currentColor"
-                            strokeWidth={isLiked ? 0 : 2}
-                        />
-                    </button>
-                </div>
-
+            <div className="bg-white border border-border rounded-lg p-4 sm:p-6 shadow-lg">
                 {selectedUnit && (
                     <div className="mb-6">
-                        <h3 className="text-sm font-semibold text-text-muted mb-1">
-                            {isEntireHome ? "Price" : "Room Price"}
-                        </h3>
-                        <p className="text-3xl font-bold text-primary-600">
-                            ${adjustedBaseRent.toFixed(2)}
-                            <span className="text-base font-normal text-text-muted">/week</span>
-                        </p>
-                        {addOns.selectedLease !== 12 && (
-                            <p className="text-xs text-text-muted mt-1">
-                                Base: ${selectedUnit.price_per_week}/week (12 months)
-                            </p>
-                        )}
-                        <p className="text-sm text-text-muted mt-1">
-                            Bond: ${adjustedBond.toFixed(2)}
-                        </p>
+                        {/* Price and Share/Like Buttons Row */}
+                        <div className="flex items-start justify-between gap-4">
+                            {/* Price Section */}
+                            <div className="flex-1">
+                                <h3 className="text-sm font-semibold text-text-muted mb-1">
+                                    {selectedUnit.name}
+                                </h3>
+                                <p className="text-3xl font-bold text-primary-600">
+                                    ${adjustedBaseRent.toFixed(2)}
+                                    <span className="text-base font-normal text-text-muted">
+                                        /week
+                                    </span>
+                                </p>
+                                {addOns.selectedLease !== 12 && (
+                                    <p className="text-xs text-text-muted mt-1">
+                                        Base: ${selectedUnit.price_per_week}/week (12 months)
+                                    </p>
+                                )}
+                                <p className="text-sm text-text-muted mt-1">
+                                    Bond: ${adjustedBond.toFixed(2)}
+                                </p>
+                            </div>
+
+                            {/* Share and Like Buttons */}
+                            <div className="flex gap-2">
+                                <ShareDropdown
+                                    propertyTitle={property.title}
+                                    propertyId={property.id}
+                                    unitId={selectedUnit?.id || ""}
+                                />
+                                <button
+                                    onClick={handleToggleLike}
+                                    disabled={
+                                        !activeUnitId ||
+                                        isLikeLoading ||
+                                        toggleLikeMutation.isPending
+                                    }
+                                    className={`p-2 rounded-full transition-all touch-manipulation active:scale-95 ${
+                                        isLiked
+                                            ? "bg-red-50 text-red-600 hover:bg-red-100"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-red-500"
+                                    } ${
+                                        !activeUnitId ||
+                                        isLikeLoading ||
+                                        toggleLikeMutation.isPending
+                                            ? "opacity-50 cursor-not-allowed"
+                                            : ""
+                                    }`}
+                                    aria-label={
+                                        !activeUnitId
+                                            ? `Select a ${isEntireHome ? "property" : "room"} to save`
+                                            : isLiked
+                                              ? `Unsave ${isEntireHome ? "property" : "room"}`
+                                              : `Save ${isEntireHome ? "property" : "room"}`
+                                    }
+                                >
+                                    <Icon
+                                        name="heart"
+                                        className="w-5 h-5"
+                                        fill={isLiked ? "currentColor" : "none"}
+                                        stroke="currentColor"
+                                        strokeWidth={isLiked ? 0 : 2}
+                                    />
+                                </button>
+                            </div>
+                        </div>
 
                         {/* Availability Information */}
                         <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -517,10 +531,50 @@ export function PropertySidebar({ selectedUnit, property }: PropertySidebarProps
                 )}
 
                 {!selectedUnit && (
-                    <div className="mb-6 flex items-center gap-2">
-                        <div className="inline-flex items-center gap-1.5 text-gray-500 font-medium text-sm">
-                            <Icon name="dot" className="w-4 h-4" />
-                            Availability will be updated
+                    <div className="mb-6">
+                        {/* Share and Like Buttons when no unit selected */}
+                        <div className="flex justify-end gap-2 mb-4">
+                            <ShareDropdown
+                                propertyTitle={property.title}
+                                propertyId={property.id}
+                                unitId=""
+                            />
+                            <button
+                                onClick={handleToggleLike}
+                                disabled={
+                                    !activeUnitId || isLikeLoading || toggleLikeMutation.isPending
+                                }
+                                className={`p-2 rounded-full transition-all touch-manipulation active:scale-95 ${
+                                    isLiked
+                                        ? "bg-red-50 text-red-600 hover:bg-red-100"
+                                        : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-red-500"
+                                } ${
+                                    !activeUnitId || isLikeLoading || toggleLikeMutation.isPending
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : ""
+                                }`}
+                                aria-label={
+                                    !activeUnitId
+                                        ? `Select a ${isEntireHome ? "property" : "room"} to save`
+                                        : isLiked
+                                          ? `Unsave ${isEntireHome ? "property" : "room"}`
+                                          : `Save ${isEntireHome ? "property" : "room"}`
+                                }
+                            >
+                                <Icon
+                                    name="heart"
+                                    className="w-5 h-5"
+                                    fill={isLiked ? "currentColor" : "none"}
+                                    stroke="currentColor"
+                                    strokeWidth={isLiked ? 0 : 2}
+                                />
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="inline-flex items-center gap-1.5 text-gray-500 font-medium text-sm">
+                                <Icon name="dot" className="w-4 h-4" />
+                                Availability will be updated
+                            </div>
                         </div>
                     </div>
                 )}

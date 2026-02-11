@@ -1,7 +1,7 @@
 "use client";
 
 import { useProperty } from "@/lib/react-query/hooks/property";
-import { Loader, Button, Icon } from "@/components/common";
+import { Loader, Button, BackButton } from "@/components/common";
 import {
     PropertyHeader,
     UnitsSelector,
@@ -90,23 +90,17 @@ export default function PropertyDetailPage() {
     };
 
     return (
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8 overflow-x-hidden">
             {/* Back Button */}
-            <button
-                onClick={() => router.back()}
-                className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 transition-colors mb-6 cursor-pointer"
-            >
-                <Icon name="chevron-left" className="w-5 h-5" />
-                Back
-            </button>
+            <BackButton className="mb-4 sm:mb-6" />
 
             {/* Property Header */}
             <PropertyHeader property={property} />
 
-            {/* Main Grid: Image Gallery (2/3) + Sidebar (1/3) */}
-            <div className="grid gap-6 mb-8 grid-cols-3">
-                {/* Image Gallery - 2/3 width */}
-                <div className="col-span-2">
+            {/* Main Grid: Image Gallery + Content (stacked on mobile, 2/3 on desktop) + Sidebar (1/3 on desktop) */}
+            <div className="grid gap-4 sm:gap-6 mb-8 lg:grid-cols-3">
+                {/* Image Gallery & Content - Full width on mobile, 2/3 on desktop */}
+                <div className="lg:col-span-2 min-w-0">
                     <ImageGallery
                         images={propertyMedia}
                         title={property.title}
@@ -129,8 +123,14 @@ export default function PropertyDetailPage() {
                             onUnitSelect={handleUnitSelect}
                         />
                     )}
+
+                    {/* Sidebar on mobile - Show after units, before description */}
+                    <div className="lg:hidden mt-4">
+                        <PropertySidebar selectedUnit={selectedUnit} property={property} />
+                    </div>
+
                     {/* Content */}
-                    <div className="space-y-8 mt-8">
+                    <div className="space-y-6 sm:space-y-8 mt-6 sm:mt-8">
                         <PropertyDescription description={property.description} />
                         <PropertyAmenities amenities={property.amenities} />
 
@@ -146,8 +146,10 @@ export default function PropertyDetailPage() {
                     </div>
                 </div>
 
-                {/* Sidebar */}
-                <PropertySidebar selectedUnit={selectedUnit} property={property} />
+                {/* Sidebar - Hidden on mobile (shown above), visible on desktop */}
+                <div className="hidden lg:block lg:col-span-1 min-w-0">
+                    <PropertySidebar selectedUnit={selectedUnit} property={property} />
+                </div>
             </div>
         </main>
     );

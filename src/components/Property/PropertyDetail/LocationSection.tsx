@@ -25,18 +25,23 @@ export function LocationSection({ latitude, longitude, address }: LocationSectio
     const localityString = useMemo(() => getLocalityString(address ?? undefined), [address]);
 
     return (
-        <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-text-primary">Location</h2>
+        <div className="space-y-3 sm:space-y-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-text-primary">Location</h2>
             <div className="bg-white rounded-lg shadow-sm border border-border overflow-hidden">
                 {/* Locality Information (Privacy Protected) */}
                 {localityString && (
-                    <div className="p-4 border-b border-border bg-gray-50">
-                        <div className="flex items-start gap-3">
+                    <div className="p-3 sm:p-4 border-b border-border bg-gray-50">
+                        <div className="flex items-start gap-2 sm:gap-3">
                             <div className="flex-shrink-0 mt-1">
-                                <Icon name="map-pin" className="w-5 h-5 text-primary-600" />
+                                <Icon
+                                    name="map-pin"
+                                    className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600"
+                                />
                             </div>
                             <div className="flex-1">
-                                <p className="text-base font-medium text-text">{localityString}</p>
+                                <p className="text-sm sm:text-base font-medium text-text">
+                                    {localityString}
+                                </p>
                                 <p className="text-xs text-text-muted mt-1">
                                     <Icon name="info-circle" className="w-3 h-3 inline mr-1" />
                                     Approximate location for privacy
@@ -50,20 +55,22 @@ export function LocationSection({ latitude, longitude, address }: LocationSectio
                 {!showMap ? (
                     <button
                         onClick={() => setShowMap(true)}
-                        className="w-full p-6 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors group"
+                        className="w-full p-4 sm:p-6 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors group touch-manipulation active:scale-[0.99]"
                     >
-                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary-100 text-primary-600 group-hover:bg-primary-200 transition-colors">
-                            <Icon name="location" className="w-6 h-6" />
+                        <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary-100 text-primary-600 group-hover:bg-primary-200 transition-colors">
+                            <Icon name="location" className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <div className="text-left">
-                            <p className="text-base font-semibold text-text group-hover:text-primary-600 transition-colors">
+                        <div className="text-left flex-1">
+                            <p className="text-sm sm:text-base font-semibold text-text group-hover:text-primary-600 transition-colors">
                                 View location on map
                             </p>
-                            <p className="text-sm text-text-muted">Click to load interactive map</p>
+                            <p className="text-xs sm:text-sm text-text-muted">
+                                Click to load interactive map
+                            </p>
                         </div>
                         <Icon
                             name="chevron-right"
-                            className="w-5 h-5 text-text-muted ml-auto group-hover:text-primary-600 transition-colors"
+                            className="w-4 h-4 sm:w-5 sm:h-5 text-text-muted group-hover:text-primary-600 transition-colors"
                         />
                     </button>
                 ) : (
@@ -71,15 +78,15 @@ export function LocationSection({ latitude, longitude, address }: LocationSectio
                         {/* Collapse Button */}
                         <button
                             onClick={() => setShowMap(false)}
-                            className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 text-text-muted hover:text-text rounded-full p-2 shadow-md transition-all border border-border"
+                            className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 bg-white hover:bg-gray-100 text-text-muted hover:text-text rounded-full p-1.5 sm:p-2 shadow-md transition-all border border-border touch-manipulation active:scale-95"
                             aria-label="Hide map"
                         >
-                            <Icon name="x" className="w-5 h-5" />
+                            <Icon name="x" className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
 
                         {/* Map Component */}
-                        <div className="p-4">
-                            <div className="mb-3 px-2">
+                        <div className="p-3 sm:p-4">
+                            <div className="mb-2 sm:mb-3 px-1 sm:px-2">
                                 <p className="text-xs text-text-muted flex items-center gap-1">
                                     <Icon name="info-circle" className="w-3.5 h-3.5" />
                                     Shaded area shows general locality. Exact address provided after

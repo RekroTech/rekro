@@ -80,20 +80,28 @@ export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {
     );
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
             {/* Parking Options Section */}
             {parkingAmenities.length > 0 && (
                 <div>
-                    <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-text mb-3 sm:mb-4 flex items-center gap-2">
                         Parking Options
                     </h3>
-                    <div className="flex flex-row gap-x-6 gap-y-4 pl-7">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 sm:pl-7">
                         {parkingAmenities.map((amenity: string, index: number) => (
-                            <div key={index} className="flex items-center gap-3 text-text group">
+                            <div
+                                key={index}
+                                className="flex items-center gap-2 sm:gap-3 text-text group"
+                            >
                                 <div className="text-primary-600 group-hover:text-primary-700 transition-colors flex-shrink-0">
-                                    <Icon name={getAmenityIcon(amenity)} className="w-5 h-5" />
+                                    <Icon
+                                        name={getAmenityIcon(amenity)}
+                                        className="w-4 h-4 sm:w-5 sm:h-5"
+                                    />
                                 </div>
-                                <span className="text-sm md:text-base leading-snug">{amenity}</span>
+                                <span className="text-xs sm:text-sm md:text-base leading-snug">
+                                    {amenity}
+                                </span>
                             </div>
                         ))}
                     </div>
@@ -103,14 +111,24 @@ export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {
             {/* Other Amenities Section */}
             {otherAmenities.length > 0 && (
                 <div>
-                    <h3 className="text-lg font-semibold text-text mb-4">Amenities</h3>
-                    <div className="flex flex-row gap-x-6 gap-y-4">
+                    <h3 className="text-base sm:text-lg font-semibold text-text mb-3 sm:mb-4">
+                        Amenities
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                         {otherAmenities.map((amenity: string, index: number) => (
-                            <div key={index} className="flex items-center gap-3 text-text group">
+                            <div
+                                key={index}
+                                className="flex items-center gap-2 sm:gap-3 text-text group"
+                            >
                                 <div className="text-primary-600 group-hover:text-primary-700 transition-colors flex-shrink-0">
-                                    <Icon name={getAmenityIcon(amenity)} className="w-5 h-5" />
+                                    <Icon
+                                        name={getAmenityIcon(amenity)}
+                                        className="w-4 h-4 sm:w-5 sm:h-5"
+                                    />
                                 </div>
-                                <span className="text-sm md:text-base leading-snug">{amenity}</span>
+                                <span className="text-xs sm:text-sm md:text-base leading-snug">
+                                    {amenity}
+                                </span>
                             </div>
                         ))}
                     </div>
