@@ -6,8 +6,6 @@ import {
     PropertyHeader,
     UnitsSelector,
     ImageGallery,
-    ImageThumbnails,
-    PropertyDescription,
     PropertyAmenities,
     PropertySidebar,
     LocationSection,
@@ -108,13 +106,6 @@ export default function PropertyDetailPage() {
                         onIndexChange={setSelectedImageIndex}
                     />
 
-                    <ImageThumbnails
-                        images={propertyMedia}
-                        title={property.title}
-                        selectedIndex={selectedImageIndex}
-                        onSelect={setSelectedImageIndex}
-                    />
-
                     {/* Units Section */}
                     {units.length > 1 && (
                         <UnitsSelector
@@ -131,7 +122,14 @@ export default function PropertyDetailPage() {
 
                     {/* Content */}
                     <div className="space-y-6 sm:space-y-8 mt-6 sm:mt-8">
-                        <PropertyDescription description={property.description} />
+                        <div>
+                            <h2 className="text-xl sm:text-2xl font-bold text-text mb-3 sm:mb-4">
+                                About the property
+                            </h2>
+                            <p className="text-sm sm:text-base text-text-muted leading-relaxed whitespace-pre-line">
+                                {property.description || "No description available."}
+                            </p>
+                        </div>
                         <PropertyAmenities amenities={property.amenities} />
 
                         {/* Location Map */}

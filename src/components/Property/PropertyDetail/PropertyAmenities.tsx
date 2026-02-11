@@ -1,60 +1,41 @@
 ﻿import { Icon, type IconName } from "@/components/common";
+import { PARKING_OPTIONS } from "@/components/Property/constants";
 
 interface PropertyAmenitiesProps {
     amenities: string[] | null;
 }
 
-// Icon mapping for common amenities
-const amenityIcons = {
-    wifi: "wifi",
-    parking: "parking",
-    pool: "pool",
-    gym: "gym",
-    aircon: "aircon",
-    heating: "heating",
-    laundry: "laundry",
-    dishwasher: "dishwasher",
-    balcony: "balcony",
-    garden: "garden",
-    default: "check",
+// Direct mapping of predefined amenities to their icons
+const AMENITY_ICON_MAP: Record<string, IconName> = {
+    "Air Conditioning": "aircon",
+    Heating: "heating",
+    "Wi-Fi": "wifi",
+    Pool: "pool",
+    Gym: "gym",
+    Laundry: "laundry",
+    Dishwasher: "dishwasher",
+    Balcony: "balcony",
+    Garden: "garden",
+    "Pet Friendly": "check",
+    "Security System": "check",
+    "BBQ Area": "check",
+    "Study Room": "check",
+    Storage: "check",
+    Elevator: "check",
 } as const;
 
 function getAmenityIcon(amenity: string): IconName {
-    const normalized = amenity.toLowerCase().trim();
+    // Check if it's a parking option
+    if (PARKING_OPTIONS.some((parking) => amenity.toLowerCase().includes(parking.toLowerCase()))) {
+        return "parking";
+    }
 
-    // Check for common patterns
-    if (normalized.includes("wifi") || normalized.includes("internet"))
-        return amenityIcons.wifi as IconName;
-    if (
-        normalized.includes("parking") ||
-        normalized.includes("garage") ||
-        normalized.includes("carport") ||
-        normalized.includes("underground") ||
-        normalized.includes("driveway") ||
-        normalized.includes("visitor") ||
-        normalized.includes("tandem")
-    )
-        return amenityIcons.parking as IconName;
-    if (normalized.includes("pool") || normalized.includes("swimming"))
-        return amenityIcons.pool as IconName;
-    if (normalized.includes("gym") || normalized.includes("fitness"))
-        return amenityIcons.gym as IconName;
-    if (normalized.includes("air") || normalized.includes("cooling") || normalized.includes("ac"))
-        return amenityIcons.aircon as IconName;
-    if (normalized.includes("heat")) return amenityIcons.heating as IconName;
-    if (normalized.includes("laundry") || normalized.includes("washing"))
-        return amenityIcons.laundry as IconName;
-    if (normalized.includes("dishwasher")) return amenityIcons.dishwasher as IconName;
-    if (
-        normalized.includes("balcony") ||
-        normalized.includes("patio") ||
-        normalized.includes("terrace")
-    )
-        return amenityIcons.balcony as IconName;
-    if (normalized.includes("garden") || normalized.includes("yard"))
-        return amenityIcons.garden as IconName;
+    // Return the mapped icon or default
+    return AMENITY_ICON_MAP[amenity] || "check";
+}
 
-    return amenityIcons.default as IconName;
+function isParkingAmenity(amenity: string): boolean {
+    return PARKING_OPTIONS.some((parking) => amenity.toLowerCase().includes(parking.toLowerCase()));
 }
 
 export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {
@@ -62,67 +43,40 @@ export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {
         return null;
     }
 
-    // Separate parking options from other amenities
-    const parkingAmenities = amenities.filter(
-        (amenity) =>
-            amenity.toLowerCase().includes("parking") ||
-            amenity.toLowerCase().includes("garage") ||
-            amenity.toLowerCase().includes("carport") ||
-            amenity.toLowerCase().includes("driveway")
-    );
+    // Separate parking features from other amenities
+    const parkingAmenities = amenities.filter(isParkingAmenity);
+    const otherAmenities = amenities.filter((amenity) => !isParkingAmenity(amenity));
 
-    const otherAmenities = amenities.filter(
-        (amenity) =>
-            !amenity.toLowerCase().includes("parking") &&
-            !amenity.toLowerCase().includes("garage") &&
-            !amenity.toLowerCase().includes("carport") &&
-            !amenity.toLowerCase().includes("driveway")
-    );
+    // Combine parking features into a descriptive phrase
+    const parkingDescription =
+        parkingAmenities.length > 0 ? parkingAmenities.join(", ") + " Parking" : "";
+
+    // Prepare amenities list for grid
+    const amenitiesList = parkingDescription
+        ? [parkingDescription, ...otherAmenities]
+        : otherAmenities;
 
     return (
         <div className="space-y-6 sm:space-y-8">
-            {/* Parking Options Section */}
-            {parkingAmenities.length > 0 && (
-                <div>
-                    <h3 className="text-base sm:text-lg font-semibold text-text mb-3 sm:mb-4 flex items-center gap-2">
-                        Parking Options
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 sm:pl-7">
-                        {parkingAmenities.map((amenity: string, index: number) => (
-                            <div
-                                key={index}
-                                className="flex items-center gap-2 sm:gap-3 text-text group"
-                            >
-                                <div className="text-primary-600 group-hover:text-primary-700 transition-colors flex-shrink-0">
-                                    <Icon
-                                        name={getAmenityIcon(amenity)}
-                                        className="w-4 h-4 sm:w-5 sm:h-5"
-                                    />
-                                </div>
-                                <span className="text-xs sm:text-sm md:text-base leading-snug">
-                                    {amenity}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Other Amenities Section */}
-            {otherAmenities.length > 0 && (
+            {/* Amenities Section (including synthesized parking description) */}
+            {amenitiesList.length > 0 && (
                 <div>
                     <h3 className="text-base sm:text-lg font-semibold text-text mb-3 sm:mb-4">
                         Amenities
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-                        {otherAmenities.map((amenity: string, index: number) => (
+                        {amenitiesList.map((amenity: string, index: number) => (
                             <div
                                 key={index}
                                 className="flex items-center gap-2 sm:gap-3 text-text group"
                             >
                                 <div className="text-primary-600 group-hover:text-primary-700 transition-colors flex-shrink-0">
                                     <Icon
-                                        name={getAmenityIcon(amenity)}
+                                        name={
+                                            index === 0 && parkingDescription
+                                                ? "parking"
+                                                : getAmenityIcon(amenity)
+                                        }
                                         className="w-4 h-4 sm:w-5 sm:h-5"
                                     />
                                 </div>

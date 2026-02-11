@@ -55,3 +55,33 @@ export const STORAGE_CAGE_COST_PER_WEEK = 15;
 export const REGULAR_CLEANING_COST_PER_ROOM_PER_WEEK = 35;
 export const REGULAR_CLEANING_COST_DUAL_OCCUPIED_PER_WEEK = 60;
 export const END_OF_LEASE_CLEANING_BASE = 200; // Per room for 2+ bed, base for studio/1bed
+
+// Parking options
+export const PARKING_OPTIONS = [
+    "Garage",
+    "Carport",
+    "Underground",
+    "Secure",
+    "Street",
+    "Driveway",
+    "Visitor",
+    "Tandem",
+] as const;
+
+export const AMENITIES = [
+    "Air Conditioning",
+    "Heating",
+    "Wi-Fi",
+    "Pool",
+    "Gym",
+    "Laundry",
+    "Dishwasher",
+    "Balcony",
+    "Garden",
+    "Pet Friendly",
+    "Security System",
+    "BBQ Area",
+    "Study Room",
+    "Storage",
+    "Elevator",
+] as const;

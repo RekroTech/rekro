@@ -1,39 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import { Button, Modal, Input, Textarea, Checkbox, Select } from "@/components/common";
+import React, { useState } from "react";
+import { Button, Input, Textarea, Checkbox, Select, Icon } from "@/components/common";
 import { useSubmitApplication } from "@/lib/react-query/hooks/application/useApplications";
 import { ApplicationType } from "@/types/db";
+import { DEFAULT_FORM_DATA } from "@/components/Property/ApplicationForm/constants";
 
-interface ApplicationModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    propertyTitle: string;
+interface ApplicationFormProps {
     propertyId: string;
     unitId?: string;
     isEntireHome: boolean;
+    onSuccess: () => void;
+    onCancel: () => void;
+    additionalInfo?: string;
+    showBackButton?: boolean;
+    onBack?: () => void;
+    initialMoveInDate?: string;
+    initialRentalDuration?: string;
 }
 
 export function ApplicationForm({
-    isOpen,
-    onClose,
-    propertyTitle,
     propertyId,
     unitId,
     isEntireHome,
-}: ApplicationModalProps) {
+    onSuccess,
+    onCancel,
+    additionalInfo = "",
+    showBackButton = false,
+    onBack,
+    initialMoveInDate = "",
+    initialRentalDuration = "",
+}: ApplicationFormProps) {
     const [formData, setFormData] = useState({
-        fullName: "",
-        email: "",
-        phone: "",
-        moveInDate: "",
-        rentalDuration: "",
-        employmentStatus: "",
-        incomeSource: "",
-        hasPets: false,
-        smoker: false,
-        additionalInfo: "",
-        message: "",
+        ...DEFAULT_FORM_DATA,
+        moveInDate: initialMoveInDate,
+        rentalDuration: initialRentalDuration,
     });
 
     const submitApplicationMutation = useSubmitApplication();
@@ -46,24 +47,17 @@ export function ApplicationForm({
                 propertyId,
                 unitId: unitId || null,
                 applicationType: (isEntireHome ? "group" : "individual") as ApplicationType,
-                formData,
+                formData: {
+                    ...formData,
+                    additionalInfo: additionalInfo
+                        ? `${formData.additionalInfo}\n\n${additionalInfo}`
+                        : formData.additionalInfo,
+                },
             });
 
             // Reset form and close modal on success
-            setFormData({
-                fullName: "",
-                email: "",
-                phone: "",
-                moveInDate: "",
-                rentalDuration: "",
-                employmentStatus: "",
-                incomeSource: "",
-                hasPets: false,
-                smoker: false,
-                additionalInfo: "",
-                message: "",
-            });
-            onClose();
+            setFormData(DEFAULT_FORM_DATA);
+            onSuccess();
         } catch (error) {
             console.error("Application submission failed:", error);
             // Error handling - you might want to show a toast notification here
@@ -73,32 +67,32 @@ export function ApplicationForm({
     const isSubmitting = submitApplicationMutation.isPending;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Apply for ${propertyTitle}`} size="xl">
-            <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Personal Information */}
-                <div className="space-y-4">
-                    <h4 className="font-semibold text-text">Personal Information</h4>
+        <form onSubmit={handleSubmit}>
+            {/* Personal Information */}
+            <div className="mb-4 sm:mb-6">
+                <h4 className="font-semibold text-text mb-3 sm:mb-4">Personal Information</h4>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                            label="Full Name"
-                            type="text"
-                            value={formData.fullName}
-                            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                            required
-                            placeholder="Enter your full name"
-                        />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <Input
+                        label="Full Name"
+                        type="text"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        required
+                        placeholder="Enter your full name"
+                    />
 
-                        <Input
-                            label="Phone Number"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            required
-                            placeholder="+1 (555) 123-4567"
-                        />
-                    </div>
+                    <Input
+                        label="Phone Number"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        required
+                        placeholder="+1 (555) 123-4567"
+                    />
+                </div>
 
+                <div className="mt-3 sm:mt-4">
                     <Input
                         label="Email"
                         type="email"
@@ -108,87 +102,83 @@ export function ApplicationForm({
                         placeholder="your.email@example.com"
                     />
                 </div>
+            </div>
 
-                {/* Tenancy Details */}
-                <div className="space-y-4">
-                    <h4 className="font-semibold text-text">Tenancy Details</h4>
+            {/* Tenancy Details */}
+            <div className="mb-4 sm:mb-6">
+                <h4 className="font-semibold text-text mb-3 sm:mb-4">Tenancy Details</h4>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                            label="Desired Move-in Date"
-                            type="date"
-                            value={formData.moveInDate}
-                            onChange={(e) =>
-                                setFormData({ ...formData, moveInDate: e.target.value })
-                            }
-                            required
-                        />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <Input
+                        label="Preferred Start Date"
+                        type="date"
+                        value={formData.moveInDate}
+                        onChange={(e) => setFormData({ ...formData, moveInDate: e.target.value })}
+                        required
+                    />
 
-                        <Select
-                            label="Rental Duration"
-                            value={formData.rentalDuration}
-                            onChange={(e) =>
-                                setFormData({ ...formData, rentalDuration: e.target.value })
-                            }
-                            options={[
-                                { value: "", label: "Select duration" },
-                                { value: "3-6 months", label: "3-6 months" },
-                                { value: "6-12 months", label: "6-12 months" },
-                                { value: "12+ months", label: "12+ months" },
-                                { value: "flexible", label: "Flexible" },
-                            ]}
-                            required
-                        />
+                    <Select
+                        label="Lease Period"
+                        value={formData.rentalDuration}
+                        onChange={(e) =>
+                            setFormData({ ...formData, rentalDuration: e.target.value })
+                        }
+                        options={[
+                            { value: "", label: "Select lease period" },
+                            { value: "4", label: "4 months" },
+                            { value: "6", label: "6 months" },
+                            { value: "9", label: "9 months" },
+                            { value: "12", label: "12 months" },
+                        ]}
+                        required
+                    />
 
-                        <Input
-                            label="Employment Status"
-                            type="text"
-                            value={formData.employmentStatus}
-                            onChange={(e) =>
-                                setFormData({ ...formData, employmentStatus: e.target.value })
-                            }
-                            required
-                            placeholder="e.g., Full-time, Part-time, Student, Self-employed"
-                        />
+                    <Input
+                        label="Employment Status"
+                        type="text"
+                        value={formData.employmentStatus}
+                        onChange={(e) =>
+                            setFormData({ ...formData, employmentStatus: e.target.value })
+                        }
+                        required
+                        placeholder="e.g., Full-time, Part-time, Student, Self-employed"
+                    />
 
-                        <Input
-                            label="Income Source"
-                            type="text"
-                            value={formData.incomeSource}
-                            onChange={(e) =>
-                                setFormData({ ...formData, incomeSource: e.target.value })
-                            }
-                            required
-                            placeholder="e.g., Salary, Business, Investments"
-                        />
-                    </div>
+                    <Input
+                        label="Income Source"
+                        type="text"
+                        value={formData.incomeSource}
+                        onChange={(e) => setFormData({ ...formData, incomeSource: e.target.value })}
+                        required
+                        placeholder="e.g., Salary, Business, Investments"
+                    />
                 </div>
+            </div>
 
-                {/* Living Preferences */}
-                <div className="space-y-4">
-                    <h4 className="font-semibold text-text">Living Preferences</h4>
+            {/* Living Preferences */}
+            <div className="mb-4 sm:mb-6">
+                <h4 className="font-semibold text-text mb-3 sm:mb-4">Living Preferences</h4>
 
-                    <div className="flex gap-6">
-                        <Checkbox
-                            label="I have pets"
-                            checked={formData.hasPets}
-                            onChange={(e) =>
-                                setFormData({ ...formData, hasPets: e.target.checked })
-                            }
-                        />
+                <div className="flex gap-4 sm:gap-6">
+                    <Checkbox
+                        label="I have pets"
+                        checked={formData.hasPets}
+                        onChange={(e) => setFormData({ ...formData, hasPets: e.target.checked })}
+                    />
 
-                        <Checkbox
-                            label="I am a smoker"
-                            checked={formData.smoker}
-                            onChange={(e) => setFormData({ ...formData, smoker: e.target.checked })}
-                        />
-                    </div>
+                    <Checkbox
+                        label="I am a smoker"
+                        checked={formData.smoker}
+                        onChange={(e) => setFormData({ ...formData, smoker: e.target.checked })}
+                    />
                 </div>
+            </div>
 
-                {/* Additional Information */}
-                <div className="space-y-4">
-                    <h4 className="font-semibold text-text">Additional Information</h4>
+            {/* Additional Information */}
+            <div className="mb-4 sm:mb-6">
+                <h4 className="font-semibold text-text mb-3 sm:mb-4">Additional Information</h4>
 
+                <div className="flex flex-col gap-3 sm:gap-4">
                     <Textarea
                         label="Message to Landlord"
                         value={formData.message}
@@ -207,32 +197,45 @@ export function ApplicationForm({
                         rows={3}
                     />
                 </div>
+            </div>
 
-                {/* Form Actions */}
-                <div className="flex gap-3 pt-4">
+            {/* Form Actions */}
+            <div className="flex items-center sm:justify-between pt-0 sm:pt-4 gap-2">
+                {showBackButton && onBack ? (
                     <Button
                         type="button"
                         variant="secondary"
-                        className="flex-1"
-                        onClick={onClose}
+                        onClick={onBack}
                         disabled={isSubmitting}
+                        className="flex-1 sm:flex-none"
+                    >
+                        <Icon name="chevron-left" className="w-4 h-4 mr-2" />
+                        Back
+                    </Button>
+                ) : (
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={onCancel}
+                        disabled={isSubmitting}
+                        className="flex-1 sm:flex-none"
                     >
                         Cancel
                     </Button>
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        className="flex-1"
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? "Submitting..." : "Submit Application"}
-                    </Button>
-                </div>
+                )}
+                <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={isSubmitting}
+                    className="flex-1 sm:flex-none"
+                >
+                    {isSubmitting ? "Submitting..." : "Submit"}
+                </Button>
+            </div>
 
-                <p className="text-xs text-text-muted text-center mt-4">
-                    Your information will be sent to the property owner for review.
-                </p>
-            </form>
-        </Modal>
+            <p className="text-xs text-text-muted text-center mt-3 sm:mt-4">
+                Your information will be sent to the property owner for review.
+            </p>
+        </form>
     );
 }

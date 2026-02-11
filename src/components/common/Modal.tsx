@@ -51,10 +51,10 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
             />
 
             {/* Modal */}
-            <div className="flex min-h-full items-start sm:items-center justify-center p-2 sm:p-4 relative z-10">
+            <div className="flex min-h-full items-center justify-center p-2 sm:p-4 relative z-10">
                 <div
                     ref={modalRef}
-                    className={`relative w-full ${sizeClasses[size]} my-4 sm:my-0 transform rounded-lg bg-white shadow-xl transition-all max-h-[calc(100vh-2rem)] flex flex-col`}
+                    className={`relative w-full ${sizeClasses[size]} transform rounded-lg bg-white shadow-xl transition-all max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] flex flex-col`}
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0">

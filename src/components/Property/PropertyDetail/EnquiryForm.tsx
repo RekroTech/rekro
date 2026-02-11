@@ -31,7 +31,7 @@ interface FormErrors {
     message?: string;
 }
 
-export function EnquiryModal({
+export function EnquiryForm({
     isOpen,
     onClose,
     propertyTitle,

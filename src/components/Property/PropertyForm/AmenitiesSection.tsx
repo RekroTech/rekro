@@ -1,39 +1,11 @@
 import { Checkbox } from "@/components/common";
 import { PropertyFormData } from "../types";
+import { AMENITIES, PARKING_OPTIONS } from "@/components/Property/constants";
 
 interface AmenitiesSectionProps {
     formData: PropertyFormData;
     updateFormData: (updates: Partial<PropertyFormData>) => void;
 }
-
-const PARKING_OPTIONS = [
-    "Garage",
-    "Carport",
-    "Underground",
-    "Secure",
-    "Street",
-    "Driveway",
-    "Visitor",
-    "Tandem",
-];
-
-const OTHER_AMENITIES = [
-    "Air Conditioning",
-    "Heating",
-    "Wi-Fi",
-    "Pool",
-    "Gym",
-    "Laundry",
-    "Dishwasher",
-    "Balcony",
-    "Garden",
-    "Pet Friendly",
-    "Security System",
-    "BBQ Area",
-    "Study Room",
-    "Storage",
-    "Elevator",
-];
 
 export function AmenitiesSection({ formData, updateFormData }: AmenitiesSectionProps) {
     const handleAmenityToggle = (amenity: string) => {
@@ -67,7 +39,7 @@ export function AmenitiesSection({ formData, updateFormData }: AmenitiesSectionP
             <div>
                 <h4 className="text-sm text-gray-500 mb-3">Amenities</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {OTHER_AMENITIES.map((amenity) => (
+                    {AMENITIES.map((amenity) => (
                         <Checkbox
                             key={amenity}
                             label={amenity}

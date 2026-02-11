@@ -1,4 +1,5 @@
 import { Property } from "@/types/property.types";
+import { ListingType } from "@/types/db";
 
 export interface AddPropertyModalProps {
     isOpen: boolean;
@@ -28,7 +29,7 @@ export interface PropertyFormData {
 
 export interface UnitFormData {
     id?: string; // Existing unit ID, undefined for new units
-    listing_type: "entire_home" | "room";
+    listing_type: ListingType;
     name: string;
     unit_description: string;
     price_per_week: string;
@@ -44,4 +45,14 @@ export interface UnitFormData {
     availability_notes: string;
 }
 
-export type FurniturePaymentOption = "add_to_rent" | "pay_total" | null;
+export interface InclusionsData {
+    furnitureSelected: boolean;
+    billsIncluded: boolean;
+    regularCleaningSelected: boolean;
+    selectedLease: number;
+    selectedStartDate: string;
+    isDualOccupancy: boolean;
+    entireHomeOccupants: number;
+    carparkSelected: boolean;
+    storageCageSelected: boolean;
+}

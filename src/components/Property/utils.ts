@@ -1,5 +1,13 @@
-import { Property } from "@/types/db";
+import type { Property } from "@/types/property.types";
+import type { Unit } from "@/types/db";
+import {
+    FURNITURE_COST,
+    CARPARK_COST_PER_WEEK,
+    STORAGE_CAGE_COST_PER_WEEK,
+} from "@/components/Property/constants";
+import { InclusionsData } from "@/components/Property/types";
 import { PropertyFormData } from "./types";
+import { PARKING_OPTIONS } from "./constants";
 
 export function parseAddress(address: unknown) {
     if (typeof address === "object" && address !== null) {
@@ -126,3 +134,111 @@ export const getRoomFurnitureCost = (
 
     return totalFurnitureCost / roomCount;
 };
+
+// Amenities helpers
+export const hasCarpark = (amenities: string[] | null): boolean => {
+    if (!amenities) return false;
+    return amenities.some((amenity) =>
+        PARKING_OPTIONS.some((parking) => amenity.includes(parking))
+    );
+};
+
+export const hasStorage = (amenities: string[] | null): boolean => {
+    if (!amenities) return false;
+    return amenities.some((amenity) => amenity.toLowerCase().includes("storage"));
+};
+
+// Lease period multipliers for rent adjustment
+const LEASE_MULTIPLIERS: Record<number, number> = {
+    4: 1.575, // 6 month * 1.05 * 1.5
+    6: 1.05,
+    9: 4 / 3,
+    12: 1,
+};
+
+/**
+ * Single consolidated function to calculate all pricing
+ * This eliminates redundant calculations and simplifies the API
+ */
+export function calculatePricing(params: {
+    selectedUnit: Unit | null;
+    property: Property;
+    inclusions: InclusionsData;
+}) {
+    const { selectedUnit, property, inclusions } = params;
+
+    // Early return if no unit selected
+    if (!selectedUnit) {
+        return {
+            baseRent: 0,
+            adjustedBaseRent: 0,
+            bond: 0,
+            inclusionsCosts: {
+                furniture: 0,
+                bills: 0,
+                cleaning: 0,
+                carpark: 0,
+                storage: 0,
+                total: 0,
+            },
+            totalWeeklyRent: 0,
+            isDualOccupancy: false,
+        };
+    }
+
+    const isEntireHome = selectedUnit.listing_type === "entire_home";
+    const canBeDualOccupancy = !isEntireHome && selectedUnit.max_occupants === 2;
+    const isDualOccupancy = canBeDualOccupancy && inclusions.isDualOccupancy;
+
+    // Calculate base rent with dual occupancy adjustment
+    let baseRent = selectedUnit.price_per_week;
+    if (isDualOccupancy) {
+        baseRent += 100;
+    }
+
+    // Apply lease period multiplier
+    const multiplier = LEASE_MULTIPLIERS[inclusions.selectedLease] || 1;
+    const adjustedBaseRent = baseRent * multiplier;
+
+    // Bond is 4x base rent (before lease adjustments)
+    const bond = baseRent * 4;
+
+    // Calculate inclusions costs
+    const furniture = inclusions.furnitureSelected
+        ? (isEntireHome
+              ? FURNITURE_COST
+              : getRoomFurnitureCost(property.units || [], FURNITURE_COST)) /
+          (inclusions.selectedLease * 4.33)
+        : 0;
+
+    const bills = inclusions.billsIncluded ? getBillsCostPerWeek(property.bedrooms) : 0;
+
+    const cleaning = inclusions.regularCleaningSelected
+        ? isEntireHome
+            ? getEntireHomeCleaningCosts(property.units || []).regularWeekly
+            : getRegularCleaningCostPerWeek(isDualOccupancy)
+        : 0;
+
+    const carpark = !isEntireHome && inclusions.carparkSelected ? CARPARK_COST_PER_WEEK : 0;
+    const storage =
+        !isEntireHome && inclusions.storageCageSelected ? STORAGE_CAGE_COST_PER_WEEK : 0;
+
+    const inclusionsTotal = furniture + bills + cleaning + carpark + storage;
+    const totalWeeklyRent = adjustedBaseRent + inclusionsTotal;
+
+    return {
+        baseRent: selectedUnit.price_per_week,
+        adjustedBaseRent,
+        bond,
+        inclusionsCosts: {
+            furniture,
+            bills,
+            cleaning,
+            carpark,
+            storage,
+            total: inclusionsTotal,
+        },
+        totalWeeklyRent,
+        isDualOccupancy,
+    };
+}
