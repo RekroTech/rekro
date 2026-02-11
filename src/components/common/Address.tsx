@@ -137,52 +137,58 @@ export function Address({
 
     return (
         <div className="w-full">
-            {label && <label className="block text-sm font-medium text-text mb-2">{label}</label>}
-            <div
-                className={`
-                    relative w-full
-                    bg-input-bg border border-input-border
-                    rounded-[var(--radius-input)]
-                    transition-all duration-200
-                    overflow-hidden
-                    ${
-                        error
-                            ? "border-danger-500 focus-within:border-danger-600 focus-within:shadow-[0_0_0_4px_rgba(255,59,48,0.1)]"
-                            : "focus-within:border-primary-500 focus-within:shadow-[0_0_0_4px_var(--primary-100)]"
-                    }
-                    ${disabled ? "opacity-50" : ""}
-                `}
-            >
-                {leftIcon && (
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted z-10 pointer-events-none">
-                        {leftIcon}
-                    </div>
+            <div className="relative">
+                {label && (
+                    <label className="absolute left-3 px-1.5 bg-white text-xs font-medium text-gray-400 z-10 -translate-y-1/2">
+                        {label}
+                    </label>
                 )}
-
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={value || ""}
+                <div
                     className={`
-                        w-full bg-transparent
-                        text-text placeholder:text-text-subtle
-                        outline-none
-                        h-[44px]
-                        ${leftIcon ? "pl-10" : "pl-4"}
-                        ${rightIcon ? "pr-10" : "pr-4"}
-                        ${disabled ? "pointer-events-none" : ""}
+                        relative w-full
+                        bg-white border border-gray-300
+                        rounded-lg
+                        transition-all
+                        overflow-hidden
+                        ${
+                            error
+                                ? "border-danger-500 focus-within:border-danger-600 hover:border-danger-400 focus-within:ring-2 focus-within:ring-danger-500"
+                                : "focus-within:border-transparent hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary-500"
+                        }
+                        ${disabled ? "opacity-50 cursor-not-allowed" : ""}
                     `}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    autoComplete="off"
-                    onChange={(e) => onChange(e.target.value)}
-                />
+                >
+                    {leftIcon && (
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted z-10 pointer-events-none">
+                            {leftIcon}
+                        </div>
+                    )}
 
-                {rightIcon && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted z-10 pointer-events-none">
-                        {rightIcon}
-                    </div>
-                )}
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={value || ""}
+                        className={`
+                            w-full bg-transparent
+                            text-gray-900 placeholder:text-gray-400
+                            outline-none
+                            py-2.5
+                            ${leftIcon ? "pl-10" : "pl-4"}
+                            ${rightIcon ? "pr-10" : "pr-4"}
+                            ${disabled ? "pointer-events-none" : ""}
+                        `}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        autoComplete="off"
+                        onChange={(e) => onChange(e.target.value)}
+                    />
+
+                    {rightIcon && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted z-10 pointer-events-none">
+                            {rightIcon}
+                        </div>
+                    )}
+                </div>
             </div>
             {error && (
                 <p className="mt-1.5 text-sm text-danger-500" role="alert">

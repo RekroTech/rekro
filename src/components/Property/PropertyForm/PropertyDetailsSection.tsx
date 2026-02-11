@@ -9,14 +9,14 @@ interface PropertyDetailsSectionProps {
 
 export function PropertyDetailsSection({ formData, updateFormData }: PropertyDetailsSectionProps) {
     return (
-        <section className="rounded-lg border border-gray-200 bg-white/80 p-4 shadow-sm">
+        <section className="rounded-lg border border-gray-200 bg-white/80 p-3 shadow-sm sm:p-4">
             <div className="mb-3">
                 <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">
                     Property Details
                 </h4>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Input
                     label="Bedrooms"
                     type="number"

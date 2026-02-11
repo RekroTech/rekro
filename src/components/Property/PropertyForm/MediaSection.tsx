@@ -26,7 +26,7 @@ export function MediaSection({
     onRemoveUploadedFile,
 }: MediaSectionProps) {
     return (
-        <section className="rounded-lg border border-gray-200 bg-white/80 p-4 shadow-sm">
+        <section className="rounded-lg border border-gray-200 bg-white/80 p-3 shadow-sm sm:p-4">
             <div className="mb-3 flex items-center justify-between">
                 <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">
                     Media
@@ -54,7 +54,7 @@ export function MediaSection({
             {(existingImages.length > 0 ||
                 (existingVideoUrl && !removeVideo) ||
                 mediaFiles.length > 0) && (
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                     {/* Existing Images */}
                     {existingImages.map((imageUrl, index) => (
                         <div

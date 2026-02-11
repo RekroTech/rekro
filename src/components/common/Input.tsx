@@ -37,35 +37,35 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         const inputId = id || generatedId;
 
         const baseClasses =
-            "bg-input-bg border border-input-border text-text placeholder:text-text-subtle outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+            "bg-white border border-gray-300 text-gray-900 placeholder:text-gray-400 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed";
 
         const sizeClasses: Record<InputSize, string> = {
-            sm: "px-3 py-2 text-sm",
+            sm: "px-3 py-2.5 text-sm",
             md: "px-4 py-2.5 text-base",
             lg: "px-5 py-3.5 text-lg",
         };
 
-        const radiusClass =
-            variant === "auth"
-                ? "rounded-[var(--radius-input-rn)]"
-                : "rounded-[var(--radius-input)]";
+        const radiusClass = "rounded-lg";
 
         const errorClass = error
-            ? "border-danger-500 focus:border-danger-600"
-            : "focus:border-primary-500";
+            ? "border-danger-500 focus:border-danger-600 hover:border-danger-400"
+            : "focus:border-transparent hover:border-gray-400";
 
         const focusClass = error
-            ? "focus:shadow-[0_0_0_4px_rgba(255,59,48,0.1)]"
-            : "focus:shadow-[0_0_0_4px_var(--primary-100)]";
+            ? "focus:ring-2 focus:ring-danger-500"
+            : "focus:ring-2 focus:ring-primary-500";
 
         return (
             <div className={clsx(fullWidth && "w-full")}>
-                {label && (
-                    <label htmlFor={inputId} className="block text-sm font-medium text-text mb-2">
-                        {label}
-                    </label>
-                )}
                 <div className="relative">
+                    {label && (
+                        <label
+                            htmlFor={inputId}
+                            className="absolute left-3 px-1.5 bg-white text-xs font-medium text-gray-400 z-10 -translate-y-1/2"
+                        >
+                            {label}
+                        </label>
+                    )}
                     {leftIcon && (
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
                             {leftIcon}

@@ -51,24 +51,28 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
             />
 
             {/* Modal */}
-            <div className="flex min-h-full items-center justify-center p-4 relative z-10">
+            <div className="flex min-h-full items-start sm:items-center justify-center p-2 sm:p-4 relative z-10">
                 <div
                     ref={modalRef}
-                    className={`relative w-full ${sizeClasses[size]} transform rounded-lg bg-white shadow-xl transition-all`}
+                    className={`relative w-full ${sizeClasses[size]} my-4 sm:my-0 transform rounded-lg bg-white shadow-xl transition-all max-h-[calc(100vh-2rem)] flex flex-col`}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-                        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                    <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                            {title}
+                        </h3>
                         <button
                             onClick={onClose}
                             className="text-gray-400 hover:text-gray-500 transition-colors"
                         >
-                            <Icon name="close" className="h-6 w-6" />
+                            <Icon name="close" className="h-5 w-5 sm:h-6 sm:w-6" />
                         </button>
                     </div>
 
                     {/* Content */}
-                    <div className="px-6 py-4">{children}</div>
+                    <div className="px-2 py-2 sm:px-6 sm:py-4 overflow-y-auto flex-1">
+                        {children}
+                    </div>
                 </div>
             </div>
         </div>

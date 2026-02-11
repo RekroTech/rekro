@@ -107,7 +107,7 @@ export function PropertyList({
     return (
         <div>
             {/* Property Grid */}
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {allProperties.map((property) => (
                     <PropertyCard
                         key={property.id}
@@ -118,7 +118,7 @@ export function PropertyList({
             </div>
 
             {/* Intersection Observer Target */}
-            <div ref={observerTarget} className="mt-8">
+            <div ref={observerTarget} className="mt-6 sm:mt-8">
                 {isFetchingNextPage && (
                     <div className="flex justify-center items-center py-4">
                         <Loader size="md" />
@@ -128,10 +128,10 @@ export function PropertyList({
 
             {/* Scroll to top button */}
             {!hasNextPage && allProperties.length > 0 && (
-                <div className="text-center py-8">
+                <div className="text-center py-6 sm:py-8">
                     <button
                         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                        className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 active:bg-primary-200 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                     >
                         <Icon name="arrow-up" className="h-5 w-5" />
                         Back to Top

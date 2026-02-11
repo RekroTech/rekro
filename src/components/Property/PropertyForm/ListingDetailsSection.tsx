@@ -33,7 +33,7 @@ export function ListingDetailsSection({
         : listingType;
 
     return (
-        <section className="rounded-lg border border-gray-200 bg-white/80 p-4 shadow-sm">
+        <section className="rounded-lg border border-gray-200 bg-white/80 p-3 shadow-sm sm:p-4">
             <div className="mb-3">
                 <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">
                     Listing Details

@@ -52,55 +52,57 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                                 className="h-8 sm:h-9"
                             >
                                 <Icon name="plus" className="h-4 w-4 mr-2" />
-                                <span className="hidden sm:inline">Add Property</span>
-                                <span className="inline sm:hidden">Add</span>
+                                <span className="hidden sm:inline font-normal">Add Property</span>
+                                <span className="inline sm:hidden font-normal">Add</span>
                             </Button>
                         )}
                         {user ? (
-                            <Dropdown
-                                align="right"
-                                trigger={
-                                    <div className="flex items-center gap-1 sm:gap-2 rounded-lg py-1.5 sm:py-2 hover:bg-surface-muted transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                        <div
-                                            className="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold text-sm"
-                                            aria-hidden="true"
-                                        >
-                                            {user.email?.charAt(0).toUpperCase()}
+                            <div className="[&_button]:!ring-0 [&_button]:!ring-offset-0 [&_button]:hover:!opacity-100">
+                                <Dropdown
+                                    align="right"
+                                    trigger={
+                                        <div className="flex items-center gap-1 sm:gap-2 rounded-[10px] py-1.5 sm:py-2 cursor-pointer">
+                                            <div
+                                                className="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold text-sm"
+                                                aria-hidden="true"
+                                            >
+                                                {user.email?.charAt(0).toUpperCase()}
+                                            </div>
+                                            <span className="hidden sm:block text-sm text-text">
+                                                {user.email}
+                                            </span>
+                                            <Icon
+                                                name="chevron-down"
+                                                className="w-4 h-4 text-text-muted"
+                                                aria-hidden="true"
+                                            />
                                         </div>
-                                        <span className="hidden sm:block text-sm text-text">
-                                            {user.email}
-                                        </span>
-                                        <Icon
-                                            name="chevron-down"
-                                            className="w-4 h-4 text-text-muted"
-                                            aria-hidden="true"
-                                        />
-                                    </div>
-                                }
-                                items={[
-                                    {
-                                        label: "Profile",
-                                        onClick: () => {
-                                            // TODO: Navigate to profile page
+                                    }
+                                    items={[
+                                        {
+                                            label: "Profile",
+                                            onClick: () => {
+                                                // TODO: Navigate to profile page
+                                            },
+                                            icon: <Icon name="profile" className="w-4 h-4" />,
                                         },
-                                        icon: <Icon name="profile" className="w-4 h-4" />,
-                                    },
-                                    {
-                                        label: "Settings",
-                                        onClick: () => {
-                                            // TODO: Navigate to settings page
+                                        {
+                                            label: "Settings",
+                                            onClick: () => {
+                                                // TODO: Navigate to settings page
+                                            },
+                                            icon: <Icon name="settings" className="w-4 h-4" />,
                                         },
-                                        icon: <Icon name="settings" className="w-4 h-4" />,
-                                    },
-                                    {
-                                        label: isPending ? "Logging out..." : "Logout",
-                                        onClick: () => logout(),
-                                        variant: "danger" as const,
-                                        disabled: isPending,
-                                        icon: <Icon name="logout" className="w-4 h-4" />,
-                                    },
-                                ]}
-                            />
+                                        {
+                                            label: isPending ? "Logging out..." : "Logout",
+                                            onClick: () => logout(),
+                                            variant: "danger" as const,
+                                            disabled: isPending,
+                                            icon: <Icon name="logout" className="w-4 h-4" />,
+                                        },
+                                    ]}
+                                />
+                            </div>
                         ) : (
                             <div className="flex items-center gap-1.5 sm:gap-2">
                                 <Link href="/login" className="shrink-0">

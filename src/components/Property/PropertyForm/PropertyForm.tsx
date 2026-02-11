@@ -252,7 +252,7 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
             title={isEditMode ? "Edit Property Listing" : "Add Property Listing"}
             size="xl"
         >
-            <form onSubmit={handleSubmit} className="space-y-6 px-1 pb-1 pt-1">
+            <form onSubmit={handleSubmit} className="space-y-4 px-1 pb-1 pt-1 sm:space-y-6">
                 {error && (
                     <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2">
                         <p className="text-sm font-medium text-red-800">{error}</p>
@@ -289,33 +289,15 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                 />
 
                 {/* Form Actions */}
-                <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-                    <p className="text-xs text-gray-400">
-                        You can edit and publish this listing later from your dashboard.
-                    </p>
-                    <div className="flex gap-3">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleClose}
-                            disabled={createProperty.isPending || updateProperty.isPending}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            disabled={createProperty.isPending || updateProperty.isPending}
-                        >
-                            {isEditMode
-                                ? updateProperty.isPending
-                                    ? "Updating..."
-                                    : "Update Property"
-                                : createProperty.isPending
-                                  ? "Adding..."
-                                  : "Add Property"}
-                        </Button>
-                    </div>
+                <div className="flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end">
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        disabled={createProperty.isPending || updateProperty.isPending}
+                        className="w-full sm:w-auto"
+                    >
+                        {updateProperty.isPending || createProperty.isPending ? "Saving" : "Save"}
+                    </Button>
                 </div>
             </form>
         </Modal>

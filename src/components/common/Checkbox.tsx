@@ -1,4 +1,5 @@
 import React from "react";
+import { clsx } from "clsx";
 
 export type CheckboxSize = "sm" | "md" | "lg";
 
@@ -7,12 +8,29 @@ export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputE
     label?: string;
     error?: string;
     helperText?: string;
+    fullWidth?: boolean;
 }
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-    ({ size = "md", label, error, helperText, className = "", id, disabled, ...props }, ref) => {
+    (
+        {
+            size = "md",
+            label,
+            error,
+            helperText,
+            fullWidth = false,
+            className,
+            id,
+            disabled,
+            ...props
+        },
+        ref
+    ) => {
         const generatedId = React.useId();
         const checkboxId = id || generatedId;
+
+        const baseClasses =
+            "border border-gray-300 rounded transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none";
 
         const sizeClasses: Record<CheckboxSize, string> = {
             sm: "w-4 h-4",
@@ -22,35 +40,71 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
         const labelSizeClasses: Record<CheckboxSize, string> = {
             sm: "text-sm",
-            md: "text-base",
-            lg: "text-lg",
+            md: "text-sm",
+            lg: "text-base",
         };
 
+        const errorClass = error
+            ? "border-danger-500 hover:border-danger-600"
+            : "hover:border-gray-400";
+
+        const accentColorStyle = error
+            ? { accentColor: "var(--danger-500)" }
+            : { accentColor: "var(--primary-500)" };
+
         return (
-            <div className="flex flex-col">
-                <div className="flex items-start">
-                    <div className="flex items-center h-5">
-                        <input
-                            ref={ref}
-                            id={checkboxId}
-                            type="checkbox"
-                            disabled={disabled}
-                            className={`${sizeClasses[size]} bg-input-bg border-2 border-input-border rounded text-primary-500 focus:ring-4 focus:ring-primary-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
-                            {...props}
-                        />
-                    </div>
+            <div className={clsx("flex flex-col", fullWidth && "w-full")}>
+                <label
+                    htmlFor={checkboxId}
+                    className={clsx(
+                        "flex items-start gap-3 cursor-pointer",
+                        disabled && "cursor-not-allowed"
+                    )}
+                >
+                    <input
+                        ref={ref}
+                        id={checkboxId}
+                        type="checkbox"
+                        disabled={disabled}
+                        aria-invalid={error ? "true" : "false"}
+                        aria-describedby={
+                            error
+                                ? `${checkboxId}-error`
+                                : helperText
+                                  ? `${checkboxId}-helper`
+                                  : undefined
+                        }
+                        style={accentColorStyle}
+                        className={clsx(
+                            baseClasses,
+                            sizeClasses[size],
+                            errorClass,
+                            "flex-shrink-0",
+                            className
+                        )}
+                        {...props}
+                    />
                     {label && (
-                        <label
-                            htmlFor={checkboxId}
-                            className={`ml-2 ${labelSizeClasses[size]} font-medium text-text cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                        <span
+                            className={clsx(
+                                "font-normal text-gray-900 select-none touch-manipulation leading-relaxed",
+                                labelSizeClasses[size],
+                                disabled && "opacity-50"
+                            )}
                         >
                             {label}
-                        </label>
+                        </span>
                     )}
-                </div>
-                {error && <p className="mt-1.5 text-sm text-danger-500">{error}</p>}
+                </label>
+                {error && (
+                    <p id={`${checkboxId}-error`} className="mt-1.5 text-sm text-danger-500">
+                        {error}
+                    </p>
+                )}
                 {helperText && !error && (
-                    <p className="mt-1.5 text-sm text-text-muted">{helperText}</p>
+                    <p id={`${checkboxId}-helper`} className="mt-1.5 text-sm text-text-muted">
+                        {helperText}
+                    </p>
                 )}
             </div>
         );

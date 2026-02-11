@@ -1,4 +1,4 @@
-import { Address, Input, Select } from "@/components/common";
+import { Address, Input, Select, Textarea } from "@/components/common";
 import { PropertyFormData } from "../types";
 import { PROPERTY_TYPES } from "../constants";
 
@@ -48,7 +48,7 @@ export function BasicInformationSection({
     };
 
     return (
-        <section className="rounded-lg border border-gray-200 bg-white/80 p-4 shadow-sm">
+        <section className="rounded-lg border border-gray-200 bg-white/80 p-3 shadow-sm sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
                 <div>
                     <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">
@@ -58,7 +58,7 @@ export function BasicInformationSection({
             </div>
 
             <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Input
                         label="Title"
                         type="text"
@@ -86,21 +86,13 @@ export function BasicInformationSection({
                         placeholder="Start typing to search for an address..."
                     />
                 </div>
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Description
-                    </label>
-                    <textarea
-                        value={formData.description}
-                        onChange={(e) => updateFormData({ description: e.target.value })}
-                        placeholder="Describe the property, key features and nearby amenities..."
-                        rows={4}
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/80"
-                    />
-                    <p className="mt-1 text-xs text-gray-400">
-                        Highlight what makes this property unique.
-                    </p>
-                </div>
+                <Textarea
+                    label="Description"
+                    value={formData.description}
+                    onChange={(e) => updateFormData({ description: e.target.value })}
+                    placeholder="Describe the property, key features and nearby amenities..."
+                    rows={4}
+                />
             </div>
         </section>
     );

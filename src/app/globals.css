@@ -74,6 +74,7 @@
     --shadow-card: 0 3px 12px rgba(0, 0, 0, 0.08);
     --shadow-soft: 0 1px 6px rgba(0, 0, 0, 0.06);
     --shadow-lift: 0 6px 18px rgba(0, 0, 0, 0.12);
+    --shadow-deep: 0 8px 24px rgba(0, 0, 0, 0.15);
     --shadow-pill: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -191,6 +192,7 @@
     --shadow-card: var(--shadow-card);
     --shadow-soft: var(--shadow-soft);
     --shadow-lift: var(--shadow-lift);
+    --shadow-deep: var(--shadow-deep);
     --shadow-pill: var(--shadow-pill);
 }
 
@@ -365,3 +367,18 @@ body {
 .pac-icon {
     margin-top: 0;
 }
+
+/* ---------------------------
+   Select Dropdown Styling
+---------------------------- */
+select {
+    /* Shift dropdown popup lower when opened */
+    scroll-margin-top: 8px;
+}
+
+select option {
+    /* Add vertical spacing to dropdown items */
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+

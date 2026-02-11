@@ -40,31 +40,34 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         const selectId = id || generatedId;
 
         const baseClasses =
-            "bg-input-bg border border-input-border text-text outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer";
+            "bg-white border border-gray-300 text-gray-900 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer";
 
         const sizeClasses: Record<SelectSize, string> = {
-            sm: "px-3 py-2 pr-8 text-sm",
+            sm: "px-3 py-2.5 pr-8 text-sm",
             md: "px-4 py-2.5 pr-10 text-base",
             lg: "px-5 py-3.5 pr-12 text-lg",
         };
 
-        const radiusClass = "rounded-[var(--radius-input)]";
+        const radiusClass = "rounded-lg";
         const widthClass = fullWidth ? "w-full" : "";
         const errorClass = error
-            ? "border-danger-500 focus:border-danger-600"
-            : "focus:border-primary-500";
+            ? "border-danger-500 focus:border-danger-600 hover:border-danger-600"
+            : "focus:border-transparent";
         const focusClass = error
-            ? "focus:shadow-[0_0_0_4px_rgba(255,59,48,0.1)]"
-            : "focus:shadow-[0_0_0_4px_var(--primary-100)]";
+            ? "focus:ring-2 focus:ring-danger-500"
+            : "focus:ring-2 focus:ring-primary-500";
 
         return (
             <div className={fullWidth ? "w-full" : ""}>
-                {label && (
-                    <label htmlFor={selectId} className="block text-sm font-medium text-text mb-2">
-                        {label}
-                    </label>
-                )}
                 <div className="relative">
+                    {label && (
+                        <label
+                            htmlFor={selectId}
+                            className="absolute left-3 px-1.5 bg-white text-xs font-medium text-gray-400 z-10 -translate-y-1/2"
+                        >
+                            {label}
+                        </label>
+                    )}
                     <select
                         ref={ref}
                         id={selectId}

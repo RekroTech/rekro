@@ -42,17 +42,19 @@ export function Dropdown({ trigger, items, align = "right" }: DropdownProps) {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center focus:outline-none"
+                className="flex items-center focus:outline-none transition-all duration-200 hover:opacity-80 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-[var(--radius-input)]"
                 type="button"
+                aria-expanded={isOpen}
+                aria-haspopup="true"
             >
                 {trigger}
             </button>
 
             {isOpen && (
                 <div
-                    className={`absolute ${alignmentClass} mt-2 w-56 rounded-[var(--radius-lg)] border border-border bg-card shadow-[var(--shadow-deep)] z-50`}
+                    className={`absolute ${alignmentClass} mt-2 min-w-[14rem] rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-lift)] z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200`}
                 >
-                    <div className="py-1">
+                    <div className="py-1.5">
                         {items.map((item, index) => (
                             <button
                                 key={index}
@@ -63,18 +65,22 @@ export function Dropdown({ trigger, items, align = "right" }: DropdownProps) {
                                     }
                                 }}
                                 disabled={item.disabled}
-                                className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-colors ${
+                                className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-all duration-150 min-h-[44px] ${
                                     item.variant === "danger"
-                                        ? "text-danger-500 hover:bg-danger-50"
-                                        : "text-text hover:bg-surface-muted"
+                                        ? "text-danger-500 hover:bg-danger-50 active:bg-danger-100"
+                                        : "text-text hover:bg-surface-muted active:bg-surface-subtle"
                                 } ${
                                     item.disabled
                                         ? "opacity-50 cursor-not-allowed"
                                         : "cursor-pointer"
                                 }`}
                             >
-                                {item.icon && <span className="w-4 h-4">{item.icon}</span>}
-                                <span>{item.label}</span>
+                                {item.icon && (
+                                    <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                                        {item.icon}
+                                    </span>
+                                )}
+                                <span className="font-medium">{item.label}</span>
                             </button>
                         ))}
                     </div>

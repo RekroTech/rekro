@@ -1,4 +1,4 @@
-import { Input, Checkbox, Select } from "@/components/common";
+import { Input, Checkbox, Select, Textarea } from "@/components/common";
 import { UnitFormData } from "../types";
 import { ListingType } from "@/types/db";
 
@@ -52,10 +52,10 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
     };
 
     return (
-        <div className="space-y-4 rounded-md border border-gray-200 bg-gray-50/50 p-4">
-            {/* Main Details - Flex layout */}
-            <div className="flex gap-4">
-                <div className="relative flex-1 min-w-0">
+        <div className="space-y-4 rounded-md border border-gray-200 bg-gray-50/50 p-3 sm:p-4">
+            {/* Main Details - Responsive layout */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:gap-4">
+                <div className="relative flex-1 min-w-0 sm:col-span-2">
                     <Input
                         label="Price per Week"
                         type="number"
@@ -76,7 +76,7 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         </div>
                     )}
                 </div>
-                <div className="w-32">
+                <div className="lg:w-32">
                     <Input
                         label="Max Occupants"
                         type="number"
@@ -86,7 +86,7 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         min="0"
                     />
                 </div>
-                <div className="w-36">
+                <div className="lg:w-36">
                     <Select
                         label="Min Lease"
                         value={unit.min_lease}
@@ -94,7 +94,7 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         options={LEASE_MONTH_OPTIONS}
                     />
                 </div>
-                <div className="w-36">
+                <div className="lg:w-36">
                     <Select
                         label="Max Lease"
                         value={unit.max_lease}
@@ -105,8 +105,8 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
             </div>
 
             {/* Availability Section */}
-            <div className="flex gap-4 items-end">
-                <div className="flex items-end pb-2">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                <div className="flex items-end sm:pb-2">
                     <Checkbox
                         label="Currently Available"
                         checked={unit.is_available}
@@ -144,10 +144,8 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
 
             {/* Optional Details */}
             <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Unit Description
-                </label>
-                <textarea
+                <Textarea
+                    label="Unit Description"
                     value={unit.unit_description}
                     onChange={(e) => onUpdate(index, { unit_description: e.target.value })}
                     placeholder={
@@ -156,7 +154,6 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                             : "Additional details about this specific listing..."
                     }
                     rows={2}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/80"
                 />
             </div>
         </div>
