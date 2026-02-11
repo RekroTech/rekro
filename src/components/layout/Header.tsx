@@ -15,43 +15,52 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
     const { mutate: logout, isPending } = useLogout();
     const canManageProperties = useCanManageProperties(user ?? null);
 
+    const authButtonClassName = "h-8 sm:h-9 min-w-[76px] sm:min-w-[96px] px-3 sm:px-4";
+
     return (
         <nav
             className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-card shadow-sm"
             role="navigation"
             aria-label="Main navigation"
         >
-            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                <Link
-                    href="/"
-                    className="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg"
-                    aria-label="Go to home"
-                >
-                    <div className="h-8 w-8 overflow-hidden rounded-[10px]">
-                        <Image
-                            src="/reKro.png"
-                            alt="reKro logo"
-                            width={32}
-                            height={32}
-                            className="h-full w-full object-contain"
-                            priority
-                        />
-                    </div>
-                    <h1 className="text-[20px] font-bold text-primary-600">reKro</h1>
+            <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+                <Link href="/" className="flex items-center gap-1.5" aria-label="Go to home">
+                    <Image
+                        src="/icon.svg"
+                        alt="reKro logo"
+                        width={32}
+                        height={32}
+                        className="h-6 sm:h-8 w-auto"
+                        priority
+                    />
+                    <Image
+                        src="/logo-text.svg"
+                        alt="reKro"
+                        width={100}
+                        height={32}
+                        className="h-6 sm:h-8 w-auto mb-0 sm:mb-0.5"
+                        priority
+                    />
                 </Link>
-                <div className="flex flex-row mx-4">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-row">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         {canManageProperties && (
-                            <Button variant="primary" onClick={() => onAddPropertyAction?.()}>
+                            <Button
+                                variant="primary"
+                                onClick={() => onAddPropertyAction?.()}
+                                size="sm"
+                                className="h-8 sm:h-9"
+                            >
                                 <Icon name="plus" className="h-4 w-4 mr-2" />
-                                Add Property
+                                <span className="hidden sm:inline">Add Property</span>
+                                <span className="inline sm:hidden">Add</span>
                             </Button>
                         )}
                         {user ? (
                             <Dropdown
                                 align="right"
                                 trigger={
-                                    <div className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-surface-muted transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <div className="flex items-center gap-1 sm:gap-2 rounded-lg py-1.5 sm:py-2 hover:bg-surface-muted transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500">
                                         <div
                                             className="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold text-sm"
                                             aria-hidden="true"
@@ -93,18 +102,26 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                                 ]}
                             />
                         ) : (
-                            <div className="flex items-center gap-3">
-                                <Link
-                                    href="/login"
-                                    className="text-sm font-medium text-text hover:text-primary-600 transition-colors"
-                                >
-                                    Login
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                                <Link href="/login" className="shrink-0">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        pill
+                                        className={authButtonClassName}
+                                    >
+                                        Login
+                                    </Button>
                                 </Link>
-                                <Link
-                                    href="/signup"
-                                    className="flex h-10 items-center justify-center gap-2 rounded-lg bg-primary-500 px-4 text-sm font-medium text-white hover:bg-primary-600 transition-colors"
-                                >
-                                    Sign Up
+                                <Link href="/signup" className="shrink-0">
+                                    <Button
+                                        variant="primary"
+                                        size="sm"
+                                        pill
+                                        className={authButtonClassName}
+                                    >
+                                        Sign Up
+                                    </Button>
                                 </Link>
                             </div>
                         )}
