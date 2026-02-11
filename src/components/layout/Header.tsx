@@ -24,13 +24,13 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
             aria-label="Main navigation"
         >
             <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                <Link href="/" className="flex items-center gap-1.5" aria-label="Go to home">
+                <Link href="/" className="flex items-end gap-2.5 sm:gap-3" aria-label="Go to home">
                     <Image
                         src="/icon.svg"
                         alt="reKro logo"
                         width={32}
                         height={32}
-                        className="h-6 sm:h-8 w-auto"
+                        className="h-8 w-auto"
                         priority
                     />
                     <Image
@@ -38,7 +38,7 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                         alt="reKro"
                         width={100}
                         height={32}
-                        className="h-6 sm:h-8 w-auto mb-0 sm:mb-0.5"
+                        className="h-6 w-auto mb-0.5"
                         priority
                     />
                 </Link>

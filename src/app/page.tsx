@@ -138,7 +138,7 @@ export default function HomePage() {
                     <div
                         role="tablist"
                         aria-label="Listing type"
-                        className="flex items-center gap-1 sm:gap-2 rounded-lg border border-gray-200 bg-white p-1 w-full max-w-md"
+                        className="flex items-center gap-1 sm:gap-2 rounded-4xl border border-gray-200 bg-white p-1 w-full max-w-md"
                     >
                         {LISTING_TYPES.map((tab) => {
                             const isActive = listingType === tab.value;
@@ -151,7 +151,7 @@ export default function HomePage() {
                                     tabIndex={isActive ? 0 : -1}
                                     onClick={() => setListingType(tab.value)}
                                     className={
-                                        "flex-1 rounded-md px-3 py-2 text-xs sm:text-sm font-medium text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 whitespace-nowrap touch-manipulation " +
+                                        "flex-1 rounded-4xl px-3 py-2 text-xs sm:text-sm font-medium text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 whitespace-nowrap touch-manipulation " +
                                         (isActive
                                             ? "bg-primary-600 text-white ring-2 ring-primary-500"
                                             : "bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100")

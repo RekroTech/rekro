@@ -397,7 +397,7 @@ export function PropertySidebar({ selectedUnit, property }: PropertySidebarProps
                         }}
                     >
                         <Icon name="document" className="w-5 h-5 mr-2" />
-                        {isAuthenticated ? "Apply" : "Login to Apply"}
+                        {isAuthenticated ? "Book Now" : "Login to Book"}
                     </Button>
                 </div>
 

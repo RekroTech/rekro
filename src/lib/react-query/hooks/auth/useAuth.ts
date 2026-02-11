@@ -136,7 +136,7 @@ export function useLogout() {
         onSuccess: () => {
             // Clear all queries on logout
             queryClient.clear();
-            router.replace("/login");
+            router.replace("/");
         },
         onError: (error) => {
             console.error("Logout error:", error);
