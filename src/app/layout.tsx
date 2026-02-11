@@ -21,8 +21,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
     title: {
-        default: "Rekro - Find Your Next Home",
-        template: "%s | Rekro",
+        default: "reKro",
+        template: "%s | reKro",
     },
     description:
         "Designed to connect, make friends, and find your next home. Browse properties, connect with landlords, and discover your perfect rental.",
@@ -34,12 +34,12 @@ export const metadata: Metadata = {
         type: "website",
         locale: "en_US",
         siteName: "Rekro",
-        title: "Rekro - Find Your Next Home",
+        title: "reKro",
         description: "Designed to connect, make friends, and find your next home.",
     },
     twitter: {
         card: "summary_large_image",
-        title: "Rekro - Find Your Next Home",
+        title: "reKro",
         description: "Designed to connect, make friends, and find your next home.",
     },
 };

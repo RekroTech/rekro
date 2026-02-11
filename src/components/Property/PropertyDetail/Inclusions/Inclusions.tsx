@@ -40,7 +40,16 @@ export function Inclusions({
 
     return (
         <div className="space-y-3">
-            {!property.furnished && (
+            {!isEntireHome ? (
+                <InclusionCard
+                    title="Furnished"
+                    description="Furniture is included in the rent for room listings."
+                    price={<span className="font-medium text-green-700">Included</span>}
+                    selected={true}
+                    disabled
+                    onToggle={() => {}}
+                />
+            ) : !property.furnished ? (
                 <InclusionCard
                     title="Furnish your space"
                     description="Add furniture to your lease."
@@ -54,17 +63,28 @@ export function Inclusions({
                         });
                     }}
                 />
-            )}
+            ) : null}
 
-            <InclusionCard
-                title="Bills included"
-                description="Electricity, gas, water, and internet bundled into your rent."
-                price={<span>+${getBillsCostPerWeek(property.bedrooms)}/week</span>}
-                selected={inclusions.billsIncluded}
-                onToggle={() =>
-                    onChange({ ...inclusions, billsIncluded: !inclusions.billsIncluded })
-                }
-            />
+            {!isEntireHome ? (
+                <InclusionCard
+                    title="Bills included"
+                    description="Electricity, gas, water, and internet are included in the rent."
+                    price={<span className="font-medium text-green-700">Included</span>}
+                    selected={true}
+                    disabled
+                    onToggle={() => {}}
+                />
+            ) : (
+                <InclusionCard
+                    title="Include Bills"
+                    description="Electricity, gas, water, and internet bundled into your rent."
+                    price={<span>+${getBillsCostPerWeek(property.bedrooms)}/week</span>}
+                    selected={inclusions.billsIncluded}
+                    onToggle={() =>
+                        onChange({ ...inclusions, billsIncluded: !inclusions.billsIncluded })
+                    }
+                />
+            )}
 
             <InclusionCard
                 title="Regular cleaning service"

@@ -1,15 +1,21 @@
 import { Property } from "@/types/db";
+import type { Unit } from "@/types/db";
 import { Icon } from "@/components/common";
 import { getLocalityString } from "@/lib/utils/locationPrivacy";
 
 interface PropertyHeaderProps {
     property: Property;
+    selectedUnit?: Unit | null;
 }
 
-export function PropertyHeader({ property }: PropertyHeaderProps) {
+export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) {
     const { title, property_type, bedrooms, bathrooms, car_spaces, furnished, address } = property;
 
     const addressText = address ? getLocalityString(address) : "Location not specified";
+
+    // Room listings are always furnished (furniture + bills included in base rent)
+    const isRoomListing = selectedUnit?.listing_type === "room";
+    const isFurnished = isRoomListing || furnished;
 
     return (
         <div className="mb-2 sm:mb-4">
@@ -65,9 +71,9 @@ export function PropertyHeader({ property }: PropertyHeaderProps) {
                 </div>
 
                 {/* Furnishing badge */}
-                {furnished !== null && (
+                {(isFurnished || furnished !== null) && (
                     <div className="flex-shrink-0">
-                        {furnished ? (
+                        {isFurnished ? (
                             <div className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2 py-1 text-green-800 sm:px-2.5">
                                 <Icon name="check" className="h-4 w-4" />
                                 <span className="text-xs font-semibold">Furnished</span>

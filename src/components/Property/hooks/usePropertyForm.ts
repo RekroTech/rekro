@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { ListingType, Property, Unit } from "@/types/db";
+import { ListingType, Unit } from "@/types/db";
 import { PropertyFormData, UnitFormData } from "@/components/Property/types";
 import { DEFAULT_UNIT_DATA } from "@/components/Property/constants";
-import { getInitialFormData } from "@/components/Property/utils";
+import { formatDateForInput, getInitialFormData } from "@/components/Property/utils";
+import { Property } from "@/types/property.types";
 
 export type ListingTypeSelection = ListingType | "all";
 
@@ -48,8 +49,8 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
                 max_lease: unit.max_lease?.toString() || "12",
                 max_occupants: unit.max_occupants?.toString() || "",
                 size_sqm: unit.size_sqm?.toString() || "",
-                available_from: unit.available_from || "",
-                available_to: unit.available_to || "",
+                available_from: formatDateForInput(unit.available_from),
+                available_to: formatDateForInput(unit.available_to),
                 is_available: unit.is_available ?? true,
                 availability_notes: "",
             };
@@ -67,7 +68,11 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
     };
 
     // Initialize state
-    const [formData, setFormData] = useState<PropertyFormData>(() => getInitialFormData(property));
+    const [formData, setFormData] = useState<PropertyFormData>(() =>
+        property
+            ? getInitialFormData({ ...property, units: property.units ?? existingUnits ?? [] })
+            : getInitialFormData()
+    );
     const [listingType, setListingType] = useState<ListingTypeSelection>(() => {
         if (property && existingUnits.length > 0) {
             return inferListingTypeFromExistingUnits(existingUnits);

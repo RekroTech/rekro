@@ -93,7 +93,7 @@ export default function PropertyDetailPage() {
             <BackButton className="mb-4 sm:mb-6" />
 
             {/* Property Header */}
-            <PropertyHeader property={property} />
+            <PropertyHeader property={property} selectedUnit={selectedUnit} />
 
             {/* Main Grid: Image Gallery + Content (stacked on mobile, 2/3 on desktop) + Sidebar (1/3 on desktop) */}
             <div className="grid gap-4 sm:gap-6 mb-8 lg:grid-cols-3">

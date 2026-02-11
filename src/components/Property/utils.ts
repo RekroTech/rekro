@@ -8,6 +8,7 @@ import {
 import { InclusionsData } from "@/components/Property/types";
 import { PropertyFormData } from "./types";
 import { PARKING_OPTIONS } from "./constants";
+import { format, parseISO, addWeeks } from "date-fns";
 
 export function parseAddress(address: unknown) {
     if (typeof address === "object" && address !== null) {
@@ -135,6 +136,111 @@ export const getRoomFurnitureCost = (
     return totalFurnitureCost / roomCount;
 };
 
+/**
+ * Format date string for display (e.g., "Feb 12, 2026")
+ * @param dateString - ISO date string from database
+ * @returns Formatted date string or null
+ */
+export const formatDate = (dateString: string | null | undefined): string | null => {
+    if (!dateString) return null;
+    try {
+        return format(parseISO(dateString), "MMM d, yyyy");
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * Format date string for HTML date inputs (yyyy-MM-dd format required)
+ * Database dates are already in this format, but timestamps need conversion
+ * @param dateString - ISO date string or timestamp from database
+ * @returns Date string in yyyy-MM-dd format, or empty string
+ */
+export const formatDateForInput = (dateString: string | null | undefined): string => {
+    if (!dateString) return "";
+    try {
+        // Parse timestamp and format to date-only
+        return format(parseISO(dateString), "yyyy-MM-dd");
+    } catch {
+        return "";
+    }
+};
+
+/**
+ * Get the effective minimum start date (today or available_from, whichever is later)
+ * @param availableFrom - ISO date string from database
+ * @returns Date string in yyyy-MM-dd format for HTML date input
+ */
+export function getMinStartDate(availableFrom: string | null | undefined): string {
+    const now = new Date();
+    if (!availableFrom) return formatDateForInput(now.toISOString());
+
+    const availableDate = parseISO(availableFrom);
+    const minDate = availableDate > now ? availableDate : now;
+    return formatDateForInput(minDate.toISOString());
+}
+
+/**
+ * Get max start date (2 weeks from min start date, capped at available_to if provided)
+ * @param availableFrom - ISO date string from database
+ * @param availableTo - ISO date string from database (optional)
+ * @returns Date string in yyyy-MM-dd format for HTML date input
+ */
+export function getMaxStartDate(
+    availableFrom: string | null | undefined,
+    availableTo: string | null | undefined
+): string {
+    const minDate = parseISO(getMinStartDate(availableFrom));
+    const twoWeeksLater = addWeeks(minDate, 2);
+
+    // Cap at available_to if it exists and is earlier
+    if (availableTo) {
+        const maxDate = parseISO(availableTo);
+        return formatDateForInput(
+            (maxDate < twoWeeksLater ? maxDate : twoWeeksLater).toISOString()
+        );
+    }
+
+    return formatDateForInput(twoWeeksLater.toISOString());
+}
+
+/**
+ * Get availability status information for display
+ * @param unit - Unit object or null
+ * @returns Object with status text, color, and date information
+ */
+export function getAvailabilityInfo(unit: Unit | null) {
+    if (!unit) {
+        return {
+            statusText: "Available",
+            statusColor: "text-gray-500",
+            showFromDate: false,
+            fromDate: null,
+            toDate: formatDate(null),
+        };
+    }
+
+    const now = new Date();
+    const availableFrom = unit.available_from ? parseISO(unit.available_from) : null;
+    const isAvailableLater = availableFrom && availableFrom > now;
+
+    return {
+        statusText: !unit.is_available
+            ? "Not Available"
+            : isAvailableLater
+              ? "Available"
+              : "Available",
+        statusColor: !unit.is_available
+            ? "text-red-600"
+            : isAvailableLater
+              ? "text-yellow-600"
+              : "text-green-600",
+        showFromDate: isAvailableLater,
+        fromDate: formatDate(unit.available_from || null),
+        toDate: formatDate(unit.available_to || null),
+    };
+}
+
 // Amenities helpers
 export const hasCarpark = (amenities: string[] | null): boolean => {
     if (!amenities) return false;
@@ -187,6 +293,7 @@ export function calculatePricing(params: {
     }
 
     const isEntireHome = selectedUnit.listing_type === "entire_home";
+    const isRoomListing = selectedUnit.listing_type === "room";
     const canBeDualOccupancy = !isEntireHome && selectedUnit.max_occupants === 2;
     const isDualOccupancy = canBeDualOccupancy && inclusions.isDualOccupancy;
 
@@ -204,14 +311,18 @@ export function calculatePricing(params: {
     const bond = baseRent * 4;
 
     // Calculate inclusions costs
-    const furniture = inclusions.furnitureSelected
-        ? (isEntireHome
-              ? FURNITURE_COST
-              : getRoomFurnitureCost(property.units || [], FURNITURE_COST)) /
-          (inclusions.selectedLease * 4.33)
-        : 0;
+    // NOTE: For room listings, furniture + bills are already included in the base rent.
+    // They should not be treated as paid add-ons.
+    const furniture =
+        !isRoomListing && inclusions.furnitureSelected
+            ? (isEntireHome
+                  ? FURNITURE_COST
+                  : getRoomFurnitureCost(property.units || [], FURNITURE_COST)) /
+              (inclusions.selectedLease * 4.33)
+            : 0;
 
-    const bills = inclusions.billsIncluded ? getBillsCostPerWeek(property.bedrooms) : 0;
+    const bills =
+        !isRoomListing && inclusions.billsIncluded ? getBillsCostPerWeek(property.bedrooms) : 0;
 
     const cleaning = inclusions.regularCleaningSelected
         ? isEntireHome

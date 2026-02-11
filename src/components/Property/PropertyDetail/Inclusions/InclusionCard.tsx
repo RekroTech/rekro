@@ -39,7 +39,7 @@ export function InclusionCard({
             className={clsx(
                 "w-full text-left rounded-lg border p-3 transition-colors",
                 disabled
-                    ? "cursor-not-allowed opacity-60 bg-gray-50 border-gray-200"
+                    ? "cursor-not-allowed opacity-80 bg-gray-50 border-gray-200"
                     : selected
                       ? "bg-primary-50 border-primary-300"
                       : "bg-white border-gray-200 hover:border-gray-300"

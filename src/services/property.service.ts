@@ -21,9 +21,10 @@ export async function getPropertiesClient(
 
     // Always fetch units with properties to avoid N+1 query problem
     // If listingType filter is applied, use inner join to filter
-    const selectQuery = listingType
-        ? "*, units!inner(id, listing_type, name, description, price_per_week, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active)"
-        : "*, units(id, listing_type, name, description, price_per_week, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active)";
+    const unitColumns =
+        "id, listing_type, name, description, price_per_week, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
+
+    const selectQuery = listingType ? `*, units!inner(${unitColumns})` : `*, units(${unitColumns})`;
 
     let query = supabase
         .from("properties")
