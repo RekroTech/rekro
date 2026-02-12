@@ -30,7 +30,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         const textareaId = id || generatedId;
 
         const baseClasses =
-            "bg-white border border-gray-300 text-gray-900 placeholder:text-gray-400 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation";
+            "bg-card border border-border text-foreground placeholder:text-text-subtle outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation";
 
         const sizeClasses: Record<TextareaSize, string> = {
             sm: "px-3 py-2.5 text-xs sm:text-sm",
@@ -41,7 +41,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         const radiusClass = "rounded-lg";
         const errorClass = error
             ? "border-danger-500 focus:border-danger-600 hover:border-danger-400"
-            : "focus:border-transparent hover:border-gray-400";
+            : "focus:border-transparent hover:border-text-muted";
         const focusClass = error
             ? "focus:ring-2 focus:ring-danger-500"
             : "focus:ring-2 focus:ring-primary-500";
@@ -52,7 +52,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
                     {label && (
                         <label
                             htmlFor={textareaId}
-                            className="absolute left-3 px-1.5 bg-white text-xs font-medium text-gray-400 z-10 -translate-y-1/2"
+                            className="absolute left-3 px-1.5 bg-card text-xs font-medium text-text-subtle z-10 -translate-y-1/2"
                         >
                             {label}
                         </label>

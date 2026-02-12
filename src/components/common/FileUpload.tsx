@@ -108,7 +108,7 @@ export function FileUpload({
                         ? "border-primary-500 bg-primary-50"
                         : error
                           ? "border-red-300 bg-red-50"
-                          : "border-gray-300 hover:border-gray-400"
+                          : "border-border hover:border-text-muted"
                 }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -125,8 +125,8 @@ export function FileUpload({
                 />
 
                 <div className="text-center">
-                    <Icon name="image" className="mx-auto h-12 w-12 text-gray-400" />
-                    <p className="mt-2 text-sm text-gray-600">
+                    <Icon name="image" className="mx-auto h-12 w-12 text-text-muted" />
+                    <p className="mt-2 text-sm text-text-muted">
                         <span className="font-semibold text-primary-600">Click to upload</span> or
                         drag and drop
                     </p>
@@ -157,22 +157,22 @@ export function FileUpload({
                                         unoptimized
                                     />
                                 ) : file.type.startsWith("video/") ? (
-                                    <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
-                                        <Icon name="play" className="h-6 w-6 text-gray-500" />
+                                    <div className="h-12 w-12 rounded bg-surface-muted flex items-center justify-center flex-shrink-0">
+                                        <Icon name="play" className="h-6 w-6 text-text-muted" />
                                     </div>
                                 ) : (
-                                    <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
-                                        <Icon name="file" className="h-6 w-6 text-gray-500" />
+                                    <div className="h-12 w-12 rounded bg-surface-muted flex items-center justify-center flex-shrink-0">
+                                        <Icon name="file" className="h-6 w-6 text-text-muted" />
                                     </div>
                                 )}
                                 <div className="flex-1 min-w-0 overflow-hidden">
                                     <p
-                                        className="text-sm font-medium text-gray-900 truncate"
+                                        className="text-sm font-medium text-foreground truncate"
                                         title={file.name}
                                     >
                                         {file.name}
                                     </p>
-                                    <p className="text-xs text-gray-500 truncate">
+                                    <p className="text-xs text-text-muted truncate">
                                         {(file.size / 1024 / 1024).toFixed(2)} MB
                                     </p>
                                 </div>

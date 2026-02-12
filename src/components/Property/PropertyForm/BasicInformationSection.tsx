@@ -48,10 +48,10 @@ export function BasicInformationSection({
     };
 
     return (
-        <section className="rounded-lg border border-gray-200 bg-white/80 p-3 shadow-sm sm:p-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
-                <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">
+        <section className="rounded-lg border border-border bg-card/80 p-3 shadow-sm sm:p-4">
+            <div className="mb-3 sm:mb-4">
+                <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">
                         Basic Information
                     </h4>
                 </div>

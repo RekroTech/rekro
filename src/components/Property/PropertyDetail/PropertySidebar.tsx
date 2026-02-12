@@ -61,14 +61,18 @@ export function PropertySidebar({
     // Sync with external unitOccupancies if provided
     useEffect(() => {
         if (externalUnitOccupancies) {
-            setInclusions((prev) => ({
-                ...prev,
-                unitOccupancies: externalUnitOccupancies,
-                // Update isDualOccupancy based on current unit's occupancy
-                isDualOccupancy: selectedUnit
-                    ? externalUnitOccupancies[selectedUnit.id] === 2
-                    : prev.isDualOccupancy,
-            }));
+            // Use functional update to avoid cascading renders
+            const timeoutId = setTimeout(() => {
+                setInclusions((prev) => ({
+                    ...prev,
+                    unitOccupancies: externalUnitOccupancies,
+                    // Update isDualOccupancy based on current unit's occupancy
+                    isDualOccupancy: selectedUnit
+                        ? externalUnitOccupancies[selectedUnit.id] === 2
+                        : prev.isDualOccupancy,
+                }));
+            }, 0);
+            return () => clearTimeout(timeoutId);
         }
     }, [externalUnitOccupancies, selectedUnit]);
 
@@ -76,26 +80,30 @@ export function PropertySidebar({
     useEffect(() => {
         if (!selectedUnit) return;
 
-        setInclusions((prev) => ({
-            ...prev,
-            selectedStartDate: getMinStartDate(selectedUnit.available_from),
-            // Reset dual occupancy if new unit doesn't support it
-            isDualOccupancy:
-                prev.isDualOccupancy && selectedUnit.max_occupants === 2
-                    ? prev.isDualOccupancy
-                    : false,
-            // Ensure unitOccupancies is initialized for all units
-            unitOccupancies:
-                externalUnitOccupancies ||
-                property.units?.reduce(
-                    (acc, unit) => {
-                        acc[unit.id] = prev.unitOccupancies?.[unit.id] || 1;
-                        return acc;
-                    },
-                    {} as Record<string, number>
-                ),
-        }));
-    }, [selectedUnit?.id, property.units, externalUnitOccupancies]);
+        // Use functional update to avoid cascading renders
+        const timeoutId = setTimeout(() => {
+            setInclusions((prev) => ({
+                ...prev,
+                selectedStartDate: getMinStartDate(selectedUnit.available_from),
+                // Reset dual occupancy if new unit doesn't support it
+                isDualOccupancy:
+                    prev.isDualOccupancy && selectedUnit.max_occupants === 2
+                        ? prev.isDualOccupancy
+                        : false,
+                // Ensure unitOccupancies is initialized for all units
+                unitOccupancies:
+                    externalUnitOccupancies ||
+                    property.units?.reduce(
+                        (acc, unit) => {
+                            acc[unit.id] = prev.unitOccupancies?.[unit.id] || 1;
+                            return acc;
+                        },
+                        {} as Record<string, number>
+                    ),
+            }));
+        }, 0);
+        return () => clearTimeout(timeoutId);
+    }, [selectedUnit, property.units, externalUnitOccupancies]);
 
     // Calculate pricing
     const pricing = useMemo(
@@ -138,15 +146,15 @@ export function PropertySidebar({
 
     const canShowDualOccupancy = !isEntireHome && selectedUnit?.max_occupants === 2;
 
-    // Reusable like button component
-    const LikeButton = () => (
+    // Reusable like button JSX
+    const likeButton = (
         <button
             onClick={handleToggleLike}
             disabled={!selectedUnit?.id || isLikeLoading || toggleLikeMutation.isPending}
             className={`p-2 rounded-full transition-all touch-manipulation active:scale-95 ${
                 isLiked
-                    ? "bg-red-50 text-red-600 hover:bg-red-100"
-                    : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-red-500"
+                    ? "bg-danger-500/10 text-danger-500 hover:bg-danger-500/20"
+                    : "bg-surface-muted text-text-muted hover:bg-surface-subtle hover:text-danger-500"
             } ${
                 !selectedUnit?.id || isLikeLoading || toggleLikeMutation.isPending
                     ? "opacity-50 cursor-not-allowed"
@@ -173,7 +181,7 @@ export function PropertySidebar({
     return (
         <div className="space-y-4">
             {/* Top Section - Price and Actions */}
-            <div className="bg-white border border-border rounded-lg p-4 sm:p-6 shadow-lg">
+            <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-lg">
                 {selectedUnit ? (
                     <div className="mb-6">
                         {/* Price and Action Buttons */}
@@ -199,12 +207,12 @@ export function PropertySidebar({
                                     propertyId={property.id}
                                     unitId={selectedUnit.id}
                                 />
-                                <LikeButton />
+                                {likeButton}
                             </div>
                         </div>
 
                         {/* Availability Information */}
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="mt-4 p-3 bg-surface-subtle rounded-lg border border-border">
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between items-center">
                                     <span className="text-text-muted">Status:</span>
@@ -303,7 +311,7 @@ export function PropertySidebar({
                                             className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
                                                 !inclusions.isDualOccupancy
                                                     ? "bg-primary-600 text-white border-primary-600 font-medium"
-                                                    : "bg-white text-text border-gray-300 hover:border-primary-400"
+                                                    : "bg-card text-text border-border hover:border-primary-400"
                                             }`}
                                         >
                                             Single
@@ -326,7 +334,7 @@ export function PropertySidebar({
                                             className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
                                                 inclusions.isDualOccupancy
                                                     ? "bg-primary-600 text-white border-primary-600 font-medium"
-                                                    : "bg-white text-text border-gray-300 hover:border-primary-400"
+                                                    : "bg-card text-text border-border hover:border-primary-400"
                                             }`}
                                         >
                                             Dual Occupancy
@@ -344,10 +352,10 @@ export function PropertySidebar({
                                 propertyId={property.id}
                                 unitId=""
                             />
-                            <LikeButton />
+                            {likeButton}
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="inline-flex items-center gap-1.5 text-gray-500 font-medium text-sm">
+                            <div className="inline-flex items-center gap-1.5 text-text-muted font-medium text-sm">
                                 <Icon name="dot" className="w-4 h-4" />
                                 Availability will be updated
                             </div>
@@ -388,8 +396,8 @@ export function PropertySidebar({
                 </div>
 
                 {!isAuthenticated && (
-                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-xs text-blue-800">
+                    <div className="mt-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+                        <p className="text-xs text-text">
                             <Icon name="info" className="w-4 h-4 inline mr-1" />
                             Create an account to save properties and apply
                         </p>
@@ -399,7 +407,7 @@ export function PropertySidebar({
 
             {/* Customize Your Stay */}
             {selectedUnit && (
-                <div className="bg-white border border-border rounded-lg p-6 shadow-lg">
+                <div className="bg-card border border-border rounded-lg p-6 shadow-lg">
                     <h3 className="text-lg font-bold text-text mb-4">Customize your stay</h3>
                     <Inclusions
                         property={property}

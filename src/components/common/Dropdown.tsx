@@ -42,7 +42,7 @@ export function Dropdown({ trigger, items, align = "right" }: DropdownProps) {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center focus:outline-none transition-all duration-200 hover:opacity-80 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-[var(--radius-input)]"
+                className="flex items-center transition-all duration-200 hover:opacity-80 rounded-[var(--radius-input)] focus:outline-none focus-visible:outline-none"
                 type="button"
                 aria-expanded={isOpen}
                 aria-haspopup="true"

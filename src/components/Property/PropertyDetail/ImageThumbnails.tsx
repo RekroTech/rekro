@@ -73,7 +73,7 @@ export function ImageThumbnails({
                                 className={`relative block h-14 sm:h-16 md:h-20 w-20 sm:w-full rounded-lg overflow-hidden border-2 transition-all touch-manipulation active:scale-95 flex-shrink-0 sm:flex-shrink ${
                                     isSelected
                                         ? "border-primary-500 ring-2 ring-primary-200"
-                                        : "border-gray-200 hover:border-gray-300"
+                                        : "border-border hover:border-text-muted"
                                 }`}
                                 aria-label={`Select image ${index + 1}`}
                                 aria-current={isSelected ? "true" : "false"}
@@ -94,7 +94,7 @@ export function ImageThumbnails({
             {showNext && (
                 <button
                     onClick={handleNext}
-                    className="hidden sm:inline-flex flex-shrink-0 bg-white hover:bg-gray-50 text-gray-800 p-1.5 sm:p-2 rounded-full shadow-lg transition-all border border-gray-200 active:scale-95"
+                    className="hidden sm:inline-flex flex-shrink-0 bg-card hover:bg-surface-muted text-foreground p-1.5 sm:p-2 rounded-full shadow-lg transition-all border border-border active:scale-95"
                     aria-label="Next thumbnails"
                 >
                     <Icon name="chevron-right" className="w-4 h-4 sm:w-5 sm:h-5" />

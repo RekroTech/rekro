@@ -51,19 +51,23 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
             />
 
             {/* Modal */}
-            <div className="flex min-h-full items-center justify-center p-2 sm:p-4 relative z-10">
+            <div
+                className="flex min-h-full items-center justify-center p-2 sm:p-4 pointer-events-none"
+                style={{ position: "relative", zIndex: 10 }}
+            >
                 <div
                     ref={modalRef}
-                    className={`relative w-full ${sizeClasses[size]} transform rounded-lg bg-white shadow-xl transition-all max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] flex flex-col`}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`relative w-full ${sizeClasses[size]} transform rounded-lg bg-card shadow-xl transition-all max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] flex flex-col pointer-events-auto`}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                    <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0">
+                        <h3 className="text-base sm:text-lg font-semibold text-foreground">
                             {title}
                         </h3>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-gray-500 transition-colors"
+                            className="text-text-muted hover:text-foreground transition-colors"
                         >
                             <Icon name="close" className="h-5 w-5 sm:h-6 sm:w-6" />
                         </button>

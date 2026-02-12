@@ -27,10 +27,10 @@ export function LocationSection({ latitude, longitude, address }: LocationSectio
     return (
         <div className="space-y-3 sm:space-y-4">
             <h2 className="text-xl sm:text-2xl font-bold text-text-primary">Location</h2>
-            <div className="bg-white rounded-lg shadow-sm border border-border overflow-hidden">
+            <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
                 {/* Locality Information (Privacy Protected) */}
                 {localityString && (
-                    <div className="p-3 sm:p-4 border-b border-border bg-gray-50">
+                    <div className="p-3 sm:p-4 border-b border-border bg-surface-subtle">
                         <div className="flex items-start gap-2 sm:gap-3">
                             <div className="flex-shrink-0 mt-1">
                                 <Icon
@@ -55,7 +55,7 @@ export function LocationSection({ latitude, longitude, address }: LocationSectio
                 {!showMap ? (
                     <button
                         onClick={() => setShowMap(true)}
-                        className="w-full p-4 sm:p-6 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors group touch-manipulation active:scale-[0.99]"
+                        className="w-full p-4 sm:p-6 flex items-center justify-center gap-3 hover:bg-surface-muted transition-colors group touch-manipulation active:scale-[0.99]"
                     >
                         <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary-100 text-primary-600 group-hover:bg-primary-200 transition-colors">
                             <Icon name="location" className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -78,7 +78,7 @@ export function LocationSection({ latitude, longitude, address }: LocationSectio
                         {/* Collapse Button */}
                         <button
                             onClick={() => setShowMap(false)}
-                            className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 bg-white hover:bg-gray-100 text-text-muted hover:text-text rounded-full p-1.5 sm:p-2 shadow-md transition-all border border-border touch-manipulation active:scale-95"
+                            className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 bg-card hover:bg-surface-muted text-text-muted hover:text-text rounded-full p-1.5 sm:p-2 shadow-md transition-all border border-border touch-manipulation active:scale-95"
                             aria-label="Hide map"
                         >
                             <Icon name="x" className="w-4 h-4 sm:w-5 sm:h-5" />

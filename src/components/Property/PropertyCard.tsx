@@ -46,43 +46,44 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
 
     return (
         <>
-            <div className="group relative block rounded-[var(--radius-lg)] border border-border bg-card overflow-hidden shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-deep)] transition-all duration-200">
+            <Link
+                href={`/property/${id}`}
+                className="group relative block rounded-[var(--radius-lg)] border border-border bg-card overflow-hidden shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-deep)] transition-all duration-200"
+            >
                 {/* Property Image */}
-                <Link href={`/property/${id}`} className="block">
-                    <div className="relative h-52 sm:h-48 w-full bg-surface-muted overflow-hidden">
-                        <Visual
-                            src={imageUrl}
-                            alt={title}
-                            fill
-                            className="group-hover:scale-105 transition-transform duration-300"
-                            priority
-                        />
-                        {furnished && (
-                            <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-primary-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">
-                                Furnished
-                            </div>
-                        )}
-                        {pricePerWeek && (
-                            <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-white/90 backdrop-blur-sm text-gray-900 text-sm font-bold px-3 py-1.5 rounded-[var(--radius-md)] shadow-md">
-                                ${pricePerWeek}/week
-                            </div>
-                        )}
-                        {showEditButton && (
-                            <button
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setIsEditModalOpen(true);
-                                }}
-                                className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-800 p-2 sm:p-1.5 rounded-full shadow-xl transition-all duration-200 hover:scale-110 z-10 border-2 border-gray-200 hover:border-gray-300 touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
-                                aria-label="Edit property"
-                                title="Edit property"
-                            >
-                                <Icon name="edit" className="w-4 h-4 sm:w-4 sm:h-4" />
-                            </button>
-                        )}
-                    </div>
-                </Link>
+                <div className="relative h-52 sm:h-48 w-full bg-surface-muted overflow-hidden">
+                    <Visual
+                        src={imageUrl}
+                        alt={title}
+                        fill
+                        className="group-hover:scale-105 transition-transform duration-300"
+                        priority
+                    />
+                    {furnished && (
+                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-primary-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">
+                            Furnished
+                        </div>
+                    )}
+                    {pricePerWeek && (
+                        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-card/90 backdrop-blur-sm text-foreground text-sm font-bold px-3 py-1.5 rounded-[var(--radius-md)] shadow-md border border-border">
+                            ${pricePerWeek}/week
+                        </div>
+                    )}
+                    {showEditButton && (
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsEditModalOpen(true);
+                            }}
+                            className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-card hover:bg-surface-muted active:bg-surface-muted text-foreground p-2 sm:p-1.5 rounded-full shadow-xl transition-all duration-200 hover:scale-110 z-10 border-2 border-border hover:border-text-muted touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+                            aria-label="Edit property"
+                            title="Edit property"
+                        >
+                            <Icon name="edit" className="w-4 h-4 sm:w-4 sm:h-4" />
+                        </button>
+                    )}
+                </div>
 
                 {/* Property Details */}
                 <div className="p-3.5 sm:p-4">
@@ -135,7 +136,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                         )}
                     </div>
                 </div>
-            </div>
+            </Link>
 
             {/* Edit Modal */}
             {showEditButton && isEditModalOpen && (

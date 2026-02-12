@@ -74,12 +74,12 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
                 {(isFurnished || furnished !== null) && (
                     <div className="flex-shrink-0">
                         {isFurnished ? (
-                            <div className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2 py-1 text-green-800 sm:px-2.5">
+                            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary-500/20 bg-success-bg px-2 py-1 text-primary-700 sm:px-2.5">
                                 <Icon name="check" className="h-4 w-4" />
                                 <span className="text-xs font-semibold">Furnished</span>
                             </div>
                         ) : (
-                            <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700 sm:px-2.5">
+                            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-muted px-2 py-1 text-text-muted sm:px-2.5">
                                 <Icon name="x" className="h-4 w-4" />
                                 <span className="text-xs font-semibold">Unfurnished</span>
                             </div>

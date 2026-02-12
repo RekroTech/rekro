@@ -9,9 +9,9 @@ interface PropertyDetailsSectionProps {
 
 export function PropertyDetailsSection({ formData, updateFormData }: PropertyDetailsSectionProps) {
     return (
-        <section className="rounded-lg border border-gray-200 bg-white/80 p-3 shadow-sm sm:p-4">
-            <div className="mb-3">
-                <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">
+        <section className="rounded-lg border border-border bg-card/80 p-3 shadow-sm sm:p-4">
+            <div className="mb-3 sm:mb-4">
+                <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">
                     Property Details
                 </h4>
             </div>

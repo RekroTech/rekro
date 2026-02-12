@@ -131,7 +131,7 @@ export function PropertyList({
                 <div className="text-center py-6 sm:py-8">
                     <button
                         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 active:bg-primary-200 rounded-lg transition-colors touch-manipulation min-h-[44px]"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-primary-600 bg-primary-500/10 hover:bg-primary-500/15 active:bg-primary-500/20 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                     >
                         <Icon name="arrow-up" className="h-5 w-5" />
                         Back to Top

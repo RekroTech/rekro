@@ -139,21 +139,21 @@ export function Address({
         <div className="w-full">
             <div className="relative">
                 {label && (
-                    <label className="absolute left-3 px-1.5 bg-white text-xs font-medium text-gray-400 z-10 -translate-y-1/2">
+                    <label className="absolute left-3 px-1.5 bg-card text-xs font-medium text-text-subtle z-10 -translate-y-1/2">
                         {label}
                     </label>
                 )}
                 <div
                     className={`
                         relative w-full
-                        bg-white border border-gray-300
+                        bg-card border border-border
                         rounded-lg
                         transition-all
                         overflow-hidden
                         ${
                             error
                                 ? "border-danger-500 focus-within:border-danger-600 hover:border-danger-400 focus-within:ring-2 focus-within:ring-danger-500"
-                                : "focus-within:border-transparent hover:border-gray-400 focus-within:ring-2 focus-within:ring-primary-500"
+                                : "focus-within:border-transparent hover:border-text-muted focus-within:ring-2 focus-within:ring-primary-500"
                         }
                         ${disabled ? "opacity-50 cursor-not-allowed" : ""}
                     `}
@@ -170,7 +170,7 @@ export function Address({
                         value={value || ""}
                         className={`
                             w-full bg-transparent
-                            text-gray-900 placeholder:text-gray-400
+                            text-foreground placeholder:text-text-subtle
                             outline-none
                             py-2.5
                             ${leftIcon ? "pl-10" : "pl-4"}

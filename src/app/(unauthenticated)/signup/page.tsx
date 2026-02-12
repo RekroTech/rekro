@@ -72,8 +72,8 @@ export default function SignupPage() {
                 </div>
 
                 {/* Card */}
-                <div className="card border border-emerald-100 px-6 py-7">
-                    <h1 className="mb-1 text-center text-[28px] font-bold text-primary-600">
+                <div className="card border border-input-border px-6 py-7">
+                    <h1 className="mb-1 text-center text-[28px] font-bold text-primary-500 dark:text-primary-300">
                         Create your account
                     </h1>
 
@@ -86,8 +86,8 @@ export default function SignupPage() {
                                     onClick={() => setRole("tenant")}
                                     className={`flex-1 px-3 py-3 text-lg rounded-[10px] border transition-all ${
                                         role === "tenant"
-                                            ? "bg-primary-600 text-white border-primary-600 font-medium"
-                                            : "bg-white text-gray-600 border-gray-300 hover:border-primary-400"
+                                            ? "bg-primary-500 text-white border-primary-500 font-medium dark:bg-primary-300 dark:text-[#071010] dark:border-primary-300"
+                                            : "bg-surface text-foreground border-border hover:border-primary-400"
                                     } disabled:opacity-60`}
                                 >
                                     Tenant
@@ -98,8 +98,8 @@ export default function SignupPage() {
                                     onClick={() => setRole("landlord")}
                                     className={`flex-1 px-3 py-3 text-lg rounded-[10px] border transition-all ${
                                         role === "landlord"
-                                            ? "bg-primary-600 text-white border-primary-600 font-medium"
-                                            : "bg-white text-gray-600 border-gray-300 hover:border-primary-400"
+                                            ? "bg-primary-500 text-white border-primary-500 font-medium dark:bg-primary-300 dark:text-[#071010] dark:border-primary-300"
+                                            : "bg-surface text-foreground border-border hover:border-primary-400"
                                     } disabled:opacity-60`}
                                 >
                                     Landlord
@@ -150,20 +150,24 @@ export default function SignupPage() {
                         </div>
 
                         {validationError && (
-                            <div className="rounded-[10px] bg-warning-500/10 p-3">
-                                <p className="text-sm text-warning-600">{validationError}</p>
+                            <div className="rounded-[10px] bg-warning-500/10 border border-warning-500/30 p-3">
+                                <p className="text-sm text-warning-600 dark:text-warning-500">
+                                    {validationError}
+                                </p>
                             </div>
                         )}
 
                         {error?.message && (
-                            <div className="rounded-[10px] bg-danger-500/10 p-3">
-                                <p className="text-sm text-danger-600">{error.message}</p>
+                            <div className="rounded-[10px] bg-danger-500/10 border border-danger-500/30 p-3">
+                                <p className="text-sm text-danger-600 dark:text-danger-500">
+                                    {error.message}
+                                </p>
                             </div>
                         )}
 
                         {isSuccess && (
-                            <div className="rounded-[10px] bg-success-bg p-3">
-                                <p className="text-sm font-medium text-primary-700">
+                            <div className="rounded-[10px] bg-success-bg border border-primary-500/30 p-3">
+                                <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
                                     Account created successfully! Redirecting…
                                 </p>
                             </div>
@@ -172,8 +176,7 @@ export default function SignupPage() {
                         <button
                             type="submit"
                             disabled={isDisabled}
-                            className="mt-2 w-full rounded-[10px] bg-primary-500 py-3.5 text-[17px] font-semibold text-white transition hover:bg-primary-600 disabled:opacity-60"
-                            style={{ boxShadow: "0 4px 10px rgba(58, 127, 121, 0.30)" }}
+                            className="mt-2 w-full rounded-[10px] bg-primary-500 py-3.5 text-[17px] font-semibold text-white shadow-[0_4px_10px_rgba(58,127,121,0.30)] transition hover:bg-primary-600 disabled:opacity-60 dark:bg-primary-300 dark:text-[#071010] dark:hover:bg-primary-200"
                         >
                             {isPending ? "Creating account..." : isSuccess ? "Success!" : "Sign up"}
                         </button>
@@ -183,7 +186,7 @@ export default function SignupPage() {
                                 Already have an account?{" "}
                                 <Link
                                     href="/login"
-                                    className="font-bold text-secondary-500 hover:opacity-80"
+                                    className="font-bold text-primary-600 hover:opacity-80 dark:text-primary-300"
                                 >
                                     Sign in
                                 </Link>

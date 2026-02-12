@@ -40,7 +40,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         const selectId = id || generatedId;
 
         const baseClasses =
-            "bg-white border border-gray-300 text-gray-900 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer";
+            "bg-card border border-border text-foreground outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer";
 
         const sizeClasses: Record<SelectSize, string> = {
             sm: "px-3 py-2.5 pr-8 text-sm",
@@ -51,8 +51,8 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         const radiusClass = "rounded-lg";
         const widthClass = fullWidth ? "w-full" : "";
         const errorClass = error
-            ? "border-danger-500 focus:border-danger-600 hover:border-danger-600"
-            : "focus:border-transparent";
+            ? "border-danger-500 focus:border-danger-600 hover:border-danger-400"
+            : "focus:border-transparent hover:border-text-muted";
         const focusClass = error
             ? "focus:ring-2 focus:ring-danger-500"
             : "focus:ring-2 focus:ring-primary-500";
@@ -63,7 +63,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                     {label && (
                         <label
                             htmlFor={selectId}
-                            className="absolute left-3 px-1.5 bg-white text-xs font-medium text-gray-400 z-10 -translate-y-1/2"
+                            className="absolute left-3 px-1.5 bg-card text-xs font-medium text-text-subtle z-10 -translate-y-1/2"
                         >
                             {label}
                         </label>

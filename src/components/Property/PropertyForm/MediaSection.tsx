@@ -26,9 +26,9 @@ export function MediaSection({
     onRemoveUploadedFile,
 }: MediaSectionProps) {
     return (
-        <section className="rounded-lg border border-gray-200 bg-white/80 p-3 shadow-sm sm:p-4">
+        <section className="rounded-lg border border-border bg-card p-3 shadow-[var(--shadow-soft)] sm:p-4">
             <div className="mb-3 flex items-center justify-between">
-                <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">
+                <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">
                     Media
                 </h4>
                 <label className="cursor-pointer">
@@ -59,7 +59,7 @@ export function MediaSection({
                     {existingImages.map((imageUrl, index) => (
                         <div
                             key={`existing-img-${index}`}
-                            className="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-100"
+                            className="relative aspect-square overflow-hidden rounded-lg border border-border bg-surface-muted"
                         >
                             <Image
                                 src={getPropertyFileUrl(imageUrl, property?.id)}
@@ -86,7 +86,7 @@ export function MediaSection({
                     {mediaFiles.map((file, index) => (
                         <div
                             key={`new-${index}`}
-                            className="relative aspect-square overflow-hidden rounded-lg border-2 border-dashed border-primary-300 bg-gray-50"
+                            className="relative aspect-square overflow-hidden rounded-lg border-2 border-dashed border-primary-300 bg-surface-subtle"
                         >
                             {isVideoFile(file) ? (
                                 <>
@@ -126,7 +126,7 @@ export function MediaSection({
             )}
 
             {/* Helper Text */}
-            <p className="mt-3 text-xs text-gray-500">
+            <p className="mt-3 text-xs text-text-muted">
                 Upload photos and videos. Images max 10MB each, videos max 50MB.
             </p>
         </section>

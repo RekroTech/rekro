@@ -30,8 +30,16 @@
     --text-muted: #666666;
     --text-subtle: #888888;
 
+    /* Auth-specific text (light mode) */
+    --auth-note: #666666;
+    --auth-support: #888888;
+    --auth-text-strong: #222222;
+
     /* Borders */
     --border: #e5e7eb;
+
+    /* Focus ring */
+    --focus-ring: rgba(58, 127, 121, 0.15);
 
     /* Brand (based on your RN token usage + logo teal direction) */
     --primary-50: #eaf2f1;
@@ -60,6 +68,8 @@
     /* Status */
     --danger-500: #ff3b30;
     --danger-600: #d32f2f;
+    --warning-500: #ff9500;
+    --warning-600: #ff8c00;
     --like: #e74c3c;
 
     /* Radius (RN: card 16-20, input ~10-12, pill 30, tag 14) */
@@ -109,6 +119,9 @@
         --auth-text-strong: #cfcfcf;
 
         --border: #2a2a2f;
+
+        /* Focus ring */
+        --focus-ring: rgba(58, 127, 121, 0.25);
     }
 }
 
@@ -149,6 +162,9 @@
 
     --color-border: var(--border);
 
+    /* Focus ring */
+    --color-focus-ring: var(--focus-ring);
+
     /* Brand scales */
     --color-primary-50: var(--primary-50);
     --color-primary-100: var(--primary-100);
@@ -175,6 +191,8 @@
     /* Status */
     --color-danger-500: var(--danger-500);
     --color-danger-600: var(--danger-600);
+    --color-warning-500: var(--warning-500);
+    --color-warning-600: var(--warning-600);
     --color-like: var(--like);
 
     /* Modal backdrop */
@@ -235,7 +253,7 @@
 
     .input:focus {
         border-color: var(--primary-500);
-        box-shadow: 0 0 0 4px var(--primary-100);
+        box-shadow: 0 0 0 4px var(--focus-ring);
     }
 
     .btn-primary-pill {
@@ -277,6 +295,8 @@
 ---------------------------- */
 html {
     font-family: var(--font-sans);
+    overflow-y: auto;
+    scrollbar-gutter: auto;
 }
 
 body {
@@ -285,9 +305,53 @@ body {
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Prevent scrollbar from taking up width */
+* {
+    scrollbar-gutter: auto;
+}
+
+/* Native Date/Time Picker Styling - Works across all browsers */
+/* Style the calendar icon picker */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    filter: invert(var(--date-icon-invert, 0));
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Dark mode date picker icon */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --date-icon-invert: 0.9;
+    }
+}
+
+/* Firefox date picker */
+input[type="date"]::-moz-calendar-picker-indicator,
+input[type="datetime-local"]::-moz-calendar-picker-indicator,
+input[type="time"]::-moz-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+input[type="date"]::-moz-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-moz-calendar-picker-indicator:hover,
+input[type="time"]::-moz-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
 /* ===========================
    Auth theme (login / signup)
-=========================== */
+   =========================== */
 .auth-theme {
     /* Page background */
     --app-bg: #f0fdf4;            /* soft green wash (mobile-like) */
@@ -298,21 +362,42 @@ body {
 
     /* Inputs */
     --input-bg: #fafafa;
-    --input-border: #d1fae5;
+    /* use brand tint for borders (matches icon.svg light fill #255553) */
+    --input-border: color-mix(in srgb, var(--primary-500) 18%, #ffffff);
+
+    /* Auth-specific text */
+    --auth-note: #4b5563;
+    --auth-support: #6b7280;
+    --auth-text-strong: #111827;
 
     /* Subtle accents */
     --shadow-card: 0 6px 18px rgba(16, 185, 129, 0.18);
     --shadow-soft: 0 1px 6px rgba(16, 185, 129, 0.12);
 }
 
-/* Dark auth (optional, safe default) */
+/* Dark auth (login / signup) */
 @media (prefers-color-scheme: dark) {
     .auth-theme {
-        --app-bg: #0f1f1a;
-        --card: #0f2a22;
-        --surface: #0f2a22;
-        --input-bg: #102e25;
-        --input-border: #134e4a;
+        /* slightly lifted from global dark bg so the page doesn't go pure-black */
+        --app-bg: #0b0d0d;
+
+        /* Card + surfaces */
+        --card: #0f1413;
+        --surface: #0f1413;
+
+        /* Inputs */
+        --input-bg: #0b1010;
+        /* match icon.svg dark fill (#86b6b0) as the accent border */
+        --input-border: color-mix(in srgb, var(--primary-300) 38%, #2a2a2f);
+
+        /* Auth-specific text */
+        --auth-note: color-mix(in srgb, var(--foreground) 72%, transparent);
+        --auth-support: color-mix(in srgb, var(--foreground) 62%, transparent);
+        --auth-text-strong: color-mix(in srgb, var(--foreground) 88%, transparent);
+
+        /* Stronger shadows for dark mode */
+        --shadow-card: 0 14px 36px rgba(0, 0, 0, 0.55);
+        --shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.35);
     }
 }
 
@@ -383,17 +468,81 @@ select option {
 }
 
 /* ---------------------------
-   Hide Scrollbars on Mobile
+   Sleek, Elegant Auto-Hide Scrollbars
 ---------------------------- */
-@media (max-width: 640px) {
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    *::-webkit-scrollbar {
-        display: none;
-    }
 
-    /* Hide scrollbar for IE, Edge and Firefox */
-    * {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
-    }
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.3s ease;
+}
+
+*:hover,
+*:focus-within {
+    scrollbar-color: var(--border) transparent;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    position: absolute;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+    margin: 2px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.3s ease;
+}
+
+/* Show scrollbar on hover or when scrolling */
+*:hover::-webkit-scrollbar-thumb,
+*:focus-within::-webkit-scrollbar-thumb {
+    background: var(--border);
+}
+
+*:hover::-webkit-scrollbar-thumb:hover,
+*:focus-within::-webkit-scrollbar-thumb:hover {
+    background: var(--text-subtle);
+    background-clip: padding-box;
+}
+
+*:hover::-webkit-scrollbar-thumb:active,
+*:focus-within::-webkit-scrollbar-thumb:active {
+    background: var(--text-muted);
+    background-clip: padding-box;
+}
+
+/* Scrollbar corner (when both scrollbars are present) */
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Enhanced scrollbar for modals and overlays */
+.modal-card::-webkit-scrollbar-thumb,
+.pac-container::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+.modal-card:hover::-webkit-scrollbar-thumb,
+.pac-container:hover::-webkit-scrollbar-thumb,
+.modal-card:focus-within::-webkit-scrollbar-thumb,
+.pac-container:focus-within::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--primary-500) 30%, transparent);
+}
+
+.modal-card:hover::-webkit-scrollbar-thumb:hover,
+.pac-container:hover::-webkit-scrollbar-thumb:hover,
+.modal-card:focus-within::-webkit-scrollbar-thumb:hover,
+.pac-container:focus-within::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--primary-500) 50%, transparent);
 }

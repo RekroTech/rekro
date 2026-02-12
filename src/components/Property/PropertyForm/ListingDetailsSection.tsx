@@ -37,9 +37,9 @@ export function ListingDetailsSection({
         : listingType;
 
     return (
-        <section className="rounded-lg border border-gray-200 bg-white/80 p-3 shadow-sm sm:p-4">
-            <div className="mb-3">
-                <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">
+        <section className="rounded-lg border border-border bg-card/80 p-3 shadow-sm sm:p-4">
+            <div className="mb-3 sm:mb-4">
+                <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">
                     Listing Details
                 </h4>
             </div>
@@ -72,7 +72,7 @@ export function ListingDetailsSection({
                 {!isListingTypeLocked &&
                     (displayedListingType === "room" || displayedListingType === "all") &&
                     units.length > 1 && (
-                        <div className="border-b border-gray-200">
+                        <div className="border-b border-border">
                             <div className="flex gap-1 overflow-x-auto">
                                 {units.map((unit, index) => {
                                     // Always use unit.name for the tab label to keep them in sync
@@ -90,7 +90,7 @@ export function ListingDetailsSection({
                                             className={`whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
                                                 activeRoomTab === index
                                                     ? "border-primary-500 text-primary-600"
-                                                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                                                    : "border-transparent text-text-muted hover:border-border hover:text-foreground"
                                             }`}
                                         >
                                             {label}

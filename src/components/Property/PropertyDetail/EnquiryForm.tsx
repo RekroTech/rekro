@@ -191,13 +191,13 @@ export function EnquiryForm({
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Property Information Card */}
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-5 mb-4">
+                    <div className="bg-panel border border-border rounded-xl p-5 mb-4">
                         {/* Info Message */}
                         <div className="">
-                            <p className="text-xs text-gray-600 flex items-start gap-2">
+                            <p className="text-xs text-text-muted flex items-start gap-2">
                                 <Icon
                                     name="info"
-                                    className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"
+                                    className="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5"
                                 />
                                 <span>
                                     Fill out the form below and we&apos;ll get back to you within 24

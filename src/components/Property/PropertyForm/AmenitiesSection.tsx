@@ -37,7 +37,7 @@ export function AmenitiesSection({ formData, updateFormData }: AmenitiesSectionP
 
             {/* Other Amenities Section */}
             <div>
-                <h4 className="text-sm text-gray-500 mb-3">Amenities</h4>
+                <h4 className="text-sm text-text-muted mb-3">Amenities</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {AMENITIES.map((amenity) => (
                         <Checkbox

@@ -39,10 +39,10 @@ export function InclusionCard({
             className={clsx(
                 "w-full text-left rounded-lg border p-3 transition-colors",
                 disabled
-                    ? "cursor-not-allowed opacity-80 bg-gray-50 border-gray-200"
+                    ? "cursor-not-allowed opacity-80 bg-surface-muted border-border"
                     : selected
-                      ? "bg-primary-50 border-primary-300"
-                      : "bg-white border-gray-200 hover:border-gray-300"
+                      ? "bg-primary-500/10 border-primary-500"
+                      : "bg-card border-border hover:border-text-muted"
             )}
         >
             <div className="flex items-start gap-3">
@@ -51,9 +51,8 @@ export function InclusionCard({
                         "mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border",
                         selected
                             ? "bg-primary-600 border-primary-600 text-white"
-                            : "bg-white border-gray-300 text-transparent"
+                            : "bg-card border-border text-transparent"
                     )}
-                    aria-hidden="true"
                 >
                     <Icon name="check" className="h-4 w-4" />
                 </span>

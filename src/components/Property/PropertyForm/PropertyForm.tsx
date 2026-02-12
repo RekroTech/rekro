@@ -372,7 +372,7 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                 />
 
                 {/* Form Actions */}
-                <div className="flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end">
+                <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:justify-end">
                     <Button
                         type="submit"
                         variant="primary"

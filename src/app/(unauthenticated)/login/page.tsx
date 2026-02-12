@@ -54,12 +54,12 @@ function LoginForm() {
                 </div>
 
                 {/* Card */}
-                <div className="card border border-emerald-100 px-6 py-7">
+                <div className="card border border-input-border px-6 py-7">
                     {/* Mascot - file should be in /public/reKro.png */}
                     <div className="mb-3 flex justify-center">
                         <div className="h-[120px] w-[120px]">
                             <Image
-                                src="/reKro.png"
+                                src="/icon.svg"
                                 alt="reKro mascot"
                                 width={120}
                                 height={120}
@@ -69,7 +69,7 @@ function LoginForm() {
                         </div>
                     </div>
 
-                    <h1 className="mb-4 text-center text-[28px] font-bold text-primary-600">
+                    <h1 className="mb-4 text-center text-[28px] font-bold text-primary-500 dark:text-primary-300">
                         Welcome to reKro
                     </h1>
 
@@ -105,24 +105,25 @@ function LoginForm() {
                         </div>
 
                         {sessionError && (
-                            <div className="rounded-[10px] bg-warning-500/10 p-3">
-                                <p className="text-sm text-warning-600">
+                            <div className="rounded-[10px] border border-warning-500/30 bg-warning-500/10 p-3">
+                                <p className="text-sm text-warning-600 dark:text-warning-500">
                                     Your session has expired. Please log in again.
                                 </p>
                             </div>
                         )}
 
                         {error && (
-                            <div className="rounded-[10px] bg-danger-500/10 p-3">
-                                <p className="text-sm text-danger-600">{error.message}</p>
+                            <div className="rounded-[10px] border border-danger-500/30 bg-danger-500/10 p-3">
+                                <p className="text-sm text-danger-600 dark:text-danger-500">
+                                    {error.message}
+                                </p>
                             </div>
                         )}
 
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="mt-2 w-full rounded-[10px] bg-primary-500 py-3.5 text-[17px] font-semibold text-white transition hover:bg-primary-600 disabled:opacity-60"
-                            style={{ boxShadow: "0 4px 10px rgba(58, 127, 121, 0.30)" }}
+                            className="mt-2 w-full rounded-[10px] bg-primary-500 py-3.5 text-[17px] font-semibold text-white shadow-[0_4px_10px_rgba(58,127,121,0.30)] transition hover:bg-primary-600 disabled:opacity-60 dark:bg-primary-300 dark:text-[#071010] dark:hover:bg-primary-200"
                         >
                             {isPending ? "Signing In..." : "Sign In"}
                         </button>
@@ -130,7 +131,7 @@ function LoginForm() {
                         <div className="pt-1 text-center">
                             <Link
                                 href="/forgot-password"
-                                className="text-[14px] font-medium text-secondary-500 hover:opacity-80"
+                                className="text-[14px] font-medium text-primary-600 hover:opacity-80 dark:text-primary-300"
                             >
                                 Forgot Password?
                             </Link>
@@ -144,7 +145,7 @@ function LoginForm() {
                         Don&apos;t have an account?{" "}
                         <Link
                             href="/signup"
-                            className="font-bold text-secondary-500 hover:opacity-80"
+                            className="font-bold text-primary-600 hover:opacity-80 dark:text-primary-300"
                         >
                             Sign up
                         </Link>

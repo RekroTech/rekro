@@ -1,11 +1,10 @@
-import { forwardRef, useId } from "react";
+import React, { forwardRef, useId, useRef, useImperativeHandle } from "react";
 import { clsx } from "clsx";
 
 export type InputVariant = "default" | "auth";
 export type InputSize = "sm" | "md" | "lg";
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
-    variant?: InputVariant;
     size?: InputSize;
     label?: string;
     error?: string;
@@ -18,7 +17,6 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     (
         {
-            variant = "default",
             size = "md",
             label,
             error,
@@ -35,9 +33,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     ) => {
         const generatedId = useId();
         const inputId = id || generatedId;
+        const inputRef = useRef<HTMLInputElement>(null);
+
+        // Merge internal ref with forwarded ref
+        useImperativeHandle(ref, () => inputRef.current!);
 
         const baseClasses =
-            "bg-white border border-gray-300 text-gray-900 placeholder:text-gray-400 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+            "bg-card border border-border text-foreground placeholder:text-text-subtle outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed";
 
         const sizeClasses: Record<InputSize, string> = {
             sm: "px-3 py-2.5 text-sm",
@@ -49,7 +51,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         const errorClass = error
             ? "border-danger-500 focus:border-danger-600 hover:border-danger-400"
-            : "focus:border-transparent hover:border-gray-400";
+            : "focus:border-transparent hover:border-text-muted";
 
         const focusClass = error
             ? "focus:ring-2 focus:ring-danger-500"
@@ -61,7 +63,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     {label && (
                         <label
                             htmlFor={inputId}
-                            className="absolute left-3 px-1.5 bg-white text-xs font-medium text-gray-400 z-10 -translate-y-1/2"
+                            className="absolute left-3 px-1.5 bg-card text-xs font-medium text-text-subtle z-10 -translate-y-1/2"
                         >
                             {label}
                         </label>
@@ -72,7 +74,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         </div>
                     )}
                     <input
-                        ref={ref}
+                        ref={inputRef}
                         id={inputId}
                         disabled={disabled}
                         aria-invalid={error ? "true" : "false"}

@@ -20,7 +20,7 @@ export function ShareDropdown({ propertyTitle, unitId, propertyId }: ShareDropdo
         <Dropdown
             align="right"
             trigger={
-                <div className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-primary-600 transition-all">
+                <div className="p-2 rounded-full bg-surface-muted text-foreground hover:bg-surface-muted hover:text-primary-600 transition-all">
                     <Icon name="share" className="w-5 h-5" />
                 </div>
             }

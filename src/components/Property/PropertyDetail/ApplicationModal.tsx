@@ -98,7 +98,7 @@ export function ApplicationModal({
         <Modal isOpen={isOpen} onClose={handleClose} title={getModalTitle()} size="xl">
             {currentStep === "inclusions" && (
                 <div>
-                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-3 sm:mb-4">
+                    <div className="p-4 bg-surface-subtle rounded-lg border border-border mb-3 sm:mb-4">
                         <Inclusions
                             property={property}
                             inclusions={inclusions}
@@ -109,7 +109,7 @@ export function ApplicationModal({
                     </div>
 
                     {/* Rent Display at Bottom */}
-                    <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-200 mb-3 sm:mb-4">
+                    <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-border mb-3 sm:mb-4">
                         <span className="text-sm text-text-muted">Total Rent:</span>
                         <span className="text-2xl font-bold text-primary-600">
                             ${pricing.totalWeeklyRent.toFixed(2)}

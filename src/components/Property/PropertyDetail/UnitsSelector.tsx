@@ -47,8 +47,8 @@ export function UnitsSelector({
                             onClick={() => onUnitSelect(unit.id)}
                             className={`relative text-left p-2 sm:p-4 rounded-lg border-2 transition-all ${
                                 isSelected
-                                    ? "border-primary-500 bg-primary-50 shadow-md"
-                                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                                    ? "border-primary-500 bg-primary-500/10 shadow-md"
+                                    : "border-border bg-card hover:border-text-muted hover:shadow-sm"
                             }`}
                         >
                             {/* Availability Badge - Top Right */}
@@ -61,8 +61,8 @@ export function UnitsSelector({
                                     <span
                                         className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                                             unit.is_available
-                                                ? "bg-green-100 text-green-800"
-                                                : "bg-red-100 text-red-800"
+                                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                                : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                                         }`}
                                     >
                                         {unit.is_available ? "Available" : "Unavailable"}
@@ -79,7 +79,7 @@ export function UnitsSelector({
                             <div className="mb-2">
                                 <div className="text-2xl font-bold text-primary-600">
                                     ${displayPrice.toFixed(0)}{" "}
-                                    <span className="text-xs font-normal text-gray-500">p/w</span>
+                                    <span className="text-xs font-normal text-text-muted">p/w</span>
                                 </div>
                             </div>
 

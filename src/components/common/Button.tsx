@@ -35,13 +35,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
         const variantClasses: Record<ButtonVariant, string> = {
             primary:
-                "bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 shadow-[var(--shadow-soft)] focus:shadow-[0_0_0_4px_var(--primary-100)]",
+                "bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 shadow-[var(--shadow-soft)] focus:shadow-[0_0_0_4px_var(--focus-ring)]",
             secondary:
                 "bg-secondary-500 text-white hover:bg-secondary-600 active:bg-secondary-700 shadow-[var(--shadow-soft)] focus:shadow-[0_0_0_4px_rgba(58,74,107,0.15)]",
             danger: "bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-600 shadow-[var(--shadow-soft)] focus:shadow-[0_0_0_4px_rgba(255,59,48,0.1)]",
-            ghost: "bg-transparent text-text hover:bg-surface-muted active:bg-surface-muted focus:shadow-[0_0_0_4px_var(--primary-100)]",
+            ghost: "bg-transparent text-text hover:bg-surface-muted active:bg-surface-muted focus:shadow-[0_0_0_4px_var(--focus-ring)]",
             outline:
-                "bg-transparent border-2 border-primary-500 text-primary-500 hover:bg-primary-50 active:bg-primary-100 focus:shadow-[0_0_0_4px_var(--primary-100)]",
+                "bg-transparent border-2 border-primary-500 text-primary-500 hover:bg-surface-subtle active:bg-surface-muted focus:shadow-[0_0_0_4px_var(--focus-ring)]",
         };
 
         const sizeClasses: Record<ButtonSize, string> = {

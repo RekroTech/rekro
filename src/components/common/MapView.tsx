@@ -131,8 +131,8 @@ export function MapView({
 
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
         return (
-            <div className={`${className} flex items-center justify-center bg-gray-100`}>
-                <p className="text-gray-500">Google Maps API key not configured</p>
+            <div className={`${className} flex items-center justify-center bg-surface-muted`}>
+                <p className="text-text-muted">Google Maps API key not configured</p>
             </div>
         );
     }

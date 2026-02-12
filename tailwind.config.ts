@@ -22,6 +22,9 @@ const config: Config = {
                 "text-muted": "var(--text-muted)",
                 "text-subtle": "var(--text-subtle)",
                 border: "var(--border)",
+                "focus-ring": "var(--focus-ring)",
+                "input-bg": "var(--input-bg)",
+                "input-border": "var(--input-border)",
                 primary: {
                     50: "var(--primary-50)",
                     100: "var(--primary-100)",
@@ -50,6 +53,13 @@ const config: Config = {
                     500: "var(--danger-500)",
                     600: "var(--danger-600)",
                 },
+                warning: {
+                    500: "var(--warning-500)",
+                    600: "var(--warning-600)",
+                },
+                "auth-note": "var(--auth-note)",
+                "auth-support": "var(--auth-support)",
+                "auth-text-strong": "var(--auth-text-strong)",
             },
             fontFamily: {
                 sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],

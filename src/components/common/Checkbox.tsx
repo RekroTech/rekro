@@ -30,7 +30,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         const checkboxId = id || generatedId;
 
         const baseClasses =
-            "border border-gray-300 rounded transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none";
+            "border border-border rounded transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none";
 
         const sizeClasses: Record<CheckboxSize, string> = {
             sm: "w-4 h-4",
@@ -46,7 +46,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
         const errorClass = error
             ? "border-danger-500 hover:border-danger-600"
-            : "hover:border-gray-400";
+            : "hover:border-text-muted";
 
         const accentColorStyle = error
             ? { accentColor: "var(--danger-500)" }
@@ -87,7 +87,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                     {label && (
                         <span
                             className={clsx(
-                                "font-normal text-gray-900 select-none touch-manipulation leading-relaxed",
+                                "font-normal text-foreground select-none touch-manipulation leading-relaxed",
                                 labelSizeClasses[size],
                                 disabled && "opacity-50"
                             )}

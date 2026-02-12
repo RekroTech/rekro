@@ -50,7 +50,7 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
     };
 
     return (
-        <div className="space-y-4 rounded-md border border-gray-200 bg-gray-50/50 p-3 sm:p-4">
+        <div className="space-y-4 rounded-md border border-border bg-surface-subtle/50 p-3 sm:p-4">
             {/* Main Details - Responsive layout */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:gap-4">
                 <div className="relative flex-1 min-w-0 sm:col-span-2">
@@ -64,13 +64,11 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         required
                     />
                     {unit.price && parseFloat(unit.price) > 0 && (
-                        <div className="absolute right-2 bottom-[10px] flex items-center gap-1.5 rounded-full bg-primary-100 px-2.5 py-1">
-                            <span className="text-[10px] font-medium uppercase tracking-wide text-primary-600">
+                        <div className="absolute right-2 bottom-[10px] flex items-center gap-1.5 rounded-full border border-primary-500/20 bg-primary-100 px-2.5 py-1 text-primary-700 dark:bg-primary-900/40 dark:text-primary-200 dark:border-primary-300/25">
+                            <span className="text-[10px] font-medium uppercase tracking-wide text-primary-600 dark:text-primary-200">
                                 Bond
                             </span>
-                            <span className="text-xs font-semibold text-primary-700">
-                                ${calculatedBond}
-                            </span>
+                            <span className="text-xs font-semibold">${calculatedBond}</span>
                         </div>
                     )}
                 </div>
