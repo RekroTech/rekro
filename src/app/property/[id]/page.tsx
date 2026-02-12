@@ -14,6 +14,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getPropertyFileUrls } from "@/services/storage.service";
 import { Unit } from "@/types/db";
+import { updateRoomRentsOnOccupancySelection } from "@/components/Property/pricing";
 
 export default function PropertyDetailPage() {
     const params = useParams();
@@ -26,9 +27,12 @@ export default function PropertyDetailPage() {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
 
+    // Track unit occupancies for dynamic pricing
+    const [unitOccupancies, setUnitOccupancies] = useState<Record<string, number>>({});
+
     const units = useMemo(() => property?.units || [], [property?.units]);
 
-    // Initialize selectedUnitId to first unit when units are available
+    // Initialize selectedUnitId and unitOccupancies when units are available
     useEffect(() => {
         if (units.length > 0) {
             const firstUnit = units[0];
@@ -38,6 +42,17 @@ export default function PropertyDetailPage() {
                     setSelectedImageIndex(0);
                 });
             }
+
+            // Initialize occupancies if not already set
+            setUnitOccupancies((prev) => {
+                const initialized = { ...prev };
+                units.forEach((unit) => {
+                    if (!initialized[unit.id]) {
+                        initialized[unit.id] = 1; // Default to single occupancy
+                    }
+                });
+                return initialized;
+            });
         } else if (selectedUnitId !== null) {
             requestAnimationFrame(() => {
                 setSelectedUnitId(null);
@@ -51,6 +66,44 @@ export default function PropertyDetailPage() {
         const found = units.find((u: Unit) => u.id === selectedUnitId);
         return found ?? units[0] ?? null;
     }, [units, selectedUnitId]);
+
+    // Calculate dynamic pricing for all rooms based on current occupancy selections
+    // Only apply dynamic pricing when dual occupancy is actually selected
+    const dynamicPricing = useMemo(() => {
+        if (!property || !property.units || property.units.length <= 1) {
+            return undefined; // No dynamic pricing for single unit or entire home
+        }
+
+        const isRoomListing = property.units.some((u) => u.listing_type === "room");
+        if (!isRoomListing) return undefined;
+
+        // Check if any ROOM unit has dual occupancy selected (exclude entire_home)
+        const hasAnyDualOccupancy = property.units.some(
+            (unit) => unit.listing_type === "room" && unitOccupancies[unit.id] === 2
+        );
+
+        // Only calculate dynamic pricing if dual occupancy is selected somewhere
+        if (!hasAnyDualOccupancy) {
+            return undefined; // Use default unit.price values
+        }
+
+        // Only include room type units in the calculation
+        const rooms = property.units
+            .filter((u) => u.listing_type === "room")
+            .map((unit) => ({
+                id: unit.id,
+                maxCapacity: unit.max_occupants || 1,
+                selectedOccupancy: unitOccupancies[unit.id] || 1,
+            }));
+
+        const result = updateRoomRentsOnOccupancySelection(
+            property.price || 0,
+            rooms,
+            property.furnished || false
+        );
+
+        return result.roomRentsById;
+    }, [property, unitOccupancies]);
 
     if (isLoading) {
         return (
@@ -112,12 +165,18 @@ export default function PropertyDetailPage() {
                             units={units}
                             selectedUnitId={selectedUnitId}
                             onUnitSelect={handleUnitSelect}
+                            dynamicPricing={dynamicPricing}
                         />
                     )}
 
                     {/* Sidebar on mobile - Show after units, before description */}
                     <div className="lg:hidden mt-4">
-                        <PropertySidebar selectedUnit={selectedUnit} property={property} />
+                        <PropertySidebar
+                            selectedUnit={selectedUnit}
+                            property={property}
+                            unitOccupancies={unitOccupancies}
+                            onUnitOccupanciesChange={setUnitOccupancies}
+                        />
                     </div>
 
                     {/* Content */}
@@ -146,7 +205,12 @@ export default function PropertyDetailPage() {
 
                 {/* Sidebar - Hidden on mobile (shown above), visible on desktop */}
                 <div className="hidden lg:block lg:col-span-1 min-w-0">
-                    <PropertySidebar selectedUnit={selectedUnit} property={property} />
+                    <PropertySidebar
+                        selectedUnit={selectedUnit}
+                        property={property}
+                        unitOccupancies={unitOccupancies}
+                        onUnitOccupanciesChange={setUnitOccupancies}
+                    />
                 </div>
             </div>
         </main>

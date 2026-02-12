@@ -78,6 +78,7 @@ export interface Database {
                     images: string[] | null;
                     video_url: string | null;
                     is_published: boolean;
+                    price: number;
                     created_at: string;
                     updated_at: string;
                 };
@@ -100,6 +101,7 @@ export interface Database {
                     images?: string[] | null;
                     video_url?: string | null;
                     is_published?: boolean;
+                    price?: number;
                     created_at?: string;
                     updated_at?: string;
                 };
@@ -121,6 +123,7 @@ export interface Database {
                     images?: string[] | null;
                     video_url?: string | null;
                     is_published?: boolean;
+                    price?: number;
                     updated_at?: string;
                 };
             };
@@ -131,7 +134,7 @@ export interface Database {
                     listing_type: ListingType;
                     name: string | null;
                     description: string | null;
-                    price_per_week: number;
+                    price: number;
                     bond_amount: number | null;
                     bills_included: boolean | null;
                     min_lease: number | null;
@@ -150,7 +153,7 @@ export interface Database {
                     listing_type: ListingType;
                     name?: string | null;
                     description?: string | null;
-                    price_per_week: number;
+                    price: number;
                     bond_amount?: number | null;
                     bills_included?: boolean | null;
                     min_lease?: number | null;
@@ -169,7 +172,7 @@ export interface Database {
                     listing_type?: ListingType;
                     name?: string | null;
                     description?: string | null;
-                    price_per_week?: number;
+                    price?: number;
                     bond_amount?: number | null;
                     bills_included?: boolean | null;
                     min_lease?: number | null;

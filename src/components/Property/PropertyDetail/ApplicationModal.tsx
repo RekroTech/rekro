@@ -7,7 +7,7 @@ import type { Unit } from "@/types/db";
 import { Inclusions } from "./Inclusions/Inclusions";
 import { ApplicationForm } from "../ApplicationForm";
 import { InclusionsData } from "@/components/Property/types";
-import { calculatePricing } from "@/components/Property/utils";
+import { calculatePricing } from "@/components/Property/pricing";
 
 interface ApplicationModalProps {
     isOpen: boolean;

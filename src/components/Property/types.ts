@@ -17,6 +17,7 @@ export interface PropertyFormData {
     car_spaces: string;
     furnished: boolean;
     amenities: string[];
+    price: string; // Base rent for the property
     address_full: string; // Complete formatted address for display
     address_street: string;
     address_city: string;
@@ -32,7 +33,7 @@ export interface UnitFormData {
     listing_type: ListingType;
     name: string;
     unit_description: string;
-    price_per_week: string;
+    price: string;
     bond_amount: string;
     bills_included: boolean;
     min_lease: string;
@@ -55,4 +56,6 @@ export interface InclusionsData {
     entireHomeOccupants: number;
     carparkSelected: boolean;
     storageCageSelected: boolean;
+    // Map of unit ID to selected occupancy (1 or 2)
+    unitOccupancies?: Record<string, number>;
 }

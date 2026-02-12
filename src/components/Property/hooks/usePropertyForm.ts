@@ -33,16 +33,16 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
 
     const mapExistingUnitsToFormData = (units: Unit[]): UnitFormData[] => {
         return units.map((unit) => {
-            const pricePerWeek = unit.price_per_week?.toString() || "";
+            const pricePerWeek = unit.price?.toString() || "";
             // Always calculate bond as 4x weekly rent
-            const calculatedBond = unit.price_per_week ? (unit.price_per_week * 4).toString() : "";
+            const calculatedBond = unit.price ? (unit.price * 4).toString() : "";
 
             return {
                 id: unit.id,
                 listing_type: unit.listing_type,
                 name: unit.name || "",
                 unit_description: unit.description || "",
-                price_per_week: pricePerWeek,
+                price: pricePerWeek,
                 bond_amount: calculatedBond,
                 bills_included: unit.bills_included || false,
                 min_lease: unit.min_lease?.toString() || "4",

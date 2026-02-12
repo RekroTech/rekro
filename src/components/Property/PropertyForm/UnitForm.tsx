@@ -18,13 +18,11 @@ const LEASE_MONTH_OPTIONS = [
 
 export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) {
     // Calculate bond as 4 times weekly rent
-    const calculatedBond = unit.price_per_week
-        ? (parseFloat(unit.price_per_week) * 4).toFixed(2)
-        : "0";
+    const calculatedBond = unit.price ? (parseFloat(unit.price) * 4).toFixed(2) : "0";
 
     const handlePriceChange = (value: string) => {
         const bond = value ? (parseFloat(value) * 4).toString() : "";
-        onUpdate(index, { price_per_week: value, bond_amount: bond });
+        onUpdate(index, { price: value, bond_amount: bond });
     };
 
     const handleMinLeaseChange = (value: string) => {
@@ -59,13 +57,13 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                     <Input
                         label="Price per Week"
                         type="number"
-                        value={unit.price_per_week}
+                        value={unit.price}
                         onChange={(e) => handlePriceChange(e.target.value)}
                         placeholder="0"
                         min="0"
                         required
                     />
-                    {unit.price_per_week && parseFloat(unit.price_per_week) > 0 && (
+                    {unit.price && parseFloat(unit.price) > 0 && (
                         <div className="absolute right-2 bottom-[10px] flex items-center gap-1.5 rounded-full bg-primary-100 px-2.5 py-1">
                             <span className="text-[10px] font-medium uppercase tracking-wide text-primary-600">
                                 Bond

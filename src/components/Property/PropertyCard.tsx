@@ -42,7 +42,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
     const addressText = address ? getLocalityString(address) : "Location not specified";
 
     // Display price from the first unit if available
-    const pricePerWeek = firstUnit?.price_per_week;
+    const pricePerWeek = firstUnit?.price;
 
     return (
         <>

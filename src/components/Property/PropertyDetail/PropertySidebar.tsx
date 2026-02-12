@@ -12,19 +12,23 @@ import { ShareDropdown } from "./ShareDropdown";
 import { ApplicationModal } from "./ApplicationModal";
 import { Inclusions } from "./Inclusions/Inclusions";
 import { InclusionsData } from "@/components/Property/types";
-import {
-    calculatePricing,
-    getAvailabilityInfo,
-    getMaxStartDate,
-    getMinStartDate,
-} from "@/components/Property/utils";
+import { getAvailabilityInfo, getMaxStartDate, getMinStartDate } from "@/components/Property/utils";
+import { calculatePricing } from "@/components/Property/pricing";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
     property: Property;
+    // Optional external state for unit occupancies (for synchronizing with UnitsSelector)
+    unitOccupancies?: Record<string, number>;
+    onUnitOccupanciesChange?: (occupancies: Record<string, number>) => void;
 }
 
-export function PropertySidebar({ selectedUnit, property }: PropertySidebarProps) {
+export function PropertySidebar({
+    selectedUnit,
+    property,
+    unitOccupancies: externalUnitOccupancies,
+    onUnitOccupanciesChange,
+}: PropertySidebarProps) {
     const { isAuthenticated } = useAuth();
     const router = useRouter();
     const isEntireHome = selectedUnit?.listing_type === "entire_home";
@@ -43,7 +47,30 @@ export function PropertySidebar({ selectedUnit, property }: PropertySidebarProps
         entireHomeOccupants: 1,
         carparkSelected: false,
         storageCageSelected: false,
+        unitOccupancies:
+            externalUnitOccupancies ||
+            property.units?.reduce(
+                (acc, unit) => {
+                    acc[unit.id] = 1; // Initialize all units to single occupancy
+                    return acc;
+                },
+                {} as Record<string, number>
+            ),
     }));
+
+    // Sync with external unitOccupancies if provided
+    useEffect(() => {
+        if (externalUnitOccupancies) {
+            setInclusions((prev) => ({
+                ...prev,
+                unitOccupancies: externalUnitOccupancies,
+                // Update isDualOccupancy based on current unit's occupancy
+                isDualOccupancy: selectedUnit
+                    ? externalUnitOccupancies[selectedUnit.id] === 2
+                    : prev.isDualOccupancy,
+            }));
+        }
+    }, [externalUnitOccupancies, selectedUnit]);
 
     // Update state when unit changes
     useEffect(() => {
@@ -57,8 +84,18 @@ export function PropertySidebar({ selectedUnit, property }: PropertySidebarProps
                 prev.isDualOccupancy && selectedUnit.max_occupants === 2
                     ? prev.isDualOccupancy
                     : false,
+            // Ensure unitOccupancies is initialized for all units
+            unitOccupancies:
+                externalUnitOccupancies ||
+                property.units?.reduce(
+                    (acc, unit) => {
+                        acc[unit.id] = prev.unitOccupancies?.[unit.id] || 1;
+                        return acc;
+                    },
+                    {} as Record<string, number>
+                ),
         }));
-    }, [selectedUnit?.id]);
+    }, [selectedUnit?.id, property.units, externalUnitOccupancies]);
 
     // Calculate pricing
     const pricing = useMemo(
@@ -250,12 +287,19 @@ export function PropertySidebar({ selectedUnit, property }: PropertySidebarProps
                                     <div className="flex gap-2">
                                         <button
                                             type="button"
-                                            onClick={() =>
+                                            onClick={() => {
+                                                const newOccupancies = {
+                                                    ...inclusions.unitOccupancies,
+                                                    [selectedUnit.id]: 1,
+                                                };
                                                 setInclusions((prev) => ({
                                                     ...prev,
                                                     isDualOccupancy: false,
-                                                }))
-                                            }
+                                                    unitOccupancies: newOccupancies,
+                                                }));
+                                                // Notify parent if handler provided
+                                                onUnitOccupanciesChange?.(newOccupancies);
+                                            }}
                                             className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
                                                 !inclusions.isDualOccupancy
                                                     ? "bg-primary-600 text-white border-primary-600 font-medium"
@@ -266,12 +310,19 @@ export function PropertySidebar({ selectedUnit, property }: PropertySidebarProps
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() =>
+                                            onClick={() => {
+                                                const newOccupancies = {
+                                                    ...inclusions.unitOccupancies,
+                                                    [selectedUnit.id]: 2,
+                                                };
                                                 setInclusions((prev) => ({
                                                     ...prev,
                                                     isDualOccupancy: true,
-                                                }))
-                                            }
+                                                    unitOccupancies: newOccupancies,
+                                                }));
+                                                // Notify parent if handler provided
+                                                onUnitOccupanciesChange?.(newOccupancies);
+                                            }}
                                             className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
                                                 inclusions.isDualOccupancy
                                                     ? "bg-primary-600 text-white border-primary-600 font-medium"

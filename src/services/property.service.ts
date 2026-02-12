@@ -22,7 +22,7 @@ export async function getPropertiesClient(
     // Always fetch units with properties to avoid N+1 query problem
     // If listingType filter is applied, use inner join to filter
     const unitColumns =
-        "id, listing_type, name, description, price_per_week, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
+        "id, listing_type, name, description, price, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
 
     const selectQuery = listingType ? `*, units!inner(${unitColumns})` : `*, units(${unitColumns})`;
 

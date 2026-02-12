@@ -7,7 +7,7 @@ create table public.units (
   listing_type public.listing_type not null,
   name text null,
   description text null,
-  price_per_week integer not null,
+  price integer not null,
   bond_amount integer null,
   bills_included boolean null default false,
   min_lease integer null,
@@ -27,7 +27,7 @@ create index IF not exists units_by_property on public.units using btree (proper
 
 create index IF not exists units_by_listing_type on public.units using btree (listing_type) TABLESPACE pg_default;
 
-create index IF not exists units_by_price on public.units using btree (price_per_week) TABLESPACE pg_default;
+create index IF not exists units_by_price on public.units using btree (price) TABLESPACE pg_default;
 
 create index IF not exists units_by_availability on public.units using btree (is_available, available_from) TABLESPACE pg_default;
 

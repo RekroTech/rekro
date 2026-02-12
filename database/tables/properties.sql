@@ -17,6 +17,7 @@ create table public.properties (
   images text[] null,
   video_url text null,
   is_published boolean null default false,
+  price integer not null,
   created_at timestamp with time zone null default now(),
   updated_at timestamp with time zone null default now(),
   constraint properties_pkey primary key (id),

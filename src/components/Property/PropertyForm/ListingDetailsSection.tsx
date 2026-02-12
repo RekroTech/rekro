@@ -1,4 +1,4 @@
-import { Select } from "@/components/common";
+import { Select, Input } from "@/components/common";
 import { UnitFormData } from "../types";
 import { UnitForm } from "./UnitForm";
 import { LISTING_TYPES } from "../constants";
@@ -9,9 +9,11 @@ interface ListingDetailsSectionProps {
     units: UnitFormData[];
     activeRoomTab: number;
     bedrooms: string;
+    price: string;
     onListingTypeChange: (type: ListingTypeSelection) => void;
     onActiveRoomTabChange: (index: number) => void;
     onUpdateUnit: (index: number, updates: Partial<UnitFormData>) => void;
+    onPriceChange: (price: string) => void;
 }
 
 export function ListingDetailsSection({
@@ -19,9 +21,11 @@ export function ListingDetailsSection({
     units,
     activeRoomTab,
     bedrooms,
+    price,
     onListingTypeChange,
     onActiveRoomTabChange,
     onUpdateUnit,
+    onPriceChange,
 }: ListingDetailsSectionProps) {
     const bedroomCount = parseInt(bedrooms) || 1;
     const isListingTypeLocked = bedroomCount === 1;
@@ -41,14 +45,28 @@ export function ListingDetailsSection({
             </div>
 
             <div className="space-y-4">
-                <Select
-                    label="Listing Type"
-                    value={displayedListingType}
-                    onChange={(e) => onListingTypeChange(e.target.value as ListingTypeSelection)}
-                    options={LISTING_TYPES}
-                    required
-                    disabled={isListingTypeLocked}
-                />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Select
+                        label="Listing Type"
+                        value={displayedListingType}
+                        onChange={(e) =>
+                            onListingTypeChange(e.target.value as ListingTypeSelection)
+                        }
+                        options={LISTING_TYPES}
+                        required
+                        disabled={isListingTypeLocked}
+                    />
+
+                    <Input
+                        label="Base Rent (per week)"
+                        type="number"
+                        value={price}
+                        onChange={(e) => onPriceChange(e.target.value)}
+                        placeholder="0"
+                        min="0"
+                        required
+                    />
+                </div>
 
                 {/* Tab Navigation for Rooms */}
                 {!isListingTypeLocked &&

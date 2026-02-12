@@ -5,6 +5,8 @@ interface UnitsSelectorProps {
     units: Unit[];
     selectedUnitId: string | null;
     onUnitSelect: (id: string) => void;
+    // Optional dynamic pricing map - if provided, overrides unit.price
+    dynamicPricing?: Record<string, number>;
 }
 
 function getUnitTypeLabel(unit: Unit) {
@@ -23,7 +25,12 @@ function getUnitName(unit: Unit, idx: number) {
     return unit.name || fallback;
 }
 
-export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSelectorProps) {
+export function UnitsSelector({
+    units,
+    selectedUnitId,
+    onUnitSelect,
+    dynamicPricing,
+}: UnitsSelectorProps) {
     if (units.length === 0) return null;
 
     return (
@@ -31,6 +38,8 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
                 {units.map((unit: Unit, idx: number) => {
                     const isSelected = selectedUnitId === unit.id;
+                    // Use dynamic pricing if available, otherwise fallback to unit.price
+                    const displayPrice = dynamicPricing?.[unit.id] ?? unit.price;
 
                     return (
                         <button
@@ -69,7 +78,7 @@ export function UnitsSelector({ units, selectedUnitId, onUnitSelect }: UnitsSele
                             {/* Price */}
                             <div className="mb-2">
                                 <div className="text-2xl font-bold text-primary-600">
-                                    ${unit.price_per_week}{" "}
+                                    ${displayPrice.toFixed(0)}{" "}
                                     <span className="text-xs font-normal text-gray-500">p/w</span>
                                 </div>
                             </div>
