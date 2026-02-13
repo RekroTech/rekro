@@ -41,12 +41,26 @@ export function successResponse<T>(
     };
 
     return NextResponse.json(
-        { success: true, data },
+        data,
         {
             status,
             headers,
         }
     );
+}
+
+/**
+ * Auth-specific error response (always no-store)
+ */
+export function authErrorResponse(message: string, status: number = 401) {
+    return errorResponse(message, status);
+}
+
+/**
+ * Auth-specific success response (always no-store)
+ */
+export function authSuccessResponse<T>(data: T, status: number = 200) {
+    return successResponse(data, status);
 }
 
 /**

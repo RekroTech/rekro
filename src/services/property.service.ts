@@ -11,6 +11,7 @@ export async function getPropertiesClient(
         offset = 0,
         isPublished = true,
         userId,
+        likedOnly = false,
         search,
         propertyType,
         minBedrooms,
@@ -24,12 +25,38 @@ export async function getPropertiesClient(
     const unitColumns =
         "id, listing_type, name, description, price, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
 
-    const selectQuery = listingType ? `*, units!inner(${unitColumns})` : `*, units(${unitColumns})`;
+    // If likedOnly is true, we need to join with property_likes table
+    const selectQuery = listingType || likedOnly
+        ? `*, units!inner(${unitColumns})`
+        : `*, units(${unitColumns})`;
 
     let query = supabase
         .from("properties")
         .select(selectQuery, { count: "exact" })
         .order("created_at", { ascending: false });
+
+    // Filter by liked properties only
+    if (likedOnly && userId) {
+        // Get liked unit IDs first
+        const { data: likedUnits } = await supabase
+            .from("property_likes")
+            .select("unit_id")
+            .eq("user_id", userId);
+
+        const likedUnitIds = likedUnits?.map((like) => like.unit_id) || [];
+
+        if (likedUnitIds.length === 0) {
+            // User has no liked properties, return empty result
+            return {
+                data: [],
+                nextOffset: null,
+                hasMore: false,
+            };
+        }
+
+        // Filter properties that have units in the liked list
+        query = query.in("units.id", likedUnitIds);
+    }
 
     if (isPublished !== undefined) {
         query = query.eq("is_published", isPublished);

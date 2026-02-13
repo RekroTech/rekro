@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button, Dropdown, Icon, LogoIcon, LogoText } from "@/components/common";
+import type { DropdownItem } from "@/components/common/Dropdown";
 import { useLogout, useUser } from "@/lib/react-query/hooks/auth/useAuth";
 import { useCanManageProperties } from "@/hooks/useRoles";
 
@@ -15,6 +16,33 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
     const canManageProperties = useCanManageProperties(user ?? null);
 
     const authButtonClassName = "h-8 sm:h-9 min-w-[76px] sm:min-w-[96px] px-3 sm:px-4";
+
+    const dropdownItems: DropdownItem[] = [
+        {
+            label: "Profile",
+            href: "/profile",
+            icon: <Icon name="profile" className="w-4 h-4" />,
+        },
+        {
+            label: "Liked properties",
+            href: "/properties/liked",
+            icon: <Icon name="heart" className="w-4 h-4" />,
+        },
+        {
+            label: "Settings",
+            onClick: () => {
+                // TODO: Navigate to settings page
+            },
+            icon: <Icon name="settings" className="w-4 h-4" />,
+        },
+        {
+            label: isPending ? "Logging out..." : "Logout",
+            onClick: () => logout(),
+            variant: "danger" as const,
+            disabled: isPending,
+            icon: <Icon name="logout" className="w-4 h-4" />,
+        },
+    ];
 
     return (
         <nav
@@ -63,29 +91,7 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                                             />
                                         </div>
                                     }
-                                    items={[
-                                        {
-                                            label: "Profile",
-                                            onClick: () => {
-                                                // TODO: Navigate to profile page
-                                            },
-                                            icon: <Icon name="profile" className="w-4 h-4" />,
-                                        },
-                                        {
-                                            label: "Settings",
-                                            onClick: () => {
-                                                // TODO: Navigate to settings page
-                                            },
-                                            icon: <Icon name="settings" className="w-4 h-4" />,
-                                        },
-                                        {
-                                            label: isPending ? "Logging out..." : "Logout",
-                                            onClick: () => logout(),
-                                            variant: "danger" as const,
-                                            disabled: isPending,
-                                            icon: <Icon name="logout" className="w-4 h-4" />,
-                                        },
-                                    ]}
+                                    items={dropdownItems}
                                 />
                             </div>
                         ) : (

@@ -1,5 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isNonEmptyString, isValidEmail } from "@/lib/utils/validation";
+import { errorResponse, successResponse } from "@/app/api/utils";
 
 // Force dynamic for user-specific operations
 export const dynamic = "force-dynamic";
@@ -14,10 +16,6 @@ type EnquiryBody = {
     unitId?: unknown;
     isEntireHome?: unknown;
 };
-
-function isNonEmptyString(v: unknown): v is string {
-    return typeof v === "string" && v.trim().length > 0;
-}
 
 export async function POST(request: NextRequest) {
     try {
@@ -45,19 +43,12 @@ export async function POST(request: NextRequest) {
             email = isNonEmptyString(body.email) ? body.email.trim() : "";
 
             if (!name || !email) {
-                return NextResponse.json(
-                    { error: "Name and email are required for guest enquiries" },
-                    { status: 400, headers: { "Cache-Control": "no-store" } }
-                );
+                return errorResponse("Name and email are required for guest enquiries", 400);
             }
 
             // Validate email format for guest users
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                return NextResponse.json(
-                    { error: "Invalid email format" },
-                    { status: 400, headers: { "Cache-Control": "no-store" } }
-                );
+            if (!isValidEmail(email)) {
+                return errorResponse("Invalid email format", 400);
             }
         }
 
@@ -83,10 +74,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (!phone || !message) {
-            return NextResponse.json(
-                { error: "Phone and message are required" },
-                { status: 400, headers: { "Cache-Control": "no-store" } }
-            );
+            return errorResponse("Phone and message are required", 400);
         }
 
         // If user is logged in and provided a phone number, update their profile
@@ -128,7 +116,7 @@ export async function POST(request: NextRequest) {
         //
         // if (dbError) {
         //     console.error("Database error:", dbError);
-        //     return NextResponse.json({ error: "Failed to store enquiry" }, { status: 500 });
+        //     return errorResponse("Failed to store enquiry", 500);
         // }
 
         // TODO: Send email to admin
@@ -158,23 +146,12 @@ export async function POST(request: NextRequest) {
         //     enquiryData,
         // });
 
-        return NextResponse.json(
-            {
-                success: true,
-                message: "Enquiry sent successfully",
-            },
-            {
-                status: 200,
-                headers: {
-                    "Cache-Control": "no-store",
-                },
-            }
-        );
+        return successResponse({
+            success: true,
+            message: "Enquiry sent successfully",
+        });
     } catch (error) {
         console.error("Error processing enquiry:", error);
-        return NextResponse.json(
-            { error: "Failed to process enquiry" },
-            { status: 500, headers: { "Cache-Control": "no-store" } }
-        );
+        return errorResponse("Failed to process enquiry", 500);
     }
 }

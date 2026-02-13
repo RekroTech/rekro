@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 
 export interface DropdownItem {
     label: string;
-    onClick: () => void;
+    href?: string;
+    onClick?: () => void;
     icon?: React.ReactNode;
     variant?: "default" | "danger";
     disabled?: boolean;
@@ -55,34 +57,57 @@ export function Dropdown({ trigger, items, align = "right" }: DropdownProps) {
                     className={`absolute ${alignmentClass} mt-2 min-w-[14rem] rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-lift)] z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200`}
                 >
                     <div className="py-1.5">
-                        {items.map((item, index) => (
-                            <button
-                                key={index}
-                                onClick={() => {
-                                    if (!item.disabled) {
-                                        item.onClick();
-                                        setIsOpen(false);
-                                    }
-                                }}
-                                disabled={item.disabled}
-                                className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-all duration-150 min-h-[44px] ${
-                                    item.variant === "danger"
-                                        ? "text-danger-500 hover:bg-danger-50 active:bg-danger-100"
-                                        : "text-text hover:bg-surface-muted active:bg-surface-subtle"
-                                } ${
-                                    item.disabled
-                                        ? "opacity-50 cursor-not-allowed"
-                                        : "cursor-pointer"
-                                }`}
-                            >
-                                {item.icon && (
-                                    <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
-                                        {item.icon}
-                                    </span>
-                                )}
-                                <span className="font-medium">{item.label}</span>
-                            </button>
-                        ))}
+                        {items.map((item, index) => {
+                            const className = `w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-all duration-150 min-h-[44px] ${
+                                item.variant === "danger"
+                                    ? "text-danger-500 hover:bg-danger-50 active:bg-danger-100"
+                                    : "text-text hover:bg-surface-muted active:bg-surface-subtle"
+                            } ${
+                                item.disabled
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : "cursor-pointer"
+                            }`;
+
+                            const content = (
+                                <>
+                                    {item.icon && (
+                                        <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                                            {item.icon}
+                                        </span>
+                                    )}
+                                    <span className="font-medium">{item.label}</span>
+                                </>
+                            );
+
+                            if (item.href) {
+                                return (
+                                    <Link
+                                        key={index}
+                                        href={item.href}
+                                        className={className}
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        {content}
+                                    </Link>
+                                );
+                            }
+
+                            return (
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        if (!item.disabled && item.onClick) {
+                                            item.onClick();
+                                            setIsOpen(false);
+                                        }
+                                    }}
+                                    disabled={item.disabled}
+                                    className={className}
+                                >
+                                    {content}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             )}

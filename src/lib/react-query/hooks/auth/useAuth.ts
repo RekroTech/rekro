@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
-import type { SignupCredentials, LoginCredentials, User, AppRole } from "@/types/auth.types";
-import { createClient } from "@/lib/supabase/client";
+import { userService } from "@/services/user.service";
+import type { SignupCredentials, LoginCredentials, User } from "@/types/auth.types";
 
 // Query keys for better cache management
 export const authKeys = {
@@ -10,64 +10,24 @@ export const authKeys = {
     user: () => [...authKeys.all, "user"] as const,
 };
 
+/**
+ * Fetch current user with profile data
+ * This is the single source of truth for user data on the client
+ */
 export function useUser() {
     return useQuery<User | null, Error>({
         queryKey: authKeys.user(),
         queryFn: async () => {
-            const supabase = createClient();
-
-            // 1. Get auth user (from auth.users)
-            const { data, error } = await supabase.auth.getUser();
-
-            // Logged-out is normal
-            if (error?.message === "Auth session missing!") return null;
-            if (error) throw new Error(error.message);
-
-            const authUser = data.user;
-            if (!authUser) return null;
-
-            // 2. Fetch profile data from public.users table with user roles
-            const { data: profileData } = await supabase
-                .from("users")
-                .select(
-                    `
-                    *,
-                    user_roles (
-                        role
-                    )
-                `
-                )
-                .eq("id", authUser.id)
-                .single();
-
-            // Extract roles from the joined data
-            const roles =
-                (profileData?.user_roles as Array<{ role: string }> | undefined)?.map(
-                    (r) => r.role as AppRole
-                ) ?? [];
-
-            // 3. Merge auth data with profile data
-            // Priority: public.users > user_metadata > auth.users > defaults
-            return {
-                id: authUser.id,
-                email: authUser.email ?? "",
-                name:
-                    profileData?.full_name ??
-                    (typeof authUser.user_metadata?.name === "string"
-                        ? authUser.user_metadata.name
-                        : undefined) ??
-                    authUser.email?.split("@")[0] ??
-                    "User",
-                phone: profileData?.phone ?? authUser?.phone ?? null,
-                roles,
-                full_name: profileData?.full_name ?? null,
-                image_url: profileData?.image_url ?? null,
-                current_location: profileData?.current_location ?? null,
-                max_budget_per_week: profileData?.max_budget_per_week ?? null,
-                receive_marketing_email: profileData?.receive_marketing_email ?? false,
-                created_at: profileData?.created_at ?? undefined,
-                updated_at: profileData?.updated_at ?? undefined,
-            };
+            try {
+                // Fetch complete user profile (includes auth + profile + roles)
+                return await userService.getProfile();
+            } catch (error) {
+                // User is not authenticated
+                if (error instanceof Error && error.message.includes("Unauthorized")) {
+                    return null;
+                }
+                throw error;
+            }
         },
         // Cache user data for 5 minutes
         staleTime: 1000 * 60 * 5,
@@ -82,11 +42,14 @@ export function useUser() {
  * Convenience hook to check if user is authenticated
  * Returns a boolean indicating authentication status
  */
-export function useAuth(): { isAuthenticated: boolean } {
-    const { data: user } = useUser();
-    return { isAuthenticated: !!user };
+export function useAuth(): { isAuthenticated: boolean; isLoading: boolean } {
+    const { data: user, isLoading } = useUser();
+    return { isAuthenticated: !!user, isLoading };
 }
 
+/**
+ * Signup mutation hook
+ */
 export function useSignup() {
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -106,6 +69,9 @@ export function useSignup() {
     });
 }
 
+/**
+ * Login mutation hook
+ */
 export function useLogin() {
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -125,6 +91,9 @@ export function useLogin() {
     });
 }
 
+/**
+ * Logout mutation hook
+ */
 export function useLogout() {
     const router = useRouter();
     const queryClient = useQueryClient();

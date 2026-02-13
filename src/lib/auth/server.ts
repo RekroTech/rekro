@@ -2,33 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 
-import type { User as SupabaseUser } from "@supabase/supabase-js";
-import type { AppRole } from "@/types/auth.types";
-import { userRolesService } from "@/services/user_roles.service";
-
-export interface User {
-    id: string;
-    email: string;
-    name: string;
-    roles?: AppRole[];
-}
-
-async function toAppUser(user: SupabaseUser): Promise<User> {
-    const email = user.email ?? "";
-
-    const nameFromMeta =
-        typeof user.user_metadata?.name === "string" ? user.user_metadata.name : undefined;
-
-    // Fetch user roles from database
-    const roles = await userRolesService.getUserRoles(user.id);
-
-    return {
-        id: user.id,
-        email,
-        name: nameFromMeta ?? email.split("@")[0] ?? "User",
-        roles,
-    };
-}
+import type { User } from "@/types/auth.types";
+import { toAppUser } from "@/lib/utils/user-transform";
 
 // Cached per-request (prevents multiple getUser() calls in the same render/request)
 export const getSession = cache(async (): Promise<User | null> => {

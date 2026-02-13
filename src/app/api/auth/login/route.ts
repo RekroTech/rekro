@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { userRolesService } from "@/services/user_roles.service";
+import { isNonEmptyString } from "@/lib/utils/validation";
+import { authErrorResponse, authSuccessResponse } from "@/app/api/utils";
+import { toAppUser } from "@/lib/utils/user-transform";
 
 // Disable caching for auth routes
 export const dynamic = "force-dynamic";
@@ -11,10 +13,6 @@ type LoginBody = {
     password?: unknown;
 };
 
-function isNonEmptyString(v: unknown): v is string {
-    return typeof v === "string" && v.trim().length > 0;
-}
-
 export async function POST(request: NextRequest) {
     try {
         const body = (await request.json()) as LoginBody;
@@ -23,56 +21,22 @@ export async function POST(request: NextRequest) {
         const password = isNonEmptyString(body.password) ? body.password : "";
 
         if (!email || !password) {
-            return NextResponse.json(
-                { error: "Email and password are required" },
-                { status: 400, headers: { "Cache-Control": "no-store" } }
-            );
+            return authErrorResponse("Email and password are required", 400);
         }
 
         const supabase = await createClient();
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error || !data.user) {
-            return NextResponse.json(
-                { error: error?.message ?? "Invalid credentials" },
-                { status: 401, headers: { "Cache-Control": "no-store" } }
-            );
+            return authErrorResponse(error?.message ?? "Invalid credentials", 401);
         }
 
-        // Fetch user roles
-        const roles = await userRolesService.getUserRoles(data.user.id);
+        // Transform to app user format
+        const user = await toAppUser(data.user);
 
-        // Return the user shape you want the client to use
-        const user = {
-            id: data.user.id,
-            email: data.user.email ?? "",
-            name:
-                (typeof data.user.user_metadata?.name === "string"
-                    ? data.user.user_metadata.name
-                    : undefined) ??
-                data.user.email?.split("@")[0] ??
-                "User",
-            avatar_url:
-                typeof data.user.user_metadata?.avatar_url === "string"
-                    ? data.user.user_metadata.avatar_url
-                    : null,
-            roles,
-        };
-
-        return NextResponse.json(
-            { user },
-            {
-                status: 200,
-                headers: {
-                    "Cache-Control": "no-store",
-                },
-            }
-        );
+        return authSuccessResponse({ user });
     } catch (err) {
         console.error("Login error:", err);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500, headers: { "Cache-Control": "no-store" } }
-        );
+        return authErrorResponse("Internal server error", 500);
     }
 }

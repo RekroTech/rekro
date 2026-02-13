@@ -23,6 +23,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             helperText,
             leftIcon,
             rightIcon,
+            prefix,
             fullWidth = true,
             className,
             id,
@@ -96,6 +97,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                             focusClass,
                             fullWidth && "w-full",
                             leftIcon && "pl-10",
+                            prefix && "pl-8",
                             rightIcon && "pr-10",
                             // Date/time inputs have an internal picker icon/button (esp. iOS Safari).
                             // Reserve space for it and prevent the control from expanding.

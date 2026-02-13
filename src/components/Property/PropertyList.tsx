@@ -13,6 +13,9 @@ export interface PropertyListProps {
     furnished?: boolean;
     listingType?: string;
     showEditButton?: boolean;
+    userId?: string;
+    likedOnly?: boolean;
+    emptyMessage?: string;
 }
 
 export function PropertyList({
@@ -23,6 +26,9 @@ export function PropertyList({
     furnished,
     listingType,
     showEditButton = false,
+    userId,
+    likedOnly = false,
+    emptyMessage,
 }: PropertyListProps = {}) {
     // UI uses "all" as a sentinel meaning "no listing-type filter".
     // The DB values are only things like "room" | "entire_home".
@@ -37,6 +43,8 @@ export function PropertyList({
             minBathrooms,
             furnished,
             listingType: normalizedListingType,
+            userId,
+            likedOnly,
         });
 
     const observerTarget = useRef<HTMLDivElement>(null);
@@ -98,7 +106,7 @@ export function PropertyList({
                 <Icon name="home" className="mx-auto h-12 w-12 text-text-muted" />
                 <h3 className="mt-4 text-lg font-semibold text-text">No properties found</h3>
                 <p className="mt-2 text-sm text-text-muted">
-                    Try adjusting your search or filters.
+                    {emptyMessage || "Try adjusting your search or filters."}
                 </p>
             </div>
         );

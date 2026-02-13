@@ -8,7 +8,7 @@ import { useSignup } from "@/lib/react-query/hooks/auth/useAuth";
 export default function SignupPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [role, setRole] = useState<"tenant" | "landlord">("tenant");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [validationError, setValidationError] = useState("");
 
     const router = useRouter();
@@ -49,12 +49,17 @@ export default function SignupPage() {
             return;
         }
 
+        if (password !== confirmPassword) {
+            setValidationError("Passwords do not match");
+            return;
+        }
+
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
             setValidationError("Please enter a valid email address");
             return;
         }
 
-        signup({ email: trimmedEmail, password, role });
+        signup({ email: trimmedEmail, password });
     };
 
     const isDisabled = isPending || isSuccess;
@@ -65,55 +70,18 @@ export default function SignupPage() {
                 {/* Top notice (consistent with login) */}
                 <div className="mb-7 px-2 text-center">
                     <p className="text-[13px] italic text-auth-note">
-                        {role === "tenant"
-                            ? "Create your account to connect, make friends, and find your next home."
-                            : "Create your account to list properties and connect with quality tenants."}
+                        Save your favourite properties, connect with housemates, and apply once to live anywhere.
                     </p>
                 </div>
 
                 {/* Card */}
-                <div className="card border border-input-border px-6 py-7">
-                    <h1 className="mb-1 text-center text-[28px] font-bold text-primary-500 dark:text-primary-300">
+                <div className="card border border-input-border px-6 py-6">
+                    <h1 className="mb-4 text-center text-[28px] font-bold text-primary-500 dark:text-primary-300">
                         Create your account
                     </h1>
 
                     <form className="space-y-4" onSubmit={handleSubmit}>
-                        <div className="mt-4">
-                            <div className="flex gap-2">
-                                <button
-                                    type="button"
-                                    disabled={isDisabled}
-                                    onClick={() => setRole("tenant")}
-                                    className={`flex-1 px-3 py-3 text-lg rounded-[10px] border transition-all ${
-                                        role === "tenant"
-                                            ? "bg-primary-500 text-white border-primary-500 font-medium dark:bg-primary-300 dark:text-[#071010] dark:border-primary-300"
-                                            : "bg-surface text-foreground border-border hover:border-primary-400"
-                                    } disabled:opacity-60`}
-                                >
-                                    Tenant
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={isDisabled}
-                                    onClick={() => setRole("landlord")}
-                                    className={`flex-1 px-3 py-3 text-lg rounded-[10px] border transition-all ${
-                                        role === "landlord"
-                                            ? "bg-primary-500 text-white border-primary-500 font-medium dark:bg-primary-300 dark:text-[#071010] dark:border-primary-300"
-                                            : "bg-surface text-foreground border-border hover:border-primary-400"
-                                    } disabled:opacity-60`}
-                                >
-                                    Landlord
-                                </button>
-                            </div>
-                        </div>
-
                         <div>
-                            <label
-                                htmlFor="email"
-                                className="mb-2 block text-sm font-medium text-text"
-                            >
-                                Email address
-                            </label>
                             <input
                                 id="email"
                                 name="email"
@@ -129,12 +97,6 @@ export default function SignupPage() {
                         </div>
 
                         <div>
-                            <label
-                                htmlFor="password"
-                                className="mb-2 block text-sm font-medium text-text"
-                            >
-                                Password
-                            </label>
                             <input
                                 id="password"
                                 name="password"
@@ -145,6 +107,21 @@ export default function SignupPage() {
                                 disabled={isDisabled}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password (min 6 characters)"
+                                className="input"
+                            />
+                        </div>
+
+                        <div>
+                            <input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type="password"
+                                autoComplete="new-password"
+                                required
+                                value={confirmPassword}
+                                disabled={isDisabled}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Confirm your password"
                                 className="input"
                             />
                         </div>
@@ -196,7 +173,25 @@ export default function SignupPage() {
                 </div>
 
                 <p className="mt-6 text-center text-xs text-text-subtle">
-                    By continuing, you agree to our Terms and Privacy Policy.
+                    By continuing, you agree to our{" "}
+                    <Link
+                        href="https://www.rekro.com.au/terms-and-conditions"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:opacity-80 dark:text-primary-300"
+                    >
+                        Terms
+                    </Link>
+                    {" "}and{" "}
+                    <Link
+                        href="https://www.rekro.com.au/privacy-policy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:opacity-80 dark:text-primary-300"
+                    >
+                        Privacy Policy
+                    </Link>
+                    .
                 </p>
             </div>
         </div>

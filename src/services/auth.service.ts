@@ -3,17 +3,8 @@ import type {
     LoginCredentials,
     AuthSuccess,
     LogoutSuccess,
-    ApiError,
 } from "@/types/auth.types";
-
-function isApiError(x: unknown): x is ApiError {
-    return (
-        typeof x === "object" &&
-        x !== null &&
-        "error" in x &&
-        typeof (x as { error?: unknown }).error === "string"
-    );
-}
+import { handleFetchError } from "@/lib/utils/api-error";
 
 export const authService = {
     signup: async (credentials: SignupCredentials): Promise<AuthSuccess> => {
@@ -24,8 +15,7 @@ export const authService = {
         });
 
         if (!response.ok) {
-            const body: unknown = await response.json().catch(() => null);
-            throw new Error(isApiError(body) ? body.error : "Signup failed");
+            await handleFetchError(response, "Signup failed");
         }
 
         return (await response.json()) as AuthSuccess;
@@ -39,8 +29,7 @@ export const authService = {
         });
 
         if (!response.ok) {
-            const body: unknown = await response.json().catch(() => null);
-            throw new Error(isApiError(body) ? body.error : "Login failed");
+            await handleFetchError(response, "Login failed");
         }
 
         return (await response.json()) as AuthSuccess;
@@ -50,8 +39,7 @@ export const authService = {
         const response = await fetch("/api/auth/logout", { method: "POST" });
 
         if (!response.ok) {
-            const body: unknown = await response.json().catch(() => null);
-            throw new Error(isApiError(body) ? body.error : "Logout failed");
+            await handleFetchError(response, "Logout failed");
         }
 
         return (await response.json()) as LogoutSuccess;

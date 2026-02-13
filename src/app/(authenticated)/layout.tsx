@@ -11,9 +11,5 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
         redirect("/login");
     }
 
-    return (
-        <div className="h-screen overflow-hidden bg-app-bg text-foreground">
-            <div className="h-[calc(100vh-4rem)] overflow-y-auto mt-16">{children}</div>
-        </div>
-    );
+    return <>{children}</>;
 }

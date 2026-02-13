@@ -1,6 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { userRolesService } from "@/services/user_roles.service";
+import { isNonEmptyString, isValidPassword } from "@/lib/utils/validation";
+import { authErrorResponse, authSuccessResponse } from "@/app/api/utils";
+import { toAppUser } from "@/lib/utils/user-transform";
 
 // Disable caching for auth routes
 export const dynamic = "force-dynamic";
@@ -10,12 +13,7 @@ type SignupBody = {
     email?: unknown;
     password?: unknown;
     name?: unknown;
-    role?: unknown;
 };
-
-function isNonEmptyString(v: unknown): v is string {
-    return typeof v === "string" && v.trim().length > 0;
-}
 
 export async function POST(request: NextRequest) {
     try {
@@ -24,20 +22,13 @@ export async function POST(request: NextRequest) {
         const email = isNonEmptyString(body.email) ? body.email.trim() : "";
         const password = isNonEmptyString(body.password) ? body.password : "";
         const name = typeof body.name === "string" ? body.name.trim() : undefined;
-        const role = body.role === "landlord" ? "landlord" : "tenant"; // Default to tenant
 
         if (!email || !password) {
-            return NextResponse.json(
-                { error: "Email and password are required" },
-                { status: 400, headers: { "Cache-Control": "no-store" } }
-            );
+            return authErrorResponse("Email and password are required", 400);
         }
 
-        if (password.length < 6) {
-            return NextResponse.json(
-                { error: "Password must be at least 6 characters" },
-                { status: 400, headers: { "Cache-Control": "no-store" } }
-            );
+        if (!isValidPassword(password)) {
+            return authErrorResponse("Password must be at least 6 characters", 400);
         }
 
         const supabase = await createClient();
@@ -52,49 +43,18 @@ export async function POST(request: NextRequest) {
         });
 
         if (error || !data.user) {
-            return NextResponse.json(
-                { error: error?.message ?? "Signup failed" },
-                { status: 400, headers: { "Cache-Control": "no-store" } }
-            );
+            return authErrorResponse(error?.message ?? "Signup failed", 400);
         }
 
-        // Assign the default role to the new user
-        await userRolesService.addUserRole(data.user.id, role);
+        // Assign the default tenant role to the new user
+        await userRolesService.addUserRole(data.user.id, "tenant");
 
-        // Fetch user roles
-        const roles = await userRolesService.getUserRoles(data.user.id);
+        // Transform to app user format
+        const user = await toAppUser(data.user);
 
-        // Normalize to your app User shape
-        const user = {
-            id: data.user.id,
-            email: data.user.email ?? "",
-            name:
-                (typeof data.user.user_metadata?.name === "string"
-                    ? data.user.user_metadata.name
-                    : undefined) ??
-                data.user.email?.split("@")[0] ??
-                "User",
-            avatar_url:
-                typeof data.user.user_metadata?.avatar_url === "string"
-                    ? data.user.user_metadata.avatar_url
-                    : null,
-            roles,
-        };
-
-        return NextResponse.json(
-            { user },
-            {
-                status: 200,
-                headers: {
-                    "Cache-Control": "no-store",
-                },
-            }
-        );
+        return authSuccessResponse({ user });
     } catch (err) {
         console.error("Signup error:", err);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500, headers: { "Cache-Control": "no-store" } }
-        );
+        return authErrorResponse("Internal server error", 500);
     }
 }
