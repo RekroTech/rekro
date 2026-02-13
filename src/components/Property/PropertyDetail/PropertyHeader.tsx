@@ -2,6 +2,8 @@ import { Property } from "@/types/db";
 import type { Unit } from "@/types/db";
 import { Icon } from "@/components/common";
 import { getLocalityString } from "@/lib/utils/locationPrivacy";
+import { useState } from "react";
+import { LocationMapModal } from "@/components/Property/PropertyDetail";
 
 interface PropertyHeaderProps {
     property: Property;
@@ -17,6 +19,11 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
     const isRoomListing = selectedUnit?.listing_type === "room";
     const isFurnished = isRoomListing || furnished;
 
+    const hasCoordinates =
+        typeof property.latitude === "number" && typeof property.longitude === "number";
+
+    const [isMapOpen, setIsMapOpen] = useState(false);
+
     return (
         <div className="mb-2 sm:mb-4">
             {property_type && (
@@ -31,13 +38,36 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
                 </h1>
             </div>
 
-            <p className="mb-2 flex min-w-0 items-start gap-2 text-sm leading-snug text-text-muted sm:mb-4 sm:text-base">
+            <p className="mb-2 flex min-w-0 gap-2 text-sm text-text-muted sm:mb-4 sm:text-base items-center">
                 <Icon
                     name="location"
-                    className="mt-0.5 h-4 w-4 flex-shrink-0 sm:mt-0.5 sm:h-5 sm:w-5"
+                    className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5"
                 />
                 <span className="min-w-0 break-words">{addressText}</span>
+
+                {hasCoordinates && (
+                    <button
+                        type="button"
+                        onClick={() => setIsMapOpen(true)}
+                        className="ml-1 inline-flex flex-shrink-0 items-center rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-text-muted hover:text-text hover:bg-surface-muted transition-colors"
+                        aria-label="Open map"
+                        title="View on map"
+                    >
+                        View Map
+                    </button>
+                )}
             </p>
+
+            {hasCoordinates && (
+                <LocationMapModal
+                    isOpen={isMapOpen}
+                    onClose={() => setIsMapOpen(false)}
+                    latitude={property.latitude!}
+                    longitude={property.longitude!}
+                    title={property.title}
+                    address={property.address}
+                />
+            )}
 
             {/* Property Features with Furnished Badge */}
             <div className="flex items-center justify-between gap-4">

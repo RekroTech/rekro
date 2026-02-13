@@ -8,7 +8,6 @@ import {
     ImageGallery,
     PropertyAmenities,
     PropertySidebar,
-    LocationSection,
 } from "@/components/Property/PropertyDetail";
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -190,16 +189,6 @@ export default function PropertyDetailPage() {
                             </p>
                         </div>
                         <PropertyAmenities amenities={property.amenities} />
-
-                        {/* Location Map */}
-                        {property.latitude && property.longitude && (
-                            <LocationSection
-                                latitude={property.latitude}
-                                longitude={property.longitude}
-                                title={property.title}
-                                address={property.address}
-                            />
-                        )}
                     </div>
                 </div>
 

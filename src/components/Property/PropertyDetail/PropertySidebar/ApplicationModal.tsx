@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Modal, Button, Icon } from "@/components/common";
 import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
-import { Inclusions } from "./Inclusions/Inclusions";
-import { ApplicationForm } from "../ApplicationForm";
+import { Inclusions } from "../Inclusions/Inclusions";
+import { ApplicationForm } from "../../ApplicationForm";
 import { InclusionsData } from "@/components/Property/types";
 import { calculatePricing } from "@/components/Property/pricing";
 

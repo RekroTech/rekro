@@ -1,7 +1,7 @@
 "use client";
 
 import { Dropdown, Icon } from "@/components/common";
-import { useShareProperty } from "../hooks";
+import { useShareProperty } from "../../hooks";
 
 interface ShareDropdownProps {
     propertyTitle: string;
