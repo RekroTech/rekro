@@ -34,9 +34,9 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                                 variant="primary"
                                 onClick={() => onAddPropertyAction?.()}
                                 size="sm"
-                                className="h-8 sm:h-9"
+                                pill
                             >
-                                <Icon name="plus" className="h-4 w-4 mr-2" />
+                                <Icon name="plus" className="h-4 w-4 mr-1 sm:mr-2" />
                                 <span className="hidden sm:inline font-normal">Add Property</span>
                                 <span className="inline sm:hidden font-normal">Add</span>
                             </Button>

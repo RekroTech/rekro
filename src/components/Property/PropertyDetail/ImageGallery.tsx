@@ -122,7 +122,7 @@ export function ImageGallery({
                                         onClick={() => onIndexChange(index)}
                                         className={`relative block h-14 sm:h-16 md:h-20 w-20 sm:w-full rounded-lg overflow-hidden border-2 transition-all touch-manipulation active:scale-95 flex-shrink-0 sm:flex-shrink ${
                                             isSelected
-                                                ? "border-primary-500 ring-2 ring-primary-200"
+                                                ? "border-primary-500"
                                                 : "border-border hover:border-text-muted"
                                         }`}
                                         aria-label={`Select image ${index + 1}`}
