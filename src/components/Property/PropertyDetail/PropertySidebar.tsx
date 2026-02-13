@@ -407,8 +407,8 @@ export function PropertySidebar({
 
             {/* Customize Your Stay */}
             {selectedUnit && (
-                <div className="bg-card border border-border rounded-lg p-6 shadow-lg">
-                    <h3 className="text-lg font-bold text-text mb-4">Customize your stay</h3>
+                <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-lg">
+                    <h3 className="text-lg font-bold text-text mb-2 sm:mb-4">Customize your stay</h3>
                     <Inclusions
                         property={property}
                         inclusions={inclusions}

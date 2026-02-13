@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { Button, Dropdown, Icon } from "@/components/common";
+import { Button, Dropdown, Icon, LogoIcon, LogoText } from "@/components/common";
 import { useLogout, useUser } from "@/lib/react-query/hooks/auth/useAuth";
 import { useCanManageProperties } from "@/hooks/useRoles";
 
@@ -25,22 +24,8 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
         >
             <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 <Link href="/" className="flex items-end gap-2.5 sm:gap-3" aria-label="Go to home">
-                    <Image
-                        src="/icon.svg"
-                        alt="reKro logo"
-                        width={32}
-                        height={32}
-                        className="h-8 w-auto"
-                        priority
-                    />
-                    <Image
-                        src="/logo-text.svg"
-                        alt="reKro"
-                        width={100}
-                        height={32}
-                        className="h-6 w-auto mb-0.5"
-                        priority
-                    />
+                    <LogoIcon className="h-8 w-auto" />
+                    <LogoText className="h-6 w-auto mb-0.5" />
                 </Link>
                 <div className="flex flex-row">
                     <div className="flex items-center gap-2 sm:gap-4">

@@ -45,7 +45,7 @@ export function UnitsSelector({
                         <button
                             key={unit.id}
                             onClick={() => onUnitSelect(unit.id)}
-                            className={`relative text-left p-2 sm:p-4 rounded-lg border-2 transition-all ${
+                            className={`relative text-left p-3 sm:p-4 rounded-lg border-2 transition-all ${
                                 isSelected
                                     ? "border-primary-500 bg-primary-500/10 shadow-md"
                                     : "border-border bg-card hover:border-text-muted hover:shadow-sm"
@@ -91,7 +91,7 @@ export function UnitsSelector({
                             )}
 
                             {/* Details */}
-                            <div className="text-xs text-text-muted flex flex-row gap-2 items-center justify-between">
+                            <div className="text-xs text-text-muted flex flex-col sm:flex-row gap-2 items-left sm:items-center justify-between">
                                 {unit.bond_amount && (
                                     <div className="flex items-center gap-1">
                                         <Icon name="document" className="w-3.5 h-3.5" />$

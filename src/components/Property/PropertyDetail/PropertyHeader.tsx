@@ -41,7 +41,7 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
 
             {/* Property Features with Furnished Badge */}
             <div className="flex items-center justify-between gap-4">
-                <div className="flex flex-wrap items-center gap-x-4 text-text-muted sm:gap-x-6">
+                <div className="flex flex-wrap items-center gap-x-3 text-text-muted sm:gap-x-6">
                     {bedrooms !== null && bedrooms !== undefined && (
                         <div className="flex items-center gap-2">
                             <Icon name="bed" className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />

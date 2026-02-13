@@ -57,6 +57,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ? "focus:ring-2 focus:ring-danger-500"
             : "focus:ring-2 focus:ring-primary-500";
 
+        const isDateLike =
+            props.type === "date" || props.type === "time" || props.type === "datetime-local";
+
         return (
             <div className={clsx(fullWidth && "w-full")}>
                 <div className="relative">
@@ -94,6 +97,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                             fullWidth && "w-full",
                             leftIcon && "pl-10",
                             rightIcon && "pr-10",
+                            // Date/time inputs have an internal picker icon/button (esp. iOS Safari).
+                            // Reserve space for it and prevent the control from expanding.
+                            isDateLike &&
+                                "min-w-0 max-w-full box-border pr-10 [&::-webkit-date-and-time-value]:overflow-hidden [&::-webkit-date-and-time-value]:text-ellipsis",
                             className
                         )}
                         {...props}

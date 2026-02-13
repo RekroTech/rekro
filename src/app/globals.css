@@ -335,21 +335,10 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* Firefox date picker */
-input[type="date"]::-moz-calendar-picker-indicator,
-input[type="datetime-local"]::-moz-calendar-picker-indicator,
-input[type="time"]::-moz-calendar-picker-indicator {
-    cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-}
+/* NOTE: Firefox doesn't support a calendar-picker pseudo-element like WebKit.
+   Keeping this out to avoid editor/linter errors for unknown selectors. */
 
-input[type="date"]::-moz-calendar-picker-indicator:hover,
-input[type="datetime-local"]::-moz-calendar-picker-indicator:hover,
-input[type="time"]::-moz-calendar-picker-indicator:hover {
-    opacity: 1;
-}
-
-/* ===========================
+/* ---------------------------
    Auth theme (login / signup)
    =========================== */
 .auth-theme {
@@ -545,4 +534,55 @@ select option {
 .modal-card:focus-within::-webkit-scrollbar-thumb:hover,
 .pac-container:focus-within::-webkit-scrollbar-thumb:hover {
     background: color-mix(in srgb, var(--primary-500) 50%, transparent);
+}
+
+/* ---------------------------
+   Date/Time Input Fixes for iOS Safari
+---------------------------- */
+/* iOS Safari can size date inputs differently (and even overflow) unless we normalize appearance + sizing. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+
+    /* Normalize iOS rendering so it matches our other inputs/selects */
+    -webkit-appearance: none;
+    appearance: none;
+    line-height: normal;
+    height: auto;
+}
+
+/* Keep the calendar picker icon inside the input box and stop it from affecting layout */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.125rem;
+    height: 1.125rem;
+    margin: 0;
+}
+
+/* Ensure the displayed value truncates instead of pushing width */
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+@supports (-webkit-touch-callout: none) {
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"] {
+        display: block; /* keep as normal input; we just normalize appearance */
+    }
 }

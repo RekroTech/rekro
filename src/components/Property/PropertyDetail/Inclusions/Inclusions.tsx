@@ -39,7 +39,7 @@ export function Inclusions({
     const furnitureWeekly = furnitureTotal / (inclusions.selectedLease * 4.33);
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
             {!isEntireHome ? (
                 <InclusionCard
                     title="Furnished"

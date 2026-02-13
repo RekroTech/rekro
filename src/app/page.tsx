@@ -64,7 +64,7 @@ export default function HomePage() {
                         <button
                             type="button"
                             onClick={() => setShowFilters(!showFilters)}
-                            className="sm:hidden flex items-center justify-center h-10 w-10 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100 touch-manipulation transition-colors"
+                            className="sm:hidden flex items-center justify-center h-10 w-10 rounded-lg border border-border bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted touch-manipulation transition-colors"
                             aria-label="Toggle filters"
                             aria-expanded={showFilters}
                         >
