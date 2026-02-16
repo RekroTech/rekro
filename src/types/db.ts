@@ -1,6 +1,8 @@
 // Database types and utilities
 // This file can be used for database-related types and helper functions
 
+import { Inclusion } from "@/components/Property/types";
+
 export interface Address {
     street: string;
     city?: string;
@@ -30,6 +32,7 @@ export type ApplicationStatus =
     | "approved"
     | "rejected"
     | "withdrawn";
+export type OccupancyType = "single" | "dual";
 
 export interface Database {
     public: {
@@ -43,12 +46,7 @@ export interface Database {
                     image_url: string | null;
                     phone: string | null;
                     current_location: Record<string, unknown> | null;
-                    destination_location: Record<string, unknown> | null;
-                    study_field: string | null;
-                    study_level: string | null;
-                    university: string | null;
-                    languages: string[] | null;
-                    max_budget_per_week: number | null;
+                    native_language: string | null;
                     receive_marketing_email: boolean | null;
                     created_at: string;
                     updated_at: string;
@@ -68,12 +66,7 @@ export interface Database {
                     image_url?: string | null;
                     phone?: string | null;
                     current_location?: Record<string, unknown> | null;
-                    destination_location?: Record<string, unknown> | null;
-                    study_field?: string | null;
-                    study_level?: string | null;
-                    university?: string | null;
-                    languages?: string[] | null;
-                    max_budget_per_week?: number | null;
+                    native_language?: string | null;
                     receive_marketing_email?: boolean | null;
                     created_at?: string;
                     updated_at?: string;
@@ -92,12 +85,7 @@ export interface Database {
                     image_url?: string | null;
                     phone?: string | null;
                     current_location?: Record<string, unknown> | null;
-                    destination_location?: Record<string, unknown> | null;
-                    study_field?: string | null;
-                    study_level?: string | null;
-                    university?: string | null;
-                    languages?: string[] | null;
-                    max_budget_per_week?: number | null;
+                    native_language?: string | null;
                     receive_marketing_email?: boolean | null;
                     updated_at?: string;
                     date_of_birth?: string | null;
@@ -107,6 +95,69 @@ export interface Database {
                     preferred_contact_method?: string | null;
                     notification_preferences?: Record<string, unknown> | null;
                     last_login_at?: string | null;
+                };
+            };
+            user_application_profile: {
+                Row: {
+                    user_id: string;
+                    visa_status: string | null;
+                    employment_status: string | null;
+                    employment_type: string | null;
+                    income_source: string | null;
+                    income_frequency: string | null;
+                    income_amount: number | null;
+                    student_status: string | null;
+                    finance_support_type: string | null;
+                    finance_support_details: string | null;
+                    preferred_locality: string | null;
+                    max_budget_per_week: number | null;
+                    has_pets: boolean | null;
+                    smoker: boolean | null;
+                    emergency_contact_name: string | null;
+                    emergency_contact_phone: string | null;
+                    documents: Record<string, unknown>;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    user_id: string;
+                    visa_status?: string | null;
+                    employment_status?: string | null;
+                    employment_type?: string | null;
+                    income_source?: string | null;
+                    income_frequency?: string | null;
+                    income_amount?: number | null;
+                    student_status?: string | null;
+                    finance_support_type?: string | null;
+                    finance_support_details?: string | null;
+                    preferred_locality?: string | null;
+                    max_budget_per_week?: number | null;
+                    has_pets?: boolean | null;
+                    smoker?: boolean | null;
+                    emergency_contact_name?: string | null;
+                    emergency_contact_phone?: string | null;
+                    documents?: Record<string, unknown>;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    visa_status?: string | null;
+                    employment_status?: string | null;
+                    employment_type?: string | null;
+                    income_source?: string | null;
+                    income_frequency?: string | null;
+                    income_amount?: number | null;
+                    student_status?: string | null;
+                    finance_support_type?: string | null;
+                    finance_support_details?: string | null;
+                    preferred_locality?: string | null;
+                    max_budget_per_week?: number | null;
+                    has_pets?: boolean | null;
+                    smoker?: boolean | null;
+                    emergency_contact_name?: string | null;
+                    emergency_contact_phone?: string | null;
+                    documents?: Record<string, unknown>;
+                    updated_at?: string;
                 };
             };
             properties: {
@@ -300,6 +351,12 @@ export interface Database {
                     submitted_at: string | null;
                     updated_at: string;
                     group_id: string | null;
+                    move_in_date: string | null; // date in DB
+                    rental_duration: number | null;
+                    proposed_rent: number | null;
+                    total_rent: number | null;
+                    inclusions: Inclusion[];
+                    occupancy_type: OccupancyType;
                 };
                 Insert: {
                     id?: string;
@@ -313,6 +370,12 @@ export interface Database {
                     submitted_at?: string | null;
                     updated_at?: string;
                     group_id?: string | null;
+                    move_in_date?: string | null; // date in DB
+                    rental_duration?: number | null;
+                    proposed_rent?: number | null;
+                    total_rent?: number | null;
+                    inclusions?: Inclusion[];
+                    occupancy_type?: OccupancyType;
                 };
                 Update: {
                     user_id?: string;
@@ -324,45 +387,36 @@ export interface Database {
                     submitted_at?: string | null;
                     updated_at?: string;
                     group_id?: string | null;
+                    move_in_date?: string | null; // date in DB
+                    rental_duration?: number | null;
+                    proposed_rent?: number | null;
+                    total_rent?: number | null;
+                    inclusions?: Inclusion[];
+                    occupancy_type?: OccupancyType;
                 };
             };
-            application_details: {
+            application_snapshot: {
                 Row: {
+                    id: string;
                     application_id: string;
-                    move_in_date: string | null;
-                    rental_duration: string | null;
-                    employment_status: string | null;
-                    income_source: string | null;
-                    contact_phone: string | null;
-                    has_pets: boolean | null;
-                    smoker: boolean | null;
-                    notes: string | null;
+                    snapshot: Record<string, unknown>;
                     created_at: string;
-                    updated_at: string;
+                    created_by: string | null;
+                    note: string | null;
                 };
                 Insert: {
+                    id?: string;
                     application_id: string;
-                    move_in_date?: string | null;
-                    rental_duration?: string | null;
-                    employment_status?: string | null;
-                    income_source?: string | null;
-                    contact_phone?: string | null;
-                    has_pets?: boolean | null;
-                    smoker?: boolean | null;
-                    notes?: string | null;
+                    snapshot: Record<string, unknown>;
                     created_at?: string;
-                    updated_at?: string;
+                    created_by?: string | null;
+                    note?: string | null;
                 };
                 Update: {
-                    move_in_date?: string | null;
-                    rental_duration?: string | null;
-                    employment_status?: string | null;
-                    income_source?: string | null;
-                    contact_phone?: string | null;
-                    has_pets?: boolean | null;
-                    smoker?: boolean | null;
-                    notes?: string | null;
-                    updated_at?: string;
+                    application_id?: string;
+                    snapshot?: Record<string, unknown>;
+                    created_by?: string | null;
+                    note?: string | null;
                 };
             };
             user_roles: {
@@ -411,12 +465,18 @@ export type Application = Database["public"]["Tables"]["applications"]["Row"];
 export type ApplicationInsert = Database["public"]["Tables"]["applications"]["Insert"];
 export type ApplicationUpdate = Database["public"]["Tables"]["applications"]["Update"];
 
-export type ApplicationDetails = Database["public"]["Tables"]["application_details"]["Row"];
-export type ApplicationDetailsInsert =
-    Database["public"]["Tables"]["application_details"]["Insert"];
-export type ApplicationDetailsUpdate =
-    Database["public"]["Tables"]["application_details"]["Update"];
+export type ApplicationSnapshot = Database["public"]["Tables"]["application_snapshot"]["Row"];
+export type ApplicationSnapshotInsert = Database["public"]["Tables"]["application_snapshot"]["Insert"];
+export type ApplicationSnapshotUpdate = Database["public"]["Tables"]["application_snapshot"]["Update"];
 
 export type UserRole = Database["public"]["Tables"]["user_roles"]["Row"];
 export type UserRoleInsert = Database["public"]["Tables"]["user_roles"]["Insert"];
 export type UserRoleUpdate = Database["public"]["Tables"]["user_roles"]["Update"];
+
+export type UserApplicationProfile =
+    Database["public"]["Tables"]["user_application_profile"]["Row"];
+export type UserApplicationProfileInsert =
+    Database["public"]["Tables"]["user_application_profile"]["Insert"];
+export type UserApplicationProfileUpdate =
+    Database["public"]["Tables"]["user_application_profile"]["Update"];
+

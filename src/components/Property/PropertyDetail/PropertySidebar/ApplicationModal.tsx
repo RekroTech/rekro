@@ -1,66 +1,63 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Modal, Button, Icon } from "@/components/common";
+import { Modal } from "@/components/common";
 import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
-import { Inclusions } from "../Inclusions/Inclusions";
-import { ApplicationForm } from "../../ApplicationForm";
-import { InclusionsData } from "@/components/Property/types";
+import { ApplicationForm } from "./ApplicationForm";
+import { ApplicationReview } from "./ApplicationReview";
+import { RentalFormData } from "@/components/Property/types";
 import { calculatePricing } from "@/components/Property/pricing";
+import { useHasApplied } from "@/lib/react-query/hooks/application/useApplications";
 
 interface ApplicationModalProps {
     isOpen: boolean;
     onClose: () => void;
     property: Property;
     selectedUnit: Unit;
-    inclusions: InclusionsData;
-    onChange: (inclusions: InclusionsData) => void;
     isEntireHome: boolean;
+    rentalForm: RentalFormData;
+    setRentalForm: (rentalForm: RentalFormData) => void;
 }
 
-type Step = "inclusions" | "application";
+type Step = "application" | "review";
 
 export function ApplicationModal({
     isOpen,
     onClose,
     property,
     selectedUnit,
-    inclusions,
-    onChange,
     isEntireHome,
+    rentalForm,
+    setRentalForm,
 }: ApplicationModalProps) {
-    const [currentStep, setCurrentStep] = useState<Step>("inclusions");
+    const [currentStep, setCurrentStep] = useState<Step>("application");
 
-    const getDefaultStartDate = () =>
-        selectedUnit?.available_from ?? new Date().toISOString().split("T")[0] ?? "";
-
+    // Check if user has already applied to this property/unit
+    const existingApplication = useHasApplied(property.id, selectedUnit?.id);
     // Calculate all pricing in one place
     const pricing = useMemo(
-        () => calculatePricing({ selectedUnit, property, inclusions }),
-        [selectedUnit, property, inclusions]
+        () => calculatePricing({ selectedUnit, property, rentalForm }),
+        [selectedUnit, property, rentalForm]
     );
 
     // Reset to first step when modal opens
     useEffect(() => {
-        if (isOpen) {
-            setCurrentStep("inclusions");
-            if (!inclusions.selectedStartDate) {
-                onChange({
-                    ...inclusions,
-                    selectedStartDate: getDefaultStartDate(),
-                });
-            }
+        if (isOpen && currentStep !== "application") {
+            // Use setTimeout to defer state update and avoid cascading renders
+            const timeoutId = setTimeout(() => {
+                setCurrentStep("application");
+            }, 0);
+            return () => clearTimeout(timeoutId);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen]);
+    }, [isOpen, currentStep]);
 
     const handleNext = () => {
-        setCurrentStep("application");
+        setCurrentStep("review");
     };
 
     const handleBack = () => {
-        setCurrentStep("inclusions");
+        setCurrentStep("application");
     };
 
     const handleApplicationSuccess = () => {
@@ -68,75 +65,43 @@ export function ApplicationModal({
     };
 
     const getModalTitle = () => {
-        if (currentStep === "inclusions") {
-            return "Review your inclusions";
+        const action = existingApplication ? "Update Application for" : "Apply for";
+        if (currentStep === "application") {
+            return `${action} ${property.title}`;
         }
-        return `Apply for ${property.title}`;
+        return `Review your Application`;
     };
 
     const handleClose = () => {
-        setCurrentStep("inclusions");
+        setCurrentStep("application");
         onClose();
     };
 
-    // Prepare inclusions summary for additional info
-    const inclusionsSummary = {
-        lease: inclusions.selectedLease,
-        startDate: inclusions.selectedStartDate,
-        furniture: inclusions.furnitureSelected,
-        bills: inclusions.billsIncluded,
-        cleaning: inclusions.regularCleaningSelected,
-        dualOccupancy: inclusions.isDualOccupancy,
-        occupants: inclusions.entireHomeOccupants,
-        carpark: inclusions.carparkSelected,
-        storageCage: inclusions.storageCageSelected,
-    };
-
-    const additionalInfoWithInclusions = `Selected Add-ons: ${JSON.stringify(inclusionsSummary, null, 2)}`;
-
     return (
         <Modal isOpen={isOpen} onClose={handleClose} title={getModalTitle()} size="xl">
-            {currentStep === "inclusions" && (
-                <div>
-                    <div className="p-4 bg-surface-subtle rounded-lg border border-border mb-3 sm:mb-4">
-                        <Inclusions
-                            property={property}
-                            inclusions={inclusions}
-                            onChange={onChange}
-                            isEntireHome={isEntireHome}
-                            effectiveIsDualOccupancy={inclusions.isDualOccupancy}
-                        />
-                    </div>
-
-                    {/* Rent Display at Bottom */}
-                    <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-border mb-3 sm:mb-4">
-                        <span className="text-sm text-text-muted">Total Rent:</span>
-                        <span className="text-2xl font-bold text-primary-600">
-                            ${pricing.totalWeeklyRent.toFixed(2)}
-                        </span>
-                    </div>
-
-                    <div className="flex justify-center">
-                        <Button variant="primary" onClick={handleNext}>
-                            Next: Application Form
-                            <Icon name="chevron-right" className="w-4 h-4 ml-2" />
-                        </Button>
-                    </div>
-                </div>
-            )}
-
             {currentStep === "application" && (
                 <ApplicationForm
+                    property={property}
+                    selectedUnit={selectedUnit}
+                    isEntireHome={isEntireHome}
+                    totalWeeklyRent={pricing.totalWeeklyRent}
+                    onNext={handleNext}
+                    onSuccess={handleApplicationSuccess}
+                    rentalData={rentalForm}
+                    onChange={setRentalForm}
+                    existingApplicationId={existingApplication?.id}
+                />
+            )}
+
+            {currentStep === "review" && existingApplication && (
+                <ApplicationReview
                     propertyId={property.id}
                     unitId={selectedUnit?.id}
-                    isEntireHome={isEntireHome}
+                    applicationId={existingApplication.id}
                     onSuccess={handleApplicationSuccess}
                     onCancel={handleClose}
-                    additionalInfo={additionalInfoWithInclusions}
                     showBackButton={true}
                     onBack={handleBack}
-                    initialMoveInDate={inclusions.selectedStartDate}
-                    initialRentalDuration={inclusions.selectedLease.toString()}
                 />
             )}
         </Modal>

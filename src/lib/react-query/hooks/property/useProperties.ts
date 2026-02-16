@@ -22,7 +22,10 @@ export const propertyKeys = {
     detail: (id: string) => [...propertyKeys.details(), id] as const,
 };
 
-export function useProperties(params: Omit<GetPropertiesParams, "offset"> = {}) {
+export function useProperties(
+    params: Omit<GetPropertiesParams, "offset"> = {},
+    options?: { enabled?: boolean }
+) {
     return useInfiniteQuery({
         queryKey: propertyKeys.list(params),
         queryFn: ({ pageParam = 0 }) =>
@@ -35,6 +38,7 @@ export function useProperties(params: Omit<GetPropertiesParams, "offset"> = {}) 
         // Cache for 2 minutes as property listings don't change frequently
         staleTime: 2 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
+        enabled: options?.enabled ?? true,
     });
 }
 

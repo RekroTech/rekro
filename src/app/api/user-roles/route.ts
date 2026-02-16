@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuthForApi } from "@/lib/auth/server";
 import { userRolesService } from "@/services/user_roles.service";
 import { requireRoleLevel } from "@/lib/auth/authorization";
-import type { AppRole } from "@/types/auth.types";
+import type { AppRole } from "@/types/db";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

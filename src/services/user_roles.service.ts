@@ -1,12 +1,37 @@
 import { createClient } from "@/lib/supabase/server";
-import type { AppRole } from "@/types/auth.types";
+import { AppRole } from "@/types/db";
 
 /**
  * User roles service for managing user roles
  */
 export const userRolesService = {
     /**
+     * Get a user's single role.
+     *
+     * Contract: each user has exactly one row in public.user_roles.
+     * If none exists (or on error), we fall back to `tenant`.
+     */
+    getUserRole: async (userId: string, fallback: AppRole = "tenant"): Promise<AppRole> => {
+        const supabase = await createClient();
+
+        const { data, error } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", userId)
+            .limit(1)
+            .maybeSingle();
+
+        if (error) {
+            console.error("Error fetching user role:", error);
+            return fallback;
+        }
+
+        return (data?.role as AppRole | undefined) ?? fallback;
+    },
+
+    /**
      * Get all roles for a user
+     * (kept for back-compat/admin tooling; app auth assumes single role)
      */
     getUserRoles: async (userId: string): Promise<AppRole[]> => {
         const supabase = await createClient();
@@ -64,24 +89,25 @@ export const userRolesService = {
      * Check if a user has a specific role
      */
     hasRole: async (userId: string, role: AppRole): Promise<boolean> => {
-        const roles = await userRolesService.getUserRoles(userId);
-        return roles.includes(role);
+        const userRole = await userRolesService.getUserRole(userId);
+        return userRole === role;
     },
 
     /**
      * Check if a user has any of the specified roles
      */
     hasAnyRole: async (userId: string, roles: AppRole[]): Promise<boolean> => {
-        const userRoles = await userRolesService.getUserRoles(userId);
-        return roles.some((role) => userRoles.includes(role));
+        const userRole = await userRolesService.getUserRole(userId);
+        return roles.includes(userRole);
     },
 
     /**
      * Check if a user has all of the specified roles
+     * (with single-role users this is only true when roles contains exactly the user's role)
      */
     hasAllRoles: async (userId: string, roles: AppRole[]): Promise<boolean> => {
-        const userRoles = await userRolesService.getUserRoles(userId);
-        return roles.every((role) => userRoles.includes(role));
+        const userRole = await userRolesService.getUserRole(userId);
+        return roles.length > 0 && roles.every((r) => r === userRole);
     },
 
     /**

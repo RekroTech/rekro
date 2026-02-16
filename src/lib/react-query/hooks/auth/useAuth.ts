@@ -1,50 +1,45 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
-import { userService } from "@/services/user.service";
-import type { SignupCredentials, LoginCredentials, User } from "@/types/auth.types";
+import { createClient } from "@/lib/supabase/client";
+import type { SignupCredentials, LoginCredentials } from "@/types/auth.types";
+import { useEffect, useState } from "react";
 
 // Query keys for better cache management
 export const authKeys = {
     all: ["auth"] as const,
-    user: () => [...authKeys.all, "user"] as const,
+    sessionUser: () => [...authKeys.all, "session-user"] as const,
 };
 
 /**
- * Fetch current user with profile data
- * This is the single source of truth for user data on the client
+ * Lightweight hook to check if user has an active session
+ * Uses Supabase client-side session check (no network call)
+ * Use this for auth guards and conditional rendering
  */
-export function useUser() {
-    return useQuery<User | null, Error>({
-        queryKey: authKeys.user(),
-        queryFn: async () => {
-            try {
-                // Fetch complete user profile (includes auth + profile + roles)
-                return await userService.getProfile();
-            } catch (error) {
-                // User is not authenticated
-                if (error instanceof Error && error.message.includes("Unauthorized")) {
-                    return null;
-                }
-                throw error;
-            }
-        },
-        // Cache user data for 5 minutes
-        staleTime: 1000 * 60 * 5,
-        gcTime: 1000 * 60 * 10,
-        refetchOnWindowFocus: false,
-        refetchOnMount: false,
-        retry: false,
-    });
-}
+export function useSession() {
+    const [hasSession, setHasSession] = useState<boolean | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-/**
- * Convenience hook to check if user is authenticated
- * Returns a boolean indicating authentication status
- */
-export function useAuth(): { isAuthenticated: boolean; isLoading: boolean } {
-    const { data: user, isLoading } = useUser();
-    return { isAuthenticated: !!user, isLoading };
+    useEffect(() => {
+        const supabase = createClient();
+
+        // Check initial session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setHasSession(!!session);
+            setIsLoading(false);
+        });
+
+        // Listen for auth changes
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setHasSession(!!session);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    return { hasSession, isLoading };
 }
 
 /**
@@ -59,9 +54,8 @@ export function useSignup() {
             await authService.signup(credentials);
         },
         onSuccess: () => {
-            // Invalidate user query to refetch
-            queryClient.invalidateQueries({ queryKey: authKeys.user() });
-            router.replace("/dashboard");
+            queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
+            router.replace("/");
         },
         onError: (error) => {
             console.error("Signup error:", error);
@@ -81,9 +75,8 @@ export function useLogin() {
             await authService.login(credentials);
         },
         onSuccess: () => {
-            // Invalidate user query to refetch
-            queryClient.invalidateQueries({ queryKey: authKeys.user() });
-            router.replace("/dashboard");
+            queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
+            router.replace("/");
         },
         onError: (error) => {
             console.error("Login error:", error);

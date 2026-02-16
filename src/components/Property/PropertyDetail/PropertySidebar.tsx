@@ -4,14 +4,14 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
-import { Button, Icon, Input, Select } from "@/components/common";
-import { useAuth } from "@/lib/react-query/hooks/auth/useAuth";
+import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
+import { useSession } from "@/lib/react-query/hooks/auth/useAuth";
 import { useToggleUnitLike, useUnitLike } from "@/lib/react-query/hooks/property";
 import { EnquiryForm } from "./PropertySidebar/EnquiryForm";
 import { ShareDropdown } from "./PropertySidebar/ShareDropdown";
 import { ApplicationModal } from "./PropertySidebar/ApplicationModal";
 import { Inclusions } from "./Inclusions/Inclusions";
-import { InclusionsData } from "@/components/Property/types";
+import { RentalFormData } from "@/components/Property/types";
 import { getAvailabilityInfo, getMaxStartDate, getMinStartDate } from "@/components/Property/utils";
 import { calculatePricing } from "@/components/Property/pricing";
 
@@ -29,47 +29,36 @@ export function PropertySidebar({
     unitOccupancies: externalUnitOccupancies,
     onUnitOccupanciesChange,
 }: PropertySidebarProps) {
-    const { isAuthenticated } = useAuth();
+    const { hasSession: isAuthenticated } = useSession();
     const router = useRouter();
     const isEntireHome = selectedUnit?.listing_type === "entire_home";
 
     const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
     const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
 
-    // Simplified inclusions state with automatic initialization
-    const [inclusions, setInclusions] = useState<InclusionsData>(() => ({
-        furnitureSelected: !isEntireHome,
-        billsIncluded: !isEntireHome,
-        regularCleaningSelected: false,
-        selectedLease: 12,
-        selectedStartDate: getMinStartDate(selectedUnit?.available_from),
-        isDualOccupancy: false,
-        entireHomeOccupants: 1,
-        carparkSelected: false,
-        storageCageSelected: false,
-        unitOccupancies:
-            externalUnitOccupancies ||
-            property.units?.reduce(
-                (acc, unit) => {
-                    acc[unit.id] = 1; // Initialize all units to single occupancy
-                    return acc;
-                },
-                {} as Record<string, number>
-            ),
-    }));
+    // Rental form state (separate from inclusions selection)
+    const [rentalForm, setRentalForm] = useState<RentalFormData>({
+        moveInDate: getMinStartDate(selectedUnit?.available_from),
+        rentalDuration: 12,
+        occupancyType: "single",
+        inclusions: [
+            { type: "furniture", selected: !isEntireHome, price: 0 },
+            { type: "bills", selected: !isEntireHome, price: 0 },
+            { type: "cleaning", selected: false, price: 0 },
+            { type: "carpark", selected: false, price: 0 },
+            { type: "storage", selected: false, price: 0 },
+        ],
+    });
 
     // Sync with external unitOccupancies if provided
     useEffect(() => {
-        if (externalUnitOccupancies) {
+        if (externalUnitOccupancies && selectedUnit) {
             // Use functional update to avoid cascading renders
             const timeoutId = setTimeout(() => {
-                setInclusions((prev) => ({
+                // Update isDualOccupancy based on current unit's occupancy
+                setRentalForm((prev) => ({
                     ...prev,
-                    unitOccupancies: externalUnitOccupancies,
-                    // Update isDualOccupancy based on current unit's occupancy
-                    isDualOccupancy: selectedUnit
-                        ? externalUnitOccupancies[selectedUnit.id] === 2
-                        : prev.isDualOccupancy,
+                    isDualOccupancy: externalUnitOccupancies[selectedUnit.id] === 2,
                 }));
             }, 0);
             return () => clearTimeout(timeoutId);
@@ -82,33 +71,21 @@ export function PropertySidebar({
 
         // Use functional update to avoid cascading renders
         const timeoutId = setTimeout(() => {
-            setInclusions((prev) => ({
+            setRentalForm((prev) => ({
                 ...prev,
-                selectedStartDate: getMinStartDate(selectedUnit.available_from),
+                moveInDate: getMinStartDate(selectedUnit.available_from),
                 // Reset dual occupancy if new unit doesn't support it
-                isDualOccupancy:
-                    prev.isDualOccupancy && selectedUnit.max_occupants === 2
-                        ? prev.isDualOccupancy
-                        : false,
-                // Ensure unitOccupancies is initialized for all units
-                unitOccupancies:
-                    externalUnitOccupancies ||
-                    property.units?.reduce(
-                        (acc, unit) => {
-                            acc[unit.id] = prev.unitOccupancies?.[unit.id] || 1;
-                            return acc;
-                        },
-                        {} as Record<string, number>
-                    ),
+                occupancyType:
+                    prev.occupancyType && selectedUnit.max_occupants === 2 ? "dual" : "single",
             }));
         }, 0);
         return () => clearTimeout(timeoutId);
-    }, [selectedUnit, property.units, externalUnitOccupancies]);
+    }, [selectedUnit]);
 
     // Calculate pricing
     const pricing = useMemo(
-        () => calculatePricing({ selectedUnit, property, inclusions }),
-        [selectedUnit, property, inclusions]
+        () => calculatePricing({ selectedUnit, property, rentalForm }),
+        [selectedUnit, property, rentalForm]
     );
 
     const handleLoginRequired = () => {
@@ -122,7 +99,7 @@ export function PropertySidebar({
     const { data: isLiked = false, isLoading: isLikeLoading } = useUnitLike(
         selectedUnit?.id ?? "",
         {
-            enabled: isAuthenticated && !!selectedUnit?.id,
+            enabled: !!isAuthenticated && !!selectedUnit?.id,
         }
     );
     const toggleLikeMutation = useToggleUnitLike();
@@ -137,7 +114,7 @@ export function PropertySidebar({
         try {
             await toggleLikeMutation.mutateAsync({
                 unitId: selectedUnit.id,
-                currentLiked: isLiked,
+                checked: isLiked,
             });
         } catch (error) {
             console.error("Error toggling unit like:", error);
@@ -249,11 +226,11 @@ export function PropertySidebar({
                                     type="date"
                                     id="startDate"
                                     label="Preferred Start Date"
-                                    value={inclusions.selectedStartDate}
+                                    value={rentalForm.moveInDate}
                                     onChange={(e) =>
-                                        setInclusions((prev) => ({
+                                        setRentalForm((prev) => ({
                                             ...prev,
-                                            selectedStartDate: e.target.value,
+                                            moveInDate: e.target.value,
                                         }))
                                     }
                                     min={getMinStartDate(selectedUnit.available_from)}
@@ -268,11 +245,11 @@ export function PropertySidebar({
                                 <Select
                                     id="leasePeriod"
                                     label="Lease Period"
-                                    value={inclusions.selectedLease.toString()}
+                                    value={rentalForm.rentalDuration.toString()}
                                     onChange={(e) =>
-                                        setInclusions((prev) => ({
+                                        setRentalForm((prev) => ({
                                             ...prev,
-                                            selectedLease: Number(e.target.value),
+                                            rentalDuration: Number(e.target.value),
                                         }))
                                     }
                                     options={[
@@ -292,54 +269,27 @@ export function PropertySidebar({
                                     <label className="block text-xs font-medium text-text-muted mb-2">
                                         Occupancy Type
                                     </label>
-                                    <div className="flex gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newOccupancies = {
-                                                    ...inclusions.unitOccupancies,
-                                                    [selectedUnit.id]: 1,
-                                                };
-                                                setInclusions((prev) => ({
-                                                    ...prev,
-                                                    isDualOccupancy: false,
-                                                    unitOccupancies: newOccupancies,
-                                                }));
-                                                // Notify parent if handler provided
-                                                onUnitOccupanciesChange?.(newOccupancies);
-                                            }}
-                                            className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
-                                                !inclusions.isDualOccupancy
-                                                    ? "bg-primary-600 text-white border-primary-600 font-medium"
-                                                    : "bg-card text-text border-border hover:border-primary-400"
-                                            }`}
-                                        >
-                                            Single
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newOccupancies = {
-                                                    ...inclusions.unitOccupancies,
-                                                    [selectedUnit.id]: 2,
-                                                };
-                                                setInclusions((prev) => ({
-                                                    ...prev,
-                                                    isDualOccupancy: true,
-                                                    unitOccupancies: newOccupancies,
-                                                }));
-                                                // Notify parent if handler provided
-                                                onUnitOccupanciesChange?.(newOccupancies);
-                                            }}
-                                            className={`flex-1 px-3 py-2 text-sm rounded-md border transition-all ${
-                                                inclusions.isDualOccupancy
-                                                    ? "bg-primary-600 text-white border-primary-600 font-medium"
-                                                    : "bg-card text-text border-border hover:border-primary-400"
-                                            }`}
-                                        >
-                                            Dual Occupancy
-                                        </button>
-                                    </div>
+
+                                    <SegmentedControl<"single" | "dual">
+                                        ariaLabel="Occupancy type"
+                                        value={rentalForm.occupancyType}
+                                        onChange={(next) => {
+                                            setRentalForm((prev) => ({
+                                                ...prev,
+                                                occupancyType: next,
+                                            }));
+
+                                            if (selectedUnit?.id) {
+                                                onUnitOccupanciesChange?.({
+                                                    [selectedUnit.id]: next === "dual" ? 2 : 1,
+                                                });
+                                            }
+                                        }}
+                                        options={[
+                                            { value: "single", label: "Single" },
+                                            { value: "dual", label: "Dual Occupancy" },
+                                        ]}
+                                    />
                                 </div>
                             )}
                         </div>
@@ -408,13 +358,21 @@ export function PropertySidebar({
             {/* Customize Your Stay */}
             {selectedUnit && (
                 <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-lg">
-                    <h3 className="text-lg font-bold text-text mb-2 sm:mb-4">Customize your stay</h3>
+                    <h3 className="text-lg font-bold text-text mb-2 sm:mb-4">
+                        Customize your stay
+                    </h3>
                     <Inclusions
+                        rentalDuration={rentalForm.rentalDuration}
                         property={property}
-                        inclusions={inclusions}
-                        onChange={setInclusions}
+                        inclusions={rentalForm.inclusions}
+                        onChange={(newInclusions) =>
+                            setRentalForm((prev) => ({
+                                ...prev,
+                                inclusions: newInclusions,
+                            }))
+                        }
                         isEntireHome={isEntireHome}
-                        effectiveIsDualOccupancy={pricing.isDualOccupancy}
+                        effectiveOccupancyType={pricing.occupancyType}
                     />
                 </div>
             )}
@@ -426,15 +384,9 @@ export function PropertySidebar({
                     onClose={() => setIsApplicationModalOpen(false)}
                     property={property}
                     selectedUnit={selectedUnit}
-                    inclusions={{
-                        ...inclusions,
-                        isDualOccupancy: pricing.isDualOccupancy,
-                        selectedStartDate:
-                            inclusions.selectedStartDate ||
-                            getMinStartDate(selectedUnit.available_from),
-                    }}
-                    onChange={setInclusions}
                     isEntireHome={isEntireHome}
+                    rentalForm={rentalForm}
+                    setRentalForm={setRentalForm}
                 />
             )}
 

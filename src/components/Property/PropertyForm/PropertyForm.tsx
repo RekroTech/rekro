@@ -3,7 +3,7 @@ import type { PropertyInsert, UnitInsert } from "@/types/db";
 import type { AddPropertyModalProps } from "../types";
 import { Button, Modal } from "@/components/common";
 import { useCreateProperty, useUpdateProperty } from "@/lib/react-query/hooks/property";
-import { useUser } from "@/lib/react-query/hooks/auth/useAuth";
+import { useProfile } from "@/lib/react-query/hooks/user";
 import { deletePropertyFiles } from "@/services/storage.service";
 import { usePropertyForm, useMediaFiles } from "../hooks";
 import { BasicInformationSection } from "./BasicInformationSection";
@@ -16,7 +16,7 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
     const [error, setError] = useState<string | null>(null);
     const createProperty = useCreateProperty();
     const updateProperty = useUpdateProperty();
-    const { data: user } = useUser();
+    const { data: user } = useProfile();
     const existingUnits = property?.units || [];
 
     // Custom hooks for form state management

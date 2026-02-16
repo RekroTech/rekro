@@ -6,7 +6,7 @@ import { Input } from "@/components/common/Input";
 import { Textarea } from "@/components/common/Textarea";
 import { Button } from "@/components/common/Button";
 import { Icon } from "@/components/common";
-import { useUser } from "@/lib/react-query/hooks/auth/useAuth";
+import { useProfile } from "@/lib/react-query/hooks/user";
 
 interface EnquiryModalProps {
     isOpen: boolean;
@@ -39,7 +39,7 @@ export function EnquiryForm({
     unitId,
     isEntireHome,
 }: EnquiryModalProps) {
-    const { data: user } = useUser();
+    const { data: user } = useProfile();
     const isLoggedIn = !!user;
 
     const [formData, setFormData] = useState<FormData>({
@@ -54,7 +54,7 @@ export function EnquiryForm({
         if (isLoggedIn && user) {
             setFormData((prev) => ({
                 ...prev,
-                name: user.name || "",
+                name: user.full_name || "",
                 email: user.email || "",
                 phone: user.phone || "",
             }));

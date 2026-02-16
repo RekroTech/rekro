@@ -12,17 +12,22 @@ import {
     getRoomFurnitureCost,
     hasCarpark,
     hasStorage,
+    isInclusionSelected,
+    toggleInclusion,
 } from "@/components/Property/utils";
 import { InclusionCard } from "./InclusionCard";
-import { InclusionsData } from "@/components/Property/types";
+import { Inclusion } from "@/components/Property/types";
+import { OccupancyType } from "@/types/db";
 
 interface InclusionsProps {
     property: Property;
-    inclusions: InclusionsData;
-    onChange: (next: InclusionsData) => void;
+    inclusions: Inclusion[];
+    onChange: (next: Inclusion[]) => void;
     isEntireHome: boolean;
     /** For room listings: changes cleaning label ($35 vs $60). */
-    effectiveIsDualOccupancy: boolean;
+    effectiveOccupancyType: OccupancyType;
+    /** Rental period in months */
+    rentalDuration: number;
 }
 
 export function Inclusions({
@@ -30,13 +35,20 @@ export function Inclusions({
     inclusions,
     onChange,
     isEntireHome,
-    effectiveIsDualOccupancy,
+    effectiveOccupancyType,
+    rentalDuration,
 }: InclusionsProps) {
     const furnitureTotal = isEntireHome
         ? FURNITURE_COST
         : getRoomFurnitureCost(property.units || [], FURNITURE_COST);
 
-    const furnitureWeekly = furnitureTotal / (inclusions.selectedLease * 4.33);
+    const furnitureWeekly = furnitureTotal / (rentalDuration * 4.33);
+
+    const furnitureSelected = isInclusionSelected(inclusions, "furniture");
+    const billsSelected = isInclusionSelected(inclusions, "bills");
+    const cleaningSelected = isInclusionSelected(inclusions, "cleaning");
+    const carparkSelected = isInclusionSelected(inclusions, "carpark");
+    const storageSelected = isInclusionSelected(inclusions, "storage");
 
     return (
         <div className="space-y-2 sm:space-y-3">
@@ -54,13 +66,9 @@ export function Inclusions({
                     title="Furnish your space"
                     description="Add furniture to your lease."
                     price={<span>+${furnitureWeekly.toFixed(2)}/week</span>}
-                    selected={inclusions.furnitureSelected}
+                    selected={furnitureSelected}
                     onToggle={() => {
-                        const nextSelected = !inclusions.furnitureSelected;
-                        onChange({
-                            ...inclusions,
-                            furnitureSelected: nextSelected,
-                        });
+                        onChange(toggleInclusion(inclusions, "furniture"));
                     }}
                 />
             ) : null}
@@ -79,10 +87,8 @@ export function Inclusions({
                     title="Include Bills"
                     description="Electricity, gas, water, and internet bundled into your rent."
                     price={<span>+${getBillsCostPerWeek(property.bedrooms)}/week</span>}
-                    selected={inclusions.billsIncluded}
-                    onToggle={() =>
-                        onChange({ ...inclusions, billsIncluded: !inclusions.billsIncluded })
-                    }
+                    selected={billsSelected}
+                    onToggle={() => onChange(toggleInclusion(inclusions, "bills"))}
                 />
             )}
 
@@ -99,16 +105,11 @@ export function Inclusions({
                             ${getEntireHomeCleaningCosts(property.units || []).regularWeekly}/week
                         </span>
                     ) : (
-                        <span>${effectiveIsDualOccupancy ? 60 : 35}/week</span>
+                        <span>${effectiveOccupancyType === "dual" ? 60 : 35}/week</span>
                     )
                 }
-                selected={inclusions.regularCleaningSelected}
-                onToggle={() =>
-                    onChange({
-                        ...inclusions,
-                        regularCleaningSelected: !inclusions.regularCleaningSelected,
-                    })
-                }
+                selected={cleaningSelected}
+                onToggle={() => onChange(toggleInclusion(inclusions, "cleaning"))}
             />
 
             {!isEntireHome && hasCarpark(property.amenities) && (
@@ -116,13 +117,8 @@ export function Inclusions({
                     title="Carpark"
                     description="Reserved car space (subject to availability)."
                     price={<span>+${CARPARK_COST_PER_WEEK}/week</span>}
-                    selected={inclusions.carparkSelected}
-                    onToggle={() =>
-                        onChange({
-                            ...inclusions,
-                            carparkSelected: !inclusions.carparkSelected,
-                        })
-                    }
+                    selected={carparkSelected}
+                    onToggle={() => onChange(toggleInclusion(inclusions, "carpark"))}
                 />
             )}
 
@@ -131,13 +127,8 @@ export function Inclusions({
                     title="Storage cage"
                     description="Extra secure storage space for boxes and belongings."
                     price={<span>+${STORAGE_CAGE_COST_PER_WEEK}/week</span>}
-                    selected={inclusions.storageCageSelected}
-                    onToggle={() =>
-                        onChange({
-                            ...inclusions,
-                            storageCageSelected: !inclusions.storageCageSelected,
-                        })
-                    }
+                    selected={storageSelected}
+                    onToggle={() => onChange(toggleInclusion(inclusions, "storage"))}
                 />
             )}
         </div>

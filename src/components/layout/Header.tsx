@@ -3,17 +3,16 @@
 import Link from "next/link";
 import { Button, Dropdown, Icon, LogoIcon, LogoText } from "@/components/common";
 import type { DropdownItem } from "@/components/common/Dropdown";
-import { useLogout, useUser } from "@/lib/react-query/hooks/auth/useAuth";
-import { useCanManageProperties } from "@/hooks/useRoles";
+import { useLogout } from "@/lib/react-query/hooks/auth";
+import { useRoles } from "@/hooks/useRoles";
 
 type HeaderProps = {
     onAddPropertyAction?: () => void;
 };
 
 export function Header({ onAddPropertyAction }: HeaderProps) {
-    const { data: user } = useUser();
     const { mutate: logout, isPending } = useLogout();
-    const canManageProperties = useCanManageProperties(user ?? null);
+    const { canManageProperties, user } = useRoles();
 
     const authButtonClassName = "h-8 sm:h-9 min-w-[76px] sm:min-w-[96px] px-3 sm:px-4";
 

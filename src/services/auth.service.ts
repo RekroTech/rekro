@@ -3,6 +3,7 @@ import type {
     LoginCredentials,
     AuthSuccess,
     LogoutSuccess,
+    SessionUser,
 } from "@/types/auth.types";
 import { handleFetchError } from "@/lib/utils/api-error";
 
@@ -43,5 +44,19 @@ export const authService = {
         }
 
         return (await response.json()) as LogoutSuccess;
+    },
+
+    getSessionUser: async (): Promise<SessionUser | null> => {
+        const response = await fetch("/api/auth/me", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+            await handleFetchError(response, "Failed to fetch session");
+        }
+
+        const json = (await response.json()) as { user: SessionUser | null };
+        return json.user ?? null;
     },
 };

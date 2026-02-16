@@ -29,14 +29,21 @@ export type { ModalProps } from "./Modal";
 export { Textarea } from "./Textarea";
 export type { TextareaProps } from "./Textarea";
 
-export { FileUpload } from "./FileUpload";
-export type { FileUploadProps } from "./FileUpload";
+export { Upload } from "./Upload";
+export type { FileUploadProps } from "./Upload";
 
 export { Visual } from "./Visual";
 export type { PropertyMediaProps } from "./Visual";
 
 export { Icon } from "./Icon";
 export type { IconProps, IconName } from "./Icon";
+
+export { SegmentedControl } from "./SegmentedControl";
+export type {
+    SegmentedControlProps,
+    SegmentedControlOption,
+    SegmentedControlSize,
+} from "./SegmentedControl";
 
 export { LogoIcon, LogoText } from "./Logo";
 

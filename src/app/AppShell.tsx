@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Header, PropertyForm } from "@/components";
-import { useCanManageProperties } from "@/hooks/useRoles";
-import { useUser } from "@/lib/react-query/hooks/auth";
+import { useRoles } from "@/hooks/useRoles";
 
 type AppShellProps = {
     children: React.ReactNode;
@@ -14,8 +13,7 @@ export default function AppShell({ children }: AppShellProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const pathname = usePathname();
 
-    const { data: user } = useUser();
-    const canManageProperties = useCanManageProperties(user ?? null);
+    const { canManageProperties } = useRoles();
 
     // Check if we're on an unauthenticated page (login, signup, forgot-password, etc.)
     const isUnauthenticatedPage =

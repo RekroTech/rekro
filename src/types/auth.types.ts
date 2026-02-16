@@ -1,3 +1,43 @@
+import { AppRole } from "@/types/db";
+
+/**
+ * Supabase Auth User (from auth.users table)
+ * This is the raw user object returned by Supabase auth methods
+ * like signInWithPassword() and signUp()
+ */
+export interface AuthUser {
+    id: string;
+    aud: string;
+    role?: string;
+    email?: string;
+    email_confirmed_at?: string;
+    phone?: string;
+    phone_confirmed_at?: string;
+    confirmed_at?: string;
+    last_sign_in_at?: string;
+    app_metadata: {
+        provider?: string;
+        providers?: string[];
+        [key: string]: unknown;
+    };
+    user_metadata: {
+        name?: string;
+        avatar_url?: string;
+        [key: string]: unknown;
+    };
+    identities?: Array<{
+        id: string;
+        user_id: string;
+        identity_data?: Record<string, unknown>;
+        provider: string;
+        last_sign_in_at?: string;
+        created_at?: string;
+        updated_at?: string;
+    }>;
+    created_at: string;
+    updated_at?: string;
+}
+
 // Credentials
 export interface SignupCredentials {
     email: string;
@@ -10,60 +50,24 @@ export interface LoginCredentials {
     password: string;
 }
 
-// User roles matching database enum
-export type AppRole = "tenant" | "landlord" | "admin" | "super_admin";
-
-export type Gender = "male" | "female" | "non_binary" | "prefer_not_to_say";
-export type PreferredContactMethod = "email" | "phone" | "sms";
-
-export type UserLocation = Record<string, unknown>;
-export type NotificationPreferences = Record<string, unknown>;
-
-// User model used throughout the app (clean, internal)
-export interface User {
+/**
+ * User identity used for authentication/authorization in the app.
+ * Comes from auth.users + public.user_roles.
+ * Note: each user has a single role.
+ */
+export interface SessionUser {
     id: string;
     email: string;
-
-    // Back-compat: some parts of the app still reference `name`.
-    // In DB we store `full_name`.
     name?: string | null;
-
-    full_name?: string | null;
-    username?: string | null;
     image_url?: string | null;
-    phone?: string | null;
-
-    roles?: AppRole[];
-
-    current_location?: UserLocation | null;
-    destination_location?: UserLocation | null;
-
-    study_field?: string | null;
-    study_level?: string | null;
-    university?: string | null;
-    languages?: string[] | null;
-
-    max_budget_per_week?: number | null;
-    receive_marketing_email?: boolean;
-
-    date_of_birth?: string | null;
-    gender?: Gender | null;
-    occupation?: string | null;
-    bio?: string | null;
-
-    preferred_contact_method?: PreferredContactMethod;
-    notification_preferences?: NotificationPreferences | null;
-
-    last_login_at?: string | null;
-    created_at?: string;
-    updated_at?: string;
+    role: AppRole;
 }
 
 /**
  * Success payload returned by /api/auth/login and /api/auth/signup
  */
 export interface AuthSuccess {
-    user: User;
+    user: SessionUser;
 }
 
 /**
@@ -89,9 +93,3 @@ export interface AuthError {
     message: string;
     code?: string;
 }
-
-/**
- * Type for updating a user profile
- * (mirrors writable columns on `public.users`)
- */
-export type UserUpdate = Omit<Partial<User>, "id" | "email" | "roles">;

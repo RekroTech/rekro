@@ -1,52 +1,75 @@
 // Application types
-
-import { ApplicationStatus, ApplicationType } from "@/types/db";
-
-export interface Application {
-    id: string;
-    user_id: string;
-    property_id: string;
-    unit_id: string | null;
-    application_type: ApplicationType;
-    status: ApplicationStatus;
-    message: string | null;
-    created_at: string;
-    submitted_at: string | null;
-    updated_at: string;
-    group_id: string | null;
-}
-
-export interface ApplicationDetails {
-    application_id: string;
-    move_in_date: string | null;
-    rental_duration: string | null;
-    employment_status: string | null;
-    income_source: string | null;
-    contact_phone: string | null;
-    has_pets: boolean | null;
-    smoker: boolean | null;
-    notes: string | null;
-    created_at: string;
-    updated_at: string;
-}
+import { ApplicationType, OccupancyType } from "@/types/db";
+import { Inclusion } from "@/components/Property/types";
 
 export interface ApplicationFormData {
-    fullName: string;
-    email: string;
-    phone: string;
     moveInDate: string;
     rentalDuration: string;
-    employmentStatus: string;
-    incomeSource: string;
-    hasPets: boolean;
-    smoker: boolean;
-    additionalInfo: string;
-    message: string;
+    proposedRent?: string;
+    totalRent?: number;
+    inclusions: Inclusion[];
+    occupancyType: OccupancyType;
+    message?: string;
+}
+
+// Application snapshot type - captures user profile + application data
+export interface ApplicationSnapshot {
+    // Application specific data
+    lease: {
+        moveInDate: string;
+        rentalDuration: string;
+        proposedRent: number;
+        totalRent: number;
+        applicationType: ApplicationType;
+        submittedAt: string;
+        inclusions: Inclusion[];
+        occupancyType: OccupancyType;
+    };
+
+    // User profile snapshot
+    profile: {
+        fullName: string | null;
+        email: string | null;
+        phone: string | null;
+        dateOfBirth: string | null;
+        gender: string | null;
+        occupation: string | null;
+        bio: string | null;
+        nativeLanguage: string | null;
+        visaStatus: string | null;
+    };
+
+    finance: {
+        employmentStatus: string | null;
+        employmentType: string | null;
+        incomeSource: string | null;
+        incomeFrequency: string | null;
+        incomeAmount: number | null;
+        studentStatus: string | null;
+        financeSupportType: string | null;
+        financeSupportDetails: string | null;
+    };
+    rental: {
+        preferredLocality: string | null;
+        maxBudgetPerWeek: number | null;
+        hasPets: boolean | null;
+        smoker: boolean | null;
+        emergencyContactName: string | null;
+        emergencyContactPhone: string | null;
+    };
+    documents: Record<string, unknown>;
 }
 
 export interface CreateApplicationRequest {
+    applicationId?: string; // Optional: if provided, will update existing application
     propertyId: string;
     unitId?: string | null;
     applicationType: ApplicationType;
-    formData: ApplicationFormData;
+    moveInDate: string;
+    rentalDuration: string;
+    proposedRent?: string;
+    totalRent?: number;
+    inclusions: Inclusion[];
+    occupancyType: OccupancyType;
+    message?: string;
 }

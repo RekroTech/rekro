@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { userRolesService } from "@/services/user_roles.service";
 import { isNonEmptyString, isValidPassword } from "@/lib/utils/validation";
 import { authErrorResponse, authSuccessResponse } from "@/app/api/utils";
-import { toAppUser } from "@/lib/utils/user-transform";
 
 // Disable caching for auth routes
 export const dynamic = "force-dynamic";
@@ -49,10 +48,7 @@ export async function POST(request: NextRequest) {
         // Assign the default tenant role to the new user
         await userRolesService.addUserRole(data.user.id, "tenant");
 
-        // Transform to app user format
-        const user = await toAppUser(data.user);
-
-        return authSuccessResponse({ user });
+        return authSuccessResponse({ user: data.user });
     } catch (err) {
         console.error("Signup error:", err);
         return authErrorResponse("Internal server error", 500);

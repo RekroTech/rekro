@@ -1,5 +1,5 @@
 import { Property } from "@/types/property.types";
-import { ListingType } from "@/types/db";
+import { ListingType, OccupancyType } from "@/types/db";
 
 export interface AddPropertyModalProps {
     isOpen: boolean;
@@ -46,16 +46,19 @@ export interface UnitFormData {
     availability_notes: string;
 }
 
-export interface InclusionsData {
-    furnitureSelected: boolean;
-    billsIncluded: boolean;
-    regularCleaningSelected: boolean;
-    selectedLease: number;
-    selectedStartDate: string;
-    isDualOccupancy: boolean;
-    entireHomeOccupants: number;
-    carparkSelected: boolean;
-    storageCageSelected: boolean;
-    // Map of unit ID to selected occupancy (1 or 2)
-    unitOccupancies?: Record<string, number>;
+export type InclusionType = "furniture" | "bills" | "cleaning" | "carpark" | "storage";
+
+export interface Inclusion {
+    type: InclusionType;
+    selected: boolean;
+    price: number;
 }
+
+export interface RentalFormData {
+    moveInDate: string;
+    rentalDuration: number;
+    inclusions: Inclusion[];
+    occupancyType: OccupancyType;
+}
+
+

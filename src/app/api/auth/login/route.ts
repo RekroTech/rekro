@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isNonEmptyString } from "@/lib/utils/validation";
 import { authErrorResponse, authSuccessResponse } from "@/app/api/utils";
-import { toAppUser } from "@/lib/utils/user-transform";
 
 // Disable caching for auth routes
 export const dynamic = "force-dynamic";
@@ -31,10 +30,7 @@ export async function POST(request: NextRequest) {
             return authErrorResponse(error?.message ?? "Invalid credentials", 401);
         }
 
-        // Transform to app user format
-        const user = await toAppUser(data.user);
-
-        return authSuccessResponse({ user });
+        return authSuccessResponse({ user: data.user });
     } catch (err) {
         console.error("Login error:", err);
         return authErrorResponse("Internal server error", 500);

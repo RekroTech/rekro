@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useProperties } from "@/lib/react-query/hooks/property";
+import { useSessionUser } from "@/lib/react-query/hooks/auth";
 import { PropertyCard } from "@/components";
 import { Icon, Loader } from "@/components/common";
 
@@ -13,7 +14,6 @@ export interface PropertyListProps {
     furnished?: boolean;
     listingType?: string;
     showEditButton?: boolean;
-    userId?: string;
     likedOnly?: boolean;
     emptyMessage?: string;
 }
@@ -26,26 +26,33 @@ export function PropertyList({
     furnished,
     listingType,
     showEditButton = false,
-    userId,
     likedOnly = false,
     emptyMessage,
 }: PropertyListProps = {}) {
-    // UI uses "all" as a sentinel meaning "no listing-type filter".
-    // The DB values are only things like "room" | "entire_home".
     const normalizedListingType = listingType && listingType !== "all" ? listingType : undefined;
 
+    const { data: sessionUser, isLoading: sessionUserLoading } = useSessionUser({
+        enabled: likedOnly,
+    });
+
+    const userId = likedOnly ? sessionUser?.id : undefined;
+    const canFetch = !likedOnly || (!!userId && !sessionUserLoading);
+
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
-        useProperties({
-            limit: 12,
-            search,
-            propertyType,
-            minBedrooms,
-            minBathrooms,
-            furnished,
-            listingType: normalizedListingType,
-            userId,
-            likedOnly,
-        });
+        useProperties(
+            {
+                limit: 12,
+                search,
+                propertyType,
+                minBedrooms,
+                minBathrooms,
+                furnished,
+                listingType: normalizedListingType,
+                userId,
+                likedOnly,
+            },
+            { enabled: canFetch }
+        );
 
     const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -71,6 +78,15 @@ export function PropertyList({
             }
         };
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    // Loading state
+    if (!canFetch) {
+        return (
+            <div className="flex justify-center items-center py-12">
+                <Loader size="lg" />
+            </div>
+        );
+    }
 
     // Loading state
     if (isLoading) {

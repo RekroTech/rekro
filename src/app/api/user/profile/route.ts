@@ -1,7 +1,13 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { errorResponse, successResponse } from "@/app/api/utils";
-import { toAppUserWithProfile } from "@/lib/utils/user-transform";
+import type {
+    Profile,
+    ProfileUpdate,
+    UserApplicationProfile,
+    UserApplicationProfileInsert,
+    UserApplicationProfileUpdate,
+} from "@/types/db";
 
 export const dynamic = "force-dynamic";
 
@@ -18,28 +24,24 @@ export async function GET() {
             return errorResponse("Unauthorized", 401);
         }
 
-        // Fetch profile data with roles
         const { data: profileData, error: profileError } = await supabase
             .from("users")
             .select(
                 `
                 *,
-                user_roles (
-                    role
+                user_application_profile (
+                    *
                 )
             `
             )
             .eq("id", authUser.id)
-            .single();
+            .single<Profile & { user_application_profile: UserApplicationProfile | null }>();
 
         if (profileError) {
             return errorResponse("Failed to fetch profile", 500);
         }
 
-        // Transform to complete app user model
-        const user = await toAppUserWithProfile(authUser, profileData);
-
-        return successResponse(user);
+        return successResponse(profileData);
     } catch (error) {
         console.error("Profile fetch error:", error);
         return errorResponse("Internal server error", 500);
@@ -59,21 +61,16 @@ export async function PATCH(req: NextRequest) {
             return errorResponse("Unauthorized", 401);
         }
 
-        const body = await req.json();
+        const body = (await req.json()) as Record<string, unknown>;
 
-        // Columns that exist on `public.users` and are safe to update via the profile UI
-        const allowedFields = [
+        // Columns that exist on `public.users` table
+        const usersTableFields: (keyof ProfileUpdate)[] = [
             "full_name",
             "username",
             "phone",
             "image_url",
             "current_location",
-            "destination_location",
-            "study_field",
-            "study_level",
-            "university",
-            "languages",
-            "max_budget_per_week",
+            "native_language",
             "receive_marketing_email",
             "date_of_birth",
             "gender",
@@ -83,38 +80,87 @@ export async function PATCH(req: NextRequest) {
             "notification_preferences",
         ];
 
-        // Filter only allowed fields
-        const updateData: Record<string, unknown> = {};
-        for (const key of allowedFields) {
+        // Columns that exist on `user_application_profile` table
+        const applicationProfileFields: (keyof UserApplicationProfileUpdate)[] = [
+            "visa_status",
+            "employment_status",
+            "employment_type",
+            "income_source",
+            "income_frequency",
+            "income_amount",
+            "student_status",
+            "finance_support_type",
+            "finance_support_details",
+            "preferred_locality",
+            "max_budget_per_week",
+            "has_pets",
+            "smoker",
+            "emergency_contact_name",
+            "emergency_contact_phone",
+            "documents",
+        ];
+
+        const usersUpdateData: ProfileUpdate = {};
+        for (const key of usersTableFields) {
             if (key in body) {
-                updateData[key] = body[key];
+                (usersUpdateData as Record<string, unknown>)[key] = body[key as string];
             }
         }
 
-        // Update profile with roles included in response
-        const { data: updatedProfile, error: updateError } = await supabase
+        const applicationProfileUpdateData: UserApplicationProfileUpdate = {};
+        for (const key of applicationProfileFields) {
+            if (key in body) {
+                (applicationProfileUpdateData as Record<string, unknown>)[key] = body[key as string];
+            }
+        }
+
+        if (Object.keys(usersUpdateData).length > 0) {
+            const { error: updateError } = await supabase
+                .from("users")
+                .update(usersUpdateData)
+                .eq("id", authUser.id);
+
+            if (updateError) {
+                console.error("Users table update error:", updateError);
+                return errorResponse("Failed to update profile", 500);
+            }
+        }
+
+        if (Object.keys(applicationProfileUpdateData).length > 0) {
+            const insertPayload: UserApplicationProfileInsert = {
+                user_id: authUser.id,
+                ...applicationProfileUpdateData,
+            };
+
+            const { error: appProfileError } = await supabase
+                .from("user_application_profile")
+                .upsert(insertPayload, { onConflict: "user_id" });
+
+            if (appProfileError) {
+                console.error("Application profile update error:", appProfileError);
+                return errorResponse("Failed to update application profile", 500);
+            }
+        }
+
+        const { data: updatedProfile, error: fetchError } = await supabase
             .from("users")
-            .update(updateData)
-            .eq("id", authUser.id)
             .select(
                 `
                 *,
-                user_roles (
-                    role
+                user_application_profile (
+                    *
                 )
             `
             )
-            .single();
+            .eq("id", authUser.id)
+            .single<Profile & { user_application_profile: UserApplicationProfile | null }>();
 
-        if (updateError) {
-            console.error("Profile update error:", updateError);
-            return errorResponse("Failed to update profile", 500);
+        if (fetchError) {
+            console.error("Profile fetch error:", fetchError);
+            return errorResponse("Failed to fetch updated profile", 500);
         }
 
-        // Transform to complete app user model
-        const user = await toAppUserWithProfile(authUser, updatedProfile);
-
-        return successResponse(user);
+        return successResponse(updatedProfile);
     } catch (error) {
         console.error("Profile update error:", error);
         return errorResponse("Internal server error", 500);

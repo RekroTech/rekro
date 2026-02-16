@@ -1,20 +1,16 @@
 import { createClient } from "@/lib/supabase/client";
 import type {
-    Application,
-    ApplicationDetails,
     CreateApplicationRequest,
 } from "@/types/application.types";
-
-export interface ApplicationWithDetails extends Application {
-    details: ApplicationDetails | null;
-}
+import { Application } from "@/types/db";
 
 /**
- * Create a new application with details
+ * Create or update an application
+ * Uses upsert to handle both create and update operations seamlessly
  */
-export async function createApplication(
+export async function upsertApplication(
     request: CreateApplicationRequest
-): Promise<ApplicationWithDetails> {
+): Promise<Application> {
     const supabase = createClient();
 
     // Get current user
@@ -27,58 +23,63 @@ export async function createApplication(
         throw new Error("User not authenticated");
     }
 
-    // Create the application
+    // If updating, verify the application belongs to the user
+    if (request.applicationId) {
+        const { data: existingApp, error: checkError } = await supabase
+            .from("applications")
+            .select("user_id")
+            .eq("id", request.applicationId)
+            .single();
+
+        if (checkError || !existingApp) {
+            throw new Error("Application not found");
+        }
+
+        if (existingApp.user_id !== user.id) {
+            throw new Error("Unauthorized to update this application");
+        }
+    }
+
+
+    // Prepare application data
+    const applicationData = {
+        ...(request.applicationId ? { id: request.applicationId } : {}),
+        user_id: user.id,
+        property_id: request.propertyId,
+        unit_id: request.unitId || null,
+        application_type: request.applicationType,
+        status: "submitted",
+        message: request.message || null,
+        submitted_at: request.applicationId ? undefined : new Date().toISOString(),
+        move_in_date: request.moveInDate || null,
+        rental_duration: request.rentalDuration ? parseInt(request.rentalDuration, 10) : null,
+        proposed_rent: request.proposedRent ? parseFloat(request.proposedRent) : null,
+        total_rent: request.totalRent || null,
+        inclusions: request.inclusions || [],
+        occupancy_type: request.occupancyType,
+        updated_at: new Date().toISOString(),
+    };
+
+    // Upsert the application
     const { data: application, error: applicationError } = await supabase
         .from("applications")
-        .insert({
-            user_id: user.id,
-            property_id: request.propertyId,
-            unit_id: request.unitId || null,
-            application_type: request.applicationType,
-            status: "submitted",
-            message: request.formData.message || null,
-            submitted_at: new Date().toISOString(),
+        .upsert(applicationData, {
+            onConflict: "id",
         })
         .select()
         .single();
 
     if (applicationError || !application) {
-        throw new Error(applicationError?.message || "Failed to create application");
+        throw new Error(applicationError?.message || "Failed to save application");
     }
 
-    // Create application details
-    const { data: details, error: detailsError } = await supabase
-        .from("application_details")
-        .insert({
-            application_id: application.id,
-            move_in_date: request.formData.moveInDate || null,
-            rental_duration: request.formData.rentalDuration || null,
-            employment_status: request.formData.employmentStatus || null,
-            income_source: request.formData.incomeSource || null,
-            contact_phone: request.formData.phone || null,
-            has_pets: request.formData.hasPets,
-            smoker: request.formData.smoker,
-            notes: request.formData.additionalInfo || null,
-        })
-        .select()
-        .single();
-
-    if (detailsError) {
-        // If details insertion fails, we should delete the application
-        await supabase.from("applications").delete().eq("id", application.id);
-        throw new Error(detailsError?.message || "Failed to create application details");
-    }
-
-    return {
-        ...application,
-        details,
-    };
+    return application;
 }
 
 /**
  * Get applications for the current user
  */
-export async function getUserApplications(): Promise<ApplicationWithDetails[]> {
+export async function getUserApplications(): Promise<Application[]> {
     const supabase = createClient();
 
     const {
@@ -92,12 +93,7 @@ export async function getUserApplications(): Promise<ApplicationWithDetails[]> {
 
     const { data: applications, error } = await supabase
         .from("applications")
-        .select(
-            `
-      *,
-      details:application_details(*)
-    `
-        )
+        .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -105,26 +101,18 @@ export async function getUserApplications(): Promise<ApplicationWithDetails[]> {
         throw new Error(error.message);
     }
 
-    return (applications || []).map((app) => ({
-        ...app,
-        details: Array.isArray(app.details) ? app.details[0] : app.details,
-    }));
+    return applications || [];
 }
 
 /**
  * Get a specific application by ID
  */
-export async function getApplicationById(id: string): Promise<ApplicationWithDetails | null> {
+export async function getApplicationById(id: string): Promise<Application | null> {
     const supabase = createClient();
 
     const { data: application, error } = await supabase
         .from("applications")
-        .select(
-            `
-      *,
-      details:application_details(*)
-    `
-        )
+        .select("*")
         .eq("id", id)
         .single();
 
@@ -135,10 +123,7 @@ export async function getApplicationById(id: string): Promise<ApplicationWithDet
         throw new Error(error.message);
     }
 
-    return {
-        ...application,
-        details: Array.isArray(application.details) ? application.details[0] : application.details,
-    };
+    return application;
 }
 
 /**
@@ -169,4 +154,28 @@ export async function updateApplicationStatus(
  */
 export async function withdrawApplication(id: string): Promise<Application> {
     return updateApplicationStatus(id, "withdrawn");
+}
+
+/**
+ * Get application snapshot by application ID
+ */
+export async function getApplicationSnapshot(applicationId: string) {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+        .from("application_snapshot")
+        .select("*")
+        .eq("application_id", applicationId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+    if (error) {
+        if (error.code === "PGRST116") {
+            return null;
+        }
+        throw new Error(error.message);
+    }
+
+    return data;
 }

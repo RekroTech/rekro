@@ -1,47 +1,56 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useUser } from "@/lib/react-query/hooks/auth/useAuth";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useProfile } from "@/lib/react-query/hooks/user";
 import * as profileHooks from "@/lib/react-query/hooks/user/useProfile";
-import { Button, Input, Textarea, Select, Icon, Loader } from "@/components/common";
+import { Icon, Loader } from "@/components/common";
+import {
+  ProfileCard,
+  ProfileSectionCard,
+  DocumentsSection,
+  RentalPreferencesSection,
+  ResidencySection,
+  IncomeDetailsSection,
+  PersonalDetailsSection,
+} from "@/components/Profile";
 import { useRouter } from "next/navigation";
-import type { Gender, PreferredContactMethod } from "@/types/auth.types";
+import type { Gender, PreferredContactMethod, ShareableProfile, EmploymentStatus } from "@/types/user.types";
+import type { PersonalDetailsFormState, ResidencyFormState, IncomeDetailsFormState, RentalPreferencesFormState } from "@/components/Profile";
+import { calculateProfileCompletion } from "@/lib/utils/profile-completion";
+import { Button } from "@/components/common";
 
 export default function ProfilePage() {
     const router = useRouter();
-    const { data: user, isLoading: userLoading } = useUser();
+    const { data: user, isLoading: userLoading } = useProfile();
     const { mutate: updateProfile, isPending } = profileHooks.useUpdateProfile();
 
-    const [formData, setFormData] = useState({
-        full_name: "",
-        username: "",
-        phone: "",
-        bio: "",
-        occupation: "",
-        date_of_birth: "",
-        gender: "" as "" | Gender,
-        max_budget_per_week: "",
-        preferred_contact_method: "email" as PreferredContactMethod,
-        notification_preferences: {
-            applications: true,
-            messages: true,
-            property_updates: true,
-            marketing: false,
-        } as Record<string, boolean>,
-        receive_marketing_email: false,
+    // State for expanded sections
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+        "personal-details": true,
+        "visa-details": false,
+        "income-details": false,
+        "documents": false,
+        "location-preferences": false,
     });
 
-    const [hasChanges, setHasChanges] = useState(false);
-    const hydratedForUserIdRef = useRef<string | null>(null);
+    const didHydrateFromUserRef = useRef(false);
 
-    // Populate form with user data (once per user id)
-    useEffect(() => {
-        if (!user?.id) return;
-        if (hydratedForUserIdRef.current === user.id) return;
+    const userPersonalDetails = useMemo((): PersonalDetailsFormState => {
+        if (!user) {
+            return {
+                full_name: "",
+                username: "",
+                phone: "",
+                bio: "",
+                occupation: "",
+                date_of_birth: "",
+                gender: "" as "" | Gender,
+                preferred_contact_method: "email" as PreferredContactMethod,
+                native_language: "",
+            };
+        }
 
-        hydratedForUserIdRef.current = user.id;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setFormData({
+        return {
             full_name: user.full_name ?? "",
             username: user.username ?? "",
             phone: user.phone ?? "",
@@ -49,65 +58,205 @@ export default function ProfilePage() {
             occupation: user.occupation ?? "",
             date_of_birth: user.date_of_birth ?? "",
             gender: (user.gender ?? "") as "" | Gender,
-            max_budget_per_week: user.max_budget_per_week?.toString() ?? "",
-            preferred_contact_method: user.preferred_contact_method ?? "email",
-            notification_preferences: (user.notification_preferences ?? {
-                applications: true,
-                messages: true,
-                property_updates: true,
-                marketing: false,
-            }) as Record<string, boolean>,
-            receive_marketing_email: user.receive_marketing_email ?? false,
-        });
+            preferred_contact_method: (user.preferred_contact_method ?? "email") as PreferredContactMethod,
+            native_language: user.native_language ?? "",
+        };
     }, [user]);
 
-    const handleChange = (
-        field: string,
-        value: string | boolean | Record<string, unknown>
-    ) => {
-        setFormData((prev) => ({ ...prev, [field]: value }));
-        setHasChanges(true);
-    };
+    const userLocationPreferences = useMemo((): RentalPreferencesFormState => {
+        if (!user) {
+            return {
+                current_location: null,
+                destination_location: null,
+                max_budget_per_week: null,
+                preferred_locality: null,
+                has_pets: null,
+                smoker: null,
+            };
+        }
 
-    const handleNotificationChange = (field: string, value: boolean) => {
-        setFormData((prev) => ({
-            ...prev,
-            notification_preferences: {
-                ...prev.notification_preferences,
-                [field]: value,
-            },
-        }));
-        setHasChanges(true);
-    };
+        const app = user.user_application_profile ?? null;
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        const updateData = {
-            full_name: formData.full_name || null,
-            username: formData.username || null,
-            phone: formData.phone || null,
-            bio: formData.bio || null,
-            occupation: formData.occupation || null,
-            date_of_birth: formData.date_of_birth || null,
-            gender: formData.gender || null,
-            max_budget_per_week: formData.max_budget_per_week
-                ? parseInt(formData.max_budget_per_week)
-                : null,
-            preferred_contact_method: formData.preferred_contact_method,
-            notification_preferences: formData.notification_preferences,
-            receive_marketing_email: formData.receive_marketing_email,
+        return {
+            current_location: user.current_location ?? null,
+            destination_location: null,
+            max_budget_per_week: app?.max_budget_per_week ?? null,
+            preferred_locality: app?.preferred_locality ?? null,
+            has_pets: app?.has_pets ?? null,
+            smoker: app?.smoker ?? null,
         };
+    }, [user]);
 
-        updateProfile(updateData, {
-            onSuccess: () => {
-                setHasChanges(false);
-                alert("Profile updated successfully!");
-            },
-            onError: (error: Error) => {
-                alert(`Failed to update profile: ${error.message}`);
-            },
+    // State for personal details form
+    const [personalDetails, setPersonalDetails] = useState<PersonalDetailsFormState>(userPersonalDetails);
+
+    // State for income and employment details
+    const [incomeDetails, setIncomeDetails] = useState<IncomeDetailsFormState>({
+        isWorking: null,
+        isStudent: null,
+        employmentStatus: null,
+        incomeSource: null,
+        incomeFrequency: null,
+        incomeAmount: null,
+        financeSupportType: null,
+        financeSupportDetails: null,
+    });
+
+    // State for visa/citizenship
+    const [residency, setResidency] = useState<ResidencyFormState>({
+        isCitizen: null,
+        visaStatus: null,
+    });
+
+    // State for location & budget
+    const [locationPreferences, setLocationPreferences] = useState(userLocationPreferences);
+
+    // State for uploaded documents (TODO: backend implementation needed)
+    const [uploadedDocs, setUploadedDocs] = useState<string[]>([]);
+
+    // Populate form with user data (once, when user is first loaded)
+    useEffect(() => {
+        if (!user) return;
+        if (didHydrateFromUserRef.current) return;
+
+        const app = user.user_application_profile ?? null;
+
+        // Defer state updates to avoid synchronous setState-in-effect warnings.
+        const defer = typeof queueMicrotask === "function"
+            ? queueMicrotask
+            : (cb: () => void) => Promise.resolve().then(cb);
+
+        defer(() => {
+            setPersonalDetails(userPersonalDetails);
+            setLocationPreferences(userLocationPreferences);
+
+            // Hydrate tenant/application details from DB
+            setIncomeDetails({
+                isWorking:
+                    app?.employment_status === "working"
+                        ? true
+                        : app?.employment_status === "not_working"
+                          ? false
+                          : null,
+                isStudent:
+                    app?.student_status === "student"
+                        ? true
+                        : app?.student_status === "not_student"
+                          ? false
+                          : null,
+                employmentStatus: app?.employment_status ?? null,
+                incomeSource: app?.income_source ?? null,
+                incomeFrequency: app?.income_frequency ?? null,
+                incomeAmount: app?.income_amount ?? null,
+                financeSupportType: app?.finance_support_type ?? null,
+                financeSupportDetails: app?.finance_support_details ?? null,
+            });
+
+            setResidency({
+                isCitizen: app?.visa_status ? false : null,
+                visaStatus: app?.visa_status ?? null,
+            });
+
+            didHydrateFromUserRef.current = true;
         });
+    }, [user, userPersonalDetails, userLocationPreferences]);
+
+    const toggleSection = (sectionId: string) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [sectionId]: !prev[sectionId],
+        }));
+    };
+
+
+    const handleSavePersonalDetails = () => {
+        const nativeLanguage = personalDetails.native_language.trim();
+
+        updateProfile(
+            {
+                full_name: personalDetails.full_name.trim() || null,
+                username: personalDetails.username.trim() || null,
+                phone: personalDetails.phone.trim() || null,
+                bio: personalDetails.bio.trim() || null,
+                occupation: personalDetails.occupation.trim() || null,
+                date_of_birth: personalDetails.date_of_birth || null,
+                gender: personalDetails.gender || null,
+                preferred_contact_method: personalDetails.preferred_contact_method,
+                native_language: nativeLanguage || null,
+            },
+            {
+                onSuccess: () => {
+                    alert("Personal details updated successfully!");
+                },
+                onError: (error: Error) => {
+                    alert(`Failed to update: ${error.message}`);
+                },
+            }
+        );
+    };
+
+    // NOTE: Location preferences are saved via the top-level "Save Profile" button.
+
+    const handleSaveWholeProfile = () => {
+        const nativeLanguage = personalDetails.native_language.trim();
+
+        updateProfile(
+            {
+                full_name: personalDetails.full_name.trim() || null,
+                username: personalDetails.username.trim() || null,
+                phone: personalDetails.phone.trim() || null,
+                bio: personalDetails.bio.trim() || null,
+                occupation: personalDetails.occupation.trim() || null,
+                date_of_birth: personalDetails.date_of_birth || null,
+                gender: personalDetails.gender || null,
+                preferred_contact_method: personalDetails.preferred_contact_method,
+                native_language: nativeLanguage || null,
+
+                current_location: locationPreferences.current_location,
+
+                // Application profile fields
+                preferred_locality: locationPreferences.preferred_locality ?? null,
+                max_budget_per_week: locationPreferences.max_budget_per_week,
+                has_pets: locationPreferences.has_pets,
+                smoker: locationPreferences.smoker,
+
+                visa_status: residency.visaStatus,
+
+                employment_status: (incomeDetails.employmentStatus as EmploymentStatus | null) ?? null,
+                income_source: incomeDetails.incomeSource,
+                income_frequency: incomeDetails.incomeFrequency,
+                income_amount: incomeDetails.incomeAmount,
+                finance_support_type: incomeDetails.financeSupportType,
+                finance_support_details: incomeDetails.financeSupportDetails,
+
+                student_status: incomeDetails.isStudent === null
+                    ? null
+                    : incomeDetails.isStudent
+                      ? "student"
+                      : "not_student",
+            },
+            {
+                onSuccess: () => {
+                    alert("Profile updated successfully!");
+                },
+                onError: (error: Error) => {
+                    alert(`Failed to update profile: ${error.message}`);
+                },
+            }
+        );
+    };
+
+    const handleDocumentUpload = (docType: string, file: File) => {
+        // TODO: Backend implementation - upload to Supabase Storage
+        console.log("Uploading document:", docType, file);
+        setUploadedDocs((prev) => (prev.includes(docType) ? prev : [...prev, docType]));
+        alert(`${docType} uploaded! (Backend implementation pending)`);
+    };
+
+    const handleDocumentRemove = (docType: string) => {
+        // TODO: Backend implementation - remove from Supabase Storage
+        setUploadedDocs((prev) => prev.filter((d) => d !== docType));
+        alert(`${docType} removed!`);
     };
 
     if (userLoading) {
@@ -123,255 +272,191 @@ export default function ProfilePage() {
         return null;
     }
 
+    // Calculate profile completion
+    const combinedTenantDetails = {
+        ...incomeDetails,
+        ...residency,
+    };
+    const profileCompletion = calculateProfileCompletion(user, combinedTenantDetails, uploadedDocs);
+    const isTenant = true;
+
+    // Build shareable profile
+    const shareableProfile: ShareableProfile = {
+        fullName: user.full_name || user.email || "User",
+        username: user.username ?? null,
+        email: user.email || "",
+        imageUrl: user.image_url ?? null,
+        nativeLanguage: user.native_language ?? null,
+        currentLocation: (user.current_location as { display?: string })?.display || null,
+        targetLocation: null, // Not available in current schema
+        budget: user.user_application_profile?.max_budget_per_week ?? null,
+        completionPercentage: profileCompletion.totalPercentage,
+    };
+
     return (
-        <div className="min-h-screen bg-background py-8">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="bg-card rounded-2xl shadow-sm border border-border p-6 sm:p-8">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-text">
-                                My Profile
-                            </h1>
-                            <p className="text-text-muted mt-1">
-                                Manage your personal information and preferences
-                            </p>
-                        </div>
-                        <div className="h-16 w-16 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold text-2xl">
-                            {user.email?.charAt(0).toUpperCase()}
+        <div className="min-h-screen bg-gray-50 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="mb-8 flex items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+                        <p className="text-gray-600 mt-2">
+                            Manage your profile and increase your chances of being accepted
+                        </p>
+                    </div>
+
+                    <Button
+                        type="button"
+                        onClick={handleSaveWholeProfile}
+                        disabled={isPending}
+                        loading={isPending}
+                        variant="primary"
+                        size="md"
+                    >
+                        Save Profile
+                    </Button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column - Shareable Profile Card */}
+                    <div className="lg:col-span-1">
+                        <div className="sticky top-8">
+                            <ProfileCard profile={shareableProfile} />
+
+                            {/* Badges */}
+                            {profileCompletion.unlockedBadges.length > 0 && (
+                                <div className="mt-6 bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                        <Icon name="star" className="w-5 h-5 text-yellow-500" />
+                                        Your Badges
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {profileCompletion.unlockedBadges.map((badge) => (
+                                            <div
+                                                key={badge}
+                                                className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg"
+                                            >
+                                                <Icon name="check-circle" className="w-5 h-5 text-yellow-600" />
+                                                <span className="text-sm font-medium text-gray-900">{badge}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* Personal Information */}
-                        <section>
-                            <h2 className="text-xl font-semibold text-text mb-4 flex items-center gap-2">
-                                <Icon name="profile" className="w-5 h-5" />
-                                Personal Information
-                            </h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Input
-                                    label="Full Name"
-                                    value={formData.full_name}
-                                    onChange={(e) =>
-                                        handleChange("full_name", e.target.value)
-                                    }
-                                    placeholder="Enter your full name"
-                                />
-                                <Input
-                                    label="Username"
-                                    value={formData.username}
-                                    onChange={(e) => handleChange("username", e.target.value)}
-                                    placeholder="Choose a username"
-                                />
-                                <Input
-                                    label="Email"
-                                    value={user.email}
-                                    disabled
-                                    placeholder="Email (cannot be changed)"
-                                />
-                                <Input
-                                    label="Phone Number"
-                                    type="tel"
-                                    value={formData.phone}
-                                    onChange={(e) => handleChange("phone", e.target.value)}
-                                    placeholder="+1 234 567 8900"
-                                />
-                                <Input
-                                    label="Date of Birth"
-                                    type="date"
-                                    value={formData.date_of_birth}
-                                    onChange={(e) =>
-                                        handleChange("date_of_birth", e.target.value)
-                                    }
-                                />
-                                <Select
-                                    label="Gender"
-                                    value={formData.gender}
-                                    onChange={(e) =>
-                                        handleChange("gender", e.target.value as "" | Gender)
-                                    }
-                                    options={[
-                                        { value: "", label: "Select gender" },
-                                        { value: "male", label: "Male" },
-                                        { value: "female", label: "Female" },
-                                        { value: "non_binary", label: "Non-binary" },
-                                        { value: "prefer_not_to_say", label: "Prefer not to say" },
-                                    ]}
-                                />
-                                <Input
-                                    label="Occupation"
-                                    value={formData.occupation}
-                                    onChange={(e) =>
-                                        handleChange("occupation", e.target.value)
-                                    }
-                                    placeholder="Your occupation"
-                                />
-                            </div>
-                            <div className="mt-4">
-                                <Textarea
-                                    label="Bio"
-                                    value={formData.bio}
-                                    onChange={(e) => handleChange("bio", e.target.value)}
-                                    placeholder="Tell us a bit about yourself..."
-                                    rows={4}
-                                />
-                            </div>
-                        </section>
+                    {/* Right Column - Profile Sections */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Personal Details Section */}
+                        <ProfileSectionCard
+                            title="Personal Details"
+                            description="Basic information about you"
+                            icon="profile"
+                            completed={profileCompletion.sections.find(s => s.id === "personal-details")?.completed || false}
+                            completionPercentage={profileCompletion.sections.find(s => s.id === "personal-details")?.completionPercentage || 0}
+                            isExpanded={expandedSections["personal-details"]}
+                            onToggle={() => toggleSection("personal-details")}
+                        >
+                            <PersonalDetailsSection
+                                userEmail={user.email || ""}
+                                value={personalDetails}
+                                onChange={setPersonalDetails}
+                                onSave={handleSavePersonalDetails}
+                                isSaving={isPending}
+                            />
+                        </ProfileSectionCard>
 
-                        {/* Rental Preferences */}
-                        {user.roles?.includes("tenant") && (
-                            <section>
-                                <h2 className="text-xl font-semibold text-text mb-4 flex items-center gap-2">
-                                    <Icon name="search" className="w-5 h-5" />
-                                    Rental Preferences
-                                </h2>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <Input
-                                        label="Maximum Budget (per week)"
-                                        type="number"
-                                        value={formData.max_budget_per_week}
-                                        onChange={(e) =>
-                                            handleChange(
-                                                "max_budget_per_week",
-                                                e.target.value
-                                            )
-                                        }
-                                        placeholder="e.g., 500"
-                                        prefix="$"
-                                    />
-                                </div>
-                            </section>
+
+                        {/* Visa Details Section - Only for tenants */}
+                        {isTenant && (
+                            <ProfileSectionCard
+                                title="Visa Details"
+                                description="Citizenship status and visa documentation"
+                                icon="map-pin"
+                                completed={profileCompletion.sections.find(s => s.id === "visa-details")?.completed || false}
+                                completionPercentage={profileCompletion.sections.find(s => s.id === "visa-details")?.completionPercentage || 0}
+                                isExpanded={expandedSections["visa-details"]}
+                                onToggle={() => toggleSection("visa-details")}
+                            >
+        <ResidencySection
+          isCitizen={residency.isCitizen}
+          visaStatus={residency.visaStatus}
+          uploadedDocs={uploadedDocs}
+          onCitizenChange={(isCitizen) =>
+            setResidency((prev) => ({
+              ...prev,
+              isCitizen,
+              visaStatus: isCitizen ? null : prev.visaStatus,
+            }))
+          }
+          onVisaStatusChange={(visaStatus: string | null) =>
+            setResidency((prev) => ({ ...prev, visaStatus }))
+          }
+          onUpload={handleDocumentUpload}
+          onRemove={handleDocumentRemove}
+        />
+      </ProfileSectionCard>
                         )}
 
-                        {/* Emergency Contact section removed */}
-
-                        {/* Contact Preferences */}
-                        <section>
-                            <h2 className="text-xl font-semibold text-text mb-4 flex items-center gap-2">
-                                <Icon name="settings" className="w-5 h-5" />
-                                Contact & Notification Preferences
-                            </h2>
-                            <div className="space-y-4">
-                                <Select
-                                    label="Preferred Contact Method"
-                                    value={formData.preferred_contact_method}
-                                    onChange={(e) =>
-                                        handleChange(
-                                            "preferred_contact_method",
-                                            e.target.value as PreferredContactMethod
-                                        )
-                                    }
-                                    options={[
-                                        { value: "email", label: "Email" },
-                                        { value: "phone", label: "Phone Call" },
-                                        { value: "sms", label: "SMS/Text Message" },
-                                    ]}
-                                />
-
-                                <div className="space-y-3">
-                                    <label className="block text-sm font-medium text-text">
-                                        Notification Settings
-                                    </label>
-                                    <div className="space-y-2">
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={
-                                                    formData.notification_preferences
-                                                        .applications
-                                                }
-                                                onChange={(e) =>
-                                                    handleNotificationChange(
-                                                        "applications",
-                                                        e.target.checked
-                                                    )
-                                                }
-                                                className="w-4 h-4 text-primary-500 rounded"
-                                            />
-                                            <span className="text-sm text-text">
-                                                Application updates
-                                            </span>
-                                        </label>
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={
-                                                    formData.notification_preferences.messages
-                                                }
-                                                onChange={(e) =>
-                                                    handleNotificationChange(
-                                                        "messages",
-                                                        e.target.checked
-                                                    )
-                                                }
-                                                className="w-4 h-4 text-primary-500 rounded"
-                                            />
-                                            <span className="text-sm text-text">
-                                                New messages
-                                            </span>
-                                        </label>
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={
-                                                    formData.notification_preferences
-                                                        .property_updates
-                                                }
-                                                onChange={(e) =>
-                                                    handleNotificationChange(
-                                                        "property_updates",
-                                                        e.target.checked
-                                                    )
-                                                }
-                                                className="w-4 h-4 text-primary-500 rounded"
-                                            />
-                                            <span className="text-sm text-text">
-                                                Property updates and availability
-                                            </span>
-                                        </label>
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={
-                                                    formData.notification_preferences.marketing
-                                                }
-                                                onChange={(e) =>
-                                                    handleNotificationChange(
-                                                        "marketing",
-                                                        e.target.checked
-                                                    )
-                                                }
-                                                className="w-4 h-4 text-primary-500 rounded"
-                                            />
-                                            <span className="text-sm text-text">
-                                                Marketing emails and promotions
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        {/* Action Buttons */}
-                        <div className="flex justify-end gap-3 pt-6 border-t border-border">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => router.back()}
-                                disabled={isPending}
+                        {/* Income Details Section - Only for tenants */}
+                        {isTenant && (
+                            <ProfileSectionCard
+                                title="Income Details"
+                                description="Employment and financial information"
+                                icon="dollar"
+                                completed={profileCompletion.sections.find(s => s.id === "income-details")?.completed || false}
+                                completionPercentage={profileCompletion.sections.find(s => s.id === "income-details")?.completionPercentage || 0}
+                                isExpanded={expandedSections["income-details"]}
+                                onToggle={() => toggleSection("income-details")}
                             >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                disabled={!hasChanges || isPending}
+                            <IncomeDetailsSection
+                                data={incomeDetails}
+                                uploadedDocs={uploadedDocs}
+                                onChange={(data) => setIncomeDetails(prev => ({ ...prev, ...data }))}
+                                onUpload={handleDocumentUpload}
+                                onRemove={handleDocumentRemove}
+                            />
+                            </ProfileSectionCard>
+                        )}
+
+                        {/* Documents Section - Only for tenants */}
+                        {isTenant && (
+                            <ProfileSectionCard
+                                title="Additional Documents"
+                                description="Upload remaining documents"
+                                icon="upload"
+                                completed={profileCompletion.sections.find(s => s.id === "documents")?.completed || false}
+                                completionPercentage={profileCompletion.sections.find(s => s.id === "documents")?.completionPercentage || 0}
+                                isExpanded={expandedSections["documents"]}
+                                onToggle={() => toggleSection("documents")}
                             >
-                                {isPending ? "Saving..." : "Save Changes"}
-                            </Button>
-                        </div>
-                    </form>
+                            <DocumentsSection
+                                uploadedDocs={uploadedDocs}
+                                onUpload={handleDocumentUpload}
+                                onRemove={handleDocumentRemove}
+                            />
+                            </ProfileSectionCard>
+                        )}
+
+                        {/* Rental Preference Section - Only for tenants */}
+                        {isTenant && (
+                            <ProfileSectionCard
+                                title="Rental Preference"
+                                description="Your preferred locality and budget"
+                                icon="map"
+                                completed={profileCompletion.sections.find(s => s.id === "location-preferences")?.completed || false}
+                                completionPercentage={profileCompletion.sections.find(s => s.id === "location-preferences")?.completionPercentage || 0}
+                                isExpanded={expandedSections["location-preferences"]}
+                                onToggle={() => toggleSection("location-preferences")}
+                            >
+                            <RentalPreferencesSection
+                                data={locationPreferences}
+                                onChange={(data) => setLocationPreferences(prev => ({ ...prev, ...data }))}
+                            />
+                            </ProfileSectionCard>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

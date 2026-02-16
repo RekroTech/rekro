@@ -1,7 +1,7 @@
 import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
 import { DEFAULT_FORM_DATA } from "@/components/Property/constants";
-import { PropertyFormData } from "./types";
+import { Inclusion, InclusionType, PropertyFormData } from "./types";
 import { PARKING_OPTIONS } from "./constants";
 import { format, parseISO, addWeeks } from "date-fns";
 
@@ -231,4 +231,31 @@ export const hasCarpark = (amenities: string[] | null): boolean => {
 export const hasStorage = (amenities: string[] | null): boolean => {
     if (!amenities) return false;
     return amenities.some((amenity) => amenity.toLowerCase().includes("storage"));
+};
+
+
+// Helper functions for working with Inclusion arrays
+export const getInclusionByType = (
+    inclusions: Inclusion[],
+    type: InclusionType
+): Inclusion | undefined => {
+    return inclusions.find((inc) => inc.type === type);
+};
+
+export const isInclusionSelected = (inclusions: Inclusion[], type: InclusionType): boolean => {
+    return getInclusionByType(inclusions, type)?.selected ?? false;
+};
+
+export const updateInclusion = (
+    inclusions: Inclusion[],
+    type: InclusionType,
+    updates: Partial<Inclusion>
+): Inclusion[] => {
+    return inclusions.map((inc) => (inc.type === type ? { ...inc, ...updates } : inc));
+};
+
+export const toggleInclusion = (inclusions: Inclusion[], type: InclusionType): Inclusion[] => {
+    return inclusions.map((inc) =>
+        inc.type === type ? { ...inc, selected: !inc.selected } : inc
+    );
 };

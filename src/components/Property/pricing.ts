@@ -10,7 +10,7 @@
  */
 import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
-import { InclusionsData } from "@/components/Property/types";
+import { RentalFormData } from "@/components/Property/types";
 import {
     PRICING_CONFIG,
     FURNITURE_COST,
@@ -22,6 +22,7 @@ import {
     getEntireHomeCleaningCosts,
     getRegularCleaningCostPerWeek,
     getRoomFurnitureCost,
+    isInclusionSelected,
 } from "@/components/Property/utils";
 
 type PricingInputs = {
@@ -154,9 +155,9 @@ function fixRoundingDrift(params: {
 export function calculatePricing(params: {
     selectedUnit: Unit | null;
     property: Property;
-    inclusions: InclusionsData;
+    rentalForm: RentalFormData;
 }) {
-    const { selectedUnit, property, inclusions } = params;
+    const { selectedUnit, property, rentalForm } = params;
 
     // Early return if no unit selected
     if (!selectedUnit) {
@@ -173,14 +174,14 @@ export function calculatePricing(params: {
                 total: 0,
             },
             totalWeeklyRent: 0,
-            isDualOccupancy: false,
+            occupancyType: "single" as const,
         };
     }
 
     const isEntireHome = selectedUnit.listing_type === "entire_home";
     const isRoomListing = selectedUnit.listing_type === "room";
     const canBeDualOccupancy = !isEntireHome && selectedUnit.max_occupants === 2;
-    const isDualOccupancy = canBeDualOccupancy && inclusions.isDualOccupancy;
+    const isDualOccupancy = canBeDualOccupancy && rentalForm.occupancyType === "dual";
 
     // CANONICAL WEEKLY RENT: Normalize selectedUnit.price to safe value
     const canonicalWeeklyRent = normalizeWeeklyRent(selectedUnit.price);
@@ -191,35 +192,9 @@ export function calculatePricing(params: {
 
     // For room listings with multiple units, check if dynamic pricing should apply
     if (isRoomListing && property.units && property.units.length > 1) {
-        // Check if any ROOM unit has dual occupancy selected (exclude entire_home)
-        const hasAnyDualOccupancy = property.units.some(
-            (unit) => unit.listing_type === "room" && inclusions.unitOccupancies?.[unit.id] === 2
-        );
-
-        // Only recalculate if there's actual dual occupancy selection
-        if (hasAnyDualOccupancy) {
-            usedDynamicPricing = true;
-
-            // Build Room array from units (only include room type units)
-            const rooms: Room[] = property.units
-                .filter((unit) => unit.listing_type === "room")
-                .map((unit) => ({
-                    id: unit.id,
-                    maxCapacity: unit.max_occupants || 1,
-                    selectedOccupancy: inclusions.unitOccupancies?.[unit.id] || 1,
-                }));
-
-            // Get dynamic pricing using normalized property price
-            const normalizedPropertyPrice = normalizeWeeklyRent(property.price);
-            const pricingResult = updateRoomRentsOnOccupancySelection(
-                normalizedPropertyPrice,
-                rooms,
-                property.furnished || false
-            );
-
-            // Use the calculated rent for the selected unit (fallback to canonical if missing)
-            baseRent = pricingResult.roomRentsById[selectedUnit.id] ?? canonicalWeeklyRent;
-        }
+        // For now, dynamic pricing is disabled in this simplified version
+        // It would require tracking occupancies for all units, not just the selected one
+        usedDynamicPricing = false;
     }
 
     // Legacy dual occupancy premium (only if dynamic pricing was NOT used)
@@ -228,7 +203,8 @@ export function calculatePricing(params: {
     }
 
     // Apply lease period multiplier (with fallback to 1.0)
-    const multiplier = PRICING_CONFIG.leaseMultipliers[inclusions.selectedLease] ?? 1;
+    const rentalDuration = rentalForm.rentalDuration;
+    const multiplier = PRICING_CONFIG.leaseMultipliers[rentalDuration] ?? 1;
     const adjustedBaseRent = baseRent * multiplier;
 
     // Bond is 4x base rent (before lease adjustments)
@@ -239,28 +215,31 @@ export function calculatePricing(params: {
     // They should not be treated as paid add-ons.
 
     // FURNITURE: Guard against division by zero
-    const selectedLease = inclusions.selectedLease;
-    const leaseDivisor = selectedLease && selectedLease > 0 ? selectedLease * 4.33 : 1;
+    const leaseDivisor = rentalDuration && rentalDuration > 0 ? rentalDuration * 4.33 : 1;
 
+    const furnitureSelected = isInclusionSelected(rentalForm.inclusions, "furniture");
     const furniture =
-        !isRoomListing && inclusions.furnitureSelected
+        !isRoomListing && furnitureSelected
             ? (isEntireHome
                   ? FURNITURE_COST
                   : getRoomFurnitureCost(property.units || [], FURNITURE_COST)) / leaseDivisor
             : 0;
 
-    const bills =
-        !isRoomListing && inclusions.billsIncluded ? getBillsCostPerWeek(property.bedrooms) : 0;
+    const billsSelected = isInclusionSelected(rentalForm.inclusions, "bills");
+    const bills = !isRoomListing && billsSelected ? getBillsCostPerWeek(property.bedrooms) : 0;
 
-    const cleaning = inclusions.regularCleaningSelected
+    const cleaningSelected = isInclusionSelected(rentalForm.inclusions, "cleaning");
+    const cleaning = cleaningSelected
         ? isEntireHome
             ? getEntireHomeCleaningCosts(property.units || []).regularWeekly
             : getRegularCleaningCostPerWeek(isDualOccupancy)
         : 0;
 
-    const carpark = !isEntireHome && inclusions.carparkSelected ? CARPARK_COST_PER_WEEK : 0;
-    const storage =
-        !isEntireHome && inclusions.storageCageSelected ? STORAGE_CAGE_COST_PER_WEEK : 0;
+    const carparkSelected = isInclusionSelected(rentalForm.inclusions, "carpark");
+    const carpark = !isEntireHome && carparkSelected ? CARPARK_COST_PER_WEEK : 0;
+
+    const storageSelected = isInclusionSelected(rentalForm.inclusions, "storage");
+    const storage = !isEntireHome && storageSelected ? STORAGE_CAGE_COST_PER_WEEK : 0;
 
     const inclusionsTotal = furniture + bills + cleaning + carpark + storage;
     const totalWeeklyRent = adjustedBaseRent + inclusionsTotal;
@@ -278,7 +257,7 @@ export function calculatePricing(params: {
             total: inclusionsTotal,
         },
         totalWeeklyRent,
-        isDualOccupancy,
+        occupancyType: rentalForm.occupancyType,
     };
 }
 

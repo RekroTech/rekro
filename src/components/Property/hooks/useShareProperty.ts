@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useCreatePropertyShare } from "@/lib/react-query/hooks/property";
-import { useUser } from "@/lib/react-query/hooks/auth";
+import { useSessionUser } from "@/lib/react-query/hooks/auth";
 
 interface UseSharePropertyProps {
     propertyId: string;
@@ -10,7 +10,7 @@ interface UseSharePropertyProps {
 
 export function useShareProperty({ propertyId, unitId, propertyTitle }: UseSharePropertyProps) {
     const [copied, setCopied] = useState(false);
-    const { data: user } = useUser();
+    const { data: sessionUser } = useSessionUser();
     const createShare = useCreatePropertyShare();
 
     const propertyUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/property/${propertyId}`;
@@ -20,9 +20,8 @@ export function useShareProperty({ propertyId, unitId, propertyTitle }: UseShare
             await navigator.clipboard.writeText(propertyUrl);
             setCopied(true);
 
-            // Track the share
             await createShare.mutateAsync({
-                shared_by: user?.id || null,
+                shared_by: sessionUser?.id ?? null,
                 unit_id: unitId,
                 channel: "link",
                 to_value: null,
@@ -52,19 +51,19 @@ export function useShareProperty({ propertyId, unitId, propertyTitle }: UseShare
             case "whatsapp":
                 shareUrl = `https://wa.me/?text=${encodeURIComponent(`Check out this property: ${propertyTitle} ${propertyUrl}`)}`;
                 break;
-            case "email":
+            case "email": {
                 const subject = encodeURIComponent(`Check out this property: ${propertyTitle}`);
                 const body = encodeURIComponent(
                     `I thought you might be interested in this property:\n\n${propertyTitle}\n\n${propertyUrl}`
                 );
                 shareUrl = `mailto:?subject=${subject}&body=${body}`;
                 break;
+            }
         }
 
         if (shareUrl) {
-            // Track the share
             await createShare.mutateAsync({
-                shared_by: user?.id || null,
+                shared_by: sessionUser?.id ?? null,
                 unit_id: unitId,
                 channel: platform,
                 to_value: null,

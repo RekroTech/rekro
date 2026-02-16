@@ -1,16 +1,11 @@
 "use client";
 
 import { ReactNode } from "react";
-import type { AppRole } from "@/types/auth.types";
-
-interface User {
-    id: string;
-    email: string;
-    roles?: AppRole[];
-}
+import type { AppRole } from "@/types/db";
+import type { SessionUser } from "@/types/auth.types";
 
 interface RoleGuardProps {
-    user: User | null;
+    user: SessionUser | null;
     children: ReactNode;
     fallback?: ReactNode;
     /**
@@ -71,31 +66,30 @@ export function RoleGuard({
     allRoles,
     minimumRole,
 }: RoleGuardProps) {
-    const userRoles = user?.roles || [];
+    if (!user) {
+        return <>{fallback}</>;
+    }
 
     // Check specific role
-    if (role && !userRoles.includes(role)) {
+    if (role && user.role !== role) {
         return <>{fallback}</>;
     }
 
     // Check any of the roles
-    if (anyRole && !anyRole.some((r) => userRoles.includes(r))) {
+    if (anyRole && !anyRole.includes(user.role)) {
         return <>{fallback}</>;
     }
 
-    // Check all roles
-    if (allRoles && !allRoles.every((r) => userRoles.includes(r))) {
+    // Check all roles (with single role, only valid if allRoles contains exactly the user's role)
+    if (allRoles && !(allRoles.length === 1 && allRoles[0] === user.role)) {
         return <>{fallback}</>;
     }
 
     // Check minimum role level
     if (minimumRole) {
-        if (userRoles.length === 0) {
-            return <>{fallback}</>;
-        }
         const minimumLevel = ROLE_HIERARCHY[minimumRole];
-        const userMaxLevel = Math.max(...userRoles.map((r) => ROLE_HIERARCHY[r] || 0));
-        if (userMaxLevel < minimumLevel) {
+        const userLevel = ROLE_HIERARCHY[user.role] || 0;
+        if (userLevel < minimumLevel) {
             return <>{fallback}</>;
         }
     }
@@ -104,7 +98,7 @@ export function RoleGuard({
 }
 
 interface PermissionGuardProps {
-    user: User | null;
+    user: SessionUser | null;
     children: ReactNode;
     fallback?: ReactNode;
     /**
@@ -139,23 +133,21 @@ export function PermissionGuard({
     canManageUsers,
     canApproveApplications,
 }: PermissionGuardProps) {
-    const userRoles = user?.roles || [];
-
-    if (userRoles.length === 0) {
+    if (!user) {
         return <>{fallback}</>;
     }
 
-    const userMaxLevel = Math.max(...userRoles.map((r) => ROLE_HIERARCHY[r] || 0));
+    const userLevel = ROLE_HIERARCHY[user.role] || 0;
 
-    if (canManageProperties && userMaxLevel < ROLE_HIERARCHY.landlord) {
+    if (canManageProperties && userLevel < ROLE_HIERARCHY.landlord!) {
         return <>{fallback}</>;
     }
 
-    if (canManageUsers && userMaxLevel < ROLE_HIERARCHY.admin) {
+    if (canManageUsers && userLevel < ROLE_HIERARCHY.admin!) {
         return <>{fallback}</>;
     }
 
-    if (canApproveApplications && userMaxLevel < ROLE_HIERARCHY.landlord) {
+    if (canApproveApplications && userLevel < ROLE_HIERARCHY.landlord!) {
         return <>{fallback}</>;
     }
 

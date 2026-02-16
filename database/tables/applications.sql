@@ -3,16 +3,10 @@
 -- Application type: individual or group application
 create type public.application_type as enum ('individual', 'group');
 
--- Application status: workflow states
-create type public.application_status as enum (
-  'draft',
-  'submitted',
-  'under_review',
-  'approved',
-  'rejected',
-  'withdrawn'
-);
+create type public.application_status as enum('draft', 'submitted', 'under_review', 'approved', 'rejected', 'withdrawn');
 
+create type public.occupancy_type as enum('single', 'dual');
+-- Application status: workflow states
 create table public.applications (
   id uuid not null default gen_random_uuid (),
   user_id uuid not null,
@@ -25,6 +19,12 @@ create table public.applications (
   submitted_at timestamp with time zone null,
   updated_at timestamp with time zone null default now(),
   group_id uuid null,
+  move_in_date date null,
+  rental_duration integer null,
+  proposed_rent numeric null,
+  total_rent numeric null,
+  inclusions jsonb not null default '[]'::jsonb,
+  occupancy_type public.occupancy_type not null default 'single'::occupancy_type,
   constraint applications_pkey primary key (id),
   constraint applications_property_id_fkey foreign KEY (property_id) references properties (id) on delete CASCADE,
   constraint applications_unit_id_fkey foreign KEY (unit_id) references units (id) on delete set null,
