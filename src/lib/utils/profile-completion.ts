@@ -44,19 +44,19 @@ function percent(filled: number, total: number): number {
 
 /**
  * Personal details completion based on the fields currently editable in the UI.
- * (Email is shown but not editable; still counts because it exists for authenticated users.)
+ * These fields match PersonalDetailsFormState from Profile/types.ts
  */
 export function calculatePersonalDetailsCompletion(user: UserProfile): number {
   const fields: unknown[] = [
     user.full_name,
     user.username,
-    user.email,
     user.phone,
     user.date_of_birth,
     user.gender,
     user.occupation,
     user.bio,
     user.native_language,
+    user.preferred_contact_method,
   ];
 
   const filled = fields.filter(isFilled).length;
@@ -151,16 +151,15 @@ export function calculateAdditionalDocumentsCompletion(uploadedDocs: string[]): 
 /**
  * Rental preferences completion is based on the fields present in `RentalPreferencesSection`.
  * We treat pets/smoker as optional (you can legitimately be false).
+ * Only checks the fields that are actually editable in the UI.
  */
 export function calculateLocationPreferencesCompletion(user: UserProfile): number {
   const app = user.user_application_profile;
 
-  const hasCurrentLocation = user.current_location !== null && user.current_location !== undefined;
   const maxBudget = app?.max_budget_per_week;
   const preferredLocality = app?.preferred_locality;
 
   const checks = [
-    hasCurrentLocation,
     maxBudget !== null && maxBudget !== undefined,
     isFilled(preferredLocality),
   ];
@@ -236,23 +235,15 @@ export function calculateProfileCompletion(
   const sections = getProfileSections(user, details, uploadedDocs);
 
   const requiredSections = sections.filter((s) => s.required);
-  const optionalSections = sections.filter((s) => !s.required);
 
-  // Simple weighted average: emphasize required sections.
-  const requiredWeight = 0.85;
-  const optionalWeight = 0.15;
-
+  // Total percentage is based only on required sections
+  // Optional sections (like Additional Documents) don't contribute to the overall completion
   const requiredAvg =
     requiredSections.length > 0
       ? requiredSections.reduce((sum, s) => sum + s.completionPercentage, 0) / requiredSections.length
       : 0;
 
-  const optionalAvg =
-    optionalSections.length > 0
-      ? optionalSections.reduce((sum, s) => sum + s.completionPercentage, 0) / optionalSections.length
-      : 0;
-
-  const totalPercentage = Math.round(requiredAvg * requiredWeight + optionalAvg * optionalWeight);
+  const totalPercentage = Math.round(requiredAvg);
 
   const unlockedBadges: string[] = [];
   if (totalPercentage >= 25) unlockedBadges.push("Getting Started");

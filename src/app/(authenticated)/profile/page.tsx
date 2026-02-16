@@ -3,21 +3,31 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useProfile } from "@/lib/react-query/hooks/user";
 import * as profileHooks from "@/lib/react-query/hooks/user/useProfile";
-import { Icon, Loader } from "@/components/common";
+import { BackButton, Icon, Loader, Toast } from "@/components/common";
 import {
-  ProfileCard,
-  ProfileSectionCard,
-  DocumentsSection,
-  RentalPreferencesSection,
-  ResidencySection,
-  IncomeDetailsSection,
-  PersonalDetailsSection,
+    ProfileCard,
+    ProfileSectionCard,
+    DocumentsSection,
+    RentalPreferencesSection,
+    ResidencySection,
+    IncomeDetailsSection,
+    PersonalDetailsSection,
 } from "@/components/Profile";
 import { useRouter } from "next/navigation";
-import type { Gender, PreferredContactMethod, ShareableProfile, EmploymentStatus } from "@/types/user.types";
-import type { PersonalDetailsFormState, ResidencyFormState, IncomeDetailsFormState, RentalPreferencesFormState } from "@/components/Profile";
+import type {
+    Gender,
+    PreferredContactMethod,
+    ShareableProfile,
+} from "@/types/user.types";
+import type {
+    PersonalDetailsFormState,
+    ResidencyFormState,
+    IncomeDetailsFormState,
+    RentalPreferencesFormState,
+} from "@/components/Profile";
 import { calculateProfileCompletion } from "@/lib/utils/profile-completion";
 import { Button } from "@/components/common";
+import type { ToastType } from "@/components/common";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -29,9 +39,15 @@ export default function ProfilePage() {
         "personal-details": true,
         "visa-details": false,
         "income-details": false,
-        "documents": false,
+        documents: false,
         "location-preferences": false,
     });
+
+    // Toast notification state
+    const [toast, setToast] = useState<{
+        message: string;
+        type: ToastType;
+    } | null>(null);
 
     const didHydrateFromUserRef = useRef(false);
 
@@ -58,7 +74,8 @@ export default function ProfilePage() {
             occupation: user.occupation ?? "",
             date_of_birth: user.date_of_birth ?? "",
             gender: (user.gender ?? "") as "" | Gender,
-            preferred_contact_method: (user.preferred_contact_method ?? "email") as PreferredContactMethod,
+            preferred_contact_method: (user.preferred_contact_method ??
+                "email") as PreferredContactMethod,
             native_language: user.native_language ?? "",
         };
     }, [user]);
@@ -88,11 +105,13 @@ export default function ProfilePage() {
     }, [user]);
 
     // State for personal details form
-    const [personalDetails, setPersonalDetails] = useState<PersonalDetailsFormState>(userPersonalDetails);
+    const [personalDetails, setPersonalDetails] =
+        useState<PersonalDetailsFormState>(userPersonalDetails);
 
     // State for income and employment details
     const [incomeDetails, setIncomeDetails] = useState<IncomeDetailsFormState>({
-        isWorking: null,
+        // Default to "Working" selected (unless DB says otherwise)
+        isWorking: true,
         isStudent: null,
         employmentStatus: null,
         incomeSource: null,
@@ -104,7 +123,8 @@ export default function ProfilePage() {
 
     // State for visa/citizenship
     const [residency, setResidency] = useState<ResidencyFormState>({
-        isCitizen: null,
+        // Default to "Citizen" selected (unless DB says otherwise)
+        isCitizen: true,
         visaStatus: null,
     });
 
@@ -122,9 +142,10 @@ export default function ProfilePage() {
         const app = user.user_application_profile ?? null;
 
         // Defer state updates to avoid synchronous setState-in-effect warnings.
-        const defer = typeof queueMicrotask === "function"
-            ? queueMicrotask
-            : (cb: () => void) => Promise.resolve().then(cb);
+        const defer =
+            typeof queueMicrotask === "function"
+                ? queueMicrotask
+                : (cb: () => void) => Promise.resolve().then(cb);
 
         defer(() => {
             setPersonalDetails(userPersonalDetails);
@@ -132,12 +153,11 @@ export default function ProfilePage() {
 
             // Hydrate tenant/application details from DB
             setIncomeDetails({
+                // If there's no saved employment status, keep the default (true).
                 isWorking:
                     app?.employment_status === "working"
                         ? true
-                        : app?.employment_status === "not_working"
-                          ? false
-                          : null,
+                        : app?.employment_status !== "not_working",
                 isStudent:
                     app?.student_status === "student"
                         ? true
@@ -153,7 +173,8 @@ export default function ProfilePage() {
             });
 
             setResidency({
-                isCitizen: app?.visa_status ? false : null,
+                // If there's no saved visa status, keep the default (true).
+                isCitizen: app?.visa_status ? false : true,
                 visaStatus: app?.visa_status ?? null,
             });
 
@@ -162,12 +183,11 @@ export default function ProfilePage() {
     }, [user, userPersonalDetails, userLocationPreferences]);
 
     const toggleSection = (sectionId: string) => {
-        setExpandedSections(prev => ({
+        setExpandedSections((prev) => ({
             ...prev,
             [sectionId]: !prev[sectionId],
         }));
     };
-
 
     const handleSavePersonalDetails = () => {
         const nativeLanguage = personalDetails.native_language.trim();
@@ -186,10 +206,10 @@ export default function ProfilePage() {
             },
             {
                 onSuccess: () => {
-                    alert("Personal details updated successfully!");
+                    setToast({ message: "Personal details updated successfully!", type: "success" });
                 },
                 onError: (error: Error) => {
-                    alert(`Failed to update: ${error.message}`);
+                    setToast({ message: `Failed to update: ${error.message}`, type: "error" });
                 },
             }
         );
@@ -222,25 +242,33 @@ export default function ProfilePage() {
 
                 visa_status: residency.visaStatus,
 
-                employment_status: (incomeDetails.employmentStatus as EmploymentStatus | null) ?? null,
+                // Fix: employment_status should be "working" or "not_working"
+                employment_status: incomeDetails.isWorking === true
+                    ? "working"
+                    : incomeDetails.isWorking === false
+                        ? "not_working"
+                        : null,
+                // employment_type is what the user selects (full-time, part-time, etc.)
+                employment_type: incomeDetails.employmentStatus,
                 income_source: incomeDetails.incomeSource,
                 income_frequency: incomeDetails.incomeFrequency,
                 income_amount: incomeDetails.incomeAmount,
                 finance_support_type: incomeDetails.financeSupportType,
                 finance_support_details: incomeDetails.financeSupportDetails,
 
-                student_status: incomeDetails.isStudent === null
-                    ? null
-                    : incomeDetails.isStudent
-                      ? "student"
-                      : "not_student",
+                student_status:
+                    incomeDetails.isStudent === null
+                        ? null
+                        : incomeDetails.isStudent
+                          ? "student"
+                          : "not_student",
             },
             {
                 onSuccess: () => {
-                    alert("Profile updated successfully!");
+                    setToast({ message: "Profile updated successfully!", type: "success" });
                 },
                 onError: (error: Error) => {
-                    alert(`Failed to update profile: ${error.message}`);
+                    setToast({ message: `Failed to update profile: ${error.message}`, type: "error" });
                 },
             }
         );
@@ -250,13 +278,13 @@ export default function ProfilePage() {
         // TODO: Backend implementation - upload to Supabase Storage
         console.log("Uploading document:", docType, file);
         setUploadedDocs((prev) => (prev.includes(docType) ? prev : [...prev, docType]));
-        alert(`${docType} uploaded! (Backend implementation pending)`);
+        setToast({ message: `${docType} uploaded! (Backend implementation pending)`, type: "info" });
     };
 
     const handleDocumentRemove = (docType: string) => {
         // TODO: Backend implementation - remove from Supabase Storage
         setUploadedDocs((prev) => prev.filter((d) => d !== docType));
-        alert(`${docType} removed!`);
+        setToast({ message: `${docType} removed!`, type: "info" });
     };
 
     if (userLoading) {
@@ -286,24 +314,47 @@ export default function ProfilePage() {
         username: user.username ?? null,
         email: user.email || "",
         imageUrl: user.image_url ?? null,
+        phone: user.phone ?? null,
         nativeLanguage: user.native_language ?? null,
+
+        // Personal details
+        dateOfBirth: user.date_of_birth ?? null,
+        age: null, // Calculated in ProfileCard component
+        gender: user.gender ?? null,
+        occupation: user.occupation ?? null,
+        bio: user.bio ?? null,
+
+        // Location & preferences
         currentLocation: (user.current_location as { display?: string })?.display || null,
-        targetLocation: null, // Not available in current schema
+        preferredLocality: user.user_application_profile?.preferred_locality ?? null,
         budget: user.user_application_profile?.max_budget_per_week ?? null,
+
+        // Application profile
+        visaStatus: user.user_application_profile?.visa_status ?? null,
+        employmentStatus: user.user_application_profile?.employment_status ?? null,
+        studentStatus: user.user_application_profile?.student_status ?? null,
+        hasPets: user.user_application_profile?.has_pets ?? null,
+        smoker: user.user_application_profile?.smoker ?? null,
+
+        // Completion
         completionPercentage: profileCompletion.totalPercentage,
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="min-h-[calc(100vh-64px)] bg-gray-50 pb-8">
+            {/* Toast Notification */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative bg-gray-50">
                 {/* Header */}
-                <div className="mb-8 flex items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-                        <p className="text-gray-600 mt-2">
-                            Manage your profile and increase your chances of being accepted
-                        </p>
-                    </div>
+                <div className="py-4 sm:py-6 flex items-center justify-between gap-4 sticky top-14 sm:top-16 z-10 bg-neutral-50">
+                    <BackButton />
 
                     <Button
                         type="button"
@@ -316,11 +367,10 @@ export default function ProfilePage() {
                         Save Profile
                     </Button>
                 </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 ">
                     {/* Left Column - Shareable Profile Card */}
                     <div className="lg:col-span-1">
-                        <div className="sticky top-8">
+                        <div className="sticky top-39">
                             <ProfileCard profile={shareableProfile} />
 
                             {/* Badges */}
@@ -336,8 +386,13 @@ export default function ProfilePage() {
                                                 key={badge}
                                                 className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg"
                                             >
-                                                <Icon name="check-circle" className="w-5 h-5 text-yellow-600" />
-                                                <span className="text-sm font-medium text-gray-900">{badge}</span>
+                                                <Icon
+                                                    name="check-circle"
+                                                    className="w-5 h-5 text-yellow-600"
+                                                />
+                                                <span className="text-sm font-medium text-gray-900">
+                                                    {badge}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
@@ -353,8 +408,14 @@ export default function ProfilePage() {
                             title="Personal Details"
                             description="Basic information about you"
                             icon="profile"
-                            completed={profileCompletion.sections.find(s => s.id === "personal-details")?.completed || false}
-                            completionPercentage={profileCompletion.sections.find(s => s.id === "personal-details")?.completionPercentage || 0}
+                            completed={
+                                profileCompletion.sections.find((s) => s.id === "personal-details")
+                                    ?.completed || false
+                            }
+                            completionPercentage={
+                                profileCompletion.sections.find((s) => s.id === "personal-details")
+                                    ?.completionPercentage || 0
+                            }
                             isExpanded={expandedSections["personal-details"]}
                             onToggle={() => toggleSection("personal-details")}
                         >
@@ -367,36 +428,41 @@ export default function ProfilePage() {
                             />
                         </ProfileSectionCard>
 
-
                         {/* Visa Details Section - Only for tenants */}
                         {isTenant && (
                             <ProfileSectionCard
                                 title="Visa Details"
                                 description="Citizenship status and visa documentation"
                                 icon="map-pin"
-                                completed={profileCompletion.sections.find(s => s.id === "visa-details")?.completed || false}
-                                completionPercentage={profileCompletion.sections.find(s => s.id === "visa-details")?.completionPercentage || 0}
+                                completed={
+                                    profileCompletion.sections.find((s) => s.id === "visa-details")
+                                        ?.completed || false
+                                }
+                                completionPercentage={
+                                    profileCompletion.sections.find((s) => s.id === "visa-details")
+                                        ?.completionPercentage || 0
+                                }
                                 isExpanded={expandedSections["visa-details"]}
                                 onToggle={() => toggleSection("visa-details")}
                             >
-        <ResidencySection
-          isCitizen={residency.isCitizen}
-          visaStatus={residency.visaStatus}
-          uploadedDocs={uploadedDocs}
-          onCitizenChange={(isCitizen) =>
-            setResidency((prev) => ({
-              ...prev,
-              isCitizen,
-              visaStatus: isCitizen ? null : prev.visaStatus,
-            }))
-          }
-          onVisaStatusChange={(visaStatus: string | null) =>
-            setResidency((prev) => ({ ...prev, visaStatus }))
-          }
-          onUpload={handleDocumentUpload}
-          onRemove={handleDocumentRemove}
-        />
-      </ProfileSectionCard>
+                                <ResidencySection
+                                    isCitizen={residency.isCitizen}
+                                    visaStatus={residency.visaStatus}
+                                    uploadedDocs={uploadedDocs}
+                                    onCitizenChange={(isCitizen) =>
+                                        setResidency((prev) => ({
+                                            ...prev,
+                                            isCitizen,
+                                            visaStatus: isCitizen ? null : prev.visaStatus,
+                                        }))
+                                    }
+                                    onVisaStatusChange={(visaStatus: string | null) =>
+                                        setResidency((prev) => ({ ...prev, visaStatus }))
+                                    }
+                                    onUpload={handleDocumentUpload}
+                                    onRemove={handleDocumentRemove}
+                                />
+                            </ProfileSectionCard>
                         )}
 
                         {/* Income Details Section - Only for tenants */}
@@ -405,18 +471,28 @@ export default function ProfilePage() {
                                 title="Income Details"
                                 description="Employment and financial information"
                                 icon="dollar"
-                                completed={profileCompletion.sections.find(s => s.id === "income-details")?.completed || false}
-                                completionPercentage={profileCompletion.sections.find(s => s.id === "income-details")?.completionPercentage || 0}
+                                completed={
+                                    profileCompletion.sections.find(
+                                        (s) => s.id === "income-details"
+                                    )?.completed || false
+                                }
+                                completionPercentage={
+                                    profileCompletion.sections.find(
+                                        (s) => s.id === "income-details"
+                                    )?.completionPercentage || 0
+                                }
                                 isExpanded={expandedSections["income-details"]}
                                 onToggle={() => toggleSection("income-details")}
                             >
-                            <IncomeDetailsSection
-                                data={incomeDetails}
-                                uploadedDocs={uploadedDocs}
-                                onChange={(data) => setIncomeDetails(prev => ({ ...prev, ...data }))}
-                                onUpload={handleDocumentUpload}
-                                onRemove={handleDocumentRemove}
-                            />
+                                <IncomeDetailsSection
+                                    data={incomeDetails}
+                                    uploadedDocs={uploadedDocs}
+                                    onChange={(data) =>
+                                        setIncomeDetails((prev) => ({ ...prev, ...data }))
+                                    }
+                                    onUpload={handleDocumentUpload}
+                                    onRemove={handleDocumentRemove}
+                                />
                             </ProfileSectionCard>
                         )}
 
@@ -426,16 +502,23 @@ export default function ProfilePage() {
                                 title="Additional Documents"
                                 description="Upload remaining documents"
                                 icon="upload"
-                                completed={profileCompletion.sections.find(s => s.id === "documents")?.completed || false}
-                                completionPercentage={profileCompletion.sections.find(s => s.id === "documents")?.completionPercentage || 0}
+                                completed={
+                                    profileCompletion.sections.find((s) => s.id === "documents")
+                                        ?.completed || false
+                                }
+                                completionPercentage={
+                                    profileCompletion.sections.find((s) => s.id === "documents")
+                                        ?.completionPercentage || 0
+                                }
                                 isExpanded={expandedSections["documents"]}
                                 onToggle={() => toggleSection("documents")}
+                                showCompletion={false} // Hide completion for this section since it's covered in Visa/Income sections
                             >
-                            <DocumentsSection
-                                uploadedDocs={uploadedDocs}
-                                onUpload={handleDocumentUpload}
-                                onRemove={handleDocumentRemove}
-                            />
+                                <DocumentsSection
+                                    uploadedDocs={uploadedDocs}
+                                    onUpload={handleDocumentUpload}
+                                    onRemove={handleDocumentRemove}
+                                />
                             </ProfileSectionCard>
                         )}
 
@@ -445,15 +528,25 @@ export default function ProfilePage() {
                                 title="Rental Preference"
                                 description="Your preferred locality and budget"
                                 icon="map"
-                                completed={profileCompletion.sections.find(s => s.id === "location-preferences")?.completed || false}
-                                completionPercentage={profileCompletion.sections.find(s => s.id === "location-preferences")?.completionPercentage || 0}
+                                completed={
+                                    profileCompletion.sections.find(
+                                        (s) => s.id === "location-preferences"
+                                    )?.completed || false
+                                }
+                                completionPercentage={
+                                    profileCompletion.sections.find(
+                                        (s) => s.id === "location-preferences"
+                                    )?.completionPercentage || 0
+                                }
                                 isExpanded={expandedSections["location-preferences"]}
                                 onToggle={() => toggleSection("location-preferences")}
                             >
-                            <RentalPreferencesSection
-                                data={locationPreferences}
-                                onChange={(data) => setLocationPreferences(prev => ({ ...prev, ...data }))}
-                            />
+                                <RentalPreferencesSection
+                                    data={locationPreferences}
+                                    onChange={(data) =>
+                                        setLocationPreferences((prev) => ({ ...prev, ...data }))
+                                    }
+                                />
                             </ProfileSectionCard>
                         )}
                     </div>

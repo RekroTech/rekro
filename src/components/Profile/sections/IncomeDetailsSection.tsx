@@ -22,7 +22,6 @@ export function IncomeDetailsSection({
     <div className="space-y-6">
       {/* Work status */}
       <div className="space-y-3">
-        <h4 className="text-md font-semibold text-gray-900">Employment Status</h4>
         <SegmentedControl<boolean>
           ariaLabel="Employment status"
           value={data.isWorking}
@@ -95,7 +94,6 @@ export function IncomeDetailsSection({
           <div className="space-y-3">
             <Upload
               label="Payslips"
-              required
               helperText="Upload your last 3 months of payslips (PDF/JPG/PNG, max 2MB)."
               accept=".pdf,.jpg,.jpeg,.png"
               maxSizeMB={2}
@@ -174,7 +172,6 @@ export function IncomeDetailsSection({
 
                 <Upload
                   label="Student ID"
-                  required
                   helperText="Upload your current student ID card (PDF/JPG/PNG, max 2MB)."
                   accept=".pdf,.jpg,.jpeg,.png"
                   maxSizeMB={2}
@@ -188,7 +185,6 @@ export function IncomeDetailsSection({
 
                 <Upload
                   label="Confirmation of Enrollment (CoE)"
-                  required
                   helperText="Upload your current semester CoE (PDF/JPG/PNG, max 2MB)."
                   accept=".pdf,.jpg,.jpeg,.png"
                   maxSizeMB={2}
@@ -202,7 +198,6 @@ export function IncomeDetailsSection({
 
                 <Upload
                   label="Proof of Financial Support"
-                  required
                   helperText="Bank statements, scholarship letters, or sponsor documents (PDF/JPG/PNG, max 2MB)."
                   accept=".pdf,.jpg,.jpeg,.png"
                   maxSizeMB={2}

@@ -67,7 +67,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     {label && (
                         <label
                             htmlFor={inputId}
-                            className="absolute left-3 px-1.5 bg-card text-xs font-medium text-text-subtle z-10 -translate-y-1/2"
+                            className="absolute left-3 px-1.5 bg-card text-xs font-medium text-text-subtle -translate-y-1/2 z-1 pointer-events-none"
                         >
                             {label}
                         </label>

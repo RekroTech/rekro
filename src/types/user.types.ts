@@ -87,12 +87,27 @@ export interface ShareableProfile {
   username: string | null;
   email: string;
   imageUrl: string | null;
+  phone: string | null;
   nativeLanguage: string | null;
+
+  // Personal details
+  dateOfBirth: string | null;
+  age: number | null;
+  gender: string | null;
+  occupation: string | null;
+  bio: string | null;
 
   // Current & Target
   currentLocation: string | null;
-  targetLocation: string | null;
+  preferredLocality: string | null;
   budget: number | null;
+
+  // Application profile
+  visaStatus: string | null;
+  employmentStatus: string | null;
+  studentStatus: string | null;
+  hasPets: boolean | null;
+  smoker: boolean | null;
 
   // Profile completion
   completionPercentage: number;

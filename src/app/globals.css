@@ -586,3 +586,67 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
         display: block; /* keep as normal input; we just normalize appearance */
     }
 }
+
+/* ---------------------------
+   Toast/Notification Animations
+---------------------------- */
+@keyframes slide-in-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-out-right {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes toast-slide-in {
+    from {
+        transform: translate(-50%, -20px);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes toast-slide-out {
+    from {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-50%, -20px);
+        opacity: 0;
+    }
+}
+
+.animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-slide-out-right {
+    animation: slide-out-right 0.2s ease-in;
+}
+
+.animate-toast-in {
+    animation: toast-slide-in 0.3s ease-out;
+}
+
+.animate-toast-out {
+    animation: toast-slide-out 0.2s ease-in;
+}
+

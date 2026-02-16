@@ -66,7 +66,6 @@ export function ResidencySection({
       <div className="space-y-3">
         <Upload
           label="Passport"
-          required
           helperText="Upload or drag a PDF/JPG/PNG of the photo page of your valid passport (max 2MB)."
           accept=".pdf,.jpg,.jpeg,.png"
           maxSizeMB={2}
