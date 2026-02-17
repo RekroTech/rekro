@@ -10,7 +10,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CreateApplicationRequest } from "@/types/application.types";
 import { Application } from "@/types/db";
-import { Inclusion } from "@/components/Property/types";
 
 interface ApplicationResponse {
     success: boolean;
@@ -25,13 +24,11 @@ interface ApplicationsResponse {
 // Query keys for better cache management
 export const applicationKeys = {
     all: ["applications"] as const,
-    lists: () => [...applicationKeys.all, "list"] as const,
     list: (filters?: { status?: string; propertyId?: string }) =>
-        [...applicationKeys.lists(), filters] as const,
-    details: () => [...applicationKeys.all, "detail"] as const,
-    detail: (id: string) => [...applicationKeys.details(), id] as const,
-    snapshots: () => [...applicationKeys.all, "snapshots"] as const,
-    snapshot: (applicationId: string) => [...applicationKeys.snapshots(), applicationId] as const,
+        [...applicationKeys.all, "list", filters ?? null] as const,
+    detail: (id: string) => [...applicationKeys.all, "detail", id] as const,
+    snapshot: (applicationId: string) =>
+        [...applicationKeys.all, "snapshot", applicationId] as const,
 };
 
 /**
@@ -60,79 +57,25 @@ export function useUpsertApplication() {
             const data: ApplicationResponse = await response.json();
             return data.data;
         },
-        onMutate: async (newApplication) => {
+        onMutate: async () => {
             // Cancel outgoing refetches
-            await queryClient.cancelQueries({ queryKey: applicationKeys.lists() });
+            await queryClient.cancelQueries({ queryKey: applicationKeys.all });
 
             // Snapshot the previous value
-            const previousApplications = queryClient.getQueryData(applicationKeys.lists());
-
-            // If updating, optimistically update the existing application
-            if (newApplication.applicationId) {
-                queryClient.setQueryData<Application[]>(
-                    applicationKeys.lists(),
-                    (old: Application[] | undefined) => {
-                        if (!old) return [];
-                        return old.map((app: Application) =>
-                            app.id === newApplication.applicationId
-                                ? {
-                                      ...app,
-                                      unit_id: newApplication.unitId || null,
-                                      application_type: newApplication.applicationType,
-                                      message: newApplication.message || null,
-                                      move_in_date: newApplication.moveInDate || null,
-                                      rental_duration: newApplication.rentalDuration ? parseInt(newApplication.rentalDuration, 10) : null,
-                                      proposed_rent: newApplication.proposedRent ? parseFloat(newApplication.proposedRent) : null,
-                                      total_rent: newApplication.totalRent || null,
-                                      inclusions: newApplication.inclusions as Inclusion[],
-                                      occupancy_type: newApplication.occupancyType,
-                                      updated_at: new Date().toISOString(),
-                                  }
-                                : app
-                        );
-                    }
-                );
-            } else {
-                // Optimistically add new application
-                queryClient.setQueryData<Application[]>(
-                    applicationKeys.lists(),
-                    (old = []) => {
-                        const optimisticApp: Application = {
-                            id: `temp-${Date.now()}`,
-                            user_id: "",
-                            property_id: newApplication.propertyId,
-                            unit_id: newApplication.unitId || null,
-                            application_type: newApplication.applicationType,
-                            status: "submitted",
-                            message: newApplication.message || null,
-                            submitted_at: new Date().toISOString(),
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                            group_id: null,
-                            move_in_date: newApplication.moveInDate || null,
-                            rental_duration: newApplication.rentalDuration ? parseInt(newApplication.rentalDuration, 10) : null,
-                            proposed_rent: newApplication.proposedRent ? parseFloat(newApplication.proposedRent) : null,
-                            total_rent: newApplication.totalRent || null,
-                            inclusions: newApplication.inclusions,
-                            occupancy_type: newApplication.occupancyType,
-                        };
-                        return [optimisticApp, ...old];
-                    }
-                );
-            }
+            const previousApplications = queryClient.getQueryData(applicationKeys.all);
 
             return { previousApplications };
         },
         onError: (err, _newApplication, context) => {
             // Rollback on error
             if (context?.previousApplications) {
-                queryClient.setQueryData(applicationKeys.lists(), context.previousApplications);
+                queryClient.setQueryData(applicationKeys.all, context.previousApplications);
             }
             console.error("Failed to save application:", err);
         },
         onSettled: () => {
             // Refetch after error or success
-            queryClient.invalidateQueries({ queryKey: applicationKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: applicationKeys.all });
         },
     });
 }
@@ -169,18 +112,31 @@ export function useApplications(filters?: { status?: string; propertyId?: string
  * Returns the existing application if found, null otherwise
  */
 export function useHasApplied(propertyId: string, unitId?: string | null) {
-    const { data: applications } = useApplications();
-
-    if (!applications) {
-        return null;
-    }
-
-    return applications.find((app) => {
-        if (unitId) {
-            return app.property_id === propertyId && app.unit_id === unitId;
-        }
-        return app.property_id === propertyId && !app.unit_id;
-    }) || null;
+    return useQuery({
+        queryKey: applicationKeys.list(),
+        queryFn: async () => {
+            const response = await fetch("/api/application");
+            if (!response.ok) {
+                throw new Error("Failed to fetch applications");
+            }
+            const data: ApplicationsResponse = await response.json();
+            return data.data;
+        },
+        select: (applications) => {
+            return (
+                applications.find((app) => {
+                    if (unitId) {
+                        return app.property_id === propertyId && app.unit_id === unitId;
+                    }
+                    return app.property_id === propertyId && !app.unit_id;
+                }) || null
+            );
+        },
+        // Keep same caching characteristics as useApplications
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        enabled: !!propertyId,
+    }).data ?? null;
 }
 
 
@@ -221,7 +177,7 @@ export function useCreateSnapshot() {
         onSuccess: (data, variables) => {
             // Invalidate snapshots query for this application
             queryClient.invalidateQueries({
-                queryKey: applicationKeys.snapshot(variables.applicationId)
+                queryKey: applicationKeys.snapshot(variables.applicationId),
             });
             console.log("Snapshot created successfully:", data);
         },

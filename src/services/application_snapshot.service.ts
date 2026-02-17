@@ -10,7 +10,6 @@ import { createApplicationSnapshot } from "@/lib/utils/applicationSnapshot";
 import type { ApplicationSnapshot } from "@/types/application.types";
 import type { ApplicationSnapshotInsert } from "@/types/db";
 import type { UserProfile } from "@/types/user.types";
-import type { Inclusion } from "@/components/Property/types";
 
 /**
  * Create a snapshot of an application with current user profile data
@@ -84,7 +83,7 @@ export async function createSnapshot(
             unitId: application.unit_id,
             proposedRent: application.proposed_rent || undefined,
             totalRent: application.total_rent || undefined,
-            inclusions: (application.inclusions as unknown as Inclusion[]) || [],
+            inclusions: application.inclusions || {},
             occupancyType: application.occupancy_type,
             message: application.message || undefined,
         }

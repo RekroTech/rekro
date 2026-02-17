@@ -6,12 +6,11 @@ import {
     useHasApplied,
 } from "@/lib/react-query/hooks/application/useApplications";
 import { useProfile } from "@/lib/react-query/hooks/user";
-import { Inclusion } from "@/components/Property/types";
 
 interface ApplicationReviewProps {
     propertyId?: string;
     unitId?: string;
-    applicationId: string;
+    applicationId?: string;
     onSuccess: () => void;
     onCancel: () => void;
     onBack?: () => void;
@@ -34,7 +33,7 @@ export function ApplicationReview({
         data: application,
         isLoading: isApplicationLoading,
         isError: isApplicationError,
-    } = useApplication(applicationId);
+    } = useApplication(applicationId ?? null);
 
     // Optional: still compute a duplicate application if propertyId/unitId are present.
     // NOTE: this hook currently fetches the full list internally.
@@ -404,19 +403,20 @@ export function ApplicationReview({
                                 </div>
                             )}
                             {sourceApp.inclusions &&
-                                Array.isArray(sourceApp.inclusions) &&
-                                sourceApp.inclusions.length > 0 && (
+                                typeof sourceApp.inclusions === 'object' &&
+                                Object.keys(sourceApp.inclusions).length > 0 && (
                                     <div className="flex flex-col">
                                         <span className="text-text-muted mb-1">Inclusions:</span>
                                         <div className="space-y-1">
-                                            {sourceApp.inclusions.map(
-                                                (inclusion: Inclusion, index: number) => (
+                                            {Object.entries(sourceApp.inclusions)
+                                                .filter(([_, inclusion]) => inclusion.selected)
+                                                .map(([type, inclusion]) => (
                                                     <div
-                                                        key={index}
+                                                        key={type}
                                                         className="flex items-center justify-between text-xs bg-background px-2 py-1.5 rounded"
                                                     >
                                                         <span className="text-text font-medium capitalize">
-                                                            {inclusion.type.replace("_", " ")}
+                                                            {type.replace("_", " ")}
                                                         </span>
                                                         <span className="text-text-muted">
                                                             {inclusion.price > 0

@@ -1,8 +1,17 @@
 import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
-import { DEFAULT_FORM_DATA } from "@/components/Property/constants";
-import { Inclusion, InclusionType, PropertyFormData } from "./types";
-import { PARKING_OPTIONS } from "./constants";
+import { DEFAULT_FORM_DATA, PARKING_OPTIONS } from "@/components/Property/constants";
+import {
+    Inclusion,
+    Inclusions,
+    InclusionType,
+    PropertyFormData,
+} from "./types";
+import {
+    CARPARK_COST_PER_WEEK,
+    FURNITURE_COST,
+    STORAGE_CAGE_COST_PER_WEEK,
+} from "@/components/Property/constants";
 import { format, parseISO, addWeeks } from "date-fns";
 
 export function parseAddress(address: unknown) {
@@ -234,28 +243,99 @@ export const hasStorage = (amenities: string[] | null): boolean => {
 };
 
 
-// Helper functions for working with Inclusion arrays
+// Helper functions for working with Inclusions (object/record)
 export const getInclusionByType = (
-    inclusions: Inclusion[],
+    inclusions: Inclusions,
     type: InclusionType
 ): Inclusion | undefined => {
-    return inclusions.find((inc) => inc.type === type);
+    return inclusions[type];
 };
 
-export const isInclusionSelected = (inclusions: Inclusion[], type: InclusionType): boolean => {
-    return getInclusionByType(inclusions, type)?.selected ?? false;
+export const isInclusionSelected = (inclusions: Inclusions, type: InclusionType): boolean => {
+    return inclusions[type]?.selected ?? false;
 };
 
 export const updateInclusion = (
-    inclusions: Inclusion[],
+    inclusions: Inclusions,
     type: InclusionType,
     updates: Partial<Inclusion>
-): Inclusion[] => {
-    return inclusions.map((inc) => (inc.type === type ? { ...inc, ...updates } : inc));
+): Inclusions => {
+    return {
+        ...inclusions,
+        [type]: { ...inclusions[type], ...updates } as Inclusion,
+    };
 };
 
-export const toggleInclusion = (inclusions: Inclusion[], type: InclusionType): Inclusion[] => {
-    return inclusions.map((inc) =>
-        inc.type === type ? { ...inc, selected: !inc.selected } : inc
-    );
+export function getInclusionPricePerWeek(params: {
+    type: InclusionType;
+    property: Property;
+    isEntireHome: boolean;
+    effectiveOccupancyType: "single" | "dual";
+    rentalDurationMonths: number;
+}): number {
+    const { type, property, isEntireHome, effectiveOccupancyType, rentalDurationMonths } = params;
+
+    switch (type) {
+        case "furniture": {
+            // For room listings, furniture is included (not a paid add-on)
+            if (!isEntireHome) return 0;
+            const months = rentalDurationMonths && rentalDurationMonths > 0 ? rentalDurationMonths : 12;
+            const weekly = FURNITURE_COST / (months * 4.33);
+            return Number.isFinite(weekly) ? weekly : 0;
+        }
+        case "bills": {
+            // For room listings, bills are included (not a paid add-on)
+            if (!isEntireHome) return 0;
+            return getBillsCostPerWeek(property.bedrooms);
+        }
+        case "cleaning": {
+            if (isEntireHome) {
+                return getEntireHomeCleaningCosts(property.units || []).regularWeekly;
+            }
+            return effectiveOccupancyType === "dual" ? 60 : 35;
+        }
+        case "carpark":
+            return isEntireHome ? 0 : CARPARK_COST_PER_WEEK;
+        case "storage":
+            return isEntireHome ? 0 : STORAGE_CAGE_COST_PER_WEEK;
+        default:
+            return 0;
+    }
+}
+
+export const toggleInclusion = (inclusions: Inclusions, type: InclusionType): Inclusions => {
+    const current = inclusions[type];
+    return {
+        ...inclusions,
+        [type]: { selected: !current?.selected, price: current?.price ?? 0 },
+    };
 };
+
+export function toggleInclusionWithPrice(params: {
+    inclusions: Inclusions;
+    type: InclusionType;
+    property: Property;
+    isEntireHome: boolean;
+    effectiveOccupancyType: "single" | "dual";
+    rentalDurationMonths: number;
+}): Inclusions {
+    const { inclusions, type, property, isEntireHome, effectiveOccupancyType, rentalDurationMonths } =
+        params;
+
+    const current = inclusions[type];
+    const nextSelected = !(current?.selected ?? false);
+    const price = nextSelected
+        ? getInclusionPricePerWeek({
+              type,
+              property,
+              isEntireHome,
+              effectiveOccupancyType,
+              rentalDurationMonths,
+          })
+        : 0;
+
+    return {
+        ...inclusions,
+        [type]: { selected: nextSelected, price },
+    };
+}

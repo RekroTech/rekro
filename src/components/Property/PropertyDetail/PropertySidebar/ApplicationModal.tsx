@@ -6,9 +6,9 @@ import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
 import { ApplicationForm } from "./ApplicationForm";
 import { ApplicationReview } from "./ApplicationReview";
-import { RentalFormData } from "@/components/Property/types";
 import { calculatePricing } from "@/components/Property/pricing";
 import { useHasApplied } from "@/lib/react-query/hooks/application/useApplications";
+import { useRentalForm } from "@/contexts";
 
 interface ApplicationModalProps {
     isOpen: boolean;
@@ -16,8 +16,6 @@ interface ApplicationModalProps {
     property: Property;
     selectedUnit: Unit;
     isEntireHome: boolean;
-    rentalForm: RentalFormData;
-    setRentalForm: (rentalForm: RentalFormData) => void;
 }
 
 type Step = "application" | "review";
@@ -28,13 +26,13 @@ export function ApplicationModal({
     property,
     selectedUnit,
     isEntireHome,
-    rentalForm,
-    setRentalForm,
 }: ApplicationModalProps) {
+    const { rentalForm } = useRentalForm();
     const [currentStep, setCurrentStep] = useState<Step>("application");
 
     // Check if user has already applied to this property/unit
     const existingApplication = useHasApplied(property.id, selectedUnit?.id);
+
     // Calculate all pricing in one place
     const pricing = useMemo(
         () => calculatePricing({ selectedUnit, property, rentalForm }),
@@ -61,7 +59,7 @@ export function ApplicationModal({
     };
 
     const handleApplicationSuccess = () => {
-        onClose();
+        setCurrentStep("review");
     };
 
     const getModalTitle = () => {
@@ -87,18 +85,16 @@ export function ApplicationModal({
                     totalWeeklyRent={pricing.totalWeeklyRent}
                     onNext={handleNext}
                     onSuccess={handleApplicationSuccess}
-                    rentalData={rentalForm}
-                    onChange={setRentalForm}
                     existingApplicationId={existingApplication?.id}
                 />
             )}
 
-            {currentStep === "review" && existingApplication && (
+            {currentStep === "review" && (
                 <ApplicationReview
                     propertyId={property.id}
                     unitId={selectedUnit?.id}
-                    applicationId={existingApplication.id}
-                    onSuccess={handleApplicationSuccess}
+                    applicationId={existingApplication?.id}
+                    onSuccess={onClose}
                     onCancel={handleClose}
                     showBackButton={true}
                     onBack={handleBack}

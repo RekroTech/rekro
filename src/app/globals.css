@@ -547,12 +547,7 @@ input[type="datetime-local"] {
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
-
-    /* Normalize iOS rendering so it matches our other inputs/selects */
-    -webkit-appearance: none;
-    appearance: none;
-    line-height: normal;
-    height: auto;
+    /* appearance: none removed - it was resetting line-height and breaking inheritance from Tailwind classes */
 }
 
 /* Keep the calendar picker icon inside the input box and stop it from affecting layout */

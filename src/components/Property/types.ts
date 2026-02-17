@@ -49,16 +49,17 @@ export interface UnitFormData {
 export type InclusionType = "furniture" | "bills" | "cleaning" | "carpark" | "storage";
 
 export interface Inclusion {
-    type: InclusionType;
     selected: boolean;
     price: number;
 }
 
+export type Inclusions = Partial<Record<InclusionType, Inclusion>>;
+
 export interface RentalFormData {
     moveInDate: string;
     rentalDuration: number;
-    inclusions: Inclusion[];
+    inclusions: Inclusions;
     occupancyType: OccupancyType;
+    message: string;
+    proposedRent: string;
 }
-
-

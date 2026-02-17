@@ -1,6 +1,7 @@
 import { Input, Checkbox, Select, Textarea } from "@/components/common";
 import { UnitFormData } from "../types";
 import { ListingType } from "@/types/db";
+import { LEASE_MONTH_OPTIONS } from "@/components/Property/constants";
 
 interface UnitFormProps {
     unit: UnitFormData;
@@ -8,13 +9,6 @@ interface UnitFormProps {
     listingType: ListingType;
     onUpdate: (index: number, updates: Partial<UnitFormData>) => void;
 }
-
-const LEASE_MONTH_OPTIONS = [
-    { value: "4", label: "4 months" },
-    { value: "6", label: "6 months" },
-    { value: "9", label: "9 months" },
-    { value: "12", label: "12 months" },
-];
 
 export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) {
     // Calculate bond as 4 times weekly rent

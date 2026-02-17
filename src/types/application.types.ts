@@ -1,13 +1,13 @@
 // Application types
 import { ApplicationType, OccupancyType } from "@/types/db";
-import { Inclusion } from "@/components/Property/types";
+import { Inclusions } from "@/components/Property/types";
 
 export interface ApplicationFormData {
     moveInDate: string;
     rentalDuration: string;
     proposedRent?: string;
     totalRent?: number;
-    inclusions: Inclusion[];
+    inclusions: Inclusions;
     occupancyType: OccupancyType;
     message?: string;
 }
@@ -22,7 +22,7 @@ export interface ApplicationSnapshot {
         totalRent: number;
         applicationType: ApplicationType;
         submittedAt: string;
-        inclusions: Inclusion[];
+        inclusions: Inclusions;
         occupancyType: OccupancyType;
     };
 
@@ -69,7 +69,7 @@ export interface CreateApplicationRequest {
     rentalDuration: string;
     proposedRent?: string;
     totalRent?: number;
-    inclusions: Inclusion[];
+    inclusions: Inclusions;
     occupancyType: OccupancyType;
     message?: string;
 }

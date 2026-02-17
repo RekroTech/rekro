@@ -1,7 +1,7 @@
 // Database types and utilities
 // This file can be used for database-related types and helper functions
 
-import { Inclusion } from "@/components/Property/types";
+import { Inclusions } from "@/components/Property/types";
 
 // User role types matching database enum
 export type AppRole = "tenant" | "landlord" | "admin" | "super_admin";
@@ -385,7 +385,7 @@ export interface Database {
                     rental_duration: number | null;
                     proposed_rent: number | null;
                     total_rent: number | null;
-                    inclusions: Inclusion[];
+                    inclusions: Inclusions;
                     occupancy_type: OccupancyType;
                 };
                 Insert: {
@@ -404,7 +404,7 @@ export interface Database {
                     rental_duration?: number | null;
                     proposed_rent?: number | null;
                     total_rent?: number | null;
-                    inclusions?: Inclusion[];
+                    inclusions?: Inclusions;
                     occupancy_type?: OccupancyType;
                 };
                 Update: {
@@ -421,7 +421,7 @@ export interface Database {
                     rental_duration?: number | null;
                     proposed_rent?: number | null;
                     total_rent?: number | null;
-                    inclusions?: Inclusion[];
+                    inclusions?: Inclusions;
                     occupancy_type?: OccupancyType;
                 };
             };

@@ -8,7 +8,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createApplicationSnapshot } from "@/lib/utils/applicationSnapshot";
-import type { Inclusion } from "@/components/Property/types";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +101,7 @@ export async function POST(request: NextRequest) {
                 unitId: application.unit_id,
                 proposedRent: application.proposed_rent || undefined,
                 totalRent: application.total_rent || undefined,
-                inclusions: (application.inclusions as unknown as Inclusion[]) || [],
+                inclusions: application.inclusions || {},
                 occupancyType: application.occupancy_type,
                 message: application.message || undefined,
             }

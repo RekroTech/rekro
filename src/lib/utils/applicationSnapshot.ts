@@ -1,7 +1,7 @@
 import type { ApplicationSnapshot } from "@/types/application.types";
 import type { ApplicationType, OccupancyType } from "@/types/db";
 import type { UserProfile } from "@/types/user.types";
-import type { Inclusion } from "@/components/Property/types";
+import type { Inclusions } from "@/components/Property/types";
 
 /**
  * Creates an application snapshot from user profile and application data
@@ -17,7 +17,7 @@ export function createApplicationSnapshot(
         unitId: string | null;
         proposedRent?: number;
         totalRent?: number;
-        inclusions?: Inclusion[];
+        inclusions?: Inclusions;
         occupancyType: OccupancyType;
         message?: string;
     }
@@ -31,7 +31,7 @@ export function createApplicationSnapshot(
             proposedRent: applicationData.proposedRent || 0,
             totalRent: applicationData.totalRent || 0,
             submittedAt: new Date().toISOString(),
-            inclusions: applicationData.inclusions || [],
+            inclusions: applicationData.inclusions || {},
             occupancyType: applicationData.occupancyType,
         },
 

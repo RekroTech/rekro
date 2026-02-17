@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
@@ -10,10 +10,11 @@ import { useToggleUnitLike, useUnitLike } from "@/lib/react-query/hooks/property
 import { EnquiryForm } from "./PropertySidebar/EnquiryForm";
 import { ShareDropdown } from "./PropertySidebar/ShareDropdown";
 import { ApplicationModal } from "./PropertySidebar/ApplicationModal";
-import { Inclusions } from "./Inclusions/Inclusions";
-import { RentalFormData } from "@/components/Property/types";
 import { getAvailabilityInfo, getMaxStartDate, getMinStartDate } from "@/components/Property/utils";
 import { calculatePricing } from "@/components/Property/pricing";
+import { LEASE_MONTH_OPTIONS } from "@/components/Property/constants";
+import { useRentalForm } from "@/contexts";
+import { Inclusions } from "./Inclusions/Inclusions";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
@@ -33,54 +34,10 @@ export function PropertySidebar({
     const router = useRouter();
     const isEntireHome = selectedUnit?.listing_type === "entire_home";
 
+    const { rentalForm, updateRentalForm } = useRentalForm();
+
     const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
     const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
-
-    // Rental form state (separate from inclusions selection)
-    const [rentalForm, setRentalForm] = useState<RentalFormData>({
-        moveInDate: getMinStartDate(selectedUnit?.available_from),
-        rentalDuration: 12,
-        occupancyType: "single",
-        inclusions: [
-            { type: "furniture", selected: !isEntireHome, price: 0 },
-            { type: "bills", selected: !isEntireHome, price: 0 },
-            { type: "cleaning", selected: false, price: 0 },
-            { type: "carpark", selected: false, price: 0 },
-            { type: "storage", selected: false, price: 0 },
-        ],
-    });
-
-    // Sync with external unitOccupancies if provided
-    useEffect(() => {
-        if (externalUnitOccupancies && selectedUnit) {
-            // Use functional update to avoid cascading renders
-            const timeoutId = setTimeout(() => {
-                // Update isDualOccupancy based on current unit's occupancy
-                setRentalForm((prev) => ({
-                    ...prev,
-                    isDualOccupancy: externalUnitOccupancies[selectedUnit.id] === 2,
-                }));
-            }, 0);
-            return () => clearTimeout(timeoutId);
-        }
-    }, [externalUnitOccupancies, selectedUnit]);
-
-    // Update state when unit changes
-    useEffect(() => {
-        if (!selectedUnit) return;
-
-        // Use functional update to avoid cascading renders
-        const timeoutId = setTimeout(() => {
-            setRentalForm((prev) => ({
-                ...prev,
-                moveInDate: getMinStartDate(selectedUnit.available_from),
-                // Reset dual occupancy if new unit doesn't support it
-                occupancyType:
-                    prev.occupancyType && selectedUnit.max_occupants === 2 ? "dual" : "single",
-            }));
-        }, 0);
-        return () => clearTimeout(timeoutId);
-    }, [selectedUnit]);
 
     // Calculate pricing
     const pricing = useMemo(
@@ -96,12 +53,9 @@ export function PropertySidebar({
     const availability = useMemo(() => getAvailabilityInfo(selectedUnit), [selectedUnit]);
 
     // Like functionality
-    const { data: isLiked = false, isLoading: isLikeLoading } = useUnitLike(
-        selectedUnit?.id ?? "",
-        {
-            enabled: !!isAuthenticated && !!selectedUnit?.id,
-        }
-    );
+    const { data: isLiked = false, isLoading: isLikeLoading } = useUnitLike(selectedUnit?.id ?? "", {
+        enabled: !!isAuthenticated && !!selectedUnit?.id,
+    });
     const toggleLikeMutation = useToggleUnitLike();
 
     const handleToggleLike = async () => {
@@ -169,9 +123,7 @@ export function PropertySidebar({
                                 </h3>
                                 <p className="text-3xl font-bold text-primary-600">
                                     ${pricing.totalWeeklyRent.toFixed(2)}
-                                    <span className="text-base font-normal text-text-muted">
-                                        /week
-                                    </span>
+                                    <span className="text-base font-normal text-text-muted">/week</span>
                                 </p>
                                 <p className="text-sm text-text-muted mt-1">
                                     Bond: ${pricing.bond.toFixed(2)}
@@ -203,17 +155,13 @@ export function PropertySidebar({
                                 {availability.showFromDate && availability.fromDate && (
                                     <div className="flex justify-between">
                                         <span className="text-text-muted">Available from:</span>
-                                        <span className="text-text font-medium">
-                                            {availability.fromDate}
-                                        </span>
+                                        <span className="text-text font-medium">{availability.fromDate}</span>
                                     </div>
                                 )}
                                 {availability.toDate && (
                                     <div className="flex justify-between">
                                         <span className="text-text-muted">Available until:</span>
-                                        <span className="text-text font-medium">
-                                            {availability.toDate}
-                                        </span>
+                                        <span className="text-text font-medium">{availability.toDate}</span>
                                     </div>
                                 )}
                             </div>
@@ -227,17 +175,9 @@ export function PropertySidebar({
                                     id="startDate"
                                     label="Preferred Start Date"
                                     value={rentalForm.moveInDate}
-                                    onChange={(e) =>
-                                        setRentalForm((prev) => ({
-                                            ...prev,
-                                            moveInDate: e.target.value,
-                                        }))
-                                    }
+                                    onChange={(e) => updateRentalForm({ moveInDate: e.target.value })}
                                     min={getMinStartDate(selectedUnit.available_from)}
-                                    max={getMaxStartDate(
-                                        selectedUnit.available_from,
-                                        selectedUnit.available_to
-                                    )}
+                                    max={getMaxStartDate(selectedUnit.available_from, selectedUnit.available_to)}
                                     size="sm"
                                     fullWidth
                                 />
@@ -247,17 +187,9 @@ export function PropertySidebar({
                                     label="Lease Period"
                                     value={rentalForm.rentalDuration.toString()}
                                     onChange={(e) =>
-                                        setRentalForm((prev) => ({
-                                            ...prev,
-                                            rentalDuration: Number(e.target.value),
-                                        }))
+                                        updateRentalForm({ rentalDuration: Number(e.target.value) })
                                     }
-                                    options={[
-                                        { value: "4", label: "4 months" },
-                                        { value: "6", label: "6 months" },
-                                        { value: "9", label: "9 months" },
-                                        { value: "12", label: "12 months" },
-                                    ]}
+                                    options={LEASE_MONTH_OPTIONS}
                                     size="sm"
                                     fullWidth
                                 />
@@ -274,13 +206,11 @@ export function PropertySidebar({
                                         ariaLabel="Occupancy type"
                                         value={rentalForm.occupancyType}
                                         onChange={(next) => {
-                                            setRentalForm((prev) => ({
-                                                ...prev,
-                                                occupancyType: next,
-                                            }));
+                                            updateRentalForm({ occupancyType: next });
 
                                             if (selectedUnit?.id) {
                                                 onUnitOccupanciesChange?.({
+                                                    ...(externalUnitOccupancies ?? {}),
                                                     [selectedUnit.id]: next === "dual" ? 2 : 1,
                                                 });
                                             }
@@ -297,11 +227,7 @@ export function PropertySidebar({
                 ) : (
                     <div className="mb-6">
                         <div className="flex justify-end gap-2 mb-4">
-                            <ShareDropdown
-                                propertyTitle={property.title}
-                                propertyId={property.id}
-                                unitId=""
-                            />
+                            <ShareDropdown propertyTitle={property.title} propertyId={property.id} unitId="" />
                             {likeButton}
                         </div>
                         <div className="flex items-center gap-2">
@@ -358,19 +284,12 @@ export function PropertySidebar({
             {/* Customize Your Stay */}
             {selectedUnit && (
                 <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-lg">
-                    <h3 className="text-lg font-bold text-text mb-2 sm:mb-4">
-                        Customize your stay
-                    </h3>
+                    <h3 className="text-lg font-bold text-text mb-2 sm:mb-4">Customize your stay</h3>
                     <Inclusions
                         rentalDuration={rentalForm.rentalDuration}
                         property={property}
                         inclusions={rentalForm.inclusions}
-                        onChange={(newInclusions) =>
-                            setRentalForm((prev) => ({
-                                ...prev,
-                                inclusions: newInclusions,
-                            }))
-                        }
+                        onChange={(newInclusions) => updateRentalForm({ inclusions: newInclusions })}
                         isEntireHome={isEntireHome}
                         effectiveOccupancyType={pricing.occupancyType}
                     />
@@ -385,8 +304,6 @@ export function PropertySidebar({
                     property={property}
                     selectedUnit={selectedUnit}
                     isEntireHome={isEntireHome}
-                    rentalForm={rentalForm}
-                    setRentalForm={setRentalForm}
                 />
             )}
 

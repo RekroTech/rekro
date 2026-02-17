@@ -23,7 +23,7 @@ create table public.applications (
   rental_duration integer null,
   proposed_rent numeric null,
   total_rent numeric null,
-  inclusions jsonb not null default '[]'::jsonb,
+  inclusions jsonb not null default '{}'::jsonb,
   occupancy_type public.occupancy_type not null default 'single'::occupancy_type,
   constraint applications_pkey primary key (id),
   constraint applications_property_id_fkey foreign KEY (property_id) references properties (id) on delete CASCADE,

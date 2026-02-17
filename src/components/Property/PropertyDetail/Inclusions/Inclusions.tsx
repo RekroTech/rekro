@@ -12,17 +12,16 @@ import {
     getRoomFurnitureCost,
     hasCarpark,
     hasStorage,
-    isInclusionSelected,
-    toggleInclusion,
+    toggleInclusionWithPrice,
 } from "@/components/Property/utils";
 import { InclusionCard } from "./InclusionCard";
-import { Inclusion } from "@/components/Property/types";
+import type { Inclusions } from "@/components/Property/types";
 import { OccupancyType } from "@/types/db";
 
 interface InclusionsProps {
     property: Property;
-    inclusions: Inclusion[];
-    onChange: (next: Inclusion[]) => void;
+    inclusions: Inclusions;
+    onChange: (next: Inclusions) => void;
     isEntireHome: boolean;
     /** For room listings: changes cleaning label ($35 vs $60). */
     effectiveOccupancyType: OccupancyType;
@@ -44,12 +43,6 @@ export function Inclusions({
 
     const furnitureWeekly = furnitureTotal / (rentalDuration * 4.33);
 
-    const furnitureSelected = isInclusionSelected(inclusions, "furniture");
-    const billsSelected = isInclusionSelected(inclusions, "bills");
-    const cleaningSelected = isInclusionSelected(inclusions, "cleaning");
-    const carparkSelected = isInclusionSelected(inclusions, "carpark");
-    const storageSelected = isInclusionSelected(inclusions, "storage");
-
     return (
         <div className="space-y-2 sm:space-y-3">
             {!isEntireHome ? (
@@ -66,9 +59,18 @@ export function Inclusions({
                     title="Furnish your space"
                     description="Add furniture to your lease."
                     price={<span>+${furnitureWeekly.toFixed(2)}/week</span>}
-                    selected={furnitureSelected}
+                    selected={inclusions.furniture?.selected || false}
                     onToggle={() => {
-                        onChange(toggleInclusion(inclusions, "furniture"));
+                        onChange(
+                            toggleInclusionWithPrice({
+                                inclusions,
+                                type: "furniture",
+                                property,
+                                isEntireHome,
+                                effectiveOccupancyType,
+                                rentalDurationMonths: rentalDuration,
+                            })
+                        );
                     }}
                 />
             ) : null}
@@ -87,8 +89,19 @@ export function Inclusions({
                     title="Include Bills"
                     description="Electricity, gas, water, and internet bundled into your rent."
                     price={<span>+${getBillsCostPerWeek(property.bedrooms)}/week</span>}
-                    selected={billsSelected}
-                    onToggle={() => onChange(toggleInclusion(inclusions, "bills"))}
+                    selected={inclusions.bills?.selected || false}
+                    onToggle={() =>
+                        onChange(
+                            toggleInclusionWithPrice({
+                                inclusions,
+                                type: "bills",
+                                property,
+                                isEntireHome,
+                                effectiveOccupancyType,
+                                rentalDurationMonths: rentalDuration,
+                            })
+                        )
+                    }
                 />
             )}
 
@@ -108,8 +121,19 @@ export function Inclusions({
                         <span>${effectiveOccupancyType === "dual" ? 60 : 35}/week</span>
                     )
                 }
-                selected={cleaningSelected}
-                onToggle={() => onChange(toggleInclusion(inclusions, "cleaning"))}
+                selected={inclusions.cleaning?.selected || false}
+                onToggle={() =>
+                    onChange(
+                        toggleInclusionWithPrice({
+                            inclusions,
+                            type: "cleaning",
+                            property,
+                            isEntireHome,
+                            effectiveOccupancyType,
+                            rentalDurationMonths: rentalDuration,
+                        })
+                    )
+                }
             />
 
             {!isEntireHome && hasCarpark(property.amenities) && (
@@ -117,8 +141,19 @@ export function Inclusions({
                     title="Carpark"
                     description="Reserved car space (subject to availability)."
                     price={<span>+${CARPARK_COST_PER_WEEK}/week</span>}
-                    selected={carparkSelected}
-                    onToggle={() => onChange(toggleInclusion(inclusions, "carpark"))}
+                    selected={inclusions.carpark?.selected || false}
+                    onToggle={() =>
+                        onChange(
+                            toggleInclusionWithPrice({
+                                inclusions,
+                                type: "carpark",
+                                property,
+                                isEntireHome,
+                                effectiveOccupancyType,
+                                rentalDurationMonths: rentalDuration,
+                            })
+                        )
+                    }
                 />
             )}
 
@@ -127,8 +162,19 @@ export function Inclusions({
                     title="Storage cage"
                     description="Extra secure storage space for boxes and belongings."
                     price={<span>+${STORAGE_CAGE_COST_PER_WEEK}/week</span>}
-                    selected={storageSelected}
-                    onToggle={() => onChange(toggleInclusion(inclusions, "storage"))}
+                    selected={inclusions.storage?.selected || false}
+                    onToggle={() =>
+                        onChange(
+                            toggleInclusionWithPrice({
+                                inclusions,
+                                type: "storage",
+                                property,
+                                isEntireHome,
+                                effectiveOccupancyType,
+                                rentalDurationMonths: rentalDuration,
+                            })
+                        )
+                    }
                 />
             )}
         </div>

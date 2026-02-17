@@ -55,7 +55,7 @@ export async function upsertApplication(
         rental_duration: request.rentalDuration ? parseInt(request.rentalDuration, 10) : null,
         proposed_rent: request.proposedRent ? parseFloat(request.proposedRent) : null,
         total_rent: request.totalRent || null,
-        inclusions: request.inclusions || [],
+        inclusions: request.inclusions || {},
         occupancy_type: request.occupancyType,
         updated_at: new Date().toISOString(),
     };

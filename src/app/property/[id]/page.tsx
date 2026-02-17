@@ -14,6 +14,8 @@ import { useParams, useRouter } from "next/navigation";
 import { getPropertyFileUrls } from "@/services/storage.service";
 import { Unit } from "@/types/db";
 import { updateRoomRentsOnOccupancySelection } from "@/components/Property/pricing";
+import { RentalFormProvider } from "@/contexts";
+import { useHasApplied } from "@/lib/react-query/hooks/application/useApplications";
 
 export default function PropertyDetailPage() {
     const params = useParams();
@@ -65,6 +67,9 @@ export default function PropertyDetailPage() {
         const found = units.find((u: Unit) => u.id === selectedUnitId);
         return found ?? units[0] ?? null;
     }, [units, selectedUnitId]);
+
+    // IMPORTANT: Hooks must be called before any conditional returns.
+    const existingApplication = useHasApplied(propertyId, selectedUnit?.id);
 
     // Calculate dynamic pricing for all rooms based on current occupancy selections
     // Only apply dynamic pricing when dual occupancy is actually selected
@@ -147,29 +152,58 @@ export default function PropertyDetailPage() {
             {/* Property Header */}
             <PropertyHeader property={property} selectedUnit={selectedUnit} />
 
-            {/* Main Grid: Image Gallery + Content (stacked on mobile, 2/3 on desktop) + Sidebar (1/3 on desktop) */}
-            <div className="grid gap-4 sm:gap-6 mb-8 lg:grid-cols-3">
-                {/* Image Gallery & Content - Full width on mobile, 2/3 on desktop */}
-                <div className="lg:col-span-2 min-w-0">
-                    <ImageGallery
-                        images={propertyMedia}
-                        title={property.title}
-                        selectedIndex={selectedImageIndex}
-                        onIndexChange={setSelectedImageIndex}
-                    />
-
-                    {/* Units Section */}
-                    {units.length > 1 && (
-                        <UnitsSelector
-                            units={units}
-                            selectedUnitId={selectedUnitId}
-                            onUnitSelect={handleUnitSelect}
-                            dynamicPricing={dynamicPricing}
+            <RentalFormProvider
+                selectedUnit={selectedUnit}
+                unitOccupancies={unitOccupancies}
+                existingApplication={existingApplication}
+            >
+                {/* Main Grid: Image Gallery + Content (stacked on mobile, 2/3 on desktop) + Sidebar (1/3 on desktop) */}
+                <div className="grid gap-4 sm:gap-6 mb-8 lg:grid-cols-3">
+                    {/* Image Gallery & Content - Full width on mobile, 2/3 on desktop */}
+                    <div className="lg:col-span-2 min-w-0">
+                        <ImageGallery
+                            images={propertyMedia}
+                            title={property.title}
+                            selectedIndex={selectedImageIndex}
+                            onIndexChange={setSelectedImageIndex}
                         />
-                    )}
 
-                    {/* Sidebar on mobile - Show after units, before description */}
-                    <div className="lg:hidden mt-4">
+                        {/* Units Section */}
+                        {units.length > 1 && (
+                            <UnitsSelector
+                                units={units}
+                                selectedUnitId={selectedUnitId}
+                                onUnitSelect={handleUnitSelect}
+                                dynamicPricing={dynamicPricing}
+                            />
+                        )}
+
+                        {/* Sidebar on mobile - Show after units, before description */}
+                        <div className="lg:hidden mt-4">
+                            <PropertySidebar
+                                selectedUnit={selectedUnit}
+                                property={property}
+                                unitOccupancies={unitOccupancies}
+                                onUnitOccupanciesChange={setUnitOccupancies}
+                            />
+                        </div>
+
+                        {/* Content */}
+                        <div className="space-y-6 sm:space-y-8 mt-6 sm:mt-8">
+                            <div>
+                                <h2 className="text-xl sm:text-2xl font-bold text-text mb-3 sm:mb-4">
+                                    About the property
+                                </h2>
+                                <p className="text-sm sm:text-base text-text-muted leading-relaxed whitespace-pre-line">
+                                    {property.description || "No description available."}
+                                </p>
+                            </div>
+                            <PropertyAmenities amenities={property.amenities} />
+                        </div>
+                    </div>
+
+                    {/* Sidebar - Hidden on mobile (shown above), visible on desktop */}
+                    <div className="hidden lg:block lg:col-span-1 min-w-0">
                         <PropertySidebar
                             selectedUnit={selectedUnit}
                             property={property}
@@ -177,31 +211,8 @@ export default function PropertyDetailPage() {
                             onUnitOccupanciesChange={setUnitOccupancies}
                         />
                     </div>
-
-                    {/* Content */}
-                    <div className="space-y-6 sm:space-y-8 mt-6 sm:mt-8">
-                        <div>
-                            <h2 className="text-xl sm:text-2xl font-bold text-text mb-3 sm:mb-4">
-                                About the property
-                            </h2>
-                            <p className="text-sm sm:text-base text-text-muted leading-relaxed whitespace-pre-line">
-                                {property.description || "No description available."}
-                            </p>
-                        </div>
-                        <PropertyAmenities amenities={property.amenities} />
-                    </div>
                 </div>
-
-                {/* Sidebar - Hidden on mobile (shown above), visible on desktop */}
-                <div className="hidden lg:block lg:col-span-1 min-w-0">
-                    <PropertySidebar
-                        selectedUnit={selectedUnit}
-                        property={property}
-                        unitOccupancies={unitOccupancies}
-                        onUnitOccupanciesChange={setUnitOccupancies}
-                    />
-                </div>
-            </div>
+            </RentalFormProvider>
         </main>
     );
 }
