@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { useProfile } from "@/lib/react-query/hooks/user";
 import { BackButton, Button, Icon, Loader } from "@/components/common";
 import {
@@ -17,12 +18,31 @@ import { useProfileForm } from "@/components/Profile/hooks/useProfileForm";
 import { useProfileSave } from "@/components/Profile/hooks/useProfileSave";
 import { useProfileImage } from "@/components/Profile/hooks/useProfileImage";
 import { useSectionExpansion } from "@/components/Profile/hooks/useSectionExpansion";
-import { calculateProfileCompletion } from "@/lib/utils/profile-completion";
-import { buildShareableProfile } from "@/lib/utils/shareable-profile";
+import { calculateProfileCompletion } from "@/components/Profile/profile-completion";
+import { buildShareableProfile } from "@/components/Profile/shareable-profile";
 
 export default function ProfilePage() {
     const router = useRouter();
-    const { showSuccess, showError } = useToast();
+    const searchParams = useSearchParams();
+    const { showSuccess, showError, showWarning } = useToast();
+
+    const toastHandledRef = useRef(false);
+
+    useEffect(() => {
+        if (toastHandledRef.current) return;
+
+        const toast = searchParams.get("toast");
+        if (toast !== "complete-profile") return;
+
+        toastHandledRef.current = true;
+        showWarning("Please complete your profile before applying.");
+
+        // Remove `toast` from the URL so it doesn't re-fire on refresh.
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("toast");
+        const queryString = params.toString();
+        router.replace(`/profile${queryString ? `?${queryString}` : ""}`);
+    }, [searchParams, router, showWarning]);
 
     // Data fetching
     const { data: user, isLoading: userLoading } = useProfile();
@@ -60,7 +80,7 @@ export default function ProfilePage() {
         try {
             await savePersonalDetailsOnlyAsync(formState);
             commitBaseline();
-        } catch (e) {
+        } catch {
             // errors are handled by react-query + onError callback
         }
     };
@@ -69,7 +89,7 @@ export default function ProfilePage() {
         try {
             await saveProfileAsync(formState);
             commitBaseline();
-        } catch (e) {
+        } catch {
             // errors are handled by react-query + onError callback
         }
     };

@@ -7,14 +7,16 @@ import type { Property } from "@/types/property.types";
 import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
 import { useSession } from "@/lib/react-query/hooks/auth/useAuth";
 import { useToggleUnitLike, useUnitLike } from "@/lib/react-query/hooks/property";
-import { EnquiryForm } from "./PropertySidebar/EnquiryForm";
-import { ShareDropdown } from "./PropertySidebar/ShareDropdown";
-import { ApplicationModal } from "./PropertySidebar/ApplicationModal";
+import { EnquiryForm } from "./EnquiryForm";
+import { ShareDropdown } from "./ShareDropdown";
+import { ApplicationModal } from "@/components/Application";
 import { getAvailabilityInfo, getMaxStartDate, getMinStartDate } from "@/components/Property/utils";
 import { calculatePricing } from "@/components/Property/pricing";
 import { LEASE_MONTH_OPTIONS } from "@/components/Property/constants";
 import { useRentalForm } from "@/contexts";
-import { Inclusions } from "./Inclusions/Inclusions";
+import { Inclusions } from "../Inclusions/Inclusions";
+import { useProfile } from "@/lib/react-query/hooks/user";
+import { isProfileCompleteFromUser } from "@/components/Profile/profile-completion";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
@@ -38,6 +40,9 @@ export function PropertySidebar({
 
     const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
     const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+
+    // Fetch profile only when authenticated; used to gate applications.
+    const { data: userProfile, isLoading: isProfileLoading } = useProfile({ enabled: !!isAuthenticated });
 
     // Calculate pricing
     const pricing = useMemo(
@@ -258,12 +263,21 @@ export function PropertySidebar({
                     <Button
                         variant="primary"
                         className="w-full"
+                        disabled={isProfileLoading}
                         onClick={() => {
                             if (!isAuthenticated) {
                                 handleLoginRequired();
-                            } else {
-                                setIsApplicationModalOpen(true);
+                                return;
                             }
+
+                            // Profile completeness gate
+                            if (!isProfileCompleteFromUser(userProfile)) {
+                                const next = `/property/${property.id}`;
+                                router.push(`/profile?toast=complete-profile&next=${encodeURIComponent(next)}`);
+                                return;
+                            }
+
+                            setIsApplicationModalOpen(true);
                         }}
                     >
                         <Icon name="document" className="w-5 h-5 mr-2" />

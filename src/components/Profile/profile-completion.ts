@@ -266,3 +266,38 @@ export function calculateProfileCompletion(
     isComplete: sections.filter((s) => s.required).every((s) => s.completed),
   };
 }
+
+/**
+ * Convenience helper for places that only have the persisted UserProfile (no Profile form state).
+ *
+ * Note: This can only evaluate completion based on what's stored in `user` + `user.user_application_profile`.
+ * The Profile page may compute a more up-to-date value from in-progress form edits.
+ */
+export function isProfileCompleteFromUser(user: UserProfile | null | undefined): boolean {
+  if (!user) return false;
+
+  const app = user.user_application_profile ?? null;
+  const docs = (app?.documents as Documents) ?? ({} as Documents);
+
+  const details: ProfileCompletionDetails = {
+    // Residency
+    isCitizen: !app?.visa_status,
+    visaStatus: app?.visa_status ?? null,
+
+    // Income / study
+    employmentStatus: (app?.employment_status ?? "working") as EmploymentStatus,
+    employmentType: app?.employment_type ?? null,
+    incomeSource: app?.income_source ?? null,
+    incomeFrequency: app?.income_frequency ?? null,
+    incomeAmount: app?.income_amount ?? null,
+    studentStatus: (app?.student_status ?? "not_student") as StudentStatus,
+    financeSupportType: app?.finance_support_type ?? null,
+    financeSupportDetails: app?.finance_support_details ?? null,
+
+    // Rental prefs (used by completion)
+    max_budget_per_week: app?.max_budget_per_week ?? null,
+    preferred_locality: app?.preferred_locality ?? null,
+  };
+
+  return calculateProfileCompletion(user, details, docs).isComplete;
+}

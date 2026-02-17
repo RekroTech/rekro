@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createApplicationSnapshot } from "@/lib/utils/applicationSnapshot";
+import { createApplicationSnapshot } from "@/components/Application/applicationSnapshot";
 
 export const dynamic = "force-dynamic";
 

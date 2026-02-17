@@ -6,7 +6,7 @@
  */
 
 import { createClient } from "@/lib/supabase/client";
-import { createApplicationSnapshot } from "@/lib/utils/applicationSnapshot";
+import { createApplicationSnapshot } from "@/components/Application/applicationSnapshot";
 import type { ApplicationSnapshot } from "@/types/application.types";
 import type { ApplicationSnapshotInsert } from "@/types/db";
 import type { UserProfile } from "@/types/user.types";

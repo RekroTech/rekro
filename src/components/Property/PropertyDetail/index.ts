@@ -2,7 +2,7 @@
 export { UnitsSelector } from "./UnitsSelector";
 export { ImageGallery } from "./ImageGallery";
 export { PropertyAmenities } from "./PropertyAmenities";
-export { PropertySidebar } from "./PropertySidebar";
+export { PropertySidebar } from "./PropertySidebar/PropertySidebar";
 export { EnquiryForm } from "./PropertySidebar/EnquiryForm";
 export { ShareDropdown } from "./PropertySidebar/ShareDropdown";
 export { LocationMapModal } from "./LocationMapModal";

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Modal } from "@/components/common";
 import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
 import { ApplicationForm } from "./ApplicationForm";
-import { ApplicationReview } from "./ApplicationReview";
+import { ApplicationReview } from "./ApplicationReview/ApplicationReview";
 import { calculatePricing } from "@/components/Property/pricing";
 import { useHasApplied } from "@/lib/react-query/hooks/application/useApplications";
 import { useRentalForm } from "@/contexts";
@@ -29,6 +29,7 @@ export function ApplicationModal({
 }: ApplicationModalProps) {
     const { rentalForm } = useRentalForm();
     const [currentStep, setCurrentStep] = useState<Step>("application");
+    const [submittedApplicationId, setSubmittedApplicationId] = useState<string | null>(null);
 
     // Check if user has already applied to this property/unit
     const existingApplication = useHasApplied(property.id, selectedUnit?.id);
@@ -39,40 +40,33 @@ export function ApplicationModal({
         [selectedUnit, property, rentalForm]
     );
 
-    // Reset to first step when modal opens
-    useEffect(() => {
-        if (isOpen && currentStep !== "application") {
-            // Use setTimeout to defer state update and avoid cascading renders
-            const timeoutId = setTimeout(() => {
-                setCurrentStep("application");
-            }, 0);
-            return () => clearTimeout(timeoutId);
-        }
-    }, [isOpen, currentStep]);
-
-    const handleNext = () => {
-        setCurrentStep("review");
-    };
-
-    const handleBack = () => {
+    // Reset state when modal closes
+    const handleClose = useCallback(() => {
         setCurrentStep("application");
-    };
+        setSubmittedApplicationId(null);
+        onClose();
+    }, [onClose]);
 
-    const handleApplicationSuccess = () => {
+    // Handle successful application submission (from ApplicationForm)
+    const handleApplicationSubmit = useCallback((applicationId: string) => {
+        setSubmittedApplicationId(applicationId);
         setCurrentStep("review");
-    };
+    }, []);
+
+    // Handle back from review to form
+    const handleBack = useCallback(() => {
+        setCurrentStep("application");
+    }, []);
+
+    // Determine which application ID to use for review
+    const applicationIdForReview = submittedApplicationId ?? existingApplication?.id;
 
     const getModalTitle = () => {
         const action = existingApplication ? "Update Application for" : "Apply for";
         if (currentStep === "application") {
             return `${action} ${property.title}`;
         }
-        return `Review your Application`;
-    };
-
-    const handleClose = () => {
-        setCurrentStep("application");
-        onClose();
+        return "Review Your Application";
     };
 
     return (
@@ -83,20 +77,18 @@ export function ApplicationModal({
                     selectedUnit={selectedUnit}
                     isEntireHome={isEntireHome}
                     totalWeeklyRent={pricing.totalWeeklyRent}
-                    onNext={handleNext}
-                    onSuccess={handleApplicationSuccess}
+                    onSuccess={handleApplicationSubmit}
                     existingApplicationId={existingApplication?.id}
                 />
             )}
 
             {currentStep === "review" && (
                 <ApplicationReview
-                    propertyId={property.id}
-                    unitId={selectedUnit?.id}
-                    applicationId={existingApplication?.id}
-                    onSuccess={onClose}
+                    property={property}
+                    selectedUnit={selectedUnit}
+                    applicationId={applicationIdForReview}
+                    onSuccess={handleClose}
                     onCancel={handleClose}
-                    showBackButton={true}
                     onBack={handleBack}
                 />
             )}
