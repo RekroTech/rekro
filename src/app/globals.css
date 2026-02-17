@@ -614,22 +614,22 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
 
 @keyframes toast-slide-in {
     from {
-        transform: translate(-50%, -20px);
+        transform: translateY(-20px);
         opacity: 0;
     }
     to {
-        transform: translate(-50%, 0);
+        transform: translateY(0);
         opacity: 1;
     }
 }
 
 @keyframes toast-slide-out {
     from {
-        transform: translate(-50%, 0);
+        transform: translateY(0);
         opacity: 1;
     }
     to {
-        transform: translate(-50%, -20px);
+        transform: translateY(-20px);
         opacity: 0;
     }
 }

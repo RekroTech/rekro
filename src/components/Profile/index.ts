@@ -7,3 +7,5 @@ export { IncomeDetailsSection } from "./sections/IncomeDetailsSection";
 export { PersonalDetailsSection } from "./sections/PersonalDetailsSection";
 export * from "./constants";
 export * from "./types";
+export * from "./utils";
+export * from "./hooks";

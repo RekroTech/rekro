@@ -1,4 +1,4 @@
-import type { Gender, PreferredContactMethod } from "../../types/user.types";
+import type { Gender, PreferredContactMethod, EmploymentStatus, StudentStatus, Document } from "@/types/db";
 
 /**
  * UI-facing types for the Profile page.
@@ -32,6 +32,10 @@ export type PersonalDetailsFormState = {
 export type ResidencyFormState = {
   isCitizen: boolean | null;
   visaStatus: string | null;
+  documents: {
+    passport?: Document;
+    visa?: Document;
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -39,18 +43,27 @@ export type ResidencyFormState = {
 // ---------------------------------------------------------------------------
 
 export type IncomeDetailsFormState = {
-  isWorking: boolean | null;
-  isStudent: boolean | null;
-
-  // employment
-  employmentStatus: string | null;
+  // Employment - using DB enum types directly
+  employmentStatus: EmploymentStatus;
+  employmentType: string | null;
   incomeSource: string | null;
   incomeFrequency: string | null;
   incomeAmount: number | null;
 
-  // finance (student or otherwise)
+  // Student - using DB enum types directly
+  studentStatus: StudentStatus;
   financeSupportType: string | null;
   financeSupportDetails: string | null;
+
+  // Documents specific to income verification
+  documents: {
+    payslips?: Document;
+    bankStatement?: Document;
+    employmentLetter?: Document;
+    studentId?: Document;
+    coe?: Document;
+    proofOfFunds?: Document;
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -66,3 +79,8 @@ export type RentalPreferencesFormState = {
   smoker: boolean | null;
 };
 
+export type AdditionalDocumentsFormState = {
+    referenceLetter?: Document;
+    guarantorLetter?: Document;
+    drivingLicense?: Document;
+}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Input, Select, Textarea } from "@/components/common";
-import type { Gender } from "@/types/user.types";
+import type { Gender } from "@/types/db";
 import type { PersonalDetailsFormState } from "../types";
 import { NATIVE_LANGUAGE_OPTIONS } from "../constants";
 

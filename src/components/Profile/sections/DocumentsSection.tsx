@@ -1,61 +1,68 @@
 "use client";
 
-import { Upload } from "@/components/common";
+import { DocumentUpload, DocumentUploadPresets } from "@/components/common/DocumentUpload";
+import { useToast } from "@/hooks/useToast";
+import type { Documents } from "@/types/db";
+import { useDocumentManager } from "../hooks";
 
 interface DocumentsSectionProps {
-  uploadedDocs: string[];
-  onUpload: (docType: string, file: File) => void;
-  onRemove: (docType: string) => void;
+  userId: string;
+  uploadedDocs: Documents;
+  onChange: (docs: Documents) => void;
 }
 
+/**
+ * Additional Documents Section
+ * Handles driver license, reference letter, and guarantor letter uploads
+ * Uses DocumentUpload component and useDocumentManager hook for consistent behavior
+ */
 export function DocumentsSection({
+  userId,
   uploadedDocs,
-  onUpload,
-  onRemove,
+  onChange,
 }: DocumentsSectionProps) {
-  const hasDrivingLicense = uploadedDocs.includes("drivingLicense");
-  const hasReferenceLetter = uploadedDocs.includes("referenceLetter");
-  const hasGuarantorLetter = uploadedDocs.includes("guarantorLetter");
+  const { showSuccess, showError } = useToast();
+
+  const {
+    uploadDocument,
+    removeDocument,
+    getDocument,
+    isOperationInProgress,
+  } = useDocumentManager({
+    userId,
+    documents: uploadedDocs,
+    onDocumentsChange: onChange,
+    onSuccess: showSuccess,
+    onError: showError,
+  });
 
   return (
     <div className="space-y-4">
-      <Upload
-        label="Driver Licence"
-        helperText="Upload or drag a PDF/JPG/PNG image of your driver licence (max 2MB)."
-        accept=".pdf,.jpg,.jpeg,.png"
-        maxSizeMB={2}
-        fieldName="drivingLicense"
-        value={hasDrivingLicense ? new File([], "drivingLicense") : null}
-        onChange={(file) => {
-          if (file) onUpload("drivingLicense", file);
-          else onRemove("drivingLicense");
-        }}
+      <DocumentUpload
+        docType="drivingLicense"
+        {...DocumentUploadPresets.drivingLicense}
+        value={getDocument("drivingLicense")}
+        onUpload={(file) => uploadDocument("drivingLicense", file)}
+        onRemove={() => removeDocument("drivingLicense")}
+        isLoading={isOperationInProgress("drivingLicense")}
       />
 
-      <Upload
-        label="Reference Letter"
-        helperText="Upload or drag a PDF/JPG/PNG reference letter (max 2MB)."
-        accept=".pdf,.jpg,.jpeg,.png"
-        maxSizeMB={2}
-        fieldName="referenceLetter"
-        value={hasReferenceLetter ? new File([], "referenceLetter") : null}
-        onChange={(file) => {
-          if (file) onUpload("referenceLetter", file);
-          else onRemove("referenceLetter");
-        }}
+      <DocumentUpload
+        docType="referenceLetter"
+        {...DocumentUploadPresets.referenceLetter}
+        value={getDocument("referenceLetter")}
+        onUpload={(file) => uploadDocument("referenceLetter", file)}
+        onRemove={() => removeDocument("referenceLetter")}
+        isLoading={isOperationInProgress("referenceLetter")}
       />
 
-      <Upload
-        label="Guarantor Letter"
-        helperText="Upload or drag a PDF/JPG/PNG guarantor letter (max 2MB)."
-        accept=".pdf,.jpg,.jpeg,.png"
-        maxSizeMB={2}
-        fieldName="guarantorLetter"
-        value={hasGuarantorLetter ? new File([], "guarantorLetter") : null}
-        onChange={(file) => {
-          if (file) onUpload("guarantorLetter", file);
-          else onRemove("guarantorLetter");
-        }}
+      <DocumentUpload
+        docType="guarantorLetter"
+        {...DocumentUploadPresets.guarantorLetter}
+        value={getDocument("guarantorLetter")}
+        onUpload={(file) => uploadDocument("guarantorLetter", file)}
+        onRemove={() => removeDocument("guarantorLetter")}
+        isLoading={isOperationInProgress("guarantorLetter")}
       />
     </div>
   );

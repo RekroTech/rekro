@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isNonEmptyString } from "@/lib/utils/validation";
 import { authErrorResponse, authSuccessResponse } from "@/app/api/utils";
+import { getSession } from "@/lib/auth/server";
 
 // Disable caching for auth routes
 export const dynamic = "force-dynamic";
@@ -24,13 +25,20 @@ export async function POST(request: NextRequest) {
         }
 
         const supabase = await createClient();
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-        if (error || !data.user) {
-            return authErrorResponse(error?.message ?? "Invalid credentials", 401);
+        if (error) {
+            return authErrorResponse(error.message ?? "Invalid credentials", 401);
         }
 
-        return authSuccessResponse({ user: data.user });
+        // Fetch complete session user (includes role and profile data)
+        const user = await getSession();
+
+        if (!user) {
+            return authErrorResponse("Failed to fetch user session", 500);
+        }
+
+        return authSuccessResponse({ user });
     } catch (err) {
         console.error("Login error:", err);
         return authErrorResponse("Internal server error", 500);

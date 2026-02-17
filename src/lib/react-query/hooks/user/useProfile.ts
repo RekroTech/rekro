@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { userService } from "@/services/user.service";
 import { UpdateProfile, UserProfile } from "@/types/user.types";
+import { authKeys } from "@/lib/react-query/hooks/auth/useAuth";
 
 export const userKeys = {
     all: ["user"] as const,
@@ -77,6 +78,9 @@ export function useUpdateProfile() {
         onSuccess: (updatedUser) => {
             // Update cache with server response
             queryClient.setQueryData(userKeys.profile(), updatedUser);
+
+            // Invalidate session user cache to update header/auth components
+            queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
         },
         onError: (error, _newProfile, context) => {
             // Rollback on error

@@ -3,6 +3,9 @@
 
 import { Inclusion } from "@/components/Property/types";
 
+// User role types matching database enum
+export type AppRole = "tenant" | "landlord" | "admin" | "super_admin";
+
 export interface Address {
     street: string;
     city?: string;
@@ -20,8 +23,13 @@ export interface Location {
 
 export type ListingType = "entire_home" | "room";
 
-// User role types matching database enum
-export type AppRole = "tenant" | "landlord" | "admin" | "super_admin";
+export type Gender = "male" | "female" | "non_binary" | "prefer_not_to_say";
+export type PreferredContactMethod = "email" | "phone" | "sms";
+
+// Employment and student status types matching database constraints
+export type EmploymentStatus = "working" | "not_working";
+export type StudentStatus = "student" | "not_student";
+
 
 // Application enum types
 export type ApplicationType = "individual" | "group";
@@ -33,6 +41,28 @@ export type ApplicationStatus =
     | "rejected"
     | "withdrawn";
 export type OccupancyType = "single" | "dual";
+
+export type DocumentType =
+    | "passport"
+    | "visa"
+    | "drivingLicense"
+    | "studentId"
+    | "coe"
+    | "employmentLetter"
+    | "payslips"
+    | "bankStatement"
+    | "proofOfFunds"
+    | "referenceLetter"
+    | "guarantorLetter"
+
+export type Document = {
+        url: string;
+        path: string;
+        uploadedAt: string;
+        filename: string;
+};
+
+export type Documents = Partial<Record<DocumentType, Document>>
 
 export interface Database {
     public: {
@@ -51,10 +81,10 @@ export interface Database {
                     created_at: string;
                     updated_at: string;
                     date_of_birth: string | null; // date in DB
-                    gender: string | null;
+                    gender: Gender;
                     occupation: string | null;
                     bio: string | null;
-                    preferred_contact_method: string | null;
+                    preferred_contact_method: PreferredContactMethod;
                     notification_preferences: Record<string, unknown> | null;
                     last_login_at: string | null;
                 };
@@ -71,10 +101,10 @@ export interface Database {
                     created_at?: string;
                     updated_at?: string;
                     date_of_birth?: string | null;
-                    gender?: string | null;
+                    gender?: Gender;
                     occupation?: string | null;
                     bio?: string | null;
-                    preferred_contact_method?: string | null;
+                    preferred_contact_method?: PreferredContactMethod;
                     notification_preferences?: Record<string, unknown> | null;
                     last_login_at?: string | null;
                 };
@@ -89,10 +119,10 @@ export interface Database {
                     receive_marketing_email?: boolean | null;
                     updated_at?: string;
                     date_of_birth?: string | null;
-                    gender?: string | null;
+                    gender?: Gender;
                     occupation?: string | null;
                     bio?: string | null;
-                    preferred_contact_method?: string | null;
+                    preferred_contact_method?: PreferredContactMethod;
                     notification_preferences?: Record<string, unknown> | null;
                     last_login_at?: string | null;
                 };
@@ -101,12 +131,12 @@ export interface Database {
                 Row: {
                     user_id: string;
                     visa_status: string | null;
-                    employment_status: string | null;
+                    employment_status: EmploymentStatus;
                     employment_type: string | null;
                     income_source: string | null;
                     income_frequency: string | null;
                     income_amount: number | null;
-                    student_status: string | null;
+                    student_status: StudentStatus;
                     finance_support_type: string | null;
                     finance_support_details: string | null;
                     preferred_locality: string | null;
@@ -115,19 +145,19 @@ export interface Database {
                     smoker: boolean | null;
                     emergency_contact_name: string | null;
                     emergency_contact_phone: string | null;
-                    documents: Record<string, unknown>;
+                    documents: Documents;
                     created_at: string;
                     updated_at: string;
                 };
                 Insert: {
                     user_id: string;
                     visa_status?: string | null;
-                    employment_status?: string | null;
+                    employment_status?: EmploymentStatus;
                     employment_type?: string | null;
                     income_source?: string | null;
                     income_frequency?: string | null;
                     income_amount?: number | null;
-                    student_status?: string | null;
+                    student_status?: StudentStatus;
                     finance_support_type?: string | null;
                     finance_support_details?: string | null;
                     preferred_locality?: string | null;
@@ -136,18 +166,18 @@ export interface Database {
                     smoker?: boolean | null;
                     emergency_contact_name?: string | null;
                     emergency_contact_phone?: string | null;
-                    documents?: Record<string, unknown>;
+                    documents?: Documents;
                     created_at?: string;
                     updated_at?: string;
                 };
                 Update: {
                     visa_status?: string | null;
-                    employment_status?: string | null;
+                    employment_status?: EmploymentStatus;
                     employment_type?: string | null;
                     income_source?: string | null;
                     income_frequency?: string | null;
                     income_amount?: number | null;
-                    student_status?: string | null;
+                    student_status?: StudentStatus;
                     finance_support_type?: string | null;
                     finance_support_details?: string | null;
                     preferred_locality?: string | null;
@@ -156,7 +186,7 @@ export interface Database {
                     smoker?: boolean | null;
                     emergency_contact_name?: string | null;
                     emergency_contact_phone?: string | null;
-                    documents?: Record<string, unknown>;
+                    documents?: Documents;
                     updated_at?: string;
                 };
             };

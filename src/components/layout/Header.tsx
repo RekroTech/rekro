@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button, Dropdown, Icon, LogoIcon, LogoText } from "@/components/common";
 import type { DropdownItem } from "@/components/common/Dropdown";
 import { useLogout } from "@/lib/react-query/hooks/auth";
@@ -75,10 +76,21 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                                     trigger={
                                         <div className="flex items-center gap-1 sm:gap-2 rounded-[10px] py-1.5 sm:py-2 cursor-pointer">
                                             <div
-                                                className="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold text-sm"
+                                                className="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold text-sm overflow-hidden"
                                                 aria-hidden="true"
                                             >
-                                                {user.email?.charAt(0).toUpperCase()}
+                                                {user.image_url ? (
+                                                    <Image
+                                                        src={user.image_url}
+                                                        alt={user.name ?? user.email}
+                                                        width={32}
+                                                        height={32}
+                                                        className="h-8 w-8 object-cover"
+                                                        unoptimized
+                                                    />
+                                                ) : (
+                                                    user.email?.charAt(0).toUpperCase()
+                                                )}
                                             </div>
                                             <span className="hidden sm:block text-sm text-text">
                                                 {user.email}

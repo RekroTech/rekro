@@ -35,6 +35,8 @@ export type { TextareaProps } from "./Textarea";
 export { Upload } from "./Upload";
 export type { FileUploadProps } from "./Upload";
 
+export { DocumentUpload, DocumentUploadPresets } from "./DocumentUpload";
+
 export { Visual } from "./Visual";
 export type { PropertyMediaProps } from "./Visual";
 

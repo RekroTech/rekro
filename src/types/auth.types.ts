@@ -52,7 +52,7 @@ export interface LoginCredentials {
 
 /**
  * User identity used for authentication/authorization in the app.
- * Comes from auth.users + public.user_roles.
+ * Comes from auth.users + public.users + public.user_roles.
  * Note: each user has a single role.
  */
 export interface SessionUser {
@@ -60,6 +60,8 @@ export interface SessionUser {
     email: string;
     name?: string | null;
     image_url?: string | null;
+    username?: string | null;
+    phone?: string | null;
     role: AppRole;
 }
 

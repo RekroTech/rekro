@@ -1,4 +1,5 @@
 import type { UserProfile, ProfileSection, ProfileCompletion } from "@/types/user.types";
+import type { Documents, EmploymentStatus, StudentStatus } from "@/types/db";
 
 /**
  * These details are provided by the Profile UI (see `src/app/(authenticated)/profile/page.tsx`).
@@ -7,18 +8,15 @@ import type { UserProfile, ProfileSection, ProfileCompletion } from "@/types/use
 export type ProfileCompletionDetails = {
   // Residency
   isCitizen: boolean | null;
-  /** UI camelCase */
   visaStatus?: string | null;
-  /** Back-compat: some callers may still pass snake_case */
-  visa_status?: string | null;
 
-  // Income / study
-  isWorking: boolean | null;
-  isStudent: boolean | null;
-  employmentStatus: string | null;
+  // Income / study - using DB enum types
+  employmentStatus: EmploymentStatus;
+  employmentType: string | null;
   incomeSource: string | null;
   incomeFrequency: string | null;
   incomeAmount: number | null;
+  studentStatus: StudentStatus;
   financeSupportType: string | null;
   financeSupportDetails: string | null;
 
@@ -71,9 +69,9 @@ export function calculatePersonalDetailsCompletion(user: UserProfile): number {
  *    - passport always
  *    - visa doc only when non-citizen
  */
-export function calculateVisaDetailsCompletion(details: ProfileCompletionDetails | null, uploadedDocs: string[]): number {
+export function calculateVisaDetailsCompletion(details: ProfileCompletionDetails | null, uploadedDocs: Documents): number {
   const isCitizen = details?.isCitizen ?? null;
-  const visaStatus = (details?.visaStatus ?? details?.visa_status) ?? null;
+  const visaStatus = details?.visaStatus ?? null;
 
   const checks: boolean[] = [];
 
@@ -86,9 +84,9 @@ export function calculateVisaDetailsCompletion(details: ProfileCompletionDetails
   }
 
   // Documents
-  checks.push(uploadedDocs.includes("passport"));
+  checks.push(uploadedDocs.passport !== undefined);
   if (isCitizen === false) {
-    checks.push(uploadedDocs.includes("visa"));
+    checks.push(uploadedDocs.visa !== undefined);
   }
 
   return percent(checks.filter(Boolean).length, checks.length);
@@ -104,35 +102,35 @@ export function calculateVisaDetailsCompletion(details: ProfileCompletionDetails
  *
  * Bank statements are optional here because the UI marks them as helper-only (not required).
  */
-export function calculateIncomeDetailsCompletion(details: ProfileCompletionDetails | null, uploadedDocs: string[]): number {
+export function calculateIncomeDetailsCompletion(details: ProfileCompletionDetails | null, uploadedDocs: Documents): number {
   const d = details ?? null;
 
   const checks: boolean[] = [];
 
   // Must pick employment status
-  const isWorking = d?.isWorking ?? null;
-  checks.push(isWorking === true || isWorking === false);
+  const employmentStatus = d?.employmentStatus ?? null;
+  checks.push(employmentStatus === "working" || employmentStatus === "not_working");
 
-  if (isWorking === true) {
-    checks.push(isFilled(d?.employmentStatus));
+  if (employmentStatus === "working") {
+    checks.push(isFilled(d?.employmentType));
     checks.push(isFilled(d?.incomeSource));
     checks.push(isFilled(d?.incomeFrequency));
     checks.push(d?.incomeAmount !== null && d?.incomeAmount !== undefined && !Number.isNaN(d?.incomeAmount));
-    checks.push(uploadedDocs.includes("payslips"));
+    checks.push(uploadedDocs.payslips !== undefined);
   }
 
-  if (isWorking === false) {
-    const isStudent = d?.isStudent ?? null;
-    checks.push(isStudent === true || isStudent === false);
+  if (employmentStatus === "not_working") {
+    const studentStatus = d?.studentStatus ?? null;
+    checks.push(studentStatus === "student" || studentStatus === "not_student");
 
     // finance support fields always required when not working (per UI)
     checks.push(isFilled(d?.financeSupportType));
     checks.push(isFilled(d?.financeSupportDetails));
-    checks.push(uploadedDocs.includes("proofOfFunds"));
+    checks.push(uploadedDocs.proofOfFunds !== undefined);
 
-    if (isStudent === true) {
-      checks.push(uploadedDocs.includes("studentId"));
-      checks.push(uploadedDocs.includes("coe"));
+    if (studentStatus === "student") {
+      checks.push(uploadedDocs.studentId !== undefined);
+      checks.push(uploadedDocs.coe !== undefined);
     }
   }
 
@@ -142,9 +140,9 @@ export function calculateIncomeDetailsCompletion(details: ProfileCompletionDetai
 /**
  * Additional documents section only includes the "optional" extra docs.
  */
-export function calculateAdditionalDocumentsCompletion(uploadedDocs: string[]): number {
-  const optionalDocs = ["drivingLicense", "referenceLetter", "guarantorLetter"];
-  const uploaded = optionalDocs.filter((d) => uploadedDocs.includes(d)).length;
+export function calculateAdditionalDocumentsCompletion(uploadedDocs: Documents): number {
+  const optionalDocs: Array<keyof Documents> = ["drivingLicense", "referenceLetter", "guarantorLetter"];
+  const uploaded = optionalDocs.filter((d) => uploadedDocs[d] !== undefined).length;
   return percent(uploaded, optionalDocs.length);
 }
 
@@ -170,7 +168,7 @@ export function calculateLocationPreferencesCompletion(user: UserProfile): numbe
 export function getProfileSections(
   user: UserProfile,
   details: ProfileCompletionDetails | null,
-  uploadedDocs: string[] = []
+  uploadedDocs: Documents = {} as Documents
 ): ProfileSection[] {
   const personal = calculatePersonalDetailsCompletion(user);
   const visa = calculateVisaDetailsCompletion(details, uploadedDocs);
@@ -230,7 +228,7 @@ export function getProfileSections(
 export function calculateProfileCompletion(
   user: UserProfile,
   details: ProfileCompletionDetails | null = null,
-  uploadedDocs: string[] = []
+  uploadedDocs: Documents = {} as Documents
 ): ProfileCompletion {
   const sections = getProfileSections(user, details, uploadedDocs);
 

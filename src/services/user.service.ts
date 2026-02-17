@@ -20,6 +20,23 @@ export const userService = {
     },
 
     /**
+     * Update user profile image
+     */
+    updateProfileImage: async (imageUrl: string): Promise<UserProfile> => {
+        const response = await fetch("/api/user/profile", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image_url: imageUrl }),
+        });
+
+        if (!response.ok) {
+            await handleFetchError(response, "Failed to update profile image");
+        }
+
+        return (await response.json()) as UserProfile;
+    },
+
+    /**
      * Get user profile
      */
     getProfile: async (): Promise<UserProfile> => {

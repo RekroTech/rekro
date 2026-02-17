@@ -236,3 +236,195 @@ export async function deletePropertyFolder(propertyId: string): Promise<void> {
     const paths = files.map((file) => `property/${propertyId}/${file.name}`);
     await deleteFiles(STORAGE_BUCKET, paths);
 }
+
+/**
+ * Upload user profile image
+ * Path format: profile/{userId}/avatar.{ext}
+ * Uses upsert to automatically replace old profile image
+ */
+export async function uploadProfileImage(
+    file: File,
+    userId: string
+): Promise<UploadFileResult> {
+    const supabase = createClient();
+
+    // Use a fixed filename (avatar) with the file extension
+    // This ensures we always replace the same file
+    const fileExt = file.name.split(".").pop() || "jpg";
+    const path = `profile/${userId}/avatar.${fileExt}`;
+
+    // First, try to delete any old profile images with different extensions
+    await deleteUserProfileImages(userId);
+
+    // Upload with upsert=true to replace if exists
+    const { data, error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
+        contentType: file.type,
+        cacheControl: "3600",
+        upsert: true, // This replaces the file if it exists
+    });
+
+    if (error) {
+        throw new Error(`Failed to upload profile image: ${error.message}`);
+    }
+
+    // Get public URL
+    const {
+        data: { publicUrl },
+    } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(data.path);
+
+    return { url: publicUrl, path: data.path };
+}
+
+/**
+ * Delete user's old profile images
+ */
+export async function deleteUserProfileImages(userId: string): Promise<void> {
+    const supabase = createClient();
+
+    const { data: files, error: listError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .list(`profile/${userId}`);
+
+    if (listError) {
+        throw new Error(`Failed to list profile images: ${listError.message}`);
+    }
+
+    if (!files || files.length === 0) {
+        return;
+    }
+
+    const paths = files.map((file) => `profile/${userId}/${file.name}`);
+    await deleteFiles(STORAGE_BUCKET, paths);
+}
+
+/**
+ * Upload user document (keeps all versions with timestamps)
+ * Path format: user/{userId}/documents/{docType}/{timestamp}-{filename}
+ * @param file - The file to upload
+ * @param userId - The user's ID
+ * @param docType - The type of document (e.g., 'passport', 'visa', 'payslips')
+ */
+export async function uploadUserDocument(
+    file: File,
+    userId: string,
+    docType: string
+): Promise<UploadFileResult> {
+    const supabase = createClient();
+
+    // Generate timestamp and sanitize filename
+    const timestamp = Date.now();
+    const sanitizedFilename = sanitizeFilename(file.name);
+    const path = `user/${userId}/documents/${docType}/${timestamp}-${sanitizedFilename}`;
+
+    const { data, error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
+        contentType: file.type,
+        cacheControl: "3600",
+        upsert: false, // Don't replace - keep all versions
+    });
+
+    if (error) {
+        throw new Error(`Failed to upload document: ${error.message}`);
+    }
+
+    // Get public URL
+    const {
+        data: { publicUrl },
+    } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(data.path);
+
+    return { url: publicUrl, path: data.path };
+}
+
+/**
+ * List all documents for a user by document type
+ * @param userId - The user's ID
+ * @param docType - The type of document (optional, lists all if not provided)
+ */
+export async function listUserDocuments(
+    userId: string,
+    docType?: string
+): Promise<{ name: string; path: string; url: string; createdAt: Date }[]> {
+    const supabase = createClient();
+
+    const basePath = docType ? `user/${userId}/documents/${docType}` : `user/${userId}/documents`;
+
+    const { data: files, error: listError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .list(basePath);
+
+    if (listError) {
+        throw new Error(`Failed to list documents: ${listError.message}`);
+    }
+
+    if (!files || files.length === 0) {
+        return [];
+    }
+
+    return files.map((file) => {
+        const fullPath = `${basePath}/${file.name}`;
+        const {
+            data: { publicUrl },
+        } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fullPath);
+
+        // Extract timestamp from filename
+        const timestampStr = file.name.split("-")[0];
+        const timestamp = timestampStr ? parseInt(timestampStr) : NaN;
+        const createdAt = isNaN(timestamp) ? new Date(file.created_at || Date.now()) : new Date(timestamp);
+
+        return {
+            name: file.name,
+            path: fullPath,
+            url: publicUrl,
+            createdAt,
+        };
+    });
+}
+
+/**
+ * Delete a specific user document
+ * @param userId - The user's ID
+ * @param docType - The type of document
+ * @param filename - The filename to delete
+ */
+export async function deleteUserDocument(
+    userId: string,
+    docType: string,
+    filename: string
+): Promise<void> {
+    const supabase = createClient();
+
+    const path = `user/${userId}/documents/${docType}/${filename}`;
+
+    const { error } = await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+
+    if (error) {
+        throw new Error(`Failed to delete document: ${error.message}`);
+    }
+}
+
+/**
+ * Delete all documents of a specific type for a user
+ * @param userId - The user's ID
+ * @param docType - The type of document
+ */
+export async function deleteUserDocumentsByType(
+    userId: string,
+    docType: string
+): Promise<void> {
+    const supabase = createClient();
+
+    const { data: files, error: listError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .list(`user/${userId}/documents/${docType}`);
+
+    if (listError) {
+        throw new Error(`Failed to list documents: ${listError.message}`);
+    }
+
+    if (!files || files.length === 0) {
+        return;
+    }
+
+    const paths = files.map((file) => `user/${userId}/documents/${docType}/${file.name}`);
+    await deleteFiles(STORAGE_BUCKET, paths);
+}
+

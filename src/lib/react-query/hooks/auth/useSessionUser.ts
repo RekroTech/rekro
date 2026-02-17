@@ -4,8 +4,11 @@ import { authKeys } from "@/lib/react-query/hooks/auth/useAuth";
 import { authService } from "@/services/auth.service";
 
 /**
- * Fetches the current SessionUser (auth identity + role) from the server.
+ * Fetches the current SessionUser (auth identity + role + profile data) from the server.
  * Use this for role checks / auth-driven UI.
+ *
+ * This hook uses React Query's caching to avoid unnecessary refetches.
+ * The session user data is considered fresh for 5 minutes.
  */
 export function useSessionUser(options?: { enabled?: boolean }) {
     return useQuery<SessionUser | null, Error>({
@@ -21,10 +24,11 @@ export function useSessionUser(options?: { enabled?: boolean }) {
                 throw error;
             }
         },
-        staleTime: 1000 * 60 * 5,
-        gcTime: 1000 * 60 * 10,
-        refetchOnWindowFocus: false,
-        retry: false,
+        staleTime: 1000 * 60 * 5, // 5 minutes - data is fresh for this long
+        gcTime: 1000 * 60 * 10, // 10 minutes - keep in cache
+        refetchOnWindowFocus: false, // Don't refetch on window focus
+        refetchOnMount: false, // Don't refetch on component mount if data is fresh
+        retry: false, // Don't retry on auth failures
         enabled: options?.enabled ?? true,
     });
 }

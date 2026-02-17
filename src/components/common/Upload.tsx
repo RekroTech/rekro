@@ -46,6 +46,7 @@ export function Upload({
     const reactId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
     const [dragActive, setDragActive] = useState(false);
+    const [internalError, setInternalError] = useState<string | null>(null);
 
     const inputId = fieldName ? `file-upload-${fieldName}` : `file-upload-${reactId}`;
     const helperId = `${inputId}-helper`;
@@ -61,8 +62,42 @@ export function Upload({
         const file = fileList?.[0] ?? null;
         if (!file) return;
 
+        // Clear any previous internal errors
+        setInternalError(null);
+
+        // Validate file type if accept is specified and not "*"
+        if (accept !== "*") {
+            const acceptedTypes = accept.split(",").map((t) => t.trim().toLowerCase());
+            const fileExt = `.${file.name.split(".").pop()?.toLowerCase() || ""}`;
+            const fileMimeType = file.type.toLowerCase();
+
+            const isValidType = acceptedTypes.some((acceptType) => {
+                // Handle file extensions (e.g., ".pdf", ".jpg")
+                if (acceptType.startsWith(".")) {
+                    return fileExt === acceptType;
+                }
+                // Handle MIME types (e.g., "image/*", "application/pdf")
+                if (acceptType.includes("*")) {
+                    const mimePrefix = acceptType.split("/")[0];
+                    return fileMimeType.startsWith(mimePrefix + "/");
+                }
+                return fileMimeType === acceptType;
+            });
+
+            if (!isValidType) {
+                const errorMessage = `Invalid file type. Please upload a file matching: ${accept}`;
+                setInternalError(errorMessage);
+                console.warn("File upload error:", errorMessage);
+                return;
+            }
+        }
+
+        // Validate file size
         if (file.size > maxSizeMB * 1024 * 1024) {
-            console.warn("File upload errors:", [`${file.name} is larger than ${maxSizeMB}MB`]);
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            const errorMessage = `File size (${fileSizeMB}MB) exceeds the maximum allowed size of ${maxSizeMB}MB`;
+            setInternalError(errorMessage);
+            console.warn("File upload error:", errorMessage);
             return;
         }
 
@@ -103,10 +138,14 @@ export function Upload({
 
     const removeFile = () => {
         if (disabled) return;
+        setInternalError(null);
         onChange(null);
     };
 
     const hasFile = Boolean(value);
+
+    // Use external error if provided, otherwise use internal error
+    const displayError = error || internalError;
 
     const labelNode = label ? (
         <div className="flex items-center gap-2 min-w-0">
@@ -132,13 +171,11 @@ export function Upload({
         "flex items-center justify-between gap-4 border px-4 py-3 bg-card transition-all",
         "rounded-lg", // match Input/Button radius
         disabled ? "opacity-50 cursor-not-allowed" : "hover:border-text-muted",
-        error
-            ? "border-danger-500 focus-within:ring-2 focus-within:ring-danger-500"
-            : "border-border focus-within:ring-2 focus-within:ring-primary-500",
-        dragActive && !error && !disabled && "border-primary-500 bg-primary-50"
+        "border-border focus-within:ring-2 focus-within:ring-primary-500",
+        dragActive && !displayError && !disabled && "border-primary-500 bg-primary-50"
     );
 
-    const describedBy = error ? errorId : descriptionText ? helperId : undefined;
+    const describedBy = displayError ? errorId : descriptionText ? helperId : undefined;
 
     return (
         <div className={clsx(labelPlacement === "left" && "flex items-start gap-4")}>
@@ -169,7 +206,7 @@ export function Upload({
                             className="hidden"
                             accept={accept}
                             disabled={disabled}
-                            aria-invalid={error ? "true" : "false"}
+                            aria-invalid={displayError ? "true" : "false"}
                             aria-required={required ? "true" : "false"}
                             aria-describedby={describedBy}
                         />
@@ -178,7 +215,7 @@ export function Upload({
                             <Button
                                 type="button"
                                 onClick={openPicker}
-                                variant={error ? "danger" : "outline"}
+                                variant="outline"
                                 size="sm"
                                 disabled={disabled}
                                 className="min-h-[40px]"
@@ -231,9 +268,9 @@ export function Upload({
                     </p>
                 )}
 
-                {error && (
+                {displayError && (
                     <p id={errorId} className="mt-1.5 text-sm text-danger-500" role="alert">
-                        {error}
+                        {displayError}
                     </p>
                 )}
             </div>

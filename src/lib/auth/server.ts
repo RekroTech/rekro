@@ -3,6 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 
 import type { SessionUser } from "@/types/auth.types";
+import type { AppRole } from "@/types/db";
 
 // Cached per-request (prevents multiple getUser() calls in the same render/request)
 export const getSession = cache(async (): Promise<SessionUser | null> => {
@@ -21,7 +22,46 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
 
     if (!data.user || !data.user.email) return null;
 
-    return data.user as SessionUser;
+    // Fetch user profile and role from public tables
+    const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select(
+            `
+            id,
+            email,
+            full_name,
+            image_url,
+            username,
+            phone,
+            user_roles!inner(role)
+        `
+        )
+        .eq("id", data.user.id)
+        .single();
+
+    if (userError || !userData) {
+        console.error("Failed to fetch user data:", userError?.message);
+        return null;
+    }
+
+    // Extract role from the joined user_roles table
+    const roleData = userData.user_roles as unknown as { role: AppRole } | { role: AppRole }[];
+    const role = Array.isArray(roleData) ? roleData[0]?.role : roleData?.role;
+
+    if (!role) {
+        console.error("User has no role assigned");
+        return null;
+    }
+
+    return {
+        id: userData.id,
+        email: userData.email ?? data.user.email,
+        name: userData.full_name,
+        image_url: userData.image_url,
+        username: userData.username,
+        phone: userData.phone,
+        role,
+    };
 });
 
 /**

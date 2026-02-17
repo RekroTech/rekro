@@ -58,17 +58,19 @@ export function Toast({ message, type = "success", duration = 3000, onClose }: T
 
     return (
         <div
-            className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 bg-card border shadow-[var(--shadow-lift)] ${
+            className={`flex items-start gap-3 px-4 py-3 bg-card border shadow-[var(--shadow-lift)] w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[24rem] max-w-2xl ${
                 isExiting ? "animate-toast-out" : "animate-toast-in"
             } ${config.borderColor}`}
             style={{ borderRadius: "var(--radius-input)" }}
             role="alert"
         >
             <Icon name={config.icon} className={`w-5 h-5 flex-shrink-0 ${config.iconColor}`} />
-            <p className="text-sm font-medium text-foreground">{message}</p>
+            <p className="text-sm font-medium text-foreground min-w-0 flex-1 whitespace-normal break-words">
+                {message}
+            </p>
             <button
                 onClick={handleClose}
-                className="ml-2 text-text-muted hover:text-foreground transition-colors flex-shrink-0"
+                className="text-text-muted hover:text-foreground transition-colors flex-shrink-0"
                 aria-label="Close notification"
             >
                 <Icon name="x" className="w-4 h-4" />
@@ -76,4 +78,3 @@ export function Toast({ message, type = "success", duration = 3000, onClose }: T
         </div>
     );
 }
-
