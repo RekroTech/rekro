@@ -8,6 +8,7 @@ import {
     createPropertyClient,
     updatePropertyClient,
     getPropertyByIdClient,
+    getLikedUsers,
 } from "@/services/property.service";
 import { createUnitClient, deleteUnitClient, upsertUnitsClient } from "@/services/unit.service";
 import { uploadPropertyImages } from "@/services/storage.service";
@@ -223,3 +224,18 @@ export function useUpdateProperty() {
         },
     });
 }
+
+/**
+ * Hook to fetch users who liked any unit in a property
+ */
+export function useUserLikes(propertyId: string) {
+    return useQuery({
+        queryKey: [...propertyKeys.detail(propertyId), "liked-users"],
+        queryFn: () => getLikedUsers(propertyId),
+        enabled: !!propertyId,
+        staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+        gcTime: 10 * 60 * 1000,
+    });
+}
+
+

@@ -78,6 +78,8 @@ export async function PATCH(req: NextRequest) {
             "bio",
             "preferred_contact_method",
             "notification_preferences",
+            "discoverable",
+            "share_contact",
         ];
 
         // Columns that exist on `user_application_profile` table

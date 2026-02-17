@@ -6,7 +6,7 @@ import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
 import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
 import { useSession } from "@/lib/react-query/hooks/auth/useAuth";
-import { useToggleUnitLike, useUnitLike } from "@/lib/react-query/hooks/property";
+import { useToggleUnitLike, useUnitLike, useUnitLikesCount } from "@/lib/react-query/hooks/property";
 import { EnquiryForm } from "./EnquiryForm";
 import { ShareDropdown } from "./ShareDropdown";
 import { ApplicationModal } from "@/components/Application";
@@ -63,6 +63,11 @@ export function PropertySidebar({
     });
     const toggleLikeMutation = useToggleUnitLike();
 
+    // Fetch like count for the selected unit
+    const { data: likesCount = 0 } = useUnitLikesCount(selectedUnit?.id ?? "", {
+        enabled: !!selectedUnit?.id,
+    });
+
     const handleToggleLike = async () => {
         if (!isAuthenticated) {
             handleLoginRequired();
@@ -87,7 +92,7 @@ export function PropertySidebar({
         <button
             onClick={handleToggleLike}
             disabled={!selectedUnit?.id || isLikeLoading || toggleLikeMutation.isPending}
-            className={`p-2 rounded-full transition-all touch-manipulation active:scale-95 ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-full transition-all touch-manipulation active:scale-95 ${
                 isLiked
                     ? "bg-danger-500/10 text-danger-500 hover:bg-danger-500/20"
                     : "bg-surface-muted text-text-muted hover:bg-surface-subtle hover:text-danger-500"
@@ -100,8 +105,8 @@ export function PropertySidebar({
                 !selectedUnit?.id
                     ? `Select a ${isEntireHome ? "property" : "room"} to save`
                     : isLiked
-                      ? `Unsave ${isEntireHome ? "property" : "room"}`
-                      : `Save ${isEntireHome ? "property" : "room"}`
+                      ? `Unsave ${isEntireHome ? "property" : "room"} (${likesCount} ${likesCount === 1 ? 'like' : 'likes'})`
+                      : `Save ${isEntireHome ? "property" : "room"} (${likesCount} ${likesCount === 1 ? 'like' : 'likes'})`
             }
         >
             <Icon
@@ -111,6 +116,11 @@ export function PropertySidebar({
                 stroke="currentColor"
                 strokeWidth={isLiked ? 0 : 2}
             />
+            {selectedUnit?.id && likesCount > 0 && (
+                <span className="text-sm font-medium">
+                    {likesCount}
+                </span>
+            )}
         </button>
     );
 

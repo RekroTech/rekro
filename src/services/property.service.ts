@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import type { PropertyInsert, Unit } from "@/types/db";
 import type { Property, GetPropertiesParams, GetPropertiesResponse } from "@/types/property.types";
+import type { LikedProfile } from "@/types/user.types";
 
 export async function getPropertiesClient(
     params: GetPropertiesParams = {}
@@ -26,9 +27,8 @@ export async function getPropertiesClient(
         "id, listing_type, name, description, price, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
 
     // If likedOnly is true, we need to join with property_likes table
-    const selectQuery = listingType || likedOnly
-        ? `*, units!inner(${unitColumns})`
-        : `*, units(${unitColumns})`;
+    const selectQuery =
+        listingType || likedOnly ? `*, units!inner(${unitColumns})` : `*, units(${unitColumns})`;
 
     let query = supabase
         .from("properties")
@@ -360,4 +360,26 @@ export async function togglePropertyLike(unitId: string): Promise<boolean> {
 
         return true;
     }
+}
+
+/**
+ * Get users who liked any unit in a property
+ * Uses the liked_profiles view for simplified and efficient querying
+ * @param propertyId - The property ID
+ * @returns Array of user profiles who liked units in this property
+ */
+export async function getLikedUsers(propertyId: string): Promise<LikedProfile[]> {
+    const supabase = createClient();
+
+    const { data: likedProfiles, error } = await supabase
+        .from("liked_profiles")
+        .select("*")
+        .eq("property_id", propertyId);
+
+    if (error) {
+        console.error("Error fetching users who liked property:", error);
+        throw new Error(error.message);
+    }
+
+    return likedProfiles || [];
 }

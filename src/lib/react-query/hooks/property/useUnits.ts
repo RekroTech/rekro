@@ -4,6 +4,8 @@ import {
     getUnitByPropertyIdClient,
     getUnitsByPropertyIdClient,
     toggleUnitLike,
+    getUnitLikesCount,
+    getBulkUnitLikesCounts,
 } from "@/services/unit.service";
 // NOTE: unit_availability hooks below are kept for future use but availability data
 // is now stored directly on the units table (available_from, available_to, is_available)
@@ -28,6 +30,9 @@ export const unitKeys = {
     like: (unitId: string) => [...unitKeys.likes(), unitId] as const,
     bulkLikes: (unitIds: string[], userId: string) =>
         [...unitKeys.likes(), "bulk", unitIds.sort().join(","), userId] as const,
+    likeCounts: () => [...unitKeys.all, "likeCounts"] as const,
+    likeCount: (unitId: string) => [...unitKeys.likeCounts(), unitId] as const,
+    bulkLikeCounts: (unitIds: string[]) => [...unitKeys.likeCounts(), "bulk", unitIds.sort().join(",")] as const,
     availability: () => [...unitKeys.all, "availability"] as const,
     availabilityDetail: (unitId: string) => [...unitKeys.availability(), unitId] as const,
 };
@@ -101,7 +106,31 @@ export function useToggleUnitLike() {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: unitKeys.like(variables.unitId) });
             queryClient.invalidateQueries({ queryKey: unitKeys.likes() });
+            queryClient.invalidateQueries({ queryKey: unitKeys.likeCount(variables.unitId) });
+            queryClient.invalidateQueries({ queryKey: unitKeys.likeCounts() });
         },
+    });
+}
+
+// Unit Like Count Hooks
+export function useUnitLikesCount(unitId: string, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: unitKeys.likeCount(unitId),
+        queryFn: () => getUnitLikesCount(unitId),
+        enabled: options?.enabled !== undefined ? options.enabled && !!unitId : !!unitId,
+    });
+}
+
+export function useBulkUnitLikesCounts(unitIds: string[], options?: { enabled?: boolean }) {
+    const hasUnits = unitIds.length > 0;
+
+    return useQuery({
+        queryKey: unitKeys.bulkLikeCounts(unitIds),
+        queryFn: async () => {
+            if (!hasUnits) return {};
+            return getBulkUnitLikesCounts(unitIds);
+        },
+        enabled: options?.enabled !== undefined ? options.enabled && hasUnits : hasUnits,
     });
 }
 

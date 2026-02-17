@@ -184,3 +184,52 @@ export async function toggleUnitLike(
         return true;
     }
 }
+
+/**
+ * Get the number of likes for a unit
+ */
+export async function getUnitLikesCount(unitId: string): Promise<number> {
+    const supabase = createClient();
+
+    const { count, error } = await supabase
+        .from("property_likes")
+        .select("*", { count: "exact", head: true })
+        .eq("unit_id", unitId);
+
+    if (error) {
+        console.error("Error fetching unit likes count:", error);
+        return 0;
+    }
+
+    return count ?? 0;
+}
+
+/**
+ * Get the number of likes for multiple units
+ */
+export async function getBulkUnitLikesCounts(unitIds: string[]): Promise<Record<string, number>> {
+    if (unitIds.length === 0) return {};
+
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+        .from("property_likes")
+        .select("unit_id")
+        .in("unit_id", unitIds);
+
+    if (error) {
+        console.error("Error fetching bulk unit likes counts:", error);
+        return {};
+    }
+
+    // Count likes per unit
+    const counts: Record<string, number> = {};
+    unitIds.forEach(id => counts[id] = 0);
+
+    data?.forEach(like => {
+        counts[like.unit_id] = (counts[like.unit_id] || 0) + 1;
+    });
+
+    return counts;
+}
+

@@ -87,6 +87,8 @@ export interface Database {
                     preferred_contact_method: PreferredContactMethod;
                     notification_preferences: Record<string, unknown> | null;
                     last_login_at: string | null;
+                    discoverable: boolean | null;
+                    share_contact: boolean | null;
                 };
                 Insert: {
                     id: string;
@@ -107,6 +109,8 @@ export interface Database {
                     preferred_contact_method?: PreferredContactMethod;
                     notification_preferences?: Record<string, unknown> | null;
                     last_login_at?: string | null;
+                    discoverable?: boolean | null;
+                    share_contact?: boolean | null;
                 };
                 Update: {
                     email?: string | null;
@@ -125,6 +129,8 @@ export interface Database {
                     preferred_contact_method?: PreferredContactMethod;
                     notification_preferences?: Record<string, unknown> | null;
                     last_login_at?: string | null;
+                    discoverable?: boolean | null;
+                    share_contact?: boolean | null;
                 };
             };
             user_application_profile: {

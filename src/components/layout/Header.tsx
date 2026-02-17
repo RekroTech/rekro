@@ -25,14 +25,12 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
         },
         {
             label: "Liked properties",
-            href: "/properties/liked",
+            href: "/profile/likes",
             icon: <Icon name="heart" className="w-4 h-4" />,
         },
         {
             label: "Settings",
-            onClick: () => {
-                // TODO: Navigate to settings page
-            },
+            href: "/profile/settings",
             icon: <Icon name="settings" className="w-4 h-4" />,
         },
         {

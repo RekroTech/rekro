@@ -1,6 +1,6 @@
 "use client";
 
-import { useProperty } from "@/lib/react-query/hooks/property";
+import { useProperty, useUserLikes } from "@/lib/react-query/hooks/property";
 import { Loader, Button, BackButton } from "@/components/common";
 import {
     PropertyHeader,
@@ -8,6 +8,7 @@ import {
     ImageGallery,
     PropertyAmenities,
     PropertySidebar,
+    LikedUsersCarousal,
 } from "@/components/Property/PropertyDetail";
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -24,6 +25,9 @@ export default function PropertyDetailPage() {
 
     // Fetch property data (no longer includes likes)
     const { data: property, isLoading, error } = useProperty(propertyId);
+
+    // Fetch users who liked any unit in this property
+    const { data: usersWhoLiked, isLoading: isLoadingLikes } = useUserLikes(propertyId);
 
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
@@ -213,6 +217,13 @@ export default function PropertyDetailPage() {
                     </div>
                 </div>
             </RentalFormProvider>
+
+            {/* Users Who Liked Carousel */}
+            {!isLoadingLikes && usersWhoLiked && usersWhoLiked.length > 0 && (
+                <div className="mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border">
+                    <LikedUsersCarousal users={usersWhoLiked} />
+                </div>
+            )}
         </main>
     );
 }

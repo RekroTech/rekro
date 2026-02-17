@@ -17,6 +17,8 @@ create table public.users (
   notification_preferences jsonb null default '{}'::jsonb,
   last_login_at timestamp with time zone null,
   native_language text null,
+  discoverable boolean not null default true,
+  share_contact boolean not null default true,
   constraint profiles_pkey primary key (id),
   constraint profiles_email_key unique (email),
   constraint profiles_id_fkey foreign KEY (id) references auth.users (id) on delete CASCADE,
