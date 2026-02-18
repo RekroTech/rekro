@@ -2,7 +2,6 @@
 
 import { DocumentUpload, DocumentUploadPresets } from "@/components/common/DocumentUpload";
 import { SegmentedControl, Select } from "@/components/common";
-import { useToast } from "@/hooks/useToast";
 import { VISA_TYPE_OPTIONS } from "@/components/Profile";
 import type { ResidencyFormState } from "../types";
 import { useDocumentManager } from "../hooks";
@@ -19,15 +18,12 @@ interface ResidencySectionProps {
  * Uses DocumentUpload component and useDocumentManager hook for consistent behavior
  */
 export function ResidencySection({ userId, data, onChange }: ResidencySectionProps) {
-    const { showSuccess, showError } = useToast();
 
     const { uploadDocument, removeDocument, getDocument, isOperationInProgress } =
         useDocumentManager({
             userId,
             documents: data.documents || {},
             onDocumentsChange: (docs) => onChange({ documents: docs }),
-            onSuccess: showSuccess,
-            onError: showError,
         });
 
     return (

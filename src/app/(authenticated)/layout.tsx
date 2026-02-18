@@ -1,15 +1,35 @@
+"use client";
+
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/server";
+import React, { useEffect } from "react";
+import { useSession } from "@/lib/react-query/hooks/auth/useAuth";
+import { ProfileCompletionProvider } from "@/contexts";
+import { Loader } from "@/components/common";
 
-// Force dynamic rendering for auth checks
-export const dynamic = "force-dynamic";
+export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+    const { hasSession, isLoading } = useSession();
 
-export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
-    const user = await getSession();
+    useEffect(() => {
+        if (!isLoading && !hasSession) {
+            redirect("/login");
+        }
+    }, [hasSession, isLoading]);
 
-    if (!user) {
-        redirect("/login");
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader />
+            </div>
+        );
     }
 
-    return <>{children}</>;
+    if (!hasSession) {
+        return null;
+    }
+
+    return (
+        <ProfileCompletionProvider>
+            {children}
+        </ProfileCompletionProvider>
+    );
 }

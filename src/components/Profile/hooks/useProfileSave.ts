@@ -7,14 +7,15 @@ import type { ProfileFormState } from "./useProfileForm";
  * Transform form state to API update payload
  */
 function transformToUpdatePayload(formState: ProfileFormState): UpdateProfile {
-    const { personalDetails, residency, incomeDetails, rentalPreferences, documents } =
+    const { personalDetails, residency, incomeDetails, rentalPreferences, additionalDocuments } =
         formState;
 
-    // Merge documents from all sections
+    // Build a canonical documents map from the section-level sources.
+    // This ensures removals (key deletions) are preserved when saving.
     const allDocuments = {
-        ...documents, // Additional documents (referenceLetter, guarantorLetter, drivingLicense)
-        ...residency.documents, // Passport, visa
-        ...incomeDetails.documents, // Payslips, bankStatement, etc.
+        ...additionalDocuments, // drivingLicense, referenceLetter, guarantorLetter
+        ...residency.documents, // passport, visa
+        ...incomeDetails.documents, // payslips, bankStatement, etc.
     };
 
     return {

@@ -3,7 +3,6 @@
 import type { EmploymentStatus } from "@/types/db";
 import { Input, Select, SegmentedControl } from "@/components/common";
 import { DocumentUpload, DocumentUploadPresets } from "@/components/common/DocumentUpload";
-import { useToast } from "@/hooks/useToast";
 import { useDocumentManager } from "../hooks";
 import type { IncomeDetailsFormState } from "../types";
 import {
@@ -25,15 +24,12 @@ interface IncomeDetailsSectionProps {
  * Uses DocumentUpload component and useDocumentManager hook for consistent behavior
  */
 export function IncomeDetailsSection({ userId, data, onChange }: IncomeDetailsSectionProps) {
-    const { showSuccess, showError } = useToast();
 
     const { uploadDocument, removeDocument, getDocument, isOperationInProgress } =
         useDocumentManager({
             userId,
             documents: data.documents || {},
             onDocumentsChange: (docs) => onChange({ documents: docs }),
-            onSuccess: showSuccess,
-            onError: showError,
         });
 
     return (

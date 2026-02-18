@@ -47,7 +47,8 @@ interface UpdateProfileContext {
 
 /**
  * Hook to update user profile
- * Optimistically updates the cache and refetches in the background
+ * The server handles merging profile and application profile fields,
+ * so we just rely on the response for cache updates.
  */
 export function useUpdateProfile() {
     const queryClient = useQueryClient();
@@ -56,42 +57,27 @@ export function useUpdateProfile() {
         mutationFn: async (data: UpdateProfile) => {
             return await userService.updateProfile(data);
         },
-        onMutate: async (newProfile) => {
-            // Cancel any outgoing refetches to avoid overwriting optimistic update
+        onMutate: async () => {
+            // Cancel any outgoing refetches to prevent them from overwriting our optimistic update
             await queryClient.cancelQueries({ queryKey: userKeys.profile() });
 
-            // Snapshot the previous value
+            // Snapshot the previous value for rollback
             const previousUser =
                 queryClient.getQueryData<UserProfile | null>(userKeys.profile()) ?? null;
 
-            // Optimistically update to the new value
-            if (previousUser) {
-                queryClient.setQueryData<UserProfile>(userKeys.profile(), {
-                    ...previousUser,
-                    ...newProfile,
-                });
-            }
-
-            // Return context with previous value
             return { previousUser };
         },
         onSuccess: (updatedUser) => {
-            // Update cache with server response
+            // Update cache with the server response (which has the correct structure)
             queryClient.setQueryData(userKeys.profile(), updatedUser);
-
-            // Invalidate session user cache to update header/auth components
             queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
         },
         onError: (error, _newProfile, context) => {
-            // Rollback on error
+            // Rollback to previous state on error
             if (context?.previousUser) {
                 queryClient.setQueryData(userKeys.profile(), context.previousUser);
             }
             console.error("Failed to update profile:", error);
-        },
-        onSettled: () => {
-            // Always refetch after error or success to ensure sync with server
-            queryClient.invalidateQueries({ queryKey: userKeys.profile() });
         },
     });
 }

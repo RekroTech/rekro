@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
-import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
+import { Button, Icon, Input, Select, SegmentedControl, ProfileCompletionModal } from "@/components/common";
 import { useSession } from "@/lib/react-query/hooks/auth/useAuth";
 import { useToggleUnitLike, useUnitLike, useUnitLikesCount } from "@/lib/react-query/hooks/property";
 import { EnquiryForm } from "./EnquiryForm";
@@ -13,10 +13,8 @@ import { ApplicationModal } from "@/components/Application";
 import { getAvailabilityInfo, getMaxStartDate, getMinStartDate } from "@/components/Property/utils";
 import { calculatePricing } from "@/components/Property/pricing";
 import { LEASE_MONTH_OPTIONS } from "@/components/Property/constants";
-import { useRentalForm } from "@/contexts";
+import { useRentalForm, useProfileCompletion } from "@/contexts";
 import { Inclusions } from "../Inclusions/Inclusions";
-import { useProfile } from "@/lib/react-query/hooks/user";
-import { isProfileCompleteFromUser } from "@/components/Profile/profile-completion";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
@@ -40,9 +38,10 @@ export function PropertySidebar({
 
     const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
     const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+    const [isProfileCompletionModalOpen, setIsProfileCompletionModalOpen] = useState(false);
 
-    // Fetch profile only when authenticated; used to gate applications.
-    const { data: userProfile, isLoading: isProfileLoading } = useProfile({ enabled: !!isAuthenticated });
+    // Use profile completion context for gating applications
+    const { isComplete: isProfileComplete, isLoading: isProfileLoading } = useProfileCompletion();
 
     // Calculate pricing
     const pricing = useMemo(
@@ -281,9 +280,8 @@ export function PropertySidebar({
                             }
 
                             // Profile completeness gate
-                            if (!isProfileCompleteFromUser(userProfile)) {
-                                const next = `/property/${property.id}`;
-                                router.push(`/profile?toast=complete-profile&next=${encodeURIComponent(next)}`);
+                            if (!isProfileComplete) {
+                                setIsProfileCompletionModalOpen(true);
                                 return;
                             }
 
@@ -321,6 +319,12 @@ export function PropertySidebar({
             )}
 
             {/* Modals */}
+            <ProfileCompletionModal
+                isOpen={isProfileCompletionModalOpen}
+                onClose={() => setIsProfileCompletionModalOpen(false)}
+                nextUrl={`/property/${property.id}`}
+            />
+
             {selectedUnit && (
                 <ApplicationModal
                     isOpen={isApplicationModalOpen}

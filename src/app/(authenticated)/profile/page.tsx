@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useProfile } from "@/lib/react-query/hooks/user";
 import { BackButton, Button, Icon, Loader } from "@/components/common";
@@ -18,31 +18,13 @@ import { useProfileForm } from "@/components/Profile/hooks/useProfileForm";
 import { useProfileSave } from "@/components/Profile/hooks/useProfileSave";
 import { useProfileImage } from "@/components/Profile/hooks/useProfileImage";
 import { useSectionExpansion } from "@/components/Profile/hooks/useSectionExpansion";
-import { calculateProfileCompletion } from "@/components/Profile/profile-completion";
+import { useProfileCompletion } from "@/contexts";
 import { buildShareableProfile } from "@/components/Profile/shareable-profile";
+import { DocumentOperationsProvider, useDocumentOperations } from "@/components/Profile/contexts/DocumentOperationsContext";
 
-export default function ProfilePage() {
+function ProfilePageContent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const { showSuccess, showError, showWarning } = useToast();
-
-    const toastHandledRef = useRef(false);
-
-    useEffect(() => {
-        if (toastHandledRef.current) return;
-
-        const toast = searchParams.get("toast");
-        if (toast !== "complete-profile") return;
-
-        toastHandledRef.current = true;
-        showWarning("Please complete your profile before applying.");
-
-        // Remove `toast` from the URL so it doesn't re-fire on refresh.
-        const params = new URLSearchParams(searchParams.toString());
-        params.delete("toast");
-        const queryString = params.toString();
-        router.replace(`/profile${queryString ? `?${queryString}` : ""}`);
-    }, [searchParams, router, showWarning]);
+    const { showSuccess, showError } = useToast();
 
     // Data fetching
     const { data: user, isLoading: userLoading } = useProfile();
@@ -73,7 +55,42 @@ export default function ProfilePage() {
     });
 
     // Section expansion state
-    const { expandedSections, toggleSection } = useSectionExpansion();
+    const { expandedSections, toggleSection, collapseAll } = useSectionExpansion();
+
+    // Profile completion from context
+    const { calculateWithFormState } = useProfileCompletion();
+
+    // Document operations state from context
+    const { isAnyOperationInProgress: isAnyDocumentOperationInProgress } = useDocumentOperations();
+
+    // Build derived data - calculate with current form state for real-time updates
+    const profileCompletion = calculateWithFormState(
+        { ...formState.incomeDetails, ...formState.residency },
+        formState.documents
+    );
+    const shareableProfile = user ? buildShareableProfile(user, formState) : null;
+    const isTenant = true;
+
+    // Track when profile reaches 100% completion
+    const hasShownCompletionToast = useRef(false);
+
+    useEffect(() => {
+        if (profileCompletion.isComplete && !hasShownCompletionToast.current) {
+            // Collapse all sections
+            collapseAll();
+
+            // Show success toast
+            showSuccess("Congratulations! You are ready to apply for any property 🎉");
+
+            // Mark as shown to prevent repeated toasts
+            hasShownCompletionToast.current = true;
+        }
+
+        // Reset flag if profile becomes incomplete again
+        if (!profileCompletion.isComplete && hasShownCompletionToast.current) {
+            hasShownCompletionToast.current = false;
+        }
+    }, [profileCompletion.isComplete, collapseAll, showSuccess]);
 
     // Handlers
     const handleSavePersonalDetails = async () => {
@@ -108,14 +125,6 @@ export default function ProfilePage() {
         return null;
     }
 
-    // Build derived data
-    const profileCompletion = calculateProfileCompletion(
-        user,
-        { ...formState.incomeDetails, ...formState.residency },
-        formState.documents
-    );
-    const shareableProfile = buildShareableProfile(user, formState);
-    const isTenant = true;
 
 
     return (
@@ -128,7 +137,7 @@ export default function ProfilePage() {
                     <Button
                         type="button"
                         onClick={handleSaveWholeProfile}
-                        disabled={isSaving || isUploadingImage || !hasChanges}
+                        disabled={isSaving || isUploadingImage || !hasChanges || isAnyDocumentOperationInProgress}
                         loading={isSaving}
                         variant="primary"
                         size="md"
@@ -140,12 +149,14 @@ export default function ProfilePage() {
                     {/* Left Column - Shareable Profile Card */}
                     <div className="lg:col-span-1">
                         <div className="sticky top-39">
-                            <ProfileCard
-                                profile={shareableProfile}
-                                editable={true}
-                                onImageUpdate={uploadImage}
-                                isUploadingImage={isUploadingImage}
-                            />
+                            {shareableProfile && (
+                                <ProfileCard
+                                    profile={shareableProfile}
+                                    editable={true}
+                                    onImageUpdate={uploadImage}
+                                    isUploadingImage={isUploadingImage}
+                                />
+                            )}
 
                             {/* Badges */}
                             {profileCompletion.unlockedBadges.length > 0 && (
@@ -311,3 +322,12 @@ export default function ProfilePage() {
         </div>
     );
 }
+
+export default function ProfilePage() {
+    return (
+        <DocumentOperationsProvider>
+            <ProfilePageContent />
+        </DocumentOperationsProvider>
+    );
+}
+

@@ -5,6 +5,7 @@ import {
     listUserDocuments,
     uploadUserDocument,
 } from "@/services/storage.service";
+import { useDocumentOperations } from "../contexts/DocumentOperationsContext";
 
 /**
  * Custom hook for managing document uploads and deletions
@@ -41,6 +42,7 @@ export function useDocumentManager({
     onError,
 }: UseDocumentManagerOptions) {
     const [operations, setOperations] = useState<Map<DocumentType, DocumentOperation>>(new Map());
+    const { startOperation, endOperation } = useDocumentOperations();
 
     const isOperationInProgress = useCallback(
         (docType: DocumentType) => operations.get(docType)?.inProgress ?? false,
@@ -53,7 +55,12 @@ export function useDocumentManager({
             next.set(docType, { type: docType, inProgress });
             return next;
         });
-    }, []);
+        if (inProgress) {
+            startOperation(docType);
+        } else {
+            endOperation(docType);
+        }
+    }, [startOperation, endOperation]);
 
     const clearOperation = useCallback((docType: DocumentType) => {
         setOperations((prev) => {
@@ -61,7 +68,8 @@ export function useDocumentManager({
             next.delete(docType);
             return next;
         });
-    }, []);
+        endOperation(docType);
+    }, [endOperation]);
 
     const uploadDocument = useCallback(
         async (docType: DocumentType, file: File) => {

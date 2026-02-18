@@ -15,7 +15,7 @@ import { useParams, useRouter } from "next/navigation";
 import { getPropertyFileUrls } from "@/services/storage.service";
 import { Unit } from "@/types/db";
 import { updateRoomRentsOnOccupancySelection } from "@/components/Property/pricing";
-import { RentalFormProvider } from "@/contexts";
+import { RentalFormProvider, ProfileCompletionProvider } from "@/contexts";
 import { useHasApplied } from "@/lib/react-query/hooks/application/useApplications";
 
 export default function PropertyDetailPage() {
@@ -149,41 +149,66 @@ export default function PropertyDetailPage() {
     };
 
     return (
-        <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8 overflow-x-hidden">
-            {/* Back Button */}
-            <BackButton className="mb-4 sm:mb-6" />
+        <ProfileCompletionProvider>
+            <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8 overflow-x-hidden">
+                {/* Back Button */}
+                <BackButton className="mb-4 sm:mb-6" />
 
-            {/* Property Header */}
-            <PropertyHeader property={property} selectedUnit={selectedUnit} />
+                {/* Property Header */}
+                <PropertyHeader property={property} selectedUnit={selectedUnit} />
 
-            <RentalFormProvider
-                selectedUnit={selectedUnit}
-                unitOccupancies={unitOccupancies}
-                existingApplication={existingApplication}
-            >
-                {/* Main Grid: Image Gallery + Content (stacked on mobile, 2/3 on desktop) + Sidebar (1/3 on desktop) */}
-                <div className="grid gap-4 sm:gap-6 mb-8 lg:grid-cols-3">
-                    {/* Image Gallery & Content - Full width on mobile, 2/3 on desktop */}
-                    <div className="lg:col-span-2 min-w-0">
-                        <ImageGallery
-                            images={propertyMedia}
-                            title={property.title}
-                            selectedIndex={selectedImageIndex}
-                            onIndexChange={setSelectedImageIndex}
-                        />
-
-                        {/* Units Section */}
-                        {units.length > 1 && (
-                            <UnitsSelector
-                                units={units}
-                                selectedUnitId={selectedUnitId}
-                                onUnitSelect={handleUnitSelect}
-                                dynamicPricing={dynamicPricing}
+                <RentalFormProvider
+                    selectedUnit={selectedUnit}
+                    unitOccupancies={unitOccupancies}
+                    existingApplication={existingApplication}
+                >
+                    {/* Main Grid: Image Gallery + Content (stacked on mobile, 2/3 on desktop) + Sidebar (1/3 on desktop) */}
+                    <div className="grid gap-4 sm:gap-6 mb-8 lg:grid-cols-3">
+                        {/* Image Gallery & Content - Full width on mobile, 2/3 on desktop */}
+                        <div className="lg:col-span-2 min-w-0">
+                            <ImageGallery
+                                images={propertyMedia}
+                                title={property.title}
+                                selectedIndex={selectedImageIndex}
+                                onIndexChange={setSelectedImageIndex}
                             />
-                        )}
 
-                        {/* Sidebar on mobile - Show after units, before description */}
-                        <div className="lg:hidden mt-4">
+                            {/* Units Section */}
+                            {units.length > 1 && (
+                                <UnitsSelector
+                                    units={units}
+                                    selectedUnitId={selectedUnitId}
+                                    onUnitSelect={handleUnitSelect}
+                                    dynamicPricing={dynamicPricing}
+                                />
+                            )}
+
+                            {/* Sidebar on mobile - Show after units, before description */}
+                            <div className="lg:hidden mt-4">
+                                <PropertySidebar
+                                    selectedUnit={selectedUnit}
+                                    property={property}
+                                    unitOccupancies={unitOccupancies}
+                                    onUnitOccupanciesChange={setUnitOccupancies}
+                                />
+                            </div>
+
+                            {/* Content */}
+                            <div className="space-y-6 sm:space-y-8 mt-6 sm:mt-8">
+                                <div>
+                                    <h2 className="text-xl sm:text-2xl font-bold text-text mb-3 sm:mb-4">
+                                        About the property
+                                    </h2>
+                                    <p className="text-sm sm:text-base text-text-muted leading-relaxed whitespace-pre-line">
+                                        {property.description || "No description available."}
+                                    </p>
+                                </div>
+                                <PropertyAmenities amenities={property.amenities} />
+                            </div>
+                        </div>
+
+                        {/* Sidebar - Hidden on mobile (shown above), visible on desktop */}
+                        <div className="hidden lg:block lg:col-span-1 min-w-0">
                             <PropertySidebar
                                 selectedUnit={selectedUnit}
                                 property={property}
@@ -191,39 +216,16 @@ export default function PropertyDetailPage() {
                                 onUnitOccupanciesChange={setUnitOccupancies}
                             />
                         </div>
-
-                        {/* Content */}
-                        <div className="space-y-6 sm:space-y-8 mt-6 sm:mt-8">
-                            <div>
-                                <h2 className="text-xl sm:text-2xl font-bold text-text mb-3 sm:mb-4">
-                                    About the property
-                                </h2>
-                                <p className="text-sm sm:text-base text-text-muted leading-relaxed whitespace-pre-line">
-                                    {property.description || "No description available."}
-                                </p>
-                            </div>
-                            <PropertyAmenities amenities={property.amenities} />
-                        </div>
                     </div>
+                </RentalFormProvider>
 
-                    {/* Sidebar - Hidden on mobile (shown above), visible on desktop */}
-                    <div className="hidden lg:block lg:col-span-1 min-w-0">
-                        <PropertySidebar
-                            selectedUnit={selectedUnit}
-                            property={property}
-                            unitOccupancies={unitOccupancies}
-                            onUnitOccupanciesChange={setUnitOccupancies}
-                        />
+                {/* Users Who Liked Carousel */}
+                {!isLoadingLikes && usersWhoLiked && usersWhoLiked.length > 0 && (
+                    <div className="mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border">
+                        <LikedUsersCarousal users={usersWhoLiked} />
                     </div>
-                </div>
-            </RentalFormProvider>
-
-            {/* Users Who Liked Carousel */}
-            {!isLoadingLikes && usersWhoLiked && usersWhoLiked.length > 0 && (
-                <div className="mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border">
-                    <LikedUsersCarousal users={usersWhoLiked} />
-                </div>
-            )}
-        </main>
+                )}
+            </main>
+        </ProfileCompletionProvider>
     );
 }

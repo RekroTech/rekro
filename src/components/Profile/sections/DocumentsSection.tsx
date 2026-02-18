@@ -1,7 +1,6 @@
 "use client";
 
 import { DocumentUpload, DocumentUploadPresets } from "@/components/common/DocumentUpload";
-import { useToast } from "@/hooks/useToast";
 import type { Documents } from "@/types/db";
 import { useDocumentManager } from "../hooks";
 
@@ -21,8 +20,6 @@ export function DocumentsSection({
   uploadedDocs,
   onChange,
 }: DocumentsSectionProps) {
-  const { showSuccess, showError } = useToast();
-
   const {
     uploadDocument,
     removeDocument,
@@ -32,8 +29,6 @@ export function DocumentsSection({
     userId,
     documents: uploadedDocs,
     onDocumentsChange: onChange,
-    onSuccess: showSuccess,
-    onError: showError,
   });
 
   return (
