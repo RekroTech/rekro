@@ -68,8 +68,12 @@
     /* Status */
     --danger-500: #ff3b30;
     --danger-600: #d32f2f;
+    --warning-50: #fff7ed;
+    --warning-200: #fed7aa;
     --warning-500: #ff9500;
     --warning-600: #ff8c00;
+    --warning-700: #cc7700;
+    --warning-800: #995800;
     --like: #e74c3c;
 
     /* Radius (RN: card 16-20, input ~10-12, pill 30, tag 14) */
@@ -122,6 +126,12 @@
 
         /* Focus ring */
         --focus-ring: rgba(58, 127, 121, 0.25);
+
+        /* Status colors for dark mode */
+        --warning-50: rgba(255, 149, 0, 0.15);
+        --warning-200: rgba(255, 149, 0, 0.3);
+        --warning-700: #ffa500;
+        --warning-800: #ffb733;
     }
 }
 
@@ -191,8 +201,12 @@
     /* Status */
     --color-danger-500: var(--danger-500);
     --color-danger-600: var(--danger-600);
+    --color-warning-50: var(--warning-50);
+    --color-warning-200: var(--warning-200);
     --color-warning-500: var(--warning-500);
     --color-warning-600: var(--warning-600);
+    --color-warning-700: var(--warning-700);
+    --color-warning-800: var(--warning-800);
     --color-like: var(--like);
 
     /* Modal backdrop */

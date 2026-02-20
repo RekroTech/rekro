@@ -54,8 +54,12 @@ const config: Config = {
                     600: "var(--danger-600)",
                 },
                 warning: {
+                    50: "var(--warning-50)",
+                    200: "var(--warning-200)",
                     500: "var(--warning-500)",
                     600: "var(--warning-600)",
+                    700: "var(--warning-700)",
+                    800: "var(--warning-800)",
                 },
                 "auth-note": "var(--auth-note)",
                 "auth-support": "var(--auth-support)",

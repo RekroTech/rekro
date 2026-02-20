@@ -42,7 +42,7 @@ export const FinancialInformationSection = React.memo(({ user }: FinancialInform
         <div className="bg-card rounded-[var(--radius-card)] border border-border overflow-hidden">
             <div className="px-4 py-3 bg-surface-subtle border-b border-border">
                 <h4 className="font-semibold text-text text-sm flex items-center">
-                    <Icon name="dollar" className="w-4 h-4 mr-2 text-primary-600" />
+                    <Icon name="dollar" className="w-4 h-4 mr-2 text-primary-600 dark:text-primary-400" />
                     Financial Information
                 </h4>
             </div>

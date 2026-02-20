@@ -189,12 +189,12 @@ export function EnquiryForm({
                     </p>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="">
                     {/* Property Information Card */}
                     <div className="bg-panel border border-border rounded-xl p-5 mb-4">
                         {/* Info Message */}
                         <div className="">
-                            <p className="text-xs text-text-muted flex items-start gap-2">
+                            <p className="text-xs sm:text-sm text-text-muted flex items-start gap-2">
                                 <Icon
                                     name="info"
                                     className="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5"
@@ -270,7 +270,7 @@ export function EnquiryForm({
                         </div>
                     )}
 
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex gap-3 mt-3">
                         <Button
                             type="button"
                             variant="secondary"

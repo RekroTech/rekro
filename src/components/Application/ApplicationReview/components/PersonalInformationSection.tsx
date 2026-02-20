@@ -36,7 +36,7 @@ export const PersonalInformationSection = React.memo(({ user }: PersonalInformat
         <div className="bg-card rounded-[var(--radius-card)] border border-border overflow-hidden">
             <div className="px-4 py-3 bg-surface-subtle border-b border-border">
                 <h4 className="font-semibold text-text text-sm flex items-center">
-                    <Icon name="user" className="w-4 h-4 mr-2 text-primary-600" />
+                    <Icon name="user" className="w-4 h-4 mr-2 text-primary-600 dark:text-primary-400" />
                     Personal Profile
                 </h4>
             </div>

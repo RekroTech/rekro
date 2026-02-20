@@ -1,38 +1,41 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import React, { useMemo, useCallback } from "react";
 import { Modal } from "@/components/common";
-import type { Property } from "@/types/property.types";
-import type { Unit } from "@/types/db";
+import { calculatePricing } from "@/components/Property/pricing";
+import { useApplicationModalActions } from "./hooks";
 import { ApplicationForm } from "./ApplicationForm";
 import { ApplicationReview } from "./ApplicationReview/ApplicationReview";
-import { calculatePricing } from "@/components/Property/pricing";
-import { useHasApplied } from "@/lib/react-query/hooks/application/useApplications";
-import { useRentalForm } from "@/contexts";
+import { ApplicationConfirm } from "./ApplicationConfirm";
+import type { Property } from "@/types/property.types";
+import type { Unit } from "@/types/db";
+import type { ModalButton } from "@/components/common/Modal";
+import type { RentalFormData } from "@/components/Property/types";
+import { useApplication } from "@/lib/react-query/hooks/application/useApplications";
+import { ModalActionState, ModalStep } from "@/components/Application/types";
+
 
 interface ApplicationModalProps {
     isOpen: boolean;
     onClose: () => void;
     property: Property;
     selectedUnit: Unit;
-    isEntireHome: boolean;
+    rentalForm: RentalFormData;
+    updateRentalForm: (updates: Partial<RentalFormData>) => void;
 }
-
-type Step = "application" | "review";
 
 export function ApplicationModal({
     isOpen,
     onClose,
     property,
     selectedUnit,
-    isEntireHome,
+    rentalForm,
+    updateRentalForm,
 }: ApplicationModalProps) {
-    const { rentalForm } = useRentalForm();
-    const [currentStep, setCurrentStep] = useState<Step>("application");
-    const [submittedApplicationId, setSubmittedApplicationId] = useState<string | null>(null);
-
-    // Check if user has already applied to this property/unit
-    const existingApplication = useHasApplied(property.id, selectedUnit?.id);
+    // Modal step state (managed locally)
+    const [step, setStep] = React.useState<ModalStep>("application");
+    const [modalActionState, setModalActionState] = React.useState<ModalActionState | null>(null);
+    const existingApplication = useApplication(property.id, selectedUnit.id);
 
     // Calculate all pricing in one place
     const pricing = useMemo(
@@ -42,55 +45,98 @@ export function ApplicationModal({
 
     // Reset state when modal closes
     const handleClose = useCallback(() => {
-        setCurrentStep("application");
-        setSubmittedApplicationId(null);
+        setStep("application");
+        setModalActionState(null);
         onClose();
     }, [onClose]);
 
-    // Handle successful application submission (from ApplicationForm)
-    const handleApplicationSubmit = useCallback((applicationId: string) => {
-        setSubmittedApplicationId(applicationId);
-        setCurrentStep("review");
-    }, []);
+    // Use the unified hook to manage actions based on step
+    useApplicationModalActions({
+        property,
+        selectedUnit,
+        totalWeeklyRent: pricing.totalWeeklyRent,
+        onClose: handleClose,
+        rentalForm,
+        step,
+        setStep,
+        existingApplication,
+        setModalActionState,
+    });
 
-    // Handle back from review to form
-    const handleBack = useCallback(() => {
-        setCurrentStep("application");
-    }, []);
-
-    // Determine which application ID to use for review
-    const applicationIdForReview = submittedApplicationId ?? existingApplication?.id;
-
-    const getModalTitle = () => {
-        const action = existingApplication ? "Update Application for" : "Apply for";
-        if (currentStep === "application") {
-            return `${action} ${property.title}`;
+    // Get modal title based on current step
+    const modalTitle = useMemo(() => {
+        if (step === "application") {
+            return existingApplication?.id ? "Update Application" : "New Application";
         }
         return "Review Your Application";
-    };
+    }, [step, existingApplication?.id]);
+
+    // Build modal buttons from action state
+    const { primaryButton, secondaryButton } = useMemo(() => {
+        if (!modalActionState) {
+            return { primaryButton: undefined, secondaryButton: undefined };
+        }
+
+        const primary: ModalButton = {
+            label: modalActionState.submitText,
+            onClick: modalActionState.onSubmit,
+            variant: "primary",
+            disabled: !modalActionState.canSubmit,
+            isLoading: modalActionState.isSubmitting,
+            icon: step === "application" ? "chevron-right" : "check",
+            iconPosition: "right",
+        };
+
+        const secondary: ModalButton = modalActionState.onBack
+            ? {
+                  label: "Back",
+                  onClick: modalActionState.onBack,
+                  variant: "secondary",
+                  disabled: modalActionState.isSubmitting,
+                  icon: "chevron-left",
+                  iconPosition: "left",
+              }
+            : {
+                  label: "Cancel",
+                  onClick: modalActionState.onCancel,
+                  variant: "secondary",
+                  disabled: modalActionState.isSubmitting,
+              };
+
+        return { primaryButton: primary, secondaryButton: secondary };
+    }, [step, modalActionState]);
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title={getModalTitle()} size="xl">
-            {currentStep === "application" && (
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title={modalTitle}
+            size="xl"
+            primaryButton={primaryButton}
+            secondaryButton={secondaryButton}
+        >
+            {step === "application" && (
                 <ApplicationForm
                     property={property}
                     selectedUnit={selectedUnit}
-                    isEntireHome={isEntireHome}
                     totalWeeklyRent={pricing.totalWeeklyRent}
-                    onSuccess={handleApplicationSubmit}
-                    existingApplicationId={existingApplication?.id}
+                    rentalForm={rentalForm}
+                    updateRentalForm={updateRentalForm}
                 />
             )}
 
-            {currentStep === "review" && (
+            {step === "review" && (
                 <ApplicationReview
                     property={property}
                     selectedUnit={selectedUnit}
-                    applicationId={applicationIdForReview}
-                    onSuccess={handleClose}
-                    onCancel={handleClose}
-                    onBack={handleBack}
+                    applicationId={existingApplication?.id}
                 />
+            )}
+
+            {step === "confirm" && (
+                <ApplicationConfirm
+                    property={property}
+                    selectedUnit={selectedUnit}/>
             )}
         </Modal>
     );

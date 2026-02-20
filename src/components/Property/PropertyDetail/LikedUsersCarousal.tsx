@@ -57,13 +57,10 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
     return (
         <div className={clsx("relative w-full", className)}>
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6 px-2 sm:px-0">
                 <h2 className="text-2xl sm:text-3xl font-bold text-text">
                     Interested Users
                 </h2>
-                <p className="text-sm text-text-muted mt-1">
-                    {users.length} {users.length === 1 ? "person" : "people"} liked this property
-                </p>
             </div>
 
             {/* Carousel Container */}

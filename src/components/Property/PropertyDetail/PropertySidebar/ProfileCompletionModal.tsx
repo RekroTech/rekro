@@ -1,9 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Modal } from "./Modal";
-import { Button } from "./Button";
-import { Icon } from "./Icon";
+import { Modal, Button, Icon } from "@/components/common";
 
 interface ProfileCompletionModalProps {
     isOpen: boolean;
@@ -28,10 +26,10 @@ export function ProfileCompletionModal({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Complete Your Profile" size="sm">
-            <div className="space-y-6">
+        <Modal isOpen={isOpen} onClose={onClose} size="sm">
+            <div className="mt-2">
                 {/* Icon and Message */}
-                <div className="flex flex-col items-center text-center space-y-4">
+                <div className="flex flex-col items-center text-center mb-6 sm:mb-8 gap-4">
                     <div className="w-16 h-16 rounded-full bg-primary-500/10 flex items-center justify-center">
                         <Icon name="user" className="w-8 h-8 text-primary-600" />
                     </div>
@@ -48,7 +46,7 @@ export function ProfileCompletionModal({
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col-reverse sm:flex-row gap-3 mb-2">
+                <div className="flex flex-col-reverse sm:flex-row gap-3 mb-0 sm:my-2">
                     <Button
                         variant="secondary"
                         onClick={onClose}

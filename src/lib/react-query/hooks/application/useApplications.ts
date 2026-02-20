@@ -111,7 +111,7 @@ export function useApplications(filters?: { status?: string; propertyId?: string
  * Hook to check if user has already applied to a property/unit
  * Returns the existing application if found, null otherwise
  */
-export function useHasApplied(propertyId: string, unitId?: string | null) {
+export function useApplication(propertyId: string, unitId?: string | null) {
     return useQuery({
         queryKey: applicationKeys.list(),
         queryFn: async () => {
@@ -219,7 +219,7 @@ export function useApplicationSnapshots(applicationId: string | null) {
  * Hook to fetch a single application by id.
  * This avoids fetching the full list and filtering client-side.
  */
-export function useApplication(applicationId: string | null) {
+export function useApplicationById(applicationId: string | null) {
     return useQuery({
         queryKey: applicationKeys.detail(applicationId || ""),
         queryFn: async () => {

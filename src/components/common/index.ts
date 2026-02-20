@@ -26,8 +26,6 @@ export type { LoaderProps, LoaderSize } from "./Loader";
 export { Modal } from "./Modal";
 export type { ModalProps } from "./Modal";
 
-export { ProfileCompletionModal } from "./ProfileCompletionModal";
-
 export { Toast } from "./Toast";
 export type { ToastProps, ToastType } from "./Toast";
 

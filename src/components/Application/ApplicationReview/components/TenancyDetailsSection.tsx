@@ -50,7 +50,7 @@ export const TenancyDetailsSection = React.memo(({
         <div className="bg-card rounded-[var(--radius-card)] border border-border overflow-hidden">
             <div className="px-4 py-3 bg-surface-subtle border-b border-border">
                 <h4 className="font-semibold text-text text-sm flex items-center">
-                    <Icon name="calendar" className="w-4 h-4 mr-2 text-primary-600" />
+                    <Icon name="calendar" className="w-4 h-4 mr-2 text-primary-600 dark:text-primary-400" />
                     Tenancy Summary
                 </h4>
             </div>
@@ -104,10 +104,10 @@ export const TenancyDetailsSection = React.memo(({
                     {/* Total Rent */}
                     {application.total_rent !== null && application.total_rent !== undefined && (
                         <div className="pt-4 border-t border-border mt-4">
-                            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-2 border-primary-300 px-4 py-3.5 rounded-[var(--radius-card)]">
-                                <div className="flex items-center justify-between">
+                            <div className="bg-gradient-to-br from-surface-subtle to-surface-muted border-2 border-primary-300 dark:border-primary-700 px-3 sm:px-4 py-3 sm:py-3.5 rounded-[var(--radius-card)]">
+                                <div className="flex items-center justify-between gap-2">
                                     <span className="text-text font-semibold text-sm">Total Rent</span>
-                                    <span className="text-primary-700 font-bold text-xl">
+                                    <span className="text-primary-700 dark:text-primary-300 font-bold text-lg sm:text-xl">
                                         ${Number(application.total_rent).toLocaleString()}
                                         <span className="text-text-muted text-xs font-normal ml-1">/ week</span>
                                     </span>

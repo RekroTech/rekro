@@ -91,20 +91,28 @@ export function UnitsSelector({
                             )}
 
                             {/* Details */}
-                            <div className="text-xs text-text-muted flex flex-col sm:flex-row gap-2 items-left sm:items-center justify-between">
+                            <div className="text-xs text-text-muted flex flex-col gap-2">
                                 {unit.bond_amount && (
                                     <div className="flex items-center gap-1">
                                         <Icon name="document" className="w-3.5 h-3.5" />$
                                         {unit.bond_amount} bond
                                     </div>
                                 )}
-                                {unit.max_occupants && (
-                                    <div className="flex items-center gap-1.5">
-                                        <Icon name="users" className="w-3.5 h-3.5" />
-                                        {unit.max_occupants}{" "}
-                                        {unit.max_occupants === 1 ? "person" : "people"}
-                                    </div>
-                                )}
+                                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                    {unit.size_sqm && (
+                                        <div className="flex items-center gap-1">
+                                            <Icon name="home" className="w-3.5 h-3.5 mb-0.5" />
+                                            {unit.size_sqm} sqm
+                                        </div>
+                                    )}
+                                    {unit.max_occupants && (
+                                        <div className="flex items-center gap-1.5">
+                                            <Icon name="users" className="w-3.5 h-3.5 mb-0.25" />
+                                            {unit.max_occupants}{" "}
+                                            {unit.max_occupants === 1 ? "person" : "people"}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </button>
                     );

@@ -31,7 +31,7 @@ export const AdditionalInformationSection = React.memo(({ user }: AdditionalInfo
         <div className="bg-card rounded-[var(--radius-card)] border border-border overflow-hidden">
             <div className="px-4 py-3 bg-surface-subtle border-b border-border">
                 <h4 className="font-semibold text-text text-sm flex items-center">
-                    <Icon name="info" className="w-4 h-4 mr-2 text-primary-600" />
+                    <Icon name="info" className="w-4 h-4 mr-2 text-primary-600 dark:text-primary-400" />
                     Additional Information
                 </h4>
             </div>
@@ -109,8 +109,8 @@ const PreferenceBadge = React.memo(({ label, isActive, icon, variant }: Preferen
         <span
             className={clsx(
                 "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium",
-                isActive && variant === "primary" && "bg-primary-50 text-primary-700 border border-primary-200",
-                isActive && variant === "warning" && "bg-warning-50 text-warning-700 border border-warning-200",
+                isActive && variant === "primary" && "bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700",
+                isActive && variant === "warning" && "bg-warning-50 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300 border border-warning-200 dark:border-warning-700",
                 !isActive && "bg-surface-muted text-text-muted border border-border"
             )}
         >

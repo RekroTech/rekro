@@ -158,12 +158,18 @@ const iconPaths: Record<IconName, React.ReactNode> = {
         </>
     ),
     bed: (
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-        />
+        <>
+            {/* headboard + pillow */}
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 9a2 2 0 012-2h3a2 2 0 012 2v3H5V9z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10h6a2 2 0 012 2v2H12v-4z" />
+            {/* bed frame + legs */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 14h16a2 2 0 012 2v2H2v-2a2 2 0 012-2zM3 18v3M21 18v3"
+            />
+        </>
     ),
     home: (
         <path
@@ -174,28 +180,66 @@ const iconPaths: Record<IconName, React.ReactNode> = {
         />
     ),
     bath: (
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
-        />
+        <>
+            {/* tub */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 12h16v4a4 4 0 01-4 4H8a4 4 0 01-4-4v-4z"
+            />
+            {/* faucet */}
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12V8a2 2 0 012-2h2" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 6v2" />
+            {/* feet */}
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 20h2m8 0h2" />
+        </>
     ),
     car: (
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 7v10M8 7l-3 3m3-3l3 3m10 4v-8a4 4 0 00-4-4H6a4 4 0 00-4 4v8"
-        />
+        <>
+            {/* car body */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 17h14a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2z"
+            />
+            {/* windshield/roof */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 11V9l1-2h6l1 2v2"
+            />
+            {/* front wheel */}
+            <circle cx="7" cy="17" r="2" fill="none" stroke="currentColor" strokeWidth={2} />
+            {/* rear wheel */}
+            <circle cx="17" cy="17" r="2" fill="none" stroke="currentColor" strokeWidth={2} />
+        </>
     ),
     parking: (
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 7v10M8 7l-3 3m3-3l3 3m10 4v-8a4 4 0 00-4-4H6a4 4 0 00-4 4v8"
-        />
+        <>
+            {/* parking space outline */}
+            <rect
+                x="3"
+                y="6"
+                width="18"
+                height="14"
+                rx="1"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            {/* P letter */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 18V10h4a3 3 0 013 3v0a3 3 0 01-3 3H9"
+            />
+        </>
     ),
     edit: (
         <path

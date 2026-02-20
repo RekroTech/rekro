@@ -68,6 +68,16 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                 </div>
                 <div className="lg:w-32">
                     <Input
+                        label="Area (sqm)"
+                        type="number"
+                        value={unit.size_sqm}
+                        onChange={(e) => onUpdate(index, { size_sqm: e.target.value })}
+                        placeholder="0"
+                        min="0"
+                    />
+                </div>
+                <div className="lg:w-32">
+                    <Input
                         label="Max Occupants"
                         type="number"
                         value={unit.max_occupants}

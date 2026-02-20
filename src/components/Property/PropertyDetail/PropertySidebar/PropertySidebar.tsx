@@ -1,20 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
-import { Button, Icon, Input, Select, SegmentedControl, ProfileCompletionModal } from "@/components/common";
+import type { RentalFormData } from "@/components/Property/types";
+import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
 import { useSession } from "@/lib/react-query/hooks/auth/useAuth";
 import { useToggleUnitLike, useUnitLike, useUnitLikesCount } from "@/lib/react-query/hooks/property";
+import { useApplication } from "@/lib/react-query/hooks/application/useApplications";
 import { EnquiryForm } from "./EnquiryForm";
 import { ShareDropdown } from "./ShareDropdown";
 import { ApplicationModal } from "@/components/Application";
 import { getAvailabilityInfo, getMaxStartDate, getMinStartDate } from "@/components/Property/utils";
 import { calculatePricing } from "@/components/Property/pricing";
 import { LEASE_MONTH_OPTIONS } from "@/components/Property/constants";
-import { useRentalForm, useProfileCompletion } from "@/contexts";
+import { useProfileCompletion } from "@/contexts";
+import { buildInitialFormData, toFormData } from "@/components/Application/utils";
 import { Inclusions } from "../Inclusions/Inclusions";
+import { ProfileCompletionModal } from "./ProfileCompletionModal";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
@@ -34,7 +38,10 @@ export function PropertySidebar({
     const router = useRouter();
     const isEntireHome = selectedUnit?.listing_type === "entire_home";
 
-    const { rentalForm, updateRentalForm } = useRentalForm();
+    // Rental form state (managed locally)
+    const [rentalForm, setRentalForm] = useState<RentalFormData>(() =>
+        buildInitialFormData(null)
+    );
 
     const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
     const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
@@ -42,6 +49,28 @@ export function PropertySidebar({
 
     // Use profile completion context for gating applications
     const { isComplete: isProfileComplete, isLoading: isProfileLoading } = useProfileCompletion();
+
+    // Fetch existing application for this unit
+    const existingApplication = useApplication(property.id, selectedUnit?.id);
+
+    // Initialize rental form when unit changes or existing application loads
+    useEffect(() => {
+        if (selectedUnit) {
+            if (existingApplication) {
+                // Pre-fill with existing application data
+                setRentalForm(toFormData(existingApplication));
+            } else {
+                // Initialize with defaults
+                setRentalForm(buildInitialFormData(selectedUnit));
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedUnit?.id, existingApplication]);
+
+    // Helper to update rental form
+    const updateRentalForm = (updates: Partial<RentalFormData>) => {
+        setRentalForm(prev => ({ ...prev, ...updates }));
+    };
 
     // Calculate pricing
     const pricing = useMemo(
@@ -331,7 +360,8 @@ export function PropertySidebar({
                     onClose={() => setIsApplicationModalOpen(false)}
                     property={property}
                     selectedUnit={selectedUnit}
-                    isEntireHome={isEntireHome}
+                    rentalForm={rentalForm}
+                    updateRentalForm={updateRentalForm}
                 />
             )}
 
