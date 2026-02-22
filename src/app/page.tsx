@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { PropertyList } from "@/components";
 import { Icon, Input, Select } from "@/components/common";
@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/useToast";
 // This page needs to be dynamic to show property listings
 export const dynamic = "force-dynamic";
 
-export default function HomePage() {
+function HomePageContent() {
     const { canManageProperties } = useRoles();
     const [showFilters, setShowFilters] = useState(false);
     const searchParams = useSearchParams();
@@ -188,3 +188,20 @@ export default function HomePage() {
         </main>
     );
 }
+
+export default function HomePage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="flex min-h-screen items-center justify-center">
+                    <div className="text-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent mx-auto"></div>
+                    </div>
+                </div>
+            }
+        >
+            <HomePageContent />
+        </Suspense>
+    );
+}
+
