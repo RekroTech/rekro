@@ -20,7 +20,10 @@ import { useProfileImage } from "@/components/Profile/hooks/useProfileImage";
 import { useSectionExpansion } from "@/components/Profile/hooks/useSectionExpansion";
 import { useProfileCompletion } from "@/contexts";
 import { buildShareableProfile } from "@/components/Profile/shareable-profile";
-import { DocumentOperationsProvider, useDocumentOperations } from "@/components/Profile/contexts/DocumentOperationsContext";
+import {
+    DocumentOperationsProvider,
+    useDocumentOperations,
+} from "@/components/Profile/contexts/DocumentOperationsContext";
 
 function ProfilePageContent() {
     const router = useRouter();
@@ -69,7 +72,6 @@ function ProfilePageContent() {
         formState.documents
     );
     const shareableProfile = user ? buildShareableProfile(user, formState) : null;
-    const isTenant = true;
 
     // Track when profile reaches 100% completion
     const hasShownCompletionToast = useRef(false);
@@ -125,8 +127,6 @@ function ProfilePageContent() {
         return null;
     }
 
-
-
     return (
         <div className="min-h-[calc(100vh-64px)] bg-gray-50 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative bg-gray-50">
@@ -137,7 +137,12 @@ function ProfilePageContent() {
                     <Button
                         type="button"
                         onClick={handleSaveWholeProfile}
-                        disabled={isSaving || isUploadingImage || !hasChanges || isAnyDocumentOperationInProgress}
+                        disabled={
+                            isSaving ||
+                            isUploadingImage ||
+                            !hasChanges ||
+                            isAnyDocumentOperationInProgress
+                        }
                         loading={isSaving}
                         variant="primary"
                         size="md"
@@ -213,109 +218,99 @@ function ProfilePageContent() {
                             />
                         </ProfileSectionCard>
 
-                        {/* Visa Details Section - Only for tenants */}
-                        {isTenant && (
-                            <ProfileSectionCard
-                                title="Visa Details"
-                                description="Citizenship status and visa documentation"
-                                icon="map-pin"
-                                completed={
-                                    profileCompletion.sections.find((s) => s.id === "visa-details")
-                                        ?.completed || false
-                                }
-                                completionPercentage={
-                                    profileCompletion.sections.find((s) => s.id === "visa-details")
-                                        ?.completionPercentage || 0
-                                }
-                                isExpanded={expandedSections["visa-details"]}
-                                onToggle={() => toggleSection("visa-details")}
-                            >
-                                <ResidencySection
-                                    userId={user.id}
-                                    data={formState.residency}
-                                    onChange={updateResidency}
-                                />
-                            </ProfileSectionCard>
-                        )}
+                        {/* Visa Details Section */}
+                        <ProfileSectionCard
+                            title="Visa Details"
+                            description="Citizenship status and visa documentation"
+                            icon="map-pin"
+                            completed={
+                                profileCompletion.sections.find((s) => s.id === "visa-details")
+                                    ?.completed || false
+                            }
+                            completionPercentage={
+                                profileCompletion.sections.find((s) => s.id === "visa-details")
+                                    ?.completionPercentage || 0
+                            }
+                            isExpanded={expandedSections["visa-details"]}
+                            onToggle={() => toggleSection("visa-details")}
+                        >
+                            <ResidencySection
+                                userId={user.id}
+                                data={formState.residency}
+                                onChange={updateResidency}
+                            />
+                        </ProfileSectionCard>
 
-                        {/* Income Details Section - Only for tenants */}
-                        {isTenant && (
-                            <ProfileSectionCard
-                                title="Income Details"
-                                description="Employment and financial information"
-                                icon="dollar"
-                                completed={
-                                    profileCompletion.sections.find(
-                                        (s) => s.id === "income-details"
-                                    )?.completed || false
-                                }
-                                completionPercentage={
-                                    profileCompletion.sections.find(
-                                        (s) => s.id === "income-details"
-                                    )?.completionPercentage || 0
-                                }
-                                isExpanded={expandedSections["income-details"]}
-                                onToggle={() => toggleSection("income-details")}
-                            >
-                                <IncomeDetailsSection
-                                    userId={user.id}
-                                    data={formState.incomeDetails}
-                                    onChange={updateIncomeDetails}
-                                />
-                            </ProfileSectionCard>
-                        )}
+                        {/* Income Details Section */}
+                        <ProfileSectionCard
+                            title="Income Details"
+                            description="Employment and financial information"
+                            icon="dollar"
+                            completed={
+                                profileCompletion.sections.find((s) => s.id === "income-details")
+                                    ?.completed || false
+                            }
+                            completionPercentage={
+                                profileCompletion.sections.find((s) => s.id === "income-details")
+                                    ?.completionPercentage || 0
+                            }
+                            isExpanded={expandedSections["income-details"]}
+                            onToggle={() => toggleSection("income-details")}
+                        >
+                            <IncomeDetailsSection
+                                userId={user.id}
+                                data={formState.incomeDetails}
+                                onChange={updateIncomeDetails}
+                            />
+                        </ProfileSectionCard>
 
-                        {/* Documents Section - Only for tenants */}
-                        {isTenant && (
-                            <ProfileSectionCard
-                                title="Additional Documents"
-                                description="Upload remaining documents"
-                                icon="upload"
-                                completed={
-                                    profileCompletion.sections.find((s) => s.id === "documents")
-                                        ?.completed || false
-                                }
-                                completionPercentage={
-                                    profileCompletion.sections.find((s) => s.id === "documents")
-                                        ?.completionPercentage || 0
-                                }
-                                isExpanded={expandedSections["documents"]}
-                                onToggle={() => toggleSection("documents")}
-                                showCompletion={false}
-                            >
-                                <DocumentsSection
-                                    userId={user.id}
-                                    uploadedDocs={formState.documents}
-                                    onChange={updateDocuments}
-                                />
-                            </ProfileSectionCard>
-                        )}
+                        {/* Documents Section */}
+                        <ProfileSectionCard
+                            title="Additional Documents"
+                            description="Upload remaining documents"
+                            icon="upload"
+                            completed={
+                                profileCompletion.sections.find((s) => s.id === "documents")
+                                    ?.completed || false
+                            }
+                            completionPercentage={
+                                profileCompletion.sections.find((s) => s.id === "documents")
+                                    ?.completionPercentage || 0
+                            }
+                            isExpanded={expandedSections["documents"]}
+                            onToggle={() => toggleSection("documents")}
+                            showCompletion={false}
+                        >
+                            <DocumentsSection
+                                userId={user.id}
+                                uploadedDocs={formState.documents}
+                                onChange={updateDocuments}
+                            />
+                        </ProfileSectionCard>
 
-                        {/* Rental Preference Section - Only for tenants */}
-                        {isTenant && (
-                            <ProfileSectionCard
-                                title="Rental Preference"
-                                description="Your preferred locality and budget"
-                                icon="map"
-                                completed={
-                                    profileCompletion.sections.find(
-                                        (s) => s.id === "location-preferences"
-                                    )?.completed || false
-                                }
-                                completionPercentage={
-                                    profileCompletion.sections.find(
-                                        (s) => s.id === "location-preferences"
-                                    )?.completionPercentage || 0
-                                }
-                                isExpanded={expandedSections["location-preferences"]}
-                                onToggle={() => toggleSection("location-preferences")}
-                            >
-                                <RentalPreferencesSection
-                                    data={formState.rentalPreferences}
-                                    onChange={updateRentalPreferences}
-                                />
-                            </ProfileSectionCard>
-                        )}
+                        {/* Rental Preference Section */}
+                        <ProfileSectionCard
+                            title="Rental Preference"
+                            description="Your preferred locality and budget"
+                            icon="map"
+                            completed={
+                                profileCompletion.sections.find(
+                                    (s) => s.id === "location-preferences"
+                                )?.completed || false
+                            }
+                            completionPercentage={
+                                profileCompletion.sections.find(
+                                    (s) => s.id === "location-preferences"
+                                )?.completionPercentage || 0
+                            }
+                            isExpanded={expandedSections["location-preferences"]}
+                            onToggle={() => toggleSection("location-preferences")}
+                        >
+                            <RentalPreferencesSection
+                                data={formState.rentalPreferences}
+                                onChange={updateRentalPreferences}
+                            />
+                        </ProfileSectionCard>
                     </div>
                 </div>
             </div>
@@ -330,4 +325,3 @@ export default function ProfilePage() {
         </DocumentOperationsProvider>
     );
 }
-

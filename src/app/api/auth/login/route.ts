@@ -28,6 +28,14 @@ export async function POST(request: NextRequest) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
+            // Handle rate limiting errors specifically
+            if (error.message?.includes("request this after")) {
+                return authErrorResponse(
+                    "Too many login attempts. Please wait a moment and try again.",
+                    429
+                );
+            }
+
             return authErrorResponse(error.message ?? "Invalid credentials", 401);
         }
 

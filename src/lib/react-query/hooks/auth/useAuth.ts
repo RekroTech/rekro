@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
 import { createClient } from "@/lib/supabase/client";
-import type { SignupCredentials, LoginCredentials } from "@/types/auth.types";
+import type { SignupCredentials, LoginCredentials, AuthSuccess } from "@/types/auth.types";
 import { useEffect, useState } from "react";
 
 // Query keys for better cache management
@@ -49,13 +49,20 @@ export function useSignup() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    return useMutation<void, Error, SignupCredentials>({
+    return useMutation<AuthSuccess, Error, SignupCredentials>({
         mutationFn: async (credentials) => {
-            await authService.signup(credentials);
+            return await authService.signup(credentials);
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
+            // If email confirmation is required, don't redirect yet
+            if (data.requiresEmailConfirmation) {
+                // User needs to check email - don't redirect
+                return;
+            }
+
+            // Otherwise, redirect to dashboard
             queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
-            router.replace("/");
+            router.replace("/dashboard");
         },
         onError: (error) => {
             console.error("Signup error:", error);
@@ -105,3 +112,18 @@ export function useLogout() {
         },
     });
 }
+
+/**
+ * Google OAuth login mutation hook
+ */
+export function useGoogleLogin() {
+    return useMutation<void, Error, string | undefined>({
+        mutationFn: async (redirectTo) => {
+            await authService.loginWithGoogle(redirectTo);
+        },
+        onError: (error) => {
+            console.error("Google login error:", error);
+        },
+    });
+}
+

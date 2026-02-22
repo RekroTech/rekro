@@ -5,16 +5,8 @@
 import { useCallback, useMemo } from "react";
 import type { AppRole } from "@/types/db";
 import { useSessionUser } from "@/lib/react-query/hooks/auth";
+import { ROLE_HIERARCHY } from "@/lib/auth";
 
-/**
- * Role hierarchy levels (higher number = more permissions)
- */
-const ROLE_HIERARCHY: Record<AppRole, number> = {
-    tenant: 1,
-    landlord: 2,
-    admin: 3,
-    super_admin: 4,
-};
 
 export type RolesApi = {
     /** Current session user (auth identity + role). `null` when signed out. */

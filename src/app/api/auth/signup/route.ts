@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { userRolesService } from "@/services/user_roles.service";
 import { isNonEmptyString, isValidPassword } from "@/lib/utils/validation";
 import { authErrorResponse, authSuccessResponse } from "@/app/api/utils";
 import { getSession } from "@/lib/auth/server";
@@ -39,16 +38,48 @@ export async function POST(request: NextRequest) {
                 data: {
                     name: name ?? email.split("@")[0],
                 },
+                emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/auth/callback?type=signup&next=/dashboard`,
             },
         });
 
-        if (error || !data.user) {
-            return authErrorResponse(error?.message ?? "Signup failed", 400);
+        if (error) {
+            // Handle rate limiting errors specifically
+            if (error.message?.includes("request this after")) {
+                return authErrorResponse(
+                    "Too many signup attempts. Please wait a moment and try again.",
+                    429
+                );
+            }
+
+            // Handle other common errors
+            if (error.message?.includes("already registered")) {
+                return authErrorResponse(
+                    "This email is already registered. Please log in instead.",
+                    400
+                );
+            }
+
+            return authErrorResponse(error.message ?? "Signup failed", 400);
         }
 
-        // Assign the default tenant role to the new user
-        await userRolesService.addUserRole(data.user.id, "tenant");
+        if (!data.user) {
+            return authErrorResponse("Signup failed", 400);
+        }
 
+        // Check if email confirmation is required
+        // If session is null, email confirmation is enabled
+        const requiresEmailConfirmation = !data.session;
+
+        if (requiresEmailConfirmation) {
+            // User created but needs to verify email
+            return authSuccessResponse({
+                user: null,
+                requiresEmailConfirmation: true,
+                message: "Please check your email to verify your account.",
+            });
+        }
+
+        // Role assignment is handled by database trigger
         // Fetch complete session user (includes role and profile data)
         const user = await getSession();
 

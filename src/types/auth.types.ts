@@ -69,7 +69,9 @@ export interface SessionUser {
  * Success payload returned by /api/auth/login and /api/auth/signup
  */
 export interface AuthSuccess {
-    user: SessionUser;
+    user: SessionUser | null;
+    requiresEmailConfirmation?: boolean;
+    message?: string;
 }
 
 /**

@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import type { AppRole } from "@/types/db";
 import type { SessionUser } from "@/types/auth.types";
+import { ROLE_HIERARCHY } from "@/lib/auth";
 
 interface RoleGuardProps {
     user: SessionUser | null;
@@ -25,13 +26,6 @@ interface RoleGuardProps {
      */
     minimumRole?: AppRole;
 }
-
-const ROLE_HIERARCHY: Record<AppRole, number> = {
-    tenant: 1,
-    landlord: 2,
-    admin: 3,
-    super_admin: 4,
-};
 
 /**
  * Component that conditionally renders children based on user roles

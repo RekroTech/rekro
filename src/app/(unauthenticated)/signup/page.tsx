@@ -3,7 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSignup } from "@/lib/react-query/hooks/auth/useAuth";
+import { useSignup, useGoogleLogin } from "@/lib/react-query/hooks/auth/useAuth";
+import { Icon } from "@/components/common/Icon";
 
 export default function SignupPage() {
     const [email, setEmail] = useState("");
@@ -14,10 +15,15 @@ export default function SignupPage() {
     const router = useRouter();
     const redirectTimerRef = useRef<number | null>(null);
 
-    const { mutate: signup, isPending, isSuccess, error } = useSignup();
+    const { mutate: signup, isPending, isSuccess, data, error } = useSignup();
+    const { mutate: loginWithGoogle, isPending: isGooglePending, error: googleError } = useGoogleLogin();
+
+    // Only show email verification message if signup requires it
+    const requiresEmailVerification = isSuccess && data?.requiresEmailConfirmation;
+    const signupSuccessful = isSuccess && !data?.requiresEmailConfirmation;
 
     useEffect(() => {
-        if (!isSuccess) return;
+        if (!signupSuccessful) return;
 
         // Redirect after successful signup (with cleanup)
         redirectTimerRef.current = window.setTimeout(() => {
@@ -30,7 +36,11 @@ export default function SignupPage() {
                 redirectTimerRef.current = null;
             }
         };
-    }, [isSuccess, router]);
+    }, [signupSuccessful, router]);
+
+    const handleGoogleSignup = () => {
+        loginWithGoogle("/dashboard");
+    };
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -62,7 +72,7 @@ export default function SignupPage() {
         signup({ email: trimmedEmail, password });
     };
 
-    const isDisabled = isPending || isSuccess;
+    const isDisabled = isPending || signupSuccessful || isGooglePending;
 
     return (
         <div className="auth-theme flex min-h-screen items-center justify-center bg-app-bg px-5 py-10 text-foreground">
@@ -134,15 +144,37 @@ export default function SignupPage() {
                             </div>
                         )}
 
-                        {error?.message && (
+                        {!validationError && (error?.message || googleError?.message) && (
                             <div className="rounded-[10px] bg-danger-500/10 border border-danger-500/30 p-3">
                                 <p className="text-sm text-danger-600 dark:text-danger-500">
-                                    {error.message}
+                                    {(() => {
+                                        const message = error?.message || googleError?.message || "";
+                                        if (message.includes("Too many") || message.includes("wait") || message.includes("signup attempts")) {
+                                            return "⏱️ " + message;
+                                        }
+                                        return message;
+                                    })()}
                                 </p>
                             </div>
                         )}
 
-                        {isSuccess && (
+                        {requiresEmailVerification && (
+                            <div className="rounded-[10px] bg-primary-500/10 border border-primary-500/30 p-4">
+                                <div className="flex items-start gap-3">
+                                    <Icon name="mail" className="h-5 w-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-primary-700 dark:text-primary-300 mb-1">
+                                            Check your email
+                                        </p>
+                                        <p className="text-sm text-primary-600 dark:text-primary-400">
+                                            {data?.message || "We've sent you a verification link. Please check your email and click the link to activate your account."}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {signupSuccessful && (
                             <div className="rounded-[10px] bg-success-bg border border-primary-500/30 p-3">
                                 <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
                                     Account created successfully! Redirecting…
@@ -153,9 +185,32 @@ export default function SignupPage() {
                         <button
                             type="submit"
                             disabled={isDisabled}
-                            className="mt-2 w-full rounded-[10px] bg-primary-500 py-3.5 text-[17px] font-semibold text-white shadow-[0_4px_10px_rgba(58,127,121,0.30)] transition hover:bg-primary-600 disabled:opacity-60 dark:bg-primary-300 dark:text-[#071010] dark:hover:bg-primary-200"
+                            className="mt-2 w-full rounded-[10px] bg-primary-500 py-3.5 text-[17px] font-semibold text-white shadow-[0_4px_10px_rgba(58,127,121,0.30)] transition hover:bg-primary-600 disabled:opacity-60 dark:bg-primary-300 dark:text-[#071010] dark:hover:bg-primary-200 flex items-center justify-center gap-2"
                         >
-                            {isPending ? "Creating account..." : isSuccess ? "Success!" : "Sign up"}
+                            {isPending && <Icon name="spinner" className="animate-spin h-5 w-5" />}
+                            {isPending ? "Creating account..." : signupSuccessful ? "Success!" : "Sign up"}
+                        </button>
+
+                        <div className="relative my-5">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-input-border"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="bg-card px-4 text-auth-text-strong">Or continue with</span>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleGoogleSignup}
+                            disabled={isDisabled}
+                            className="w-full rounded-[10px] border border-input-border bg-card py-3.5 text-[17px] font-semibold text-auth-text-strong transition hover:bg-hover disabled:opacity-60 flex items-center justify-center gap-3"
+                        >
+                            <Icon
+                                name={isGooglePending ? "spinner" : "google"}
+                                className={isGooglePending ? "animate-spin h-5 w-5" : "h-5 w-5"}
+                            />
+                            {isGooglePending ? "Signing up..." : "Sign up with Google"}
                         </button>
 
                         <div className="pt-2 text-center">

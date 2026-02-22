@@ -6,6 +6,7 @@ import type {
     SessionUser,
 } from "@/types/auth.types";
 import { handleFetchError } from "@/lib/utils/api-error";
+import { createClient } from "@/lib/supabase/client";
 
 export const authService = {
     signup: async (credentials: SignupCredentials): Promise<AuthSuccess> => {
@@ -34,6 +35,20 @@ export const authService = {
         }
 
         return (await response.json()) as AuthSuccess;
+    },
+
+    loginWithGoogle: async (redirectTo?: string): Promise<void> => {
+        const supabase = createClient();
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo: `${window.location.origin}/api/auth/callback?next=${redirectTo || "/dashboard"}`,
+            },
+        });
+
+        if (error) {
+            throw new Error(error.message);
+        }
     },
 
     logout: async (): Promise<LogoutSuccess> => {

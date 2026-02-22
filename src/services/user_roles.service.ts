@@ -9,9 +9,9 @@ export const userRolesService = {
      * Get a user's single role.
      *
      * Contract: each user has exactly one row in public.user_roles.
-     * If none exists (or on error), we fall back to `tenant`.
+     * If none exists (or on error), we fall back to `user`.
      */
-    getUserRole: async (userId: string, fallback: AppRole = "tenant"): Promise<AppRole> => {
+    getUserRole: async (userId: string, fallback: AppRole = "user"): Promise<AppRole> => {
         const supabase = await createClient();
 
         const { data, error } = await supabase

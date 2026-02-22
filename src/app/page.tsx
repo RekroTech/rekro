@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { PropertyList } from "@/components";
 import { Icon, Input, Select } from "@/components/common";
 import { usePropertyFilters } from "@/components/Property/hooks";
 import { LISTING_TYPES } from "@/components/Property/constants";
 import { useRoles } from "@/hooks/useRoles";
+import { useToast } from "@/hooks/useToast";
 
 // This page needs to be dynamic to show property listings
 export const dynamic = "force-dynamic";
@@ -13,6 +15,17 @@ export const dynamic = "force-dynamic";
 export default function HomePage() {
     const { canManageProperties } = useRoles();
     const [showFilters, setShowFilters] = useState(false);
+    const searchParams = useSearchParams();
+    const { showSuccess } = useToast();
+
+    // Show success toast when email is verified
+    useEffect(() => {
+        if (searchParams.get("verified") === "true") {
+            showSuccess("Email verified successfully! Welcome to reKro.");
+            // Clean up the URL
+            window.history.replaceState({}, "", "/");
+        }
+    }, [searchParams, showSuccess]);
 
     const {
         filters: {

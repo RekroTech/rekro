@@ -9,7 +9,8 @@ import type { SessionUser } from "@/types/auth.types";
 /**
  * Role hierarchy levels (higher number = more permissions)
  */
-const ROLE_HIERARCHY: Record<AppRole, number> = {
+export const ROLE_HIERARCHY: Record<AppRole, number> = {
+    user: 0,
     tenant: 1,
     landlord: 2,
     admin: 3,
@@ -50,6 +51,12 @@ export function hasRoleLevel(user: SessionUser | null, minimumRole: AppRole): bo
     const userLevel = ROLE_HIERARCHY[user.role] || 0;
 
     return userLevel >= minimumLevel;
+}
+/**
+* Check if user is a regular user
+*/
+export function isUser(user: SessionUser | null): boolean {
+    return hasRole(user, "user");
 }
 
 /**

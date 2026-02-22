@@ -4,7 +4,7 @@
 import { Inclusions } from "@/components/Property/types";
 
 // User role types matching database enum
-export type AppRole = "tenant" | "landlord" | "admin" | "super_admin";
+export type AppRole = "user" | "tenant" | "landlord" | "admin" | "super_admin";
 
 export interface Address {
     street: string;

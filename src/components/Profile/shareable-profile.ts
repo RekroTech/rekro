@@ -17,13 +17,13 @@ export function buildShareableProfile(
     const { incomeDetails, residency, documents } = formState;
 
     // Calculate profile completion
-    const combinedTenantDetails = {
+    const combinedUserDetails = {
         ...incomeDetails,
         ...residency,
     };
     const profileCompletion = calculateProfileCompletion(
         user,
-        combinedTenantDetails,
+        combinedUserDetails,
         documents
     );
 
