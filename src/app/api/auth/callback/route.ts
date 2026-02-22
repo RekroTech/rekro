@@ -7,15 +7,40 @@ export async function GET(request: NextRequest) {
     const next = requestUrl.searchParams.get("next") || "/dashboard";
     const type = requestUrl.searchParams.get("type"); // email confirmation or OAuth
 
+    // Handle Supabase errors passed in URL (e.g., expired OTP)
+    const error = requestUrl.searchParams.get("error");
+    const errorCode = requestUrl.searchParams.get("error_code");
+    const errorDescription = requestUrl.searchParams.get("error_description");
+
+    if (error || errorCode) {
+        console.error("Auth callback received error:", { error, errorCode, errorDescription });
+
+        // Redirect to verify-email page with error parameters for user-friendly display
+        const errorParams = new URLSearchParams();
+        if (error) errorParams.set("error", error);
+        if (errorCode) errorParams.set("error_code", errorCode);
+        if (errorDescription) errorParams.set("error_description", errorDescription);
+
+        return NextResponse.redirect(`${requestUrl.origin}/verify-email?${errorParams.toString()}`);
+    }
+
     if (code) {
         const supabase = await createClient();
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
-        if (error) {
-            console.error("Auth callback error:", error);
-            const errorType = type === "signup" ? "email_verification_failed" : "oauth_failed";
+        if (exchangeError) {
+            console.error("Auth callback error:", exchangeError);
+
+            // Handle specific error types
+            let errorMessage = "authentication_failed";
+            if (exchangeError.message?.includes("expired")) {
+                errorMessage = "link_expired";
+            } else if (exchangeError.message?.includes("invalid")) {
+                errorMessage = "invalid_link";
+            }
+
             return NextResponse.redirect(
-                `${requestUrl.origin}/login?error=${errorType}`
+                `${requestUrl.origin}/verify-email?error=authentication_failed&error_code=${errorMessage}`
             );
         }
 
@@ -77,11 +102,7 @@ export async function GET(request: NextRequest) {
     // Ensure the redirect is safe (internal only)
     const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 
-    // If this was an email verification, add a success flag
-    if (type === "signup") {
-        return NextResponse.redirect(`${requestUrl.origin}${safeNext}?verified=true`);
-    }
-
+    // Always redirect to the intended destination
     return NextResponse.redirect(`${requestUrl.origin}${safeNext}`);
 }
 

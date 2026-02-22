@@ -1,4 +1,3 @@
-export { login, signup, logout } from "./client";
 export * from "./authorization";
 
 // Note: Server-only exports are NOT re-exported here to prevent bundling in client components

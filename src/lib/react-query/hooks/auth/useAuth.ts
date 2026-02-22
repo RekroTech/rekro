@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
 import { createClient } from "@/lib/supabase/client";
-import type { SignupCredentials, LoginCredentials, AuthSuccess } from "@/types/auth.types";
+import type { AuthSuccess, OtpCredentials } from "@/types/auth.types";
 import { useEffect, useState } from "react";
 
 // Query keys for better cache management
@@ -42,54 +42,6 @@ export function useSession() {
     return { hasSession, isLoading };
 }
 
-/**
- * Signup mutation hook
- */
-export function useSignup() {
-    const router = useRouter();
-    const queryClient = useQueryClient();
-
-    return useMutation<AuthSuccess, Error, SignupCredentials>({
-        mutationFn: async (credentials) => {
-            return await authService.signup(credentials);
-        },
-        onSuccess: (data) => {
-            // If email confirmation is required, don't redirect yet
-            if (data.requiresEmailConfirmation) {
-                // User needs to check email - don't redirect
-                return;
-            }
-
-            // Otherwise, redirect to dashboard
-            queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
-            router.replace("/dashboard");
-        },
-        onError: (error) => {
-            console.error("Signup error:", error);
-        },
-    });
-}
-
-/**
- * Login mutation hook
- */
-export function useLogin() {
-    const router = useRouter();
-    const queryClient = useQueryClient();
-
-    return useMutation<void, Error, LoginCredentials>({
-        mutationFn: async (credentials) => {
-            await authService.login(credentials);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
-            router.replace("/");
-        },
-        onError: (error) => {
-            console.error("Login error:", error);
-        },
-    });
-}
 
 /**
  * Logout mutation hook
@@ -127,3 +79,32 @@ export function useGoogleLogin() {
     });
 }
 
+/**
+ * Passwordless OTP sign-in mutation hook
+ * Works for both new and existing users
+ */
+export function useSignInWithOtp() {
+    return useMutation<AuthSuccess, Error, OtpCredentials>({
+        mutationFn: async (credentials) => {
+            return await authService.signInWithOtp(credentials);
+        },
+        onError: (error) => {
+            console.error("OTP sign-in error:", error);
+        },
+    });
+}
+
+/**
+ * Resend OTP mutation hook
+ * Same as signInWithOtp - Supabase allows resending by calling signInWithOtp again
+ */
+export function useResendOtp() {
+    return useMutation<AuthSuccess, Error, OtpCredentials>({
+        mutationFn: async (credentials) => {
+            return await authService.resendOtp(credentials);
+        },
+        onError: (error) => {
+            console.error("Resend OTP error:", error);
+        },
+    });
+}

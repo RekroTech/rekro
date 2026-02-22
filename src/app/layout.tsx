@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { clsx } from "clsx";
 import { QueryProvider } from "@/lib/react-query/QueryProvider";
-import { ToastProvider } from "@/contexts";
+import { AuthModalProvider, ToastProvider } from "@/contexts";
 import AppShell from "./AppShell";
 
 import "./globals.css";
@@ -67,7 +67,9 @@ export default function RootLayout({
             >
                 <QueryProvider>
                     <ToastProvider>
-                        <AppShell>{children}</AppShell>
+                        <AuthModalProvider>
+                            <AppShell>{children}</AppShell>
+                        </AuthModalProvider>
                     </ToastProvider>
                 </QueryProvider>
             </body>

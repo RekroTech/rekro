@@ -123,7 +123,7 @@ function ProfilePageContent() {
     }
 
     if (!user) {
-        router.push("/login");
+        router.push("/?auth=open");
         return null;
     }
 

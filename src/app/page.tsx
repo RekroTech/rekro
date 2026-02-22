@@ -8,6 +8,7 @@ import { usePropertyFilters } from "@/components/Property/hooks";
 import { LISTING_TYPES } from "@/components/Property/constants";
 import { useRoles } from "@/hooks/useRoles";
 import { useToast } from "@/hooks/useToast";
+import { useAuthModal } from "@/contexts";
 
 // This page needs to be dynamic to show property listings
 export const dynamic = "force-dynamic";
@@ -16,16 +17,48 @@ function HomePageContent() {
     const { canManageProperties } = useRoles();
     const [showFilters, setShowFilters] = useState(false);
     const searchParams = useSearchParams();
-    const { showSuccess } = useToast();
+    const { showSuccess, showError } = useToast();
+    const { openAuthModal } = useAuthModal();
 
-    // Show success toast when email is verified
+    // Handle URL parameters (success and error states)
     useEffect(() => {
-        if (searchParams.get("verified") === "true") {
+        const verified = searchParams.get("verified");
+        const error = searchParams.get("error");
+        const errorCode = searchParams.get("error_code");
+        const errorDescription = searchParams.get("error_description");
+        const auth = searchParams.get("auth");
+
+        // Handle auth modal trigger
+        if (auth === "open") {
+            openAuthModal();
+            window.history.replaceState({}, "", "/");
+            return;
+        }
+
+        // Handle successful email verification
+        if (verified === "true") {
             showSuccess("Email verified successfully! Welcome to reKro.");
+            window.history.replaceState({}, "", "/");
+            return;
+        }
+
+        // Handle authentication errors
+        if (error) {
+            let errorMessage = "Authentication failed. Please try again.";
+
+            if (errorCode === "otp_expired") {
+                errorMessage = "Email verification link has expired. Please request a new one.";
+            } else if (error === "access_denied") {
+                errorMessage = "Access denied. The verification link may be invalid or expired.";
+            } else if (errorDescription) {
+                errorMessage = decodeURIComponent(errorDescription);
+            }
+
+            showError(errorMessage);
             // Clean up the URL
             window.history.replaceState({}, "", "/");
         }
-    }, [searchParams, showSuccess]);
+    }, [searchParams, showSuccess, showError, openAuthModal]);
 
     const {
         filters: {

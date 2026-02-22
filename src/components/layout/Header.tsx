@@ -6,6 +6,7 @@ import { Button, Dropdown, Icon, LogoIcon, LogoText } from "@/components/common"
 import type { DropdownItem } from "@/components/common/Dropdown";
 import { useLogout } from "@/lib/react-query/hooks/auth";
 import { useRoles } from "@/hooks/useRoles";
+import { useAuthModal } from "@/contexts";
 
 type HeaderProps = {
     onAddPropertyAction?: () => void;
@@ -14,6 +15,7 @@ type HeaderProps = {
 export function Header({ onAddPropertyAction }: HeaderProps) {
     const { mutate: logout, isPending } = useLogout();
     const { canManageProperties, user } = useRoles();
+    const { openAuthModal } = useAuthModal();
 
     const authButtonClassName = "h-8 sm:h-9 min-w-[76px] sm:min-w-[96px] px-3 sm:px-4";
 
@@ -104,28 +106,15 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                                 />
                             </div>
                         ) : (
-                            <div className="flex items-center gap-1.5 sm:gap-2">
-                                <Link href="/login" className="shrink-0">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        pill
-                                        className={authButtonClassName}
-                                    >
-                                        Login
-                                    </Button>
-                                </Link>
-                                <Link href="/signup" className="shrink-0">
-                                    <Button
-                                        variant="primary"
-                                        size="sm"
-                                        pill
-                                        className={authButtonClassName}
-                                    >
-                                        Sign Up
-                                    </Button>
-                                </Link>
-                            </div>
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                pill
+                                className={authButtonClassName}
+                                onClick={() => openAuthModal()}
+                            >
+                                Sign In
+                            </Button>
                         )}
                     </div>
                 </div>

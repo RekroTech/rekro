@@ -11,7 +11,8 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
 
     useEffect(() => {
         if (!isLoading && !hasSession) {
-            redirect("/login");
+            // Redirect to home with auth modal trigger
+            redirect("/?auth=open");
         }
     }, [hasSession, isLoading]);
 

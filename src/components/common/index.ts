@@ -26,6 +26,9 @@ export type { LoaderProps, LoaderSize } from "./Loader";
 export { Modal } from "./Modal";
 export type { ModalProps } from "./Modal";
 
+export { AuthModal } from "./AuthModal";
+export type { AuthModalProps } from "./AuthModal";
+
 export { Toast } from "./Toast";
 export type { ToastProps, ToastType } from "./Toast";
 

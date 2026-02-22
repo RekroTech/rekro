@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Header, PropertyForm } from "@/components";
 import { useRoles } from "@/hooks/useRoles";
+import { AuthModal } from "@/components/common";
+import { useAuthModal } from "@/contexts";
 
 type AppShellProps = {
     children: React.ReactNode;
@@ -14,12 +16,7 @@ export default function AppShell({ children }: AppShellProps) {
     const pathname = usePathname();
 
     const { canManageProperties } = useRoles();
-
-    // Check if we're on an unauthenticated page (login, signup, forgot-password, etc.)
-    const isUnauthenticatedPage =
-        pathname?.startsWith("/login") ||
-        pathname?.startsWith("/signup") ||
-        pathname?.startsWith("/forgot-password");
+    const { isAuthModalOpen, closeAuthModal, redirectTo } = useAuthModal();
 
     // Close global modals on route change to avoid stale UI.
     useEffect(() => {
@@ -31,11 +28,6 @@ export default function AppShell({ children }: AppShellProps) {
         return () => clearTimeout(timer);
     }, [pathname]);
 
-    // Don't render Header on unauthenticated pages
-    if (isUnauthenticatedPage) {
-        return <>{children}</>;
-    }
-
     return (
         <>
             <Header onAddPropertyAction={() => setIsModalOpen(true)} />
@@ -45,6 +37,13 @@ export default function AppShell({ children }: AppShellProps) {
             {canManageProperties && (
                 <PropertyForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
             )}
+
+            {/* Global Auth Modal */}
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={closeAuthModal}
+                redirectTo={redirectTo}
+            />
         </>
     );
 }

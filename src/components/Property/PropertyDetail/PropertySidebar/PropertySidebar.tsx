@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
 import type { RentalFormData } from "@/components/Property/types";
 import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
 import { useSession } from "@/lib/react-query/hooks/auth/useAuth";
-import { useToggleUnitLike, useUnitLike, useUnitLikesCount } from "@/lib/react-query/hooks/property";
+import {
+    useToggleUnitLike,
+    useUnitLike,
+    useUnitLikesCount,
+} from "@/lib/react-query/hooks/property";
 import { useApplication } from "@/lib/react-query/hooks/application/useApplications";
 import { EnquiryForm } from "./EnquiryForm";
 import { ShareDropdown } from "./ShareDropdown";
@@ -19,6 +22,7 @@ import { useProfileCompletion } from "@/contexts";
 import { buildInitialFormData, toFormData } from "@/components/Application/utils";
 import { Inclusions } from "../Inclusions/Inclusions";
 import { ProfileCompletionModal } from "./ProfileCompletionModal";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
@@ -35,13 +39,11 @@ export function PropertySidebar({
     onUnitOccupanciesChange,
 }: PropertySidebarProps) {
     const { hasSession: isAuthenticated } = useSession();
-    const router = useRouter();
+    const { requireAuth } = useRequireAuth();
     const isEntireHome = selectedUnit?.listing_type === "entire_home";
 
     // Rental form state (managed locally)
-    const [rentalForm, setRentalForm] = useState<RentalFormData>(() =>
-        buildInitialFormData(null)
-    );
+    const [rentalForm, setRentalForm] = useState<RentalFormData>(() => buildInitialFormData(null));
 
     const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
     const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
@@ -69,7 +71,7 @@ export function PropertySidebar({
 
     // Helper to update rental form
     const updateRentalForm = (updates: Partial<RentalFormData>) => {
-        setRentalForm(prev => ({ ...prev, ...updates }));
+        setRentalForm((prev) => ({ ...prev, ...updates }));
     };
 
     // Calculate pricing
@@ -78,17 +80,16 @@ export function PropertySidebar({
         [selectedUnit, property, rentalForm]
     );
 
-    const handleLoginRequired = () => {
-        router.push(`/login?redirect=/property/${property.id}`);
-    };
-
     // Get availability info
     const availability = useMemo(() => getAvailabilityInfo(selectedUnit), [selectedUnit]);
 
     // Like functionality
-    const { data: isLiked = false, isLoading: isLikeLoading } = useUnitLike(selectedUnit?.id ?? "", {
-        enabled: !!isAuthenticated && !!selectedUnit?.id,
-    });
+    const { data: isLiked = false, isLoading: isLikeLoading } = useUnitLike(
+        selectedUnit?.id ?? "",
+        {
+            enabled: !!isAuthenticated && !!selectedUnit?.id,
+        }
+    );
     const toggleLikeMutation = useToggleUnitLike();
 
     // Fetch like count for the selected unit
@@ -96,11 +97,8 @@ export function PropertySidebar({
         enabled: !!selectedUnit?.id,
     });
 
-    const handleToggleLike = async () => {
-        if (!isAuthenticated) {
-            handleLoginRequired();
-            return;
-        }
+    // Toggle like with auth protection
+    const handleToggleLike = requireAuth(async () => {
         if (!selectedUnit?.id || isLikeLoading) return;
 
         try {
@@ -111,7 +109,18 @@ export function PropertySidebar({
         } catch (error) {
             console.error("Error toggling unit like:", error);
         }
-    };
+    }, `/property/${property.id}`);
+
+    // Handle book now with auth and profile completion gates
+    const handleBookNow = requireAuth(() => {
+        // Profile completeness gate (after auth)
+        if (!isProfileComplete) {
+            setIsProfileCompletionModalOpen(true);
+            return;
+        }
+
+        setIsApplicationModalOpen(true);
+    }, `/property/${property.id}`);
 
     const canShowDualOccupancy = !isEntireHome && selectedUnit?.max_occupants === 2;
 
@@ -133,8 +142,8 @@ export function PropertySidebar({
                 !selectedUnit?.id
                     ? `Select a ${isEntireHome ? "property" : "room"} to save`
                     : isLiked
-                      ? `Unsave ${isEntireHome ? "property" : "room"} (${likesCount} ${likesCount === 1 ? 'like' : 'likes'})`
-                      : `Save ${isEntireHome ? "property" : "room"} (${likesCount} ${likesCount === 1 ? 'like' : 'likes'})`
+                      ? `Unsave ${isEntireHome ? "property" : "room"} (${likesCount} ${likesCount === 1 ? "like" : "likes"})`
+                      : `Save ${isEntireHome ? "property" : "room"} (${likesCount} ${likesCount === 1 ? "like" : "likes"})`
             }
         >
             <Icon
@@ -145,9 +154,7 @@ export function PropertySidebar({
                 strokeWidth={isLiked ? 0 : 2}
             />
             {selectedUnit?.id && likesCount > 0 && (
-                <span className="text-sm font-medium">
-                    {likesCount}
-                </span>
+                <span className="text-sm font-medium">{likesCount}</span>
             )}
         </button>
     );
@@ -166,7 +173,9 @@ export function PropertySidebar({
                                 </h3>
                                 <p className="text-3xl font-bold text-primary-600">
                                     ${pricing.totalWeeklyRent.toFixed(2)}
-                                    <span className="text-base font-normal text-text-muted">/week</span>
+                                    <span className="text-base font-normal text-text-muted">
+                                        /week
+                                    </span>
                                 </p>
                                 <p className="text-sm text-text-muted mt-1">
                                     Bond: ${pricing.bond.toFixed(2)}
@@ -198,13 +207,17 @@ export function PropertySidebar({
                                 {availability.showFromDate && availability.fromDate && (
                                     <div className="flex justify-between">
                                         <span className="text-text-muted">Available from:</span>
-                                        <span className="text-text font-medium">{availability.fromDate}</span>
+                                        <span className="text-text font-medium">
+                                            {availability.fromDate}
+                                        </span>
                                     </div>
                                 )}
                                 {availability.toDate && (
                                     <div className="flex justify-between">
                                         <span className="text-text-muted">Available until:</span>
-                                        <span className="text-text font-medium">{availability.toDate}</span>
+                                        <span className="text-text font-medium">
+                                            {availability.toDate}
+                                        </span>
                                     </div>
                                 )}
                             </div>
@@ -218,9 +231,14 @@ export function PropertySidebar({
                                     id="startDate"
                                     label="Preferred Start Date"
                                     value={rentalForm.moveInDate}
-                                    onChange={(e) => updateRentalForm({ moveInDate: e.target.value })}
+                                    onChange={(e) =>
+                                        updateRentalForm({ moveInDate: e.target.value })
+                                    }
                                     min={getMinStartDate(selectedUnit.available_from)}
-                                    max={getMaxStartDate(selectedUnit.available_from, selectedUnit.available_to)}
+                                    max={getMaxStartDate(
+                                        selectedUnit.available_from,
+                                        selectedUnit.available_to
+                                    )}
                                     size="sm"
                                     fullWidth
                                 />
@@ -270,7 +288,11 @@ export function PropertySidebar({
                 ) : (
                     <div className="mb-6">
                         <div className="flex justify-end gap-2 mb-4">
-                            <ShareDropdown propertyTitle={property.title} propertyId={property.id} unitId="" />
+                            <ShareDropdown
+                                propertyTitle={property.title}
+                                propertyId={property.id}
+                                unitId=""
+                            />
                             {likeButton}
                         </div>
                         <div className="flex items-center gap-2">
@@ -302,20 +324,7 @@ export function PropertySidebar({
                         variant="primary"
                         className="w-full"
                         disabled={isProfileLoading}
-                        onClick={() => {
-                            if (!isAuthenticated) {
-                                handleLoginRequired();
-                                return;
-                            }
-
-                            // Profile completeness gate
-                            if (!isProfileComplete) {
-                                setIsProfileCompletionModalOpen(true);
-                                return;
-                            }
-
-                            setIsApplicationModalOpen(true);
-                        }}
+                        onClick={handleBookNow}
                     >
                         <Icon name="document" className="w-5 h-5 mr-2" />
                         {isAuthenticated ? "Book Now" : "Login to Book"}
@@ -335,12 +344,16 @@ export function PropertySidebar({
             {/* Customize Your Stay */}
             {selectedUnit && (
                 <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-lg">
-                    <h3 className="text-lg font-bold text-text mb-2 sm:mb-4">Customize your stay</h3>
+                    <h3 className="text-lg font-bold text-text mb-2 sm:mb-4">
+                        Customize your stay
+                    </h3>
                     <Inclusions
                         rentalDuration={rentalForm.rentalDuration}
                         property={property}
                         inclusions={rentalForm.inclusions}
-                        onChange={(newInclusions) => updateRentalForm({ inclusions: newInclusions })}
+                        onChange={(newInclusions) =>
+                            updateRentalForm({ inclusions: newInclusions })
+                        }
                         isEntireHome={isEntireHome}
                         effectiveOccupancyType={pricing.occupancyType}
                     />

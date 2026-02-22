@@ -1,2 +1,2 @@
-export { useLogin, useSignup, useLogout, useSession } from "./useAuth";
+export { useLogout, useSession, useSignInWithOtp, useResendOtp, useGoogleLogin } from "./useAuth";
 export { useSessionUser } from "./useSessionUser";

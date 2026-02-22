@@ -1,53 +1,8 @@
 import { AppRole } from "@/types/db";
 
-/**
- * Supabase Auth User (from auth.users table)
- * This is the raw user object returned by Supabase auth methods
- * like signInWithPassword() and signUp()
- */
-export interface AuthUser {
-    id: string;
-    aud: string;
-    role?: string;
-    email?: string;
-    email_confirmed_at?: string;
-    phone?: string;
-    phone_confirmed_at?: string;
-    confirmed_at?: string;
-    last_sign_in_at?: string;
-    app_metadata: {
-        provider?: string;
-        providers?: string[];
-        [key: string]: unknown;
-    };
-    user_metadata: {
-        name?: string;
-        avatar_url?: string;
-        [key: string]: unknown;
-    };
-    identities?: Array<{
-        id: string;
-        user_id: string;
-        identity_data?: Record<string, unknown>;
-        provider: string;
-        last_sign_in_at?: string;
-        created_at?: string;
-        updated_at?: string;
-    }>;
-    created_at: string;
-    updated_at?: string;
-}
-
-// Credentials
-export interface SignupCredentials {
+export interface OtpCredentials {
     email: string;
-    password: string;
-    name?: string;
-}
-
-export interface LoginCredentials {
-    email: string;
-    password: string;
+    redirectTo?: string;
 }
 
 /**

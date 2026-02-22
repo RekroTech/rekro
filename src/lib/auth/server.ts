@@ -70,7 +70,7 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
  */
 export const requireAuth = cache(async (): Promise<SessionUser> => {
     const user = await getSession();
-    if (!user) redirect("/login");
+    if (!user) redirect("/?auth=open");
     return user;
 });
 

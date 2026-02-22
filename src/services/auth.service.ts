@@ -1,42 +1,12 @@
 import type {
-    SignupCredentials,
-    LoginCredentials,
     AuthSuccess,
     LogoutSuccess,
-    SessionUser,
+    SessionUser, OtpCredentials,
 } from "@/types/auth.types";
 import { handleFetchError } from "@/lib/utils/api-error";
 import { createClient } from "@/lib/supabase/client";
 
 export const authService = {
-    signup: async (credentials: SignupCredentials): Promise<AuthSuccess> => {
-        const response = await fetch("/api/auth/signup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(credentials),
-        });
-
-        if (!response.ok) {
-            await handleFetchError(response, "Signup failed");
-        }
-
-        return (await response.json()) as AuthSuccess;
-    },
-
-    login: async (credentials: LoginCredentials): Promise<AuthSuccess> => {
-        const response = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(credentials),
-        });
-
-        if (!response.ok) {
-            await handleFetchError(response, "Login failed");
-        }
-
-        return (await response.json()) as AuthSuccess;
-    },
-
     loginWithGoogle: async (redirectTo?: string): Promise<void> => {
         const supabase = createClient();
         const { error } = await supabase.auth.signInWithOAuth({
@@ -49,6 +19,25 @@ export const authService = {
         if (error) {
             throw new Error(error.message);
         }
+    },
+
+    signInWithOtp: async (credentials: OtpCredentials): Promise<AuthSuccess> => {
+        const response = await fetch("/api/auth/otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(credentials),
+        });
+
+        if (!response.ok) {
+            await handleFetchError(response, "Failed to send magic link");
+        }
+
+        return (await response.json()) as AuthSuccess;
+    },
+
+    resendOtp: async (credentials: OtpCredentials): Promise<AuthSuccess> => {
+        // Same as signInWithOtp - Supabase allows resending by calling signInWithOtp again
+        return authService.signInWithOtp(credentials);
     },
 
     logout: async (): Promise<LogoutSuccess> => {
