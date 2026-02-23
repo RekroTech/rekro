@@ -34,7 +34,6 @@ export default function PropertyDetailPage() {
     // Fetch current user's profile to check discoverability setting
     const { data: userProfile } = useProfile();
 
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
 
     // Track unit occupancies for dynamic pricing
@@ -55,7 +54,6 @@ export default function PropertyDetailPage() {
             if (firstUnit && selectedUnitId !== firstUnit.id) {
                 requestAnimationFrame(() => {
                     setSelectedUnitId(firstUnit.id);
-                    setSelectedImageIndex(0);
                 });
             }
         } else if (selectedUnitId !== null) {
@@ -136,7 +134,6 @@ export default function PropertyDetailPage() {
 
     const handleUnitSelect = (unitId: string) => {
         setSelectedUnitId(unitId);
-        setSelectedImageIndex(0);
     };
 
     return (
@@ -157,8 +154,6 @@ export default function PropertyDetailPage() {
                             <ImageGalleryMobile
                                 images={propertyMedia}
                                 title={property.title}
-                                selectedIndex={selectedImageIndex}
-                                onIndexChange={setSelectedImageIndex}
                             />
                         </div>
 
@@ -167,8 +162,6 @@ export default function PropertyDetailPage() {
                             <ImageGallery
                                 images={propertyMedia}
                                 title={property.title}
-                                selectedIndex={selectedImageIndex}
-                                onIndexChange={setSelectedImageIndex}
                             />
                         </div>
 

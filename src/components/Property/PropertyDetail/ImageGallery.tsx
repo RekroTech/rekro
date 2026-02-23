@@ -1,29 +1,26 @@
-import { Icon, Visual } from "@/components/common";
 import { useState } from "react";
+import { Icon, Visual } from "@/components/common";
 
 interface ImageGalleryProps {
     images: string[];
     title: string;
-    selectedIndex: number;
-    onIndexChange: (index: number) => void;
     thumbnailsPerPage?: number;
 }
 
 export function ImageGallery({
     images,
     title,
-    selectedIndex,
-    onIndexChange,
     thumbnailsPerPage = 8,
 }: ImageGalleryProps) {
+    const [selectedIndex, setSelectedIndex] = useState(0);
     const [thumbnailStartIndex, setThumbnailStartIndex] = useState(0);
 
     const handlePrevious = () => {
-        onIndexChange(selectedIndex === 0 ? images.length - 1 : selectedIndex - 1);
+        setSelectedIndex(selectedIndex === 0 ? images.length - 1 : selectedIndex - 1);
     };
 
     const handleNext = () => {
-        onIndexChange(selectedIndex === images.length - 1 ? 0 : selectedIndex + 1);
+        setSelectedIndex(selectedIndex === images.length - 1 ? 0 : selectedIndex + 1);
     };
 
     const handleThumbnailPrevious = () => {
@@ -119,7 +116,7 @@ export function ImageGallery({
                                     <button
                                         key={`${img}-${index}`}
                                         type="button"
-                                        onClick={() => onIndexChange(index)}
+                                        onClick={() => setSelectedIndex(index)}
                                         className={`relative block h-14 sm:h-16 md:h-20 w-20 sm:w-full rounded-lg overflow-hidden border-2 transition-all touch-manipulation active:scale-95 flex-shrink-0 sm:flex-shrink ${
                                             isSelected
                                                 ? "border-primary-500"

@@ -1,22 +1,20 @@
-import { Visual } from "@/components/common";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
+import { Visual } from "@/components/common";
 
 interface ImageGalleryProps {
     images: string[];
     title: string;
-    selectedIndex: number;
-    onIndexChange: (index: number) => void;
     hideIndicators?: boolean;
 }
 
 export function ImageGallery({
     images,
     title,
-    selectedIndex,
-    onIndexChange,
     hideIndicators = false,
 }: ImageGalleryProps) {
+    const [selectedIndex, setSelectedIndex] = useState(0);
+
     // Main carousel
     const [emblaRef, emblaApi] = useEmblaCarousel({
         loop: true,
@@ -24,28 +22,20 @@ export function ImageGallery({
         duration: 25,
     });
 
-    // Sync Embla with parent's selectedIndex
-    useEffect(() => {
-        if (!emblaApi) return;
-        emblaApi.scrollTo(selectedIndex, false);
-    }, [emblaApi, selectedIndex]);
-
-    // Listen to Embla changes and notify parent
+    // Listen to Embla changes and update internal state
     useEffect(() => {
         if (!emblaApi) return;
 
         const onSelect = () => {
             const index = emblaApi.selectedScrollSnap();
-            if (index !== selectedIndex) {
-                onIndexChange(index);
-            }
+            setSelectedIndex(index);
         };
 
         emblaApi.on("select", onSelect);
         return () => {
             emblaApi.off("select", onSelect);
         };
-    }, [emblaApi, selectedIndex, onIndexChange]);
+    }, [emblaApi]);
 
     const handleIndicatorClick = useCallback(
         (index: number) => {

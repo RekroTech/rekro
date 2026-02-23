@@ -16,7 +16,6 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, showEditButton = false }: PropertyCardProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
     const {
         id,
@@ -65,8 +64,6 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                         <ImageGallery
                             images={imageUrls}
                             title={title}
-                            selectedIndex={selectedImageIndex}
-                            onIndexChange={setSelectedImageIndex}
                             hideIndicators
                         />
                     </div>
