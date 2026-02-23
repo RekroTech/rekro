@@ -211,7 +211,7 @@ export function IncomeDetailsSection({ userId, data, onChange }: IncomeDetailsSe
                             />
 
                             <div className="space-y-3">
-                                <h6 className="text-sm font-medium text-gray-900">
+                                <h6 className="text-sm font-medium text-text">
                                     Financial Documents
                                 </h6>
                                 <Upload

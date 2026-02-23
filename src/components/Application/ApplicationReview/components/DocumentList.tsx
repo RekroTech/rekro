@@ -58,8 +58,8 @@ const DocumentItem = React.memo(({ label, filename, url }: DocumentItemProps) =>
     return (
         <div className="flex items-center justify-between bg-surface-subtle hover:bg-surface-muted transition-colors px-3 py-2.5 rounded-[var(--radius-input)] border border-border/50">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className="flex-shrink-0 w-8 h-8 rounded-md bg-primary-50 border border-primary-200 flex items-center justify-center">
-                    <Icon name="file" className="w-4 h-4 text-primary-600" />
+                <div className="flex-shrink-0 w-8 h-8 rounded-md bg-primary-50 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/50 flex items-center justify-center">
+                    <Icon name="file" className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div className="min-w-0 flex-1">
                     <p className="text-text text-sm font-medium">{label}</p>
@@ -70,7 +70,7 @@ const DocumentItem = React.memo(({ label, filename, url }: DocumentItemProps) =>
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-shrink-0 ml-2 text-primary-600 hover:text-primary-700 transition-colors"
+                className="flex-shrink-0 ml-2 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
             >
                 <Icon name="eye" className="w-4 h-4" />
             </a>

@@ -44,7 +44,8 @@ export function useApplicationModalActions({
 
     // Detect if form has changes by comparing individual fields
     const hasChanges = useMemo(() => {
-        if (!existingApplication) return false; // Not loaded yet
+        // If no existing application, this is a new application - always needs to be saved
+        if (!existingApplication) return true;
 
         // Compare each field individually, normalizing empty strings to null where appropriate
         const formProposedRent = rentalForm.proposedRent

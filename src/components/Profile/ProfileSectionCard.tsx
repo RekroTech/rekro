@@ -33,37 +33,37 @@ export function ProfileSectionCard({
     children,
 }: ProfileSectionCardProps) {
     const statusColor = completed
-        ? "text-green-600"
+        ? "text-green-600 dark:text-green-400"
         : completionPercentage >= 50
-          ? "text-yellow-600"
-          : "text-gray-400";
+          ? "text-yellow-600 dark:text-yellow-400"
+          : "text-gray-400 dark:text-gray-500";
 
     return (
         <div
-            className={`rounded-xl border-2 overflow-hidden transition-all bg-gray-50 border-gray-200`}
+            className={`rounded-xl border-2 overflow-hidden transition-all bg-surface-subtle dark:bg-surface border-border`}
         >
             {/* Section Header */}
             <button
                 onClick={onToggle}
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/50 transition-colors"
+                className="w-full px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-card dark:hover:bg-surface-muted/50 transition-colors"
                 type="button"
             >
                 <div className="flex items-center gap-4">
-                    <div className={"p-2 rounded-lg bg-white"}>
-                        <Icon name={icon} className={`w-5 h-5 text-gray-400`} />
+                    <div className={"p-2 rounded-lg bg-card dark:bg-surface-muted"}>
+                        <Icon name={icon} className={`w-5 h-5 text-text-muted`} />
                     </div>
 
                     <div className="text-left">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                            <h3 className="text-lg font-semibold text-text">{title}</h3>
                             {required && (
-                                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                                <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full font-medium">
                                     Required
                                 </span>
                             )}
                         </div>
                         {description && (
-                            <p className="text-sm text-gray-600 mt-0.5">{description}</p>
+                            <p className="text-sm text-text-muted mt-0.5">{description}</p>
                         )}
                     </div>
                 </div>
@@ -73,7 +73,7 @@ export function ProfileSectionCard({
                     {showCompletion && (
                         <div className="flex items-center gap-2">
                             {completed ? (
-                                <div className="flex items-center gap-1 text-green-600">
+                                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
                                     <Icon name="check-circle" className="w-5 h-5" />
                                     <span className="text-sm font-medium">Complete</span>
                                 </div>
@@ -88,14 +88,14 @@ export function ProfileSectionCard({
                     {/* Expand/Collapse Icon */}
                     <Icon
                         name={isExpanded ? "chevron-up" : "chevron-down"}
-                        className="w-5 h-5 text-gray-400"
+                        className="w-5 h-5 text-text-muted"
                     />
                 </div>
             </button>
 
             {/* Section Content */}
             {isExpanded && (
-                <div className="px-6 py-4 bg-white border-t border-gray-200">{children}</div>
+                <div className="px-4 sm:px-6 py-4 bg-card dark:bg-surface border-t border-border">{children}</div>
             )}
         </div>
     );

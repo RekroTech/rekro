@@ -38,7 +38,7 @@ export const AdditionalInformationSection = React.memo(({ user }: AdditionalInfo
             <div className="p-4">
                 {/* Preferences */}
                 {hasPreferences && (
-                    <div className="mt-4 pt-4 border-t border-border">
+                    <div>
                         <span className="text-text-muted text-xs block mb-3 uppercase tracking-wide font-semibold">
                             Preferences
                         </span>

@@ -57,24 +57,24 @@ export function ProfileCard({
 
     const completionColor =
         profile.completionPercentage >= 75
-            ? "text-primary-600"
+            ? "text-primary-700 dark:text-primary-300"
             : profile.completionPercentage >= 50
-              ? "text-warning-600"
-              : "text-danger-600";
+              ? "text-warning-700 dark:text-warning-300"
+              : "text-danger-600 dark:text-danger-400";
 
     const completionBgColor =
         profile.completionPercentage >= 75
-            ? "bg-primary-100"
+            ? "bg-primary-100 dark:bg-primary-800"
             : profile.completionPercentage >= 50
-              ? "bg-warning-500/15"
-              : "bg-danger-500/15";
+              ? "bg-warning-50 dark:bg-warning-700"
+              : "bg-danger-500/15 dark:bg-danger-700";
 
     const completionBarColor =
         profile.completionPercentage >= 75
-            ? "bg-primary-600"
+            ? "bg-primary-600 dark:bg-primary-500"
             : profile.completionPercentage >= 50
-              ? "bg-warning-600"
-              : "bg-danger-600";
+              ? "bg-warning-600 dark:bg-warning-500"
+              : "bg-danger-600 dark:bg-danger-500";
 
     const age = profile.age || (profile.dateOfBirth ? calculateAge(profile.dateOfBirth) : null);
     const formattedVisaStatus = formatVisaStatus(profile.visaStatus);
@@ -110,7 +110,7 @@ export function ProfileCard({
     const hasValidImage = currentImageUrl && errorImageUrl !== currentImageUrl;
 
     return (
-        <div className="card border border-border p-6 max-w-md relative text-text">
+        <div className="card border border-border p-4 sm:p-6 max-w-md relative text-text">
             {/* Share button (top right) */}
             {showShareButton && (
                 <button
@@ -248,7 +248,7 @@ export function ProfileCard({
                 {/* Status Badges */}
                 <div className="flex flex-wrap gap-2">
                     {profile.nativeLanguage && (
-                        <span className="px-3 py-1 bg-secondary-500 text-white text-xs font-medium rounded-full">
+                        <span className="px-3 py-1 bg-secondary-500 dark:bg-secondary-600 text-white text-xs font-medium rounded-full">
                             {profile.nativeLanguage}
                         </span>
                     )}
@@ -272,7 +272,7 @@ export function ProfileCard({
                         </h3>
                         {formattedVisaStatus && (
                             <div className="flex items-center gap-2">
-                                <Icon name="map-pin" className="w-4 h-4 text-secondary-500" />
+                                <Icon name="map-pin" className="w-4 h-4 text-secondary-500 dark:text-secondary-400" />
                                 <span className="text-sm text-text font-medium">
                                     {formattedVisaStatus}
                                 </span>
@@ -280,13 +280,13 @@ export function ProfileCard({
                         )}
                         {profile.employmentStatus === "working" && (
                             <div className="flex items-center gap-2">
-                                <Icon name="dollar" className="w-4 h-4 text-primary-600" />
+                                <Icon name="dollar" className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                                 <span className="text-sm text-text font-medium">Employed</span>
                             </div>
                         )}
                         {profile.studentStatus === "student" && (
                             <div className="flex items-center gap-2">
-                                <Icon name="book" className="w-4 h-4 text-primary-600" />
+                                <Icon name="book" className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                                 <span className="text-sm text-text font-medium">Student</span>
                             </div>
                         )}
@@ -352,8 +352,8 @@ export function ProfileCard({
                             <div
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-border ${
                                     profile.hasPets
-                                        ? "bg-warning-500/15 text-text"
-                                        : "bg-surface-muted text-text"
+                                        ? "bg-warning-500/15 dark:bg-warning-500/25 text-text"
+                                        : "bg-surface-muted dark:bg-surface text-text"
                                 }`}
                             >
                                 <Icon name={profile.hasPets ? "check" : "x"} className="w-3 h-3" />
@@ -364,8 +364,8 @@ export function ProfileCard({
                             <div
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-border ${
                                     profile.smoker
-                                        ? "bg-danger-500/15 text-text"
-                                        : "bg-primary-100 text-text"
+                                        ? "bg-danger-500/15 dark:bg-danger-500/25 text-text"
+                                        : "bg-primary-100 dark:bg-primary-900/40 text-text"
                                 }`}
                             >
                                 <Icon
@@ -388,7 +388,7 @@ export function ProfileCard({
                             {profile.completionPercentage}%
                         </span>
                     </div>
-                    <div className="w-full bg-primary-100/60 rounded-full h-2">
+                    <div className="w-full bg-primary-100/60 dark:bg-primary-900/30 rounded-full h-2">
                         <div
                             className={`h-2 rounded-full transition-all duration-300 ${completionBarColor}`}
                             style={{ width: `${profile.completionPercentage}%` }}

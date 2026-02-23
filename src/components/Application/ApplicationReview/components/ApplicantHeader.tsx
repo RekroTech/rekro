@@ -32,7 +32,7 @@ export const ApplicantHeader = React.memo(({ user, propertyTypeDisplay }: Applic
                     </div>
 
                     {/* Applicant Info */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 text-center sm:text-left">
                         <h3 className="text-xl sm:text-2xl font-bold text-text mb-1 truncate">
                             {user.full_name || "Applicant"}
                         </h3>

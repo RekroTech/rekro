@@ -128,10 +128,10 @@ function ProfilePageContent() {
     }
 
     return (
-        <div className="min-h-[calc(100vh-64px)] bg-gray-50 pb-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative bg-gray-50">
+        <div className="min-h-[calc(100vh-64px)] bg-app-bg pb-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative bg-app-bg">
                 {/* Header */}
-                <div className="py-4 sm:py-6 flex items-center justify-between gap-4 sticky top-14 sm:top-16 z-10 bg-neutral-50">
+                <div className="py-4 sm:py-6 flex items-center justify-between gap-4 sticky top-14 sm:top-16 z-10 bg-app-bg">
                     <BackButton />
 
                     <Button
@@ -150,7 +150,7 @@ function ProfilePageContent() {
                         Save Profile
                     </Button>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 ">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 ">
                     {/* Left Column - Shareable Profile Card */}
                     <div className="lg:col-span-1">
                         <div className="sticky top-39">
@@ -165,22 +165,22 @@ function ProfilePageContent() {
 
                             {/* Badges */}
                             {profileCompletion.unlockedBadges.length > 0 && (
-                                <div className="mt-6 bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                        <Icon name="star" className="w-5 h-5 text-yellow-500" />
+                                <div className="mt-4 sm:mt-6 bg-card rounded-2xl shadow-lg border border-border p-4 sm:p-6">
+                                    <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+                                        <Icon name="star" className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
                                         Your Badges
                                     </h3>
                                     <div className="space-y-2">
                                         {profileCompletion.unlockedBadges.map((badge) => (
                                             <div
                                                 key={badge}
-                                                className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg"
+                                                className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg"
                                             >
                                                 <Icon
                                                     name="check-circle"
-                                                    className="w-5 h-5 text-yellow-600"
+                                                    className="w-5 h-5 text-yellow-600 dark:text-yellow-400"
                                                 />
-                                                <span className="text-sm font-medium text-gray-900">
+                                                <span className="text-sm font-medium text-text">
                                                     {badge}
                                                 </span>
                                             </div>
@@ -192,7 +192,7 @@ function ProfilePageContent() {
                     </div>
 
                     {/* Right Column - Profile Sections */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                         {/* Personal Details Section */}
                         <ProfileSectionCard
                             title="Personal Details"
