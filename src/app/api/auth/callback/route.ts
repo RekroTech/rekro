@@ -4,12 +4,16 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get("code");
-    const next = requestUrl.searchParams.get("next") || "/dashboard";
+    const next = requestUrl.searchParams.get("next") || "/";
 
     // Handle Supabase errors passed in URL (e.g., OAuth/OTP errors)
     const error = requestUrl.searchParams.get("error");
     const errorCode = requestUrl.searchParams.get("error_code");
     const errorDescription = requestUrl.searchParams.get("error_description");
+
+    // Supabase can also pass errors in the URL fragment (#...). Next.js route handlers
+    // don't receive the fragment, so if you see errors on /?error=... the user likely
+    // landed on the site root directly (not via this callback).
 
     if (error || errorCode) {
         console.error("Auth callback received error", { error, errorCode, errorDescription });
@@ -19,7 +23,8 @@ export async function GET(request: NextRequest) {
         if (errorCode) errorParams.set("error_code", errorCode);
         if (errorDescription) errorParams.set("error_description", errorDescription);
 
-        return NextResponse.redirect(`${requestUrl.origin}/verify-email?${errorParams.toString()}`);
+        // Send auth errors to home page where error modal will display.
+        return NextResponse.redirect(`${requestUrl.origin}/?${errorParams.toString()}`);
     }
 
     if (code) {
@@ -27,33 +32,31 @@ export async function GET(request: NextRequest) {
         const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
         if (exchangeError) {
-            // Avoid logging sensitive user data; keep details needed for debugging.
             console.error("Auth callback: exchangeCodeForSession failed", {
                 message: exchangeError.message,
                 status: exchangeError.status,
                 name: exchangeError.name,
             });
 
-            let errorMessage = "authentication_failed";
-            if (exchangeError.message?.includes("expired")) {
-                errorMessage = "link_expired";
-            } else if (exchangeError.message?.includes("invalid")) {
-                errorMessage = "invalid_link";
+            let mappedCode = "authentication_failed";
+            if (exchangeError.message?.toLowerCase().includes("expired")) {
+                mappedCode = "link_expired";
+            } else if (exchangeError.message?.toLowerCase().includes("invalid")) {
+                mappedCode = "invalid_link";
             }
 
             return NextResponse.redirect(
-                `${requestUrl.origin}/verify-email?error=authentication_failed&error_code=${errorMessage}`
+                `${requestUrl.origin}/?error=authentication_failed&error_code=${mappedCode}`
             );
         }
 
-        // If a session wasn't returned, something is off; log once for visibility.
         if (!data?.session) {
             console.error("Auth callback: session exchange succeeded but no session returned");
         }
     }
 
     // Ensure the redirect is safe (internal only)
-    const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+    const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/";
 
     return NextResponse.redirect(new URL(safeNext, requestUrl.origin));
 }

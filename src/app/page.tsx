@@ -1,14 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 import { PropertyList } from "@/components";
-import { Icon, Input, Select } from "@/components/common";
-import { usePropertyFilters } from "@/components/Property/hooks";
-import { LISTING_TYPES } from "@/components/Property/constants";
+import { Icon, Input, Select, Banner } from "@/components/common";
+import { usePropertyFilters, LISTING_TYPES, PROPERTY_TYPES } from "@/components/Property";
 import { useRoles } from "@/hooks/useRoles";
-import { useToast } from "@/hooks/useToast";
-import { useAuthModal } from "@/contexts";
+import { useEmailVerification, VerificationErrorModal } from "@/components/Auth";
 
 // This page needs to be dynamic to show property listings
 export const dynamic = "force-dynamic";
@@ -16,28 +13,6 @@ export const dynamic = "force-dynamic";
 function HomePageContent() {
     const { canManageProperties } = useRoles();
     const [showFilters, setShowFilters] = useState(false);
-    const searchParams = useSearchParams();
-    const { showSuccess } = useToast();
-    const { openAuthModal } = useAuthModal();
-
-    // Handle URL parameters (success and error states)
-    useEffect(() => {
-        const verified = searchParams.get("verified");
-        const auth = searchParams.get("auth");
-
-        // Handle auth modal trigger
-        if (auth === "open") {
-            openAuthModal();
-            window.history.replaceState({}, "", "/");
-            return;
-        }
-
-        // Handle successful email verification
-        if (verified === "true") {
-            showSuccess("Email verified successfully! Welcome to reKro.");
-            window.history.replaceState({}, "", "/");
-        }
-    }, [searchParams, showSuccess, openAuthModal]);
 
     const {
         filters: {
@@ -51,8 +26,27 @@ function HomePageContent() {
         setters: { setSearchQuery, setPropertyType, setBedrooms, setBathrooms, setListingType },
     } = usePropertyFilters();
 
+    // Email verification handling
+    const {
+        verified,
+        errorInfo,
+        isErrorModalOpen,
+        handleCloseErrorModal,
+        handleTryDifferentEmail,
+    } = useEmailVerification();
+
     return (
         <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8">
+            {/* Email Verification Success Banner */}
+            {verified && (
+                <Banner
+                    variant="success"
+                    title="Email verified successfully!"
+                    message="Redirecting you to your dashboard..."
+                    className="mb-4 sm:mb-6"
+                />
+            )}
+
             {/* Property Listings Section */}
             <div className="mb-6 sm:mb-8">
                 {/* Search and Filters */}
@@ -106,15 +100,7 @@ function HomePageContent() {
                             onChange={(e) => setPropertyType(e.target.value)}
                             size="sm"
                             label="Property Type"
-                            options={[
-                                { value: "", label: "Any" },
-                                { value: "house", label: "House" },
-                                { value: "apartment", label: "Apartment" },
-                                { value: "townhouse", label: "Townhouse" },
-                                { value: "villa", label: "Villa" },
-                                { value: "studio", label: "Studio" },
-                                { value: "land", label: "Land" },
-                            ]}
+                            options={PROPERTY_TYPES}
                             fullWidth={false}
                             className="w-full sm:flex-none sm:w-[140px]"
                         />
@@ -197,6 +183,14 @@ function HomePageContent() {
                     showEditButton={canManageProperties}
                 />
             </div>
+
+            {/* Email Verification Error Modal */}
+            <VerificationErrorModal
+                isOpen={isErrorModalOpen}
+                onClose={handleCloseErrorModal}
+                error={errorInfo}
+                onTryDifferentEmail={handleTryDifferentEmail}
+            />
         </main>
     );
 }

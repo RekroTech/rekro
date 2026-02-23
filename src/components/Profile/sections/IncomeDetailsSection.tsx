@@ -1,8 +1,7 @@
 "use client";
 
 import type { EmploymentStatus } from "@/types/db";
-import { Input, Select, SegmentedControl } from "@/components/common";
-import { DocumentUpload, DocumentUploadPresets } from "@/components/common/DocumentUpload";
+import { Input, Select, SegmentedControl, Upload, UploadPresets } from "@/components/common";
 import { useDocumentManager } from "../hooks";
 import type { IncomeDetailsFormState } from "../types";
 import {
@@ -21,7 +20,7 @@ interface IncomeDetailsSectionProps {
 /**
  * Income Details Section
  * Handles employment status, income information, student status, and related document uploads
- * Uses DocumentUpload component and useDocumentManager hook for consistent behavior
+ * Uses Upload component and useDocumentManager hook for consistent behavior
  */
 export function IncomeDetailsSection({ userId, data, onChange }: IncomeDetailsSectionProps) {
 
@@ -95,18 +94,18 @@ export function IncomeDetailsSection({ userId, data, onChange }: IncomeDetailsSe
                     </div>
 
                     <div className="space-y-3">
-                        <DocumentUpload
+                        <Upload
                             docType="payslips"
-                            {...DocumentUploadPresets.payslips}
+                            {...UploadPresets.payslips}
                             value={getDocument("payslips")}
                             onUpload={(file) => uploadDocument("payslips", file)}
                             onRemove={() => removeDocument("payslips")}
                             isLoading={isOperationInProgress("payslips")}
                         />
 
-                        <DocumentUpload
+                        <Upload
                             docType="bankStatement"
-                            {...DocumentUploadPresets.bankStatement}
+                            {...UploadPresets.bankStatement}
                             value={getDocument("bankStatement")}
                             onUpload={(file) => uploadDocument("bankStatement", file)}
                             onRemove={() => removeDocument("bankStatement")}
@@ -159,27 +158,27 @@ export function IncomeDetailsSection({ userId, data, onChange }: IncomeDetailsSe
                                     Finance Support Documents
                                 </h6>
 
-                                <DocumentUpload
+                                <Upload
                                     docType="studentId"
-                                    {...DocumentUploadPresets.studentId}
+                                    {...UploadPresets.studentId}
                                     value={getDocument("studentId")}
                                     onUpload={(file) => uploadDocument("studentId", file)}
                                     onRemove={() => removeDocument("studentId")}
                                     isLoading={isOperationInProgress("studentId")}
                                 />
 
-                                <DocumentUpload
+                                <Upload
                                     docType="coe"
-                                    {...DocumentUploadPresets.coe}
+                                    {...UploadPresets.coe}
                                     value={getDocument("coe")}
                                     onUpload={(file) => uploadDocument("coe", file)}
                                     onRemove={() => removeDocument("coe")}
                                     isLoading={isOperationInProgress("coe")}
                                 />
 
-                                <DocumentUpload
+                                <Upload
                                     docType="proofOfFunds"
-                                    {...DocumentUploadPresets.proofOfFunds}
+                                    {...UploadPresets.proofOfFunds}
                                     value={getDocument("proofOfFunds")}
                                     onUpload={(file) => uploadDocument("proofOfFunds", file)}
                                     onRemove={() => removeDocument("proofOfFunds")}
@@ -215,9 +214,9 @@ export function IncomeDetailsSection({ userId, data, onChange }: IncomeDetailsSe
                                 <h6 className="text-sm font-medium text-gray-900">
                                     Financial Documents
                                 </h6>
-                                <DocumentUpload
+                                <Upload
                                     docType="proofOfFunds"
-                                    {...DocumentUploadPresets.proofOfFunds}
+                                    {...UploadPresets.proofOfFunds}
                                     required
                                     helperText="Upload bank statements or other proof of funds (PDF/JPG/PNG, max 2MB)."
                                     value={getDocument("proofOfFunds")}

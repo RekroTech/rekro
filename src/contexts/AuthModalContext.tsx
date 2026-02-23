@@ -2,11 +2,22 @@
 
 import React, { createContext, useContext, useState, useCallback } from "react";
 
+export interface EmailVerificationError {
+    title: string;
+    message: string;
+    icon: "info" | "x";
+    canResend: boolean;
+}
+
 interface AuthModalContextType {
     isAuthModalOpen: boolean;
     openAuthModal: (redirectTo?: string) => void;
     closeAuthModal: () => void;
     redirectTo?: string;
+    verificationError: EmailVerificationError | null;
+    setVerificationError: (error: EmailVerificationError | null) => void;
+    isVerified: boolean;
+    setIsVerified: (verified: boolean) => void;
 }
 
 const AuthModalContext = createContext<AuthModalContextType | undefined>(undefined);
@@ -14,6 +25,8 @@ const AuthModalContext = createContext<AuthModalContextType | undefined>(undefin
 export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [redirectTo, setRedirectTo] = useState<string | undefined>();
+    const [verificationError, setVerificationError] = useState<EmailVerificationError | null>(null);
+    const [isVerified, setIsVerified] = useState(false);
 
     const openAuthModal = useCallback((redirect?: string) => {
         setRedirectTo(redirect);
@@ -33,6 +46,10 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
                 openAuthModal,
                 closeAuthModal,
                 redirectTo,
+                verificationError,
+                setVerificationError,
+                isVerified,
+                setIsVerified,
             }}
         >
             {children}

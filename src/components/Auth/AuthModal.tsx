@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Modal } from "./Modal";
-import { Icon } from "./Icon";
-import { Button } from "./Button";
+import { Modal, Icon, Button, Input, Alert } from "@/components/common";
+import { EmailSentSuccess } from "./EmailSentSuccess";
 import { useSignInWithOtp, useResendOtp, useGoogleLogin } from "@/lib/react-query/hooks/auth/useAuth";
+import { processEmail } from "@/lib/utils/email";
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -15,9 +15,11 @@ interface AuthModalProps {
 
 export type { AuthModalProps };
 
-type AuthStep = "email-entry" | "check-email" | "error";
+type AuthStep = "email-entry" | "check-email";
 
-export function AuthModal({ isOpen, onClose, redirectTo = "/dashboard" }: AuthModalProps) {
+const RESEND_COOLDOWN_SECONDS = 60;
+
+export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps) {
     const [email, setEmail] = useState("");
     const [step, setStep] = useState<AuthStep>("email-entry");
     const [countdown, setCountdown] = useState(0);
@@ -30,7 +32,6 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/dashboard" }: AuthMo
     // Reset state when modal closes
     useEffect(() => {
         if (!isOpen) {
-            // Use setTimeout to avoid setState in effect warning
             const timer = setTimeout(() => {
                 setEmail("");
                 setStep("email-entry");
@@ -49,10 +50,9 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/dashboard" }: AuthMo
         }
     }, [countdown]);
 
-    // Handle errors
+    // Handle errors from mutations
     useEffect(() => {
         if (error || googleError) {
-            // Use setTimeout to avoid setState in effect warning
             const timer = setTimeout(() => {
                 const errorMsg = error?.message || googleError?.message || "";
                 if (errorMsg.includes("rate") || errorMsg.includes("too many")) {
@@ -68,20 +68,20 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/dashboard" }: AuthMo
     const handleSubmitEmail = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const trimmedEmail = email.trim().toLowerCase();
+        const { normalized, isValid, error: validationError } = processEmail(email);
 
-        if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-            setErrorMessage("Please enter a valid email address");
+        if (!isValid) {
+            setErrorMessage(validationError || "Please enter a valid email address");
             return;
         }
 
         setErrorMessage("");
         signInWithOtp(
-            { email: trimmedEmail, redirectTo },
+            { email: normalized, redirectTo },
             {
                 onSuccess: () => {
                     setStep("check-email");
-                    setCountdown(60); // 60 second cooldown
+                    setCountdown(RESEND_COOLDOWN_SECONDS);
                 },
             }
         );
@@ -90,12 +90,18 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/dashboard" }: AuthMo
     const handleResend = () => {
         if (countdown > 0) return;
 
-        const trimmedEmail = email.trim().toLowerCase();
+        const { normalized, isValid, error: validationError } = processEmail(email);
+
+        if (!isValid) {
+            setErrorMessage(validationError || "Please enter a valid email address");
+            return;
+        }
+
         resendOtp(
-            { email: trimmedEmail, redirectTo },
+            { email: normalized, redirectTo },
             {
                 onSuccess: () => {
-                    setCountdown(60);
+                    setCountdown(RESEND_COOLDOWN_SECONDS);
                     setErrorMessage("");
                 },
                 onError: (err) => {
@@ -144,29 +150,19 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/dashboard" }: AuthMo
                         </p>
 
                         <form onSubmit={handleSubmitEmail} className="space-y-4">
-                            <div>
-                                <input
-                                    id="auth-email"
-                                    name="email"
-                                    type="email"
-                                    autoComplete="email"
-                                    required
-                                    disabled={isPending}
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Enter your email"
-                                    className="input"
-                                    autoFocus
-                                />
-                            </div>
-
-                            {errorMessage && (
-                                <div className="rounded-[10px] border border-danger-500/30 bg-danger-500/10 p-3">
-                                    <p className="text-sm text-danger-600 dark:text-danger-500">
-                                        {errorMessage}
-                                    </p>
-                                </div>
-                            )}
+                            <Input
+                                id="auth-email"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                disabled={isPending}
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Enter your email"
+                                error={errorMessage || undefined}
+                                autoFocus
+                                fullWidth
+                            />
 
                             <Button
                                 type="submit"
@@ -229,29 +225,10 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/dashboard" }: AuthMo
 
                 {step === "check-email" && (
                     <>
-                        <h2 className="text-center text-2xl font-bold text-foreground mb-2">
-                            Check your email
-                        </h2>
-                        <p className="text-center text-sm text-text-muted mb-6">
-                            We sent a magic link to <strong className="text-foreground">{email}</strong>
-                        </p>
-
-                        <div className="rounded-[10px] bg-primary-500/10 border border-primary-500/30 p-4 mb-6">
-                            <div className="flex items-start gap-3">
-                                <Icon name="info" className="h-5 w-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
-                                <div className="text-sm text-primary-600 dark:text-primary-400">
-                                    <p className="font-semibold mb-1">Click the link in your email to continue</p>
-                                    <p>The link will expire in 1 hour. Check your spam folder if you don&apos;t see it.</p>
-                                </div>
-                            </div>
-                        </div>
+                        <EmailSentSuccess email={email} />
 
                         {errorMessage && (
-                            <div className="rounded-[10px] border border-danger-500/30 bg-danger-500/10 p-3 mb-4">
-                                <p className="text-sm text-danger-600 dark:text-danger-500">
-                                    {errorMessage}
-                                </p>
-                            </div>
+                            <Alert variant="error" message={errorMessage} className="mb-4" />
                         )}
 
                         <div className="space-y-3">

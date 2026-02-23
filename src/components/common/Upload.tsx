@@ -1,61 +1,81 @@
 "use client";
 
-import React, { useId, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { clsx } from "clsx";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
+import type { DocumentType } from "@/types/db";
 
-export interface FileUploadProps {
-    /** Label to display (optional in `labelPlacement="none"` use-cases). */
+/**
+ * Props for document upload component
+ */
+export interface UploadProps {
+    /** Document type (used for internal tracking) */
+    docType: DocumentType;
+
+    /** Display label */
     label: string;
-    accept?: string;
-    maxSizeMB?: number;
-    onChange: (file: File | null) => void;
-    value?: File | null;
-    error?: string;
+
+    /** Helper text shown below the upload field */
     helperText?: string;
+
+    /** Current document metadata (if exists) */
+    value: { filename: string; url?: string } | null;
+
+    /** Callback when a file is uploaded */
+    onUpload: (file: File) => void | Promise<void>;
+
+    /** Callback when the document is removed */
+    onRemove: () => void | Promise<void>;
+
+    /** Whether an upload/remove operation is in progress */
+    isLoading?: boolean;
+
+    /** Whether this field is required */
     required?: boolean;
-    fieldName?: string;
+
+    /** Accepted file types */
+    accept?: string;
+
+    /** Maximum file size in MB */
+    maxSizeMB?: number;
+
+    /** Error message to display */
+    error?: string;
+
+    /** Whether the field is disabled */
     disabled?: boolean;
-
-    /** Where to render the label (if provided). Useful for embedding next to a parent label. */
-    labelPlacement?: "top" | "left" | "none";
-
-    /** Optional override for button text. */
-    buttonText?: string | ((hasFile: boolean) => string);
-
-    /** If true, enable drag-and-drop onto the button/card. */
-    allowDrop?: boolean;
 }
 
+
 export function Upload({
+    docType,
     label,
-    accept = "*",
-    maxSizeMB = 10,
-    onChange,
-    value = null,
-    error,
-    helperText,
+    helperText = "Upload or drag a PDF/JPG/PNG file (max 2MB)",
+    value,
+    onUpload,
+    onRemove,
+    isLoading = false,
     required = false,
-    fieldName,
+    accept = ".pdf,.jpg,.jpeg,.png",
+    maxSizeMB = 2,
+    error,
     disabled = false,
-    labelPlacement = "top",
-    buttonText,
-    allowDrop = true,
-}: FileUploadProps) {
-    const reactId = useId();
+}: UploadProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [dragActive, setDragActive] = useState(false);
     const [internalError, setInternalError] = useState<string | null>(null);
 
-    const inputId = fieldName ? `file-upload-${fieldName}` : `file-upload-${reactId}`;
+    const inputId = `file-upload-${docType}`;
     const helperId = `${inputId}-helper`;
     const errorId = `${inputId}-error`;
 
-    const resolveButtonText = (hasFile: boolean) => {
-        if (typeof buttonText === "function") return buttonText(hasFile);
-        if (typeof buttonText === "string") return buttonText;
-        return hasFile ? "Replace" : "Upload";
+    const handleChange = (file: File | null) => {
+        if (file) {
+            onUpload(file);
+        } else {
+            onRemove();
+        }
     };
 
     const handleFiles = (fileList: FileList | null) => {
@@ -101,10 +121,10 @@ export function Upload({
             return;
         }
 
-        onChange(file);
+        handleChange(file);
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         handleFiles(e.target.files);
         if (inputRef.current) {
             // Allows selecting the same file again.
@@ -113,12 +133,12 @@ export function Upload({
     };
 
     const openPicker = () => {
-        if (disabled) return;
+        if (disabled || isLoading) return;
         inputRef.current?.click();
     };
 
     const handleDrag = (e: React.DragEvent) => {
-        if (!allowDrop || disabled) return;
+        if (disabled || isLoading) return;
         e.preventDefault();
         e.stopPropagation();
         if (e.type === "dragenter" || e.type === "dragover") {
@@ -129,7 +149,7 @@ export function Upload({
     };
 
     const handleDrop = (e: React.DragEvent) => {
-        if (!allowDrop || disabled) return;
+        if (disabled || isLoading) return;
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);
@@ -137,143 +157,200 @@ export function Upload({
     };
 
     const removeFile = () => {
-        if (disabled) return;
+        if (disabled || isLoading) return;
         setInternalError(null);
-        onChange(null);
+        handleChange(null);
     };
 
-    const hasFile = Boolean(value);
+    // Create a File object if we have metadata
+    const fileValue = value ? new File([], value.filename || docType) : null;
+    const hasFile = Boolean(fileValue);
 
     // Use external error if provided, otherwise use internal error
     const displayError = error || internalError;
 
-    const labelNode = label ? (
+    const labelNode = (
         <div className="flex items-center gap-2 min-w-0">
             <span className="block text-sm font-semibold tracking-tight text-foreground truncate">
                 {label}
             </span>
             {required && <span className="text-danger-500">*</span>}
         </div>
-    ) : null;
+    );
 
-    const descriptionText = helperText || `Upload or drag a file • up to ${maxSizeMB}MB`;
-
-    const dropHandlers = allowDrop
-        ? {
-              onDragEnter: handleDrag,
-              onDragLeave: handleDrag,
-              onDragOver: handleDrag,
-              onDrop: handleDrop,
-          }
-        : {};
+    const descriptionText = isLoading ? "Processing..." : helperText;
 
     const containerClasses = clsx(
         "flex items-center justify-between gap-4 border px-4 py-3 bg-card transition-all",
-        "rounded-lg", // match Input/Button radius
-        disabled ? "opacity-50 cursor-not-allowed" : "hover:border-text-muted",
+        "rounded-lg",
+        disabled || isLoading ? "opacity-50 cursor-not-allowed" : "hover:border-text-muted",
         "border-border focus-within:ring-2 focus-within:ring-primary-500",
-        dragActive && !displayError && !disabled && "border-primary-500 bg-primary-50"
+        dragActive && !displayError && !disabled && !isLoading && "border-primary-500 bg-primary-50"
     );
 
     const describedBy = displayError ? errorId : descriptionText ? helperId : undefined;
 
     return (
-        <div className={clsx(labelPlacement === "left" && "flex items-start gap-4")}>
-            {labelPlacement === "left" && (
-                <div className="pt-1 min-w-0">
+        <div className="min-w-0">
+            <div
+                className={containerClasses}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+            >
+                <div className="min-w-0 flex-1">
                     {labelNode}
-                    <p className="mt-1 text-xs text-text-muted truncate">{descriptionText}</p>
-                </div>
-            )}
-
-            <div className={clsx("min-w-0", labelPlacement === "left" ? "flex-1" : undefined)}>
-                <div className={containerClasses} {...dropHandlers}>
-                    <div className="min-w-0 flex-1">
-                        {labelPlacement === "top" && labelNode}
-                        {labelPlacement === "top" && (
-                            <p className="mt-1 text-xs text-text-muted truncate" id={helperId}>
-                                {descriptionText}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        <input
-                            ref={inputRef}
-                            id={inputId}
-                            type="file"
-                            onChange={handleChange}
-                            className="hidden"
-                            accept={accept}
-                            disabled={disabled}
-                            aria-invalid={displayError ? "true" : "false"}
-                            aria-required={required ? "true" : "false"}
-                            aria-describedby={describedBy}
-                        />
-
-                        {!hasFile ? (
-                            <Button
-                                type="button"
-                                onClick={openPicker}
-                                variant="outline"
-                                size="sm"
-                                disabled={disabled}
-                                className="min-h-[40px]"
-                                title={helperText || undefined}
-                            >
-                                {resolveButtonText(false)}
-                            </Button>
-                        ) : (
-                            <div className="flex items-center gap-2 max-w-[260px]">
-                                <button
-                                    type="button"
-                                    onClick={openPicker}
-                                    className={clsx(
-                                        "text-sm text-foreground truncate underline-offset-2",
-                                        disabled
-                                            ? "cursor-not-allowed"
-                                            : "hover:underline focus-visible:underline"
-                                    )}
-                                    title={value?.name || undefined}
-                                    disabled={disabled}
-                                >
-                                    {value?.name}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={removeFile}
-                                    className={clsx(
-                                        "p-1.5 rounded-md transition-colors outline-none",
-                                        "text-text-muted hover:text-danger-600 hover:bg-danger-500/10",
-                                        "focus:shadow-[0_0_0_4px_var(--focus-ring)]",
-                                        disabled && "cursor-not-allowed"
-                                    )}
-                                    aria-label="Remove file"
-                                    disabled={disabled}
-                                >
-                                    <Icon name="x" className="h-4 w-4" />
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {dragActive && allowDrop && !disabled && (
-                    <p className="mt-2 text-xs text-text-muted">Drop the file to upload</p>
-                )}
-
-                {labelPlacement === "none" && (
-                    <p className="mt-1 text-xs text-text-muted" id={helperId}>
+                    <p className="mt-1 text-xs text-text-muted truncate" id={helperId}>
                         {descriptionText}
                     </p>
-                )}
+                </div>
 
-                {displayError && (
-                    <p id={errorId} className="mt-1.5 text-sm text-danger-500" role="alert">
-                        {displayError}
-                    </p>
-                )}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <input
+                        ref={inputRef}
+                        id={inputId}
+                        type="file"
+                        onChange={handleInputChange}
+                        className="hidden"
+                        accept={accept}
+                        disabled={disabled || isLoading}
+                        aria-invalid={displayError ? "true" : "false"}
+                        aria-required={required ? "true" : "false"}
+                        aria-describedby={describedBy}
+                    />
+
+                    {!hasFile ? (
+                        <Button
+                            type="button"
+                            onClick={openPicker}
+                            variant="outline"
+                            size="sm"
+                            disabled={disabled || isLoading}
+                            className="min-h-[40px]"
+                            title={helperText || undefined}
+                        >
+                            Upload
+                        </Button>
+                    ) : (
+                        <div className="flex items-center gap-2 max-w-[260px]">
+                            <button
+                                type="button"
+                                onClick={openPicker}
+                                className={clsx(
+                                    "text-sm text-foreground truncate underline-offset-2",
+                                    disabled || isLoading
+                                        ? "cursor-not-allowed"
+                                        : "hover:underline focus-visible:underline"
+                                )}
+                                title={fileValue?.name || undefined}
+                                disabled={disabled || isLoading}
+                            >
+                                {fileValue?.name}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={removeFile}
+                                className={clsx(
+                                    "p-1.5 rounded-md transition-colors outline-none",
+                                    "text-text-muted hover:text-danger-600 hover:bg-danger-500/10",
+                                    "focus:shadow-[0_0_0_4px_var(--focus-ring)]",
+                                    (disabled || isLoading) && "cursor-not-allowed"
+                                )}
+                                aria-label="Remove file"
+                                disabled={disabled || isLoading}
+                            >
+                                <Icon name="x" className="h-4 w-4" />
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
+
+            {dragActive && !disabled && !isLoading && (
+                <p className="mt-2 text-xs text-text-muted">Drop the file to upload</p>
+            )}
+
+            {displayError && (
+                <p id={errorId} className="mt-1.5 text-sm text-danger-500" role="alert">
+                    {displayError}
+                </p>
+            )}
         </div>
     );
 }
+
+/**
+ * Document upload configuration presets
+ * Use these for consistent document upload configurations
+ */
+export const UploadPresets = {
+    passport: {
+        label: "Passport",
+        helperText: "Upload or drag a PDF/JPG/PNG of the photo page of your valid passport (max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    visa: {
+        label: "Visa",
+        helperText: "Upload or drag a PDF/JPG/PNG of your current valid visa (max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+        required: true,
+    },
+    drivingLicense: {
+        label: "Driver Licence",
+        helperText: "Upload or drag a PDF/JPG/PNG image of your driver licence (max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    studentId: {
+        label: "Student ID",
+        helperText: "Upload your current student ID card (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    coe: {
+        label: "Confirmation of Enrollment (CoE)",
+        helperText: "Upload your current semester CoE (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    employmentLetter: {
+        label: "Employment Letter",
+        helperText: "Upload your employment letter (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    payslips: {
+        label: "Payslips",
+        helperText: "Upload your last 3 months of payslips (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    bankStatement: {
+        label: "Bank Statements",
+        helperText: "Upload your last 3 months of bank statements (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    proofOfFunds: {
+        label: "Proof of Financial Support",
+        helperText: "Bank statements, scholarship letters, or sponsor documents (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    referenceLetter: {
+        label: "Reference Letter",
+        helperText: "Upload or drag a PDF/JPG/PNG reference letter (max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    guarantorLetter: {
+        label: "Guarantor Letter",
+        helperText: "Upload or drag a PDF/JPG/PNG guarantor letter (max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+} as const;
+

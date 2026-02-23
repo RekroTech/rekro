@@ -3,9 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button, Dropdown, Icon, LogoIcon, LogoText } from "@/components/common";
-import type { DropdownItem } from "@/components/common/Dropdown";
+import type { DropdownItem } from "@/components/common";
 import { useLogout } from "@/lib/react-query/hooks/auth";
-import { useRoles } from "@/hooks/useRoles";
+import { useRoles } from "@/hooks";
 import { useAuthModal } from "@/contexts";
 
 type HeaderProps = {

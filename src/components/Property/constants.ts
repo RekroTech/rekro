@@ -1,5 +1,5 @@
 export const PROPERTY_TYPES = [
-    { value: "", label: "Select property type" },
+    { value: "", label: "Any" },
     { value: "house", label: "House" },
     { value: "apartment", label: "Apartment" },
     { value: "townhouse", label: "Townhouse" },
@@ -138,3 +138,78 @@ export const AMENITIES = [
     "Storage",
     "Elevator",
 ] as const;
+
+
+/**
+ * Document upload configuration presets
+ * Use these for consistent document upload configurations
+ */
+export const UploadPresets = {
+    passport: {
+        label: "Passport",
+        helperText: "Upload or drag a PDF/JPG/PNG of the photo page of your valid passport (max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    visa: {
+        label: "Visa",
+        helperText: "Upload or drag a PDF/JPG/PNG of your current valid visa (max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+        required: true,
+    },
+    drivingLicense: {
+        label: "Driver Licence",
+        helperText: "Upload or drag a PDF/JPG/PNG image of your driver licence (max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    studentId: {
+        label: "Student ID",
+        helperText: "Upload your current student ID card (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    coe: {
+        label: "Confirmation of Enrollment (CoE)",
+        helperText: "Upload your current semester CoE (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    employmentLetter: {
+        label: "Employment Letter",
+        helperText: "Upload your employment letter (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    payslips: {
+        label: "Payslips",
+        helperText: "Upload your last 3 months of payslips (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    bankStatement: {
+        label: "Bank Statements",
+        helperText: "Upload your last 3 months of bank statements (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    proofOfFunds: {
+        label: "Proof of Financial Support",
+        helperText: "Bank statements, scholarship letters, or sponsor documents (PDF/JPG/PNG, max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    referenceLetter: {
+        label: "Reference Letter",
+        helperText: "Upload or drag a PDF/JPG/PNG reference letter (max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+    guarantorLetter: {
+        label: "Guarantor Letter",
+        helperText: "Upload or drag a PDF/JPG/PNG guarantor letter (max 2MB).",
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSizeMB: 2,
+    },
+} as const;

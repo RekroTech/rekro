@@ -33,6 +33,8 @@ export interface ModalProps {
     secondaryButton?: ModalButton;
     /** Description text below buttons */
     actionsDescription?: string;
+    /** Whether buttons should take equal 50% width each */
+    fullWidthButtons?: boolean;
 }
 
 export function Modal({
@@ -43,7 +45,8 @@ export function Modal({
     size = "md",
     primaryButton,
     secondaryButton,
-    actionsDescription
+    actionsDescription,
+    fullWidthButtons = false,
 }: ModalProps) {
     const modalRef = useRef<HTMLDivElement>(null);
 
@@ -127,13 +130,13 @@ export function Modal({
                                         {secondaryButton && (
                                             <ModalButton
                                                 button={secondaryButton}
-                                                className="flex-1 sm:flex-initial sm:min-w-[140px]"
+                                                className={fullWidthButtons ? "flex-1" : "flex-1 sm:flex-initial sm:min-w-[140px]"}
                                             />
                                         )}
                                         {primaryButton && (
                                             <ModalButton
                                                 button={primaryButton}
-                                                className="flex-1 sm:flex-initial sm:min-w-[160px]"
+                                                className={fullWidthButtons ? "flex-1" : "flex-1 sm:flex-initial sm:min-w-[160px]"}
                                             />
                                         )}
                                     </div>

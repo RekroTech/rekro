@@ -7,6 +7,12 @@ export type { BackButtonProps } from "./BackButton";
 export { Input } from "./Input";
 export type { InputProps, InputVariant, InputSize } from "./Input";
 
+export { Alert } from "./Alert";
+export type { AlertProps, AlertVariant } from "./Alert";
+
+export { Banner } from "./Banner";
+export type { BannerProps, BannerVariant } from "./Banner";
+
 export { Address } from "./Address";
 
 export { MapView } from "./MapView";
@@ -26,19 +32,14 @@ export type { LoaderProps, LoaderSize } from "./Loader";
 export { Modal } from "./Modal";
 export type { ModalProps } from "./Modal";
 
-export { AuthModal } from "./AuthModal";
-export type { AuthModalProps } from "./AuthModal";
-
 export { Toast } from "./Toast";
 export type { ToastProps, ToastType } from "./Toast";
 
 export { Textarea } from "./Textarea";
 export type { TextareaProps } from "./Textarea";
 
-export { Upload } from "./Upload";
-export type { FileUploadProps } from "./Upload";
-
-export { DocumentUpload, DocumentUploadPresets } from "./DocumentUpload";
+export { Upload, UploadPresets } from "./Upload";
+export type { UploadProps } from "./Upload";
 
 export { Visual } from "./Visual";
 export type { PropertyMediaProps } from "./Visual";

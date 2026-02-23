@@ -1,7 +1,6 @@
 "use client";
 
-import { DocumentUpload, DocumentUploadPresets } from "@/components/common/DocumentUpload";
-import { SegmentedControl, Select } from "@/components/common";
+import { Upload, UploadPresets, SegmentedControl, Select } from "@/components/common";
 import { VISA_TYPE_OPTIONS } from "@/components/Profile";
 import type { ResidencyFormState } from "../types";
 import { useDocumentManager } from "../hooks";
@@ -57,9 +56,9 @@ export function ResidencySection({ userId, data, onChange }: ResidencySectionPro
 
             {/* Document uploads */}
             <div className="space-y-3">
-                <DocumentUpload
+                <Upload
                     docType="passport"
-                    {...DocumentUploadPresets.passport}
+                    {...UploadPresets.passport}
                     value={getDocument("passport")}
                     onUpload={(file) => uploadDocument("passport", file)}
                     onRemove={() => removeDocument("passport")}
@@ -67,9 +66,9 @@ export function ResidencySection({ userId, data, onChange }: ResidencySectionPro
                 />
 
                 {data.isCitizen === false && (
-                    <DocumentUpload
+                    <Upload
                         docType="visa"
-                        {...DocumentUploadPresets.visa}
+                        {...UploadPresets.visa}
                         value={getDocument("visa")}
                         onUpload={(file) => uploadDocument("visa", file)}
                         onRemove={() => removeDocument("visa")}

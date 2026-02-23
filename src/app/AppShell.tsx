@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Header, PropertyForm } from "@/components";
 import { useRoles } from "@/hooks/useRoles";
-import { AuthModal } from "@/components/common";
+import { AuthModal } from "@/components/Auth";
 import { useAuthModal } from "@/contexts";
 import { useSession } from "@/lib/react-query/hooks/auth";
 

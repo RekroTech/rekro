@@ -12,7 +12,7 @@ export const authService = {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                redirectTo: `${window.location.origin}/api/auth/callback?next=${redirectTo || "/dashboard"}`,
+                redirectTo: `${window.location.origin}/api/auth/callback?next=${redirectTo || "/"}`,
             },
         });
 

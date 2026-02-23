@@ -1,6 +1,6 @@
 "use client";
 
-import { DocumentUpload, DocumentUploadPresets } from "@/components/common/DocumentUpload";
+import { Upload, UploadPresets } from "@/components/common";
 import type { Documents } from "@/types/db";
 import { useDocumentManager } from "../hooks";
 
@@ -33,27 +33,27 @@ export function DocumentsSection({
 
   return (
     <div className="space-y-4">
-      <DocumentUpload
+      <Upload
         docType="drivingLicense"
-        {...DocumentUploadPresets.drivingLicense}
+        {...UploadPresets.drivingLicense}
         value={getDocument("drivingLicense")}
         onUpload={(file) => uploadDocument("drivingLicense", file)}
         onRemove={() => removeDocument("drivingLicense")}
         isLoading={isOperationInProgress("drivingLicense")}
       />
 
-      <DocumentUpload
+      <Upload
         docType="referenceLetter"
-        {...DocumentUploadPresets.referenceLetter}
+        {...UploadPresets.referenceLetter}
         value={getDocument("referenceLetter")}
         onUpload={(file) => uploadDocument("referenceLetter", file)}
         onRemove={() => removeDocument("referenceLetter")}
         isLoading={isOperationInProgress("referenceLetter")}
       />
 
-      <DocumentUpload
+      <Upload
         docType="guarantorLetter"
-        {...DocumentUploadPresets.guarantorLetter}
+        {...UploadPresets.guarantorLetter}
         value={getDocument("guarantorLetter")}
         onUpload={(file) => uploadDocument("guarantorLetter", file)}
         onRemove={() => removeDocument("guarantorLetter")}
