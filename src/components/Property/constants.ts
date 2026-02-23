@@ -77,6 +77,14 @@ export const PRICING_CONFIG = {
     sharedDiscount: 0.8, // Each person in dual-occupied room pays 80% of single-room base
     roundStep: 5, // Round prices to nearest $5
 
+    // Room area weighting (optional)
+    // - If a room has size_sqm and alpha > 0, we bias weights so larger rooms cost a bit more.
+    // - Missing/invalid sizes are treated as neutral (factor 1.0).
+    // - Ratios are calculated relative to the median sized room, then clamped.
+    roomAreaWeightAlpha: 0.5, // 0 disables; 0.5 means 50% of area difference affects weight
+    roomAreaMinRatio: 0.75, // smallest room can be treated as at least 75% of reference size
+    roomAreaMaxRatio: 1.35, // largest room can be treated as at most 135% of reference size
+
     // Lease period multipliers
     leaseMultipliers: {
         3: 2.1, // 3 months
@@ -136,3 +144,4 @@ export const AMENITIES = [
     "Storage",
     "Elevator",
 ] as const;
+

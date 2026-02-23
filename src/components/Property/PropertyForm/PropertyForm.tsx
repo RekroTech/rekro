@@ -109,6 +109,7 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                 const maxOccupants = parseInt(unit.max_occupants) || 1;
                 return {
                     maxCapacity: maxOccupants,
+                    sizeSqm: unit.size_sqm ? parseFloat(unit.size_sqm) : undefined,
                 };
             });
 

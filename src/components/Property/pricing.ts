@@ -36,6 +36,7 @@ type Room = {
     id: string;
     maxCapacity: number;
     selectedOccupancy?: number;
+    sizeSqm?: number;
 };
 
 // ============================================
@@ -73,6 +74,64 @@ function roundToStep(n: number, step: number): number {
     if (!isFinite(n)) return 0;
     if (!isFinite(step) || step <= 0) return Math.round(n);
     return Math.round(n / step) * step;
+}
+
+/**
+ * Normalize a room area (sqm) to a safe finite number > 0.
+ * Returns null when missing/invalid so we can treat it as "unknown".
+ */
+function normalizeAreaSqm(value: number | null | undefined): number | null {
+    if (value == null || !isFinite(value) || value <= 0) return null;
+    return value;
+}
+
+function clamp(n: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, n));
+}
+
+function median(values: number[]): number {
+    if (values.length === 0) return 0;
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    if (sorted.length % 2 === 0) {
+        return (sorted[mid - 1]! + sorted[mid]!) / 2;
+    }
+    return sorted[mid]!;
+}
+
+/**
+ * Compute optional area factors for each room.
+ * - Valid room sizes are compared to the median size.
+ * - The ratio is clamped to avoid extreme pricing.
+ * - Missing/invalid sizes return 1.0 (neutral).
+ */
+function computeAreaFactors(rooms: { sizeSqm?: number }[]): number[] {
+    const alpha = PRICING_CONFIG.roomAreaWeightAlpha ?? 0;
+    if (!isFinite(alpha) || alpha <= 0) return rooms.map(() => 1);
+
+    const sizes = rooms
+        .map((r) => normalizeAreaSqm(r.sizeSqm))
+        .filter((v): v is number => v != null);
+
+    if (sizes.length === 0) return rooms.map(() => 1);
+
+    const ref = median(sizes) || 0;
+    if (!isFinite(ref) || ref <= 0) return rooms.map(() => 1);
+
+    const minRatioRaw = PRICING_CONFIG.roomAreaMinRatio ?? 0.75;
+    const maxRatioRaw = PRICING_CONFIG.roomAreaMaxRatio ?? 1.35;
+    const minRatio = isFinite(minRatioRaw) && minRatioRaw > 0 ? minRatioRaw : 0.75;
+    const maxRatio =
+        isFinite(maxRatioRaw) && maxRatioRaw > minRatio ? maxRatioRaw : Math.max(1.35, minRatio);
+
+    return rooms.map((r) => {
+        const a = normalizeAreaSqm(r.sizeSqm);
+        if (a == null) return 1;
+
+        const ratio = clamp(a / ref, minRatio, maxRatio);
+        const factor = 1 + alpha * (ratio - 1);
+        return isFinite(factor) && factor > 0 ? factor : 1;
+    });
 }
 
 /**
@@ -320,11 +379,14 @@ export function computeTargetRentSelectionTime(inputs: PricingInputs, occupants:
 
 type RoomMeta = {
     maxCapacity: number;
+    sizeSqm?: number;
 };
 
 /**
  * Distribute T across rooms using weights.
  * Save-time: all rooms are "single occupied", but 2-cap rooms get a premium weight.
+ *
+ * Optionally incorporates room area (sqm) when available.
  *
  * Uses shared drift-fix implementation to ensure sum exactly equals T
  * Returns: Array of finite numbers ≥ 0
@@ -345,10 +407,16 @@ export function computeRoomRentsSaveTimeWeighted(
 
     const targetTotal = Math.max(0, normalizeWeeklyRent(T));
 
+    const areaFactors = computeAreaFactors(rooms);
+
     // Weight logic:
     // cap=1 -> weight 1.0
     // cap=2 -> weight 1.0 + premium (e.g. 1.15)
-    const weights = rooms.map((r) => (r.maxCapacity === 2 ? 1 + premium : 1));
+    const weights = rooms.map((r, i) => {
+        const capWeight = r.maxCapacity === 2 ? 1 + premium : 1;
+        const w = capWeight * (areaFactors[i] ?? 1);
+        return isFinite(w) && w > 0 ? w : capWeight;
+    });
     const W = weights.reduce((a, b) => a + b, 0) || 1;
 
     // Raw rents
@@ -446,17 +514,22 @@ export function updateRoomRentsOnOccupancySelection(
     const premium = PRICING_CONFIG.twoCapacityPremium;
     const d = PRICING_CONFIG.sharedDiscount;
 
+    const areaFactors = computeAreaFactors(rooms);
+
     const weights = rooms.map((r, idx) => {
         const occ = occs[idx]!;
 
+        let occWeight: number;
         if (occ === 2) {
             // dual room total = 2 * d * baseSingle => weight = 2d
-            return 2 * d;
+            occWeight = 2 * d;
+        } else {
+            // occ === 1
+            occWeight = r.maxCapacity === 2 ? 1 + premium : 1;
         }
 
-        // occ === 1
-        if (r.maxCapacity === 2) return 1 + premium;
-        return 1;
+        const w = occWeight * (areaFactors[idx] ?? 1);
+        return isFinite(w) && w > 0 ? w : occWeight;
     });
 
     const W = weights.reduce((a, b) => a + b, 0) || 1;
