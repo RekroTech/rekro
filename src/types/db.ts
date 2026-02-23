@@ -86,7 +86,6 @@ export interface Database {
                     bio: string | null;
                     preferred_contact_method: PreferredContactMethod;
                     notification_preferences: Record<string, unknown> | null;
-                    last_login_at: string | null;
                     discoverable: boolean | null;
                     share_contact: boolean | null;
                 };
@@ -108,7 +107,6 @@ export interface Database {
                     bio?: string | null;
                     preferred_contact_method?: PreferredContactMethod;
                     notification_preferences?: Record<string, unknown> | null;
-                    last_login_at?: string | null;
                     discoverable?: boolean | null;
                     share_contact?: boolean | null;
                 };
@@ -128,7 +126,6 @@ export interface Database {
                     bio?: string | null;
                     preferred_contact_method?: PreferredContactMethod;
                     notification_preferences?: Record<string, unknown> | null;
-                    last_login_at?: string | null;
                     discoverable?: boolean | null;
                     share_contact?: boolean | null;
                 };

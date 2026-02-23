@@ -23,10 +23,21 @@ export function useSession() {
     useEffect(() => {
         const supabase = createClient();
 
+        // Check if we just redirected from auth callback (session_refresh parameter)
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionRefresh = urlParams.get('session_refresh');
+
         // Check initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setHasSession(!!session);
             setIsLoading(false);
+
+            // Clean up the session_refresh parameter from URL if present
+            if (sessionRefresh && session) {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('session_refresh');
+                window.history.replaceState({}, '', url.toString());
+            }
         });
 
         // Listen for auth changes

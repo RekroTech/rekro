@@ -15,7 +15,6 @@ create table public.users (
   bio text null,
   preferred_contact_method text null default 'email'::text,
   notification_preferences jsonb null default '{}'::jsonb,
-  last_login_at timestamp with time zone null,
   native_language text null,
   discoverable boolean not null default true,
   share_contact boolean not null default true,

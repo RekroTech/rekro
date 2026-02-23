@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     if (code) {
         const supabase = await createClient();
-        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
         if (exchangeError) {
             console.error("Auth callback error:", exchangeError);
@@ -43,66 +43,20 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // After successful authentication, ensure user profile exists
-        // This handles both email verification (type=signup) and OAuth logins (no type param)
-        if (data.user) {
-            try {
-                // Check if user profile exists
-                const { data: existingUser, error: fetchError } = await supabase
-                    .from("users")
-                    .select("id")
-                    .eq("id", data.user.id)
-                    .single();
-
-                // If user doesn't exist in users table, create it
-                if (fetchError?.code === "PGRST116" || !existingUser) {
-                    console.log("Creating user profile for new user:", data.user.id);
-
-                    // Create user profile
-                    const { error: insertUserError } = await supabase
-                        .from("users")
-                        .insert({
-                            id: data.user.id,
-                            email: data.user.email,
-                            full_name: data.user.user_metadata?.name || data.user.user_metadata?.full_name || data.user.email?.split("@")[0],
-                        });
-
-                    if (insertUserError) {
-                        console.error("Failed to create user profile:", insertUserError);
-                    }
-
-                    // Check if user role exists
-                    const { data: existingRole } = await supabase
-                        .from("user_roles")
-                        .select("user_id")
-                        .eq("user_id", data.user.id)
-                        .single();
-
-                    // Create default role if it doesn't exist
-                    if (!existingRole) {
-                        const { error: insertRoleError } = await supabase
-                            .from("user_roles")
-                            .insert({
-                                user_id: data.user.id,
-                                role: "tenant", // Default role
-                            });
-
-                        if (insertRoleError) {
-                            console.error("Failed to create user role:", insertRoleError);
-                        }
-                    }
-                }
-            } catch (profileError) {
-                console.error("Error ensuring user profile exists:", profileError);
-                // Don't block the flow, just log the error
-            }
-        }
+        // Session exchange successful
+        // User profile and role are automatically created by Supabase database triggers
+        console.log("Auth session established successfully");
     }
 
     // Ensure the redirect is safe (internal only)
     const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 
-    // Always redirect to the intended destination
-    return NextResponse.redirect(`${requestUrl.origin}${safeNext}`);
+    // Add a timestamp parameter to force client-side session refresh
+    const redirectUrl = new URL(safeNext, requestUrl.origin);
+    redirectUrl.searchParams.set('session_refresh', Date.now().toString());
+
+    // Create the redirect response
+    // The session cookies are automatically set by the Supabase client during exchangeCodeForSession
+    return NextResponse.redirect(redirectUrl.toString());
 }
 
