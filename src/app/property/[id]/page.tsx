@@ -9,6 +9,7 @@ import {
     PropertyAmenities,
     PropertySidebar,
     LikedUsersCarousal,
+    DiscoverabilityPrompt,
 } from "@/components/Property/PropertyDetail";
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -16,6 +17,7 @@ import { getPropertyFileUrls } from "@/services/storage.service";
 import { Unit } from "@/types/db";
 import { updateRoomRentsOnOccupancySelection } from "@/components/Property/pricing";
 import { ProfileCompletionProvider } from "@/contexts";
+import { useProfile } from "@/lib/react-query/hooks/user/useProfile";
 
 export default function PropertyDetailPage() {
     const params = useParams();
@@ -27,6 +29,9 @@ export default function PropertyDetailPage() {
 
     // Fetch users who liked any unit in this property
     const { data: usersWhoLiked, isLoading: isLoadingLikes } = useUserLikes(propertyId);
+
+    // Fetch current user's profile to check discoverability setting
+    const { data: userProfile } = useProfile();
 
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
@@ -133,6 +138,8 @@ export default function PropertyDetailPage() {
         setSelectedImageIndex(0);
     };
 
+    console.log(userProfile?.discoverable);
+
     return (
         <ProfileCompletionProvider>
             <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8 overflow-x-hidden">
@@ -200,9 +207,15 @@ export default function PropertyDetailPage() {
 
                 {/* Users Who Liked Carousel */}
                 {!isLoadingLikes && usersWhoLiked && usersWhoLiked.length > 0 && (
-                    <div className="mt-4 sm:mt-12 pt-4 sm:pt-12 border-t border-border">
-                        <LikedUsersCarousal users={usersWhoLiked} />
-                    </div>
+                    <>
+                        {userProfile?.discoverable ? (
+                            <div className="mt-4 sm:mt-12 pt-4 sm:pt-12 border-t border-border">
+                                <LikedUsersCarousal users={usersWhoLiked} />
+                            </div>
+                        ) : (
+                            <DiscoverabilityPrompt />
+                        )}
+                    </>
                 )}
             </main>
         </ProfileCompletionProvider>

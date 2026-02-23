@@ -7,3 +7,4 @@ export { EnquiryForm } from "./PropertySidebar/EnquiryForm";
 export { ShareDropdown } from "./PropertySidebar/ShareDropdown";
 export { LocationMapModal } from "./LocationMapModal";
 export { LikedUsersCarousal } from "./LikedUsersCarousal";
+export { DiscoverabilityPrompt } from "./DiscoverabilityPrompt";
