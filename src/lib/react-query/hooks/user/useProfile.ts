@@ -32,7 +32,7 @@ export function useProfile(options?: { enabled?: boolean }) {
         staleTime: 1000 * 60 * 5, // 5 minutes
         gcTime: 1000 * 60 * 10, // 10 minutes
         refetchOnWindowFocus: false,
-        refetchOnMount: false,
+        refetchOnMount: true, // Refetch on component mount to ensure fresh data after auth
         retry: false,
         enabled: options?.enabled ?? true,
     });

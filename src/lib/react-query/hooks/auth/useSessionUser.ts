@@ -27,7 +27,7 @@ export function useSessionUser(options?: { enabled?: boolean }) {
         staleTime: 1000 * 60 * 5, // 5 minutes - data is fresh for this long
         gcTime: 1000 * 60 * 10, // 10 minutes - keep in cache
         refetchOnWindowFocus: false, // Don't refetch on window focus
-        refetchOnMount: false, // Don't refetch on component mount if data is fresh
+        refetchOnMount: true, // Refetch on component mount to ensure fresh data after auth
         retry: false, // Don't retry on auth failures
         enabled: options?.enabled ?? true,
     });

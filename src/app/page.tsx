@@ -17,15 +17,12 @@ function HomePageContent() {
     const { canManageProperties } = useRoles();
     const [showFilters, setShowFilters] = useState(false);
     const searchParams = useSearchParams();
-    const { showSuccess, showError } = useToast();
+    const { showSuccess } = useToast();
     const { openAuthModal } = useAuthModal();
 
     // Handle URL parameters (success and error states)
     useEffect(() => {
         const verified = searchParams.get("verified");
-        const error = searchParams.get("error");
-        const errorCode = searchParams.get("error_code");
-        const errorDescription = searchParams.get("error_description");
         const auth = searchParams.get("auth");
 
         // Handle auth modal trigger
@@ -39,26 +36,8 @@ function HomePageContent() {
         if (verified === "true") {
             showSuccess("Email verified successfully! Welcome to reKro.");
             window.history.replaceState({}, "", "/");
-            return;
         }
-
-        // Handle authentication errors
-        if (error) {
-            let errorMessage = "Authentication failed. Please try again.";
-
-            if (errorCode === "otp_expired") {
-                errorMessage = "Email verification link has expired. Please request a new one.";
-            } else if (error === "access_denied") {
-                errorMessage = "Access denied. The verification link may be invalid or expired.";
-            } else if (errorDescription) {
-                errorMessage = decodeURIComponent(errorDescription);
-            }
-
-            showError(errorMessage);
-            // Clean up the URL
-            window.history.replaceState({}, "", "/");
-        }
-    }, [searchParams, showSuccess, showError, openAuthModal]);
+    }, [searchParams, showSuccess, openAuthModal]);
 
     const {
         filters: {
@@ -237,4 +216,3 @@ export default function HomePage() {
         </Suspense>
     );
 }
-

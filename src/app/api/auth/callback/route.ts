@@ -55,9 +55,5 @@ export async function GET(request: NextRequest) {
     // Ensure the redirect is safe (internal only)
     const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 
-    // Add a timestamp param to trigger client-side session refresh & cache invalidation.
-    const redirectUrl = new URL(safeNext, requestUrl.origin);
-    redirectUrl.searchParams.set("session_refresh", Date.now().toString());
-
-    return NextResponse.redirect(redirectUrl.toString());
+    return NextResponse.redirect(new URL(safeNext, requestUrl.origin));
 }

@@ -4,6 +4,7 @@ import { authService } from "@/services/auth.service";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthSuccess, OtpCredentials } from "@/types/auth.types";
 import { useEffect, useState } from "react";
+import { userKeys } from "@/lib/react-query/hooks/user/useProfile";
 
 // Query keys for better cache management
 export const authKeys = {
@@ -12,9 +13,11 @@ export const authKeys = {
 };
 
 /**
- * Lightweight hook to check if user has an active session
- * Uses Supabase client-side session check (no network call)
- * Use this for auth guards and conditional rendering
+ * Lightweight hook that keeps React Query auth-derived caches in sync
+ * with Supabase client auth state.
+ *
+ * - No network call by default.
+ * - Triggers refetch of server-derived session user when auth state changes.
  */
 export function useSession() {
     const [hasSession, setHasSession] = useState<boolean | null>(null);
@@ -24,10 +27,6 @@ export function useSession() {
     useEffect(() => {
         const supabase = createClient();
 
-        // Check if we just redirected from auth callback (session_refresh parameter)
-        const urlParams = new URLSearchParams(window.location.search);
-        const sessionRefresh = urlParams.get("session_refresh");
-
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((event, session) => {
@@ -35,43 +34,43 @@ export function useSession() {
             setIsLoading(false);
 
             // Keep server-derived session user in sync with client auth events
-            if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+            if (
+                event === "SIGNED_IN" ||
+                event === "SIGNED_OUT" ||
+                event === "TOKEN_REFRESHED" ||
+                event === "USER_UPDATED"
+            ) {
                 queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
+                queryClient.invalidateQueries({ queryKey: userKeys.profile() });
+
+                // Force immediate refetch on sign in/user update so the header updates ASAP.
+                if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+                    queryClient.refetchQueries({ queryKey: authKeys.sessionUser() });
+                }
             }
         });
 
-        const cleanupSessionRefreshParam = () => {
-            const url = new URL(window.location.href);
-            url.searchParams.delete("session_refresh");
-            window.history.replaceState({}, "", url.toString());
-        };
-
-        // If we just came back from OAuth, force a session refresh to trigger the auth state change
-        if (sessionRefresh) {
-            supabase.auth.refreshSession().then(({ data: { session } }) => {
+        // Initial session check (client-side) to seed hasSession and ensure we fetch session user.
+        supabase.auth
+            .getSession()
+            .then(({ data: { session } }) => {
                 setHasSession(!!session);
                 setIsLoading(false);
 
-                // Force refetch of session user after OAuth callback
-                queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
-
-                // Clean up the session_refresh parameter from URL
-                if (session) cleanupSessionRefreshParam();
-            });
-        } else {
-            // Normal session check
-            supabase.auth.getSession().then(({ data: { session } }) => {
-                setHasSession(!!session);
+                if (session) {
+                    queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
+                }
+            })
+            .catch(() => {
+                setHasSession(false);
                 setIsLoading(false);
             });
-        }
 
         return () => subscription.unsubscribe();
     }, [queryClient]);
 
     return { hasSession, isLoading };
 }
-
 
 /**
  * Logout mutation hook
