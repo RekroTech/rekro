@@ -5,7 +5,6 @@ export async function GET(request: NextRequest) {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get("code");
     const next = requestUrl.searchParams.get("next") || "/dashboard";
-    const type = requestUrl.searchParams.get("type"); // email confirmation or OAuth
 
     // Handle Supabase errors passed in URL (e.g., expired OTP)
     const error = requestUrl.searchParams.get("error");
@@ -44,8 +43,9 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // After successful email verification, ensure user profile exists
-        if (data.user && type === "signup") {
+        // After successful authentication, ensure user profile exists
+        // This handles both email verification (type=signup) and OAuth logins (no type param)
+        if (data.user) {
             try {
                 // Check if user profile exists
                 const { data: existingUser, error: fetchError } = await supabase
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
                 // If user doesn't exist in users table, create it
                 if (fetchError?.code === "PGRST116" || !existingUser) {
-                    console.log("Creating user profile for newly verified user:", data.user.id);
+                    console.log("Creating user profile for new user:", data.user.id);
 
                     // Create user profile
                     const { error: insertUserError } = await supabase
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
                         .insert({
                             id: data.user.id,
                             email: data.user.email,
-                            full_name: data.user.user_metadata?.name || data.user.email?.split("@")[0],
+                            full_name: data.user.user_metadata?.name || data.user.user_metadata?.full_name || data.user.email?.split("@")[0],
                         });
 
                     if (insertUserError) {
