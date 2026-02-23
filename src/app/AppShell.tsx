@@ -6,6 +6,7 @@ import { Header, PropertyForm } from "@/components";
 import { useRoles } from "@/hooks/useRoles";
 import { AuthModal } from "@/components/common";
 import { useAuthModal } from "@/contexts";
+import { useSession } from "@/lib/react-query/hooks/auth";
 
 type AppShellProps = {
     children: React.ReactNode;
@@ -17,6 +18,10 @@ export default function AppShell({ children }: AppShellProps) {
 
     const { canManageProperties } = useRoles();
     const { isAuthModalOpen, closeAuthModal, redirectTo } = useAuthModal();
+
+    // Ensure we react to Supabase auth state changes (OAuth callback, sign out, token refresh)
+    // This hook keeps our session-dependent React Query caches in sync.
+    useSession();
 
     // Close global modals on route change to avoid stale UI.
     useEffect(() => {

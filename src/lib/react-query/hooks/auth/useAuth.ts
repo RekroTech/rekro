@@ -19,22 +19,32 @@ export const authKeys = {
 export function useSession() {
     const [hasSession, setHasSession] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         const supabase = createClient();
 
         // Check if we just redirected from auth callback (session_refresh parameter)
         const urlParams = new URLSearchParams(window.location.search);
-        const sessionRefresh = urlParams.get('session_refresh');
+        const sessionRefresh = urlParams.get("session_refresh");
 
-        // Listen for auth changes BEFORE checking session
-        // This ensures we catch the SIGNED_IN event
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
             setHasSession(!!session);
             setIsLoading(false);
+
+            // Keep server-derived session user in sync with client auth events
+            if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+                queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
+            }
         });
+
+        const cleanupSessionRefreshParam = () => {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("session_refresh");
+            window.history.replaceState({}, "", url.toString());
+        };
 
         // If we just came back from OAuth, force a session refresh to trigger the auth state change
         if (sessionRefresh) {
@@ -42,12 +52,11 @@ export function useSession() {
                 setHasSession(!!session);
                 setIsLoading(false);
 
+                // Force refetch of session user after OAuth callback
+                queryClient.invalidateQueries({ queryKey: authKeys.sessionUser() });
+
                 // Clean up the session_refresh parameter from URL
-                if (session) {
-                    const url = new URL(window.location.href);
-                    url.searchParams.delete('session_refresh');
-                    window.history.replaceState({}, '', url.toString());
-                }
+                if (session) cleanupSessionRefreshParam();
             });
         } else {
             // Normal session check
@@ -58,7 +67,7 @@ export function useSession() {
         }
 
         return () => subscription.unsubscribe();
-    }, []);
+    }, [queryClient]);
 
     return { hasSession, isLoading };
 }

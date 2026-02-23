@@ -6,15 +6,14 @@ export async function GET(request: NextRequest) {
     const code = requestUrl.searchParams.get("code");
     const next = requestUrl.searchParams.get("next") || "/dashboard";
 
-    // Handle Supabase errors passed in URL (e.g., expired OTP)
+    // Handle Supabase errors passed in URL (e.g., OAuth/OTP errors)
     const error = requestUrl.searchParams.get("error");
     const errorCode = requestUrl.searchParams.get("error_code");
     const errorDescription = requestUrl.searchParams.get("error_description");
 
     if (error || errorCode) {
-        console.error("Auth callback received error:", { error, errorCode, errorDescription });
+        console.error("Auth callback received error", { error, errorCode, errorDescription });
 
-        // Redirect to verify-email page with error parameters for user-friendly display
         const errorParams = new URLSearchParams();
         if (error) errorParams.set("error", error);
         if (errorCode) errorParams.set("error_code", errorCode);
@@ -28,14 +27,13 @@ export async function GET(request: NextRequest) {
         const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
         if (exchangeError) {
-            console.error("Auth callback error:", exchangeError);
-            console.error("Error details:", {
+            // Avoid logging sensitive user data; keep details needed for debugging.
+            console.error("Auth callback: exchangeCodeForSession failed", {
                 message: exchangeError.message,
                 status: exchangeError.status,
                 name: exchangeError.name,
             });
 
-            // Handle specific error types
             let errorMessage = "authentication_failed";
             if (exchangeError.message?.includes("expired")) {
                 errorMessage = "link_expired";
@@ -48,25 +46,18 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Log successful session creation
-        if (data?.session) {
-            console.log("Auth session established successfully for user:", data.user?.id);
-            console.log("User email:", data.user?.email);
-            console.log("User metadata:", data.user?.user_metadata);
-        } else {
-            console.error("Session exchange succeeded but no session data returned");
+        // If a session wasn't returned, something is off; log once for visibility.
+        if (!data?.session) {
+            console.error("Auth callback: session exchange succeeded but no session returned");
         }
     }
 
     // Ensure the redirect is safe (internal only)
     const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 
-    // Add a timestamp parameter to force client-side session refresh
+    // Add a timestamp param to trigger client-side session refresh & cache invalidation.
     const redirectUrl = new URL(safeNext, requestUrl.origin);
-    redirectUrl.searchParams.set('session_refresh', Date.now().toString());
+    redirectUrl.searchParams.set("session_refresh", Date.now().toString());
 
-    // Create the redirect response
-    // The session cookies are automatically set by the Supabase client during exchangeCodeForSession
     return NextResponse.redirect(redirectUrl.toString());
 }
-
