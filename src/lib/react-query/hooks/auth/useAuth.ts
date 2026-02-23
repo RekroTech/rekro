@@ -27,25 +27,35 @@ export function useSession() {
         const urlParams = new URLSearchParams(window.location.search);
         const sessionRefresh = urlParams.get('session_refresh');
 
-        // Check initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setHasSession(!!session);
-            setIsLoading(false);
-
-            // Clean up the session_refresh parameter from URL if present
-            if (sessionRefresh && session) {
-                const url = new URL(window.location.href);
-                url.searchParams.delete('session_refresh');
-                window.history.replaceState({}, '', url.toString());
-            }
-        });
-
-        // Listen for auth changes
+        // Listen for auth changes BEFORE checking session
+        // This ensures we catch the SIGNED_IN event
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             setHasSession(!!session);
+            setIsLoading(false);
         });
+
+        // If we just came back from OAuth, force a session refresh to trigger the auth state change
+        if (sessionRefresh) {
+            supabase.auth.refreshSession().then(({ data: { session } }) => {
+                setHasSession(!!session);
+                setIsLoading(false);
+
+                // Clean up the session_refresh parameter from URL
+                if (session) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('session_refresh');
+                    window.history.replaceState({}, '', url.toString());
+                }
+            });
+        } else {
+            // Normal session check
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                setHasSession(!!session);
+                setIsLoading(false);
+            });
+        }
 
         return () => subscription.unsubscribe();
     }, []);

@@ -25,10 +25,15 @@ export async function GET(request: NextRequest) {
 
     if (code) {
         const supabase = await createClient();
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
         if (exchangeError) {
             console.error("Auth callback error:", exchangeError);
+            console.error("Error details:", {
+                message: exchangeError.message,
+                status: exchangeError.status,
+                name: exchangeError.name,
+            });
 
             // Handle specific error types
             let errorMessage = "authentication_failed";
@@ -43,9 +48,14 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Session exchange successful
-        // User profile and role are automatically created by Supabase database triggers
-        console.log("Auth session established successfully");
+        // Log successful session creation
+        if (data?.session) {
+            console.log("Auth session established successfully for user:", data.user?.id);
+            console.log("User email:", data.user?.email);
+            console.log("User metadata:", data.user?.user_metadata);
+        } else {
+            console.error("Session exchange succeeded but no session data returned");
+        }
     }
 
     // Ensure the redirect is safe (internal only)
