@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import { Property, Unit } from "@/types/db";
 import { Icon, Visual } from "@/components/common";
-import Link from "next/link";
-import { useState } from "react";
 import { PropertyForm } from "@/components";
 import { getPropertyFileUrl } from "@/services/storage.service";
 import { getLocalityString } from "@/lib/utils/locationPrivacy";
+import { ImageGallery } from "./PropertyDetail/ImageGalleryMobile";
 
 interface PropertyCardProps {
     property: Property & { units?: Unit[] };
@@ -15,6 +16,7 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, showEditButton = false }: PropertyCardProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
     const {
         id,
@@ -34,9 +36,10 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
     // Get the first unit for price display
     const firstUnit = units && units.length > 0 ? units[0] : null;
 
-    // Get the first image or use a placeholder
-    const imagePath = images && images.length > 0 ? images[0] : null;
-    const imageUrl = imagePath ? getPropertyFileUrl(imagePath, id) : "/window.svg";
+    // Process all images for gallery
+    const imageUrls = images && images.length > 0
+        ? images.map(img => getPropertyFileUrl(img, id))
+        : ["/window.svg"];
 
     // Format address to show only locality (suburb/city + state)
     const addressText = address ? getLocalityString(address) : "Location not specified";
@@ -50,22 +53,43 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                 href={`/property/${id}`}
                 className="group relative block rounded-[var(--radius-lg)] border border-border bg-card overflow-hidden shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-deep)] transition-all duration-200"
             >
-                {/* Property Image */}
-                <div className="relative h-52 sm:h-48 w-full bg-surface-muted overflow-hidden">
-                    <Visual
-                        src={imageUrl}
-                        alt={title}
-                        fill
-                        className="group-hover:scale-105 transition-transform duration-300"
-                        priority
-                    />
+                {/* Property Image Gallery - Swipeable on mobile, simple Visual on desktop */}
+                <div className="relative w-full h-48 sm:h-64" onClick={(e) => {
+                    // Prevent navigation when interacting with gallery controls
+                    if ((e.target as HTMLElement).closest('button')) {
+                        e.preventDefault();
+                    }
+                }}>
+                    {/* Mobile: ImageGallery with Embla */}
+                    <div className="md:hidden h-full">
+                        <ImageGallery
+                            images={imageUrls}
+                            title={title}
+                            selectedIndex={selectedImageIndex}
+                            onIndexChange={setSelectedImageIndex}
+                            hideIndicators
+                        />
+                    </div>
+
+                    {/* Desktop: Simple Visual */}
+                    <div className="hidden md:block h-full">
+                        <Visual
+                            src={imageUrls[0] || "/window.svg"}
+                            alt={title}
+                            fill
+                            className="group-hover:scale-105 transition-transform duration-300"
+                            priority
+                        />
+                    </div>
+
+                    {/* Overlays on top of gallery */}
                     {furnished && (
-                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-primary-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)]">
+                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-primary-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)] z-20 pointer-events-none">
                             Furnished
                         </div>
                     )}
                     {pricePerWeek && (
-                        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-card/90 backdrop-blur-sm text-foreground text-sm font-bold px-3 py-1.5 rounded-[var(--radius-md)] shadow-md border border-border">
+                        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-card/90 backdrop-blur-sm text-foreground text-sm font-bold px-3 py-1.5 rounded-[var(--radius-md)] shadow-md border border-border z-20 pointer-events-none">
                             ${pricePerWeek}/week
                         </div>
                     )}
@@ -76,7 +100,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                                 e.stopPropagation();
                                 setIsEditModalOpen(true);
                             }}
-                            className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-card hover:bg-surface-muted active:bg-surface-muted text-foreground p-2 sm:p-1.5 rounded-full shadow-xl transition-all duration-200 hover:scale-110 z-10 border-2 border-border hover:border-text-muted touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+                            className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-card hover:bg-surface-muted active:bg-surface-muted text-foreground p-2 sm:p-1.5 rounded-full shadow-xl transition-all duration-200 hover:scale-110 z-20 border-2 border-border hover:border-text-muted touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
                             aria-label="Edit property"
                             title="Edit property"
                         >

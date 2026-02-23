@@ -1,6 +1,7 @@
 ﻿export { PropertyHeader } from "./PropertyHeader";
 export { UnitsSelector } from "./UnitsSelector";
 export { ImageGallery } from "./ImageGallery";
+export { ImageGallery as ImageGalleryMobile } from "./ImageGalleryMobile";
 export { PropertyAmenities } from "./PropertyAmenities";
 export { PropertySidebar } from "./PropertySidebar/PropertySidebar";
 export { EnquiryForm } from "./PropertySidebar/EnquiryForm";

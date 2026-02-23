@@ -6,6 +6,7 @@ import {
     PropertyHeader,
     UnitsSelector,
     ImageGallery,
+    ImageGalleryMobile,
     PropertyAmenities,
     PropertySidebar,
     LikedUsersCarousal,
@@ -138,8 +139,6 @@ export default function PropertyDetailPage() {
         setSelectedImageIndex(0);
     };
 
-    console.log(userProfile?.discoverable);
-
     return (
         <ProfileCompletionProvider>
             <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8 overflow-x-hidden">
@@ -153,12 +152,25 @@ export default function PropertyDetailPage() {
                 <div className="grid gap-4 sm:gap-6 mb-8 lg:grid-cols-3">
                     {/* Image Gallery & Content - Full width on mobile, 2/3 on desktop */}
                     <div className="lg:col-span-2 min-w-0">
-                        <ImageGallery
-                            images={propertyMedia}
-                            title={property.title}
-                            selectedIndex={selectedImageIndex}
-                            onIndexChange={setSelectedImageIndex}
-                        />
+                        {/* Mobile Image Gallery - Embla Carousel */}
+                        <div className="md:hidden aspect-video rounded-lg overflow-hidden mb-2 sm:mb-4">
+                            <ImageGalleryMobile
+                                images={propertyMedia}
+                                title={property.title}
+                                selectedIndex={selectedImageIndex}
+                                onIndexChange={setSelectedImageIndex}
+                            />
+                        </div>
+
+                        {/* Desktop Image Gallery */}
+                        <div className="hidden md:block">
+                            <ImageGallery
+                                images={propertyMedia}
+                                title={property.title}
+                                selectedIndex={selectedImageIndex}
+                                onIndexChange={setSelectedImageIndex}
+                            />
+                        </div>
 
                         {/* Units Section */}
                         {units.length > 1 && (

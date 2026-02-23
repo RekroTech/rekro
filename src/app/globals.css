@@ -659,3 +659,31 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
     animation: toast-slide-out 0.2s ease-in;
 }
 
+/* ---------------------------
+   Embla Carousel
+---------------------------- */
+.embla {
+    overflow: hidden;
+}
+
+.embla__container {
+    display: flex;
+    touch-action: pan-y pinch-zoom;
+    margin-left: calc(var(--slide-spacing, 0rem) * -1);
+}
+
+.embla__slide {
+    flex: 0 0 var(--slide-size, 100%);
+    min-width: 0;
+    padding-left: var(--slide-spacing, 0rem);
+}
+
+.embla-thumbs {
+    overflow: hidden;
+}
+
+.embla-thumbs__container {
+    display: flex;
+    gap: 0.5rem;
+}
+
