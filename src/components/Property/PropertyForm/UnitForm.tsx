@@ -12,10 +12,10 @@ interface UnitFormProps {
 
 export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) {
     // Calculate bond as 4 times weekly rent
-    const calculatedBond = unit.price ? (parseFloat(unit.price) * 4).toFixed(2) : "0";
+    const calculatedBond = unit.price ? Math.round(parseFloat(unit.price) * 4).toString() : "0";
 
     const handlePriceChange = (value: string) => {
-        const bond = value ? (parseFloat(value) * 4).toString() : "";
+        const bond = value ? Math.round(parseFloat(value) * 4).toString() : "";
         onUpdate(index, { price: value, bond_amount: bond });
     };
 

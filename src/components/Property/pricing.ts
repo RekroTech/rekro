@@ -205,10 +205,10 @@ export function calculatePricing(params: {
     // Apply lease period multiplier (with fallback to 1.0)
     const rentalDuration = rentalForm.rentalDuration;
     const multiplier = PRICING_CONFIG.leaseMultipliers[rentalDuration] ?? 1;
-    const adjustedBaseRent = baseRent * multiplier;
+    const adjustedBaseRent = Math.round(baseRent * multiplier);
 
     // Bond is 4x base rent (before lease adjustments)
-    const bond = baseRent * 4;
+    const bond = Math.round(baseRent * 4);
 
     // Calculate inclusions costs
     // NOTE: For room listings, furniture + bills are already included in the base rent.
@@ -220,9 +220,9 @@ export function calculatePricing(params: {
     const furnitureSelected = isInclusionSelected(rentalForm.inclusions, "furniture");
     const furniture =
         !isRoomListing && furnitureSelected
-            ? (isEntireHome
+            ? Math.round((isEntireHome
                   ? FURNITURE_COST
-                  : getRoomFurnitureCost(property.units || [], FURNITURE_COST)) / leaseDivisor
+                  : getRoomFurnitureCost(property.units || [], FURNITURE_COST)) / leaseDivisor)
             : 0;
 
     const billsSelected = isInclusionSelected(rentalForm.inclusions, "bills");
@@ -241,8 +241,8 @@ export function calculatePricing(params: {
     const storageSelected = isInclusionSelected(rentalForm.inclusions, "storage");
     const storage = !isEntireHome && storageSelected ? STORAGE_CAGE_COST_PER_WEEK : 0;
 
-    const inclusionsTotal = furniture + bills + cleaning + carpark + storage;
-    const totalWeeklyRent = adjustedBaseRent + inclusionsTotal;
+    const inclusionsTotal = Math.round(furniture + bills + cleaning + carpark + storage);
+    const totalWeeklyRent = Math.round(adjustedBaseRent + inclusionsTotal);
 
     return {
         baseRent,

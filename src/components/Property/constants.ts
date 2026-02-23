@@ -15,9 +15,8 @@ export const LISTING_TYPES = [
 ];
 
 export const LEASE_MONTH_OPTIONS = [
-    { value: "4", label: "4 months" },
+    { value: "3", label: "3 months" },
     { value: "6", label: "6 months" },
-    { value: "9", label: "9 months" },
     { value: "12", label: "12 months" },
 ];
 
@@ -48,7 +47,7 @@ export const DEFAULT_UNIT_DATA = {
     price: "",
     bond_amount: "",
     bills_included: false,
-    min_lease: "4",
+    min_lease: "6",
     max_lease: "12",
     max_occupants: "",
     size_sqm: "",
@@ -80,9 +79,8 @@ export const PRICING_CONFIG = {
 
     // Lease period multipliers
     leaseMultipliers: {
-        4: 1.575, // 4 months: 6 month * 1.05 * 1.5
+        3: 2.1, // 3 months
         6: 1.05, // 6 months
-        9: 4 / 3, // 9 months
         12: 1, // 12 months (base)
     } as Record<number, number>,
 
@@ -138,78 +136,3 @@ export const AMENITIES = [
     "Storage",
     "Elevator",
 ] as const;
-
-
-/**
- * Document upload configuration presets
- * Use these for consistent document upload configurations
- */
-export const UploadPresets = {
-    passport: {
-        label: "Passport",
-        helperText: "Upload or drag a PDF/JPG/PNG of the photo page of your valid passport (max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-    },
-    visa: {
-        label: "Visa",
-        helperText: "Upload or drag a PDF/JPG/PNG of your current valid visa (max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-        required: true,
-    },
-    drivingLicense: {
-        label: "Driver Licence",
-        helperText: "Upload or drag a PDF/JPG/PNG image of your driver licence (max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-    },
-    studentId: {
-        label: "Student ID",
-        helperText: "Upload your current student ID card (PDF/JPG/PNG, max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-    },
-    coe: {
-        label: "Confirmation of Enrollment (CoE)",
-        helperText: "Upload your current semester CoE (PDF/JPG/PNG, max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-    },
-    employmentLetter: {
-        label: "Employment Letter",
-        helperText: "Upload your employment letter (PDF/JPG/PNG, max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-    },
-    payslips: {
-        label: "Payslips",
-        helperText: "Upload your last 3 months of payslips (PDF/JPG/PNG, max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-    },
-    bankStatement: {
-        label: "Bank Statements",
-        helperText: "Upload your last 3 months of bank statements (PDF/JPG/PNG, max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-    },
-    proofOfFunds: {
-        label: "Proof of Financial Support",
-        helperText: "Bank statements, scholarship letters, or sponsor documents (PDF/JPG/PNG, max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-    },
-    referenceLetter: {
-        label: "Reference Letter",
-        helperText: "Upload or drag a PDF/JPG/PNG reference letter (max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-    },
-    guarantorLetter: {
-        label: "Guarantor Letter",
-        helperText: "Upload or drag a PDF/JPG/PNG guarantor letter (max 2MB).",
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSizeMB: 2,
-    },
-} as const;
