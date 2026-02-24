@@ -116,10 +116,10 @@ export const TenancyDetailsSection = React.memo(({
                         </div>
                     )}
 
-                    {/* Message to Landlord */}
+                    {/* Message to Rekro */}
                     {application.message && (
                         <div className="pt-4 border-t border-border mt-4">
-                            <span className="text-text-muted text-xs block mb-2">Message to Landlord</span>
+                            <span className="text-text-muted text-xs block mb-2">Message to Rekro</span>
                             <div className="bg-panel px-3 py-2.5 rounded-[var(--radius-input)]">
                                 <p className="text-text text-sm leading-relaxed">
                                     {application.message}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useProperty, useUserLikes } from "@/lib/react-query/hooks/property";
+import { useProperty } from "@/lib/react-query/hooks/property";
 import { Loader, Button, BackButton } from "@/components/common";
 import {
     PropertyHeader,
@@ -28,8 +28,6 @@ export default function PropertyDetailPage() {
     // Fetch property data (no longer includes likes)
     const { data: property, isLoading, error } = useProperty(propertyId);
 
-    // Fetch users who liked any unit in this property
-    const { data: usersWhoLiked, isLoading: isLoadingLikes } = useUserLikes(propertyId);
 
     // Fetch current user's profile to check discoverability setting
     const { data: userProfile } = useProfile();
@@ -210,17 +208,13 @@ export default function PropertyDetailPage() {
                     </div>
                 </div>
 
-                {/* Users Who Liked Carousel */}
-                {!isLoadingLikes && usersWhoLiked && usersWhoLiked.length > 0 && (
-                    <>
-                        {userProfile?.discoverable ? (
-                            <div className="mt-4 sm:mt-12 pt-4 sm:pt-12 border-t border-border">
-                                <LikedUsersCarousal users={usersWhoLiked} />
-                            </div>
-                        ) : (
-                            <DiscoverabilityPrompt />
-                        )}
-                    </>
+                {/* Users Who Liked Carousel - Only visible if viewing user is discoverable (reciprocal privacy) */}
+                {userProfile?.discoverable ? (
+                    <div className="my-4 sm:my-12">
+                        <LikedUsersCarousal propertyId={propertyId} />
+                    </div>
+                ) : (
+                    <DiscoverabilityPrompt />
                 )}
             </main>
         </ProfileCompletionProvider>

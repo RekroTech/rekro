@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useProfile } from "@/lib/react-query/hooks/user";
+import { useProfile, useUpdateProfile } from "@/lib/react-query/hooks/user";
 import { BackButton, Button, Input, Checkbox, Loader } from "@/components/common";
 import { useToast } from "@/hooks/useToast";
 import { userService } from "@/services/user.service";
@@ -10,6 +10,7 @@ import type { NotificationPreferences } from "@/types/user.types";
 export default function SettingsPage() {
     const { showSuccess, showError } = useToast();
     const { data: user, isLoading: userLoading } = useProfile();
+    const updateProfileMutation = useUpdateProfile();
 
     // Password change state
     const [currentPassword, setCurrentPassword] = useState("");
@@ -89,7 +90,7 @@ export default function SettingsPage() {
         setIsSavingPrivacy(true);
 
         try {
-            await userService.updatePrivacySettings({
+            await updateProfileMutation.mutateAsync({
                 discoverable: isDiscoverable,
                 share_contact: shareContact,
             });
@@ -105,7 +106,7 @@ export default function SettingsPage() {
         setIsSavingNotifications(true);
 
         try {
-            await userService.updateNotificationPreferences({
+            await updateProfileMutation.mutateAsync({
                 notification_preferences: notificationPreferences as Record<string, unknown>,
                 receive_marketing_email: notificationPreferences.marketingEmails,
             });

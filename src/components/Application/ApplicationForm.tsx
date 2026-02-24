@@ -94,10 +94,10 @@ export function ApplicationForm({
                 </span>
             </div>
 
-            {/* Message to Landlord */}
+            {/* Message to Rekro */}
             <div>
                 <label className="block text-sm font-medium text-text mb-2">
-                    Message to Landlord (Optional)
+                    Message to Rekro (Optional)
                 </label>
                 <Textarea
                     value={rentalForm.message || ""}

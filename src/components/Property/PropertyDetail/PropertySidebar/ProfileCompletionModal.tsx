@@ -40,7 +40,7 @@ export function ProfileCompletionModal({
                         </h4>
                         <p className="text-text-muted text-sm">
                             Complete your profile once and unlock the ability to apply to any property instantly.
-                            Your verified profile increases trust with landlords and speeds up approvals.
+                            Your verified profile increases trust and speeds up approvals.
                         </p>
                     </div>
                 </div>

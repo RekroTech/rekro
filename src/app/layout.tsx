@@ -26,7 +26,7 @@ export const metadata: Metadata = {
         template: "%s | reKro",
     },
     description:
-        "Designed to connect, make friends, and find your next home. Browse properties, connect with landlords, and discover your perfect rental.",
+        "Designed to connect, make friends, and find your next home. Browse properties, connect with people, and discover your perfect rental.",
     keywords: ["rental", "property", "housing", "real estate", "apartments"],
     authors: [{ name: "Rekro" }],
     creator: "Rekro",

@@ -42,7 +42,6 @@ function formatVisaStatus(visaStatus: string | null): string | null {
 
 /**
  * Shareable profile card showing user's key information
- * Can be shared with landlords when applying for properties
  */
 export function ProfileCard({
     profile,

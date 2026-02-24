@@ -38,7 +38,7 @@ export default function AppShell({ children }: AppShellProps) {
             <Header onAddPropertyAction={() => setIsModalOpen(true)} />
             <div className="pt-14 sm:pt-16">{children}</div>
 
-            {/* Add Property Modal - only for admin/landlord */}
+            {/* Add Property Modal - only for admin */}
             {canManageProperties && (
                 <PropertyForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
             )}

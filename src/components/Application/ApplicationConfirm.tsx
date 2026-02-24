@@ -57,7 +57,7 @@ export function ApplicationConfirm({
                         <div className="flex-1">
                             <h4 className="font-medium text-text mb-1">Application Review</h4>
                             <p className="text-sm text-text-muted">
-                                The landlord will review your application and supporting documents.
+                                Rekro will review your application and supporting documents.
                             </p>
                         </div>
                     </div>
@@ -69,7 +69,7 @@ export function ApplicationConfirm({
                         <div className="flex-1">
                             <h4 className="font-medium text-text mb-1">Response Notification</h4>
                             <p className="text-sm text-text-muted">
-                                You&#39;ll receive an email notification about the status of your application.
+                                You&#39;ll receive an email notification about the status of your application within 24 hours.
                             </p>
                         </div>
                     </div>
@@ -81,7 +81,7 @@ export function ApplicationConfirm({
                         <div className="flex-1">
                             <h4 className="font-medium text-text mb-1">Next Steps</h4>
                             <p className="text-sm text-text-muted">
-                                If approved, you&#39;ll receive instructions for signing the lease agreement and paying the bond.
+                                If approved, you&#39;ll receive instructions for signing the lease agreement and paying the bond to secure the property.
                             </p>
                         </div>
                     </div>
