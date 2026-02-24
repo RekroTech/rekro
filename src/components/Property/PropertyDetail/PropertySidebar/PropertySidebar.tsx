@@ -5,7 +5,8 @@ import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
 import type { RentalFormData } from "@/components/Property/types";
 import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
-import { useSession } from "@/lib/react-query/hooks/auth/useAuth";
+import { useSessionUser } from "@/lib/react-query/hooks/auth";
+import { useAuthModal } from "@/contexts";
 import {
     useToggleUnitLike,
     useUnitLike,
@@ -22,7 +23,6 @@ import { useProfileCompletion } from "@/contexts";
 import { buildInitialFormData, toFormData } from "@/components/Application/utils";
 import { Inclusions } from "../Inclusions/Inclusions";
 import { ProfileCompletionModal } from "./ProfileCompletionModal";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 interface PropertySidebarProps {
     selectedUnit: Unit | null;
@@ -38,8 +38,9 @@ export function PropertySidebar({
     unitOccupancies: externalUnitOccupancies,
     onUnitOccupanciesChange,
 }: PropertySidebarProps) {
-    const { hasSession: isAuthenticated } = useSession();
-    const { requireAuth } = useRequireAuth();
+    const { data: user } = useSessionUser();
+    const { openAuthModal } = useAuthModal();
+    const isAuthenticated = !!user;
     const isEntireHome = selectedUnit?.listing_type === "entire_home";
 
     // Rental form state (managed locally)
@@ -87,7 +88,7 @@ export function PropertySidebar({
     const { data: isLiked = false, isLoading: isLikeLoading } = useUnitLike(
         selectedUnit?.id ?? "",
         {
-            enabled: !!isAuthenticated && !!selectedUnit?.id,
+            enabled: isAuthenticated && Boolean(selectedUnit?.id),
         }
     );
     const toggleLikeMutation = useToggleUnitLike();
@@ -98,7 +99,13 @@ export function PropertySidebar({
     });
 
     // Toggle like with auth protection
-    const handleToggleLike = requireAuth(async () => {
+    const handleToggleLike = async () => {
+        // Check authentication first
+        if (!isAuthenticated) {
+            openAuthModal(`/property/${property.id}`);
+            return;
+        }
+
         if (!selectedUnit?.id || isLikeLoading) return;
 
         try {
@@ -109,10 +116,16 @@ export function PropertySidebar({
         } catch (error) {
             console.error("Error toggling unit like:", error);
         }
-    }, `/property/${property.id}`);
+    };
 
     // Handle book now with auth and profile completion gates
-    const handleBookNow = requireAuth(() => {
+    const handleBookNow = () => {
+        // Check authentication first
+        if (!isAuthenticated) {
+            openAuthModal(`/property/${property.id}`);
+            return;
+        }
+
         // Profile completeness gate (after auth)
         if (!isProfileComplete) {
             setIsProfileCompletionModalOpen(true);
@@ -120,7 +133,7 @@ export function PropertySidebar({
         }
 
         setIsApplicationModalOpen(true);
-    }, `/property/${property.id}`);
+    };
 
     const canShowDualOccupancy = !isEntireHome && selectedUnit?.max_occupants === 2;
 
@@ -327,11 +340,11 @@ export function PropertySidebar({
                         onClick={handleBookNow}
                     >
                         <Icon name="document" className="w-5 h-5 mr-2" />
-                        {isAuthenticated ? "Book Now" : "Login to Book"}
+                        {user ? "Book Now" : "Login to Book"}
                     </Button>
                 </div>
 
-                {!isAuthenticated && (
+                {!user && (
                     <div className="mt-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
                         <p className="text-xs text-text">
                             <Icon name="info" className="w-4 h-4 inline mr-1" />

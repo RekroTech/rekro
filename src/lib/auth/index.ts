@@ -1,6 +1,5 @@
 export * from "./authorization";
 
-// Note: Server-only exports are NOT re-exported here to prevent bundling in client components
-// Import directly from "./server" when needed in Server Components:
-// import { getSession, requireAuth, requireAuthForApi } from "@/lib/auth/server";
-
+// Note: Server-only auth utilities have been moved to @/lib/supabase/server
+// Import from there when needed in Server Components or API Routes:
+// import { getSession, requireAuth, requireAuthForApi } from "@/lib/supabase/server";

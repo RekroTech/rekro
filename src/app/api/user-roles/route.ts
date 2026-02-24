@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuthForApi } from "@/lib/auth/server";
+import { requireAuthForApi } from "@/lib/supabase/server";
 import { userRolesService } from "@/services/user_roles.service";
 import { requireRoleLevel } from "@/lib/auth/authorization";
 

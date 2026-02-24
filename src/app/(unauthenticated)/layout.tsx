@@ -1,6 +1,6 @@
 import React from "react";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/server";
+import { getSession } from "@/lib/supabase/server";
 
 // Force dynamic rendering for auth checks
 export const dynamic = "force-dynamic";

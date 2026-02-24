@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Modal, Icon, Button, Input, Alert } from "@/components/common";
 import { EmailSentSuccess } from "./EmailSentSuccess";
-import { useSignInWithOtp, useResendOtp, useGoogleLogin } from "@/lib/react-query/hooks/auth/useAuth";
+import { useSignInWithOtp, useResendOtp, useGoogleLogin } from "@/lib/react-query/hooks/auth";
 import { processEmail } from "@/lib/utils/email";
 
 interface AuthModalProps {
