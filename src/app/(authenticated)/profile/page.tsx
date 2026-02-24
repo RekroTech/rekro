@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useProfile } from "@/lib/react-query/hooks/user";
-import { BackButton, Button, Icon, Loader } from "@/components/common";
+import { BackButton, Icon, Loader } from "@/components/common";
 import {
     ProfileCard,
     ProfileSectionCard,
@@ -13,11 +13,11 @@ import {
     IncomeDetailsSection,
     PersonalDetailsSection,
 } from "@/components/Profile";
-import { useToast } from "@/hooks/useToast";
 import { useProfileForm } from "@/components/Profile/hooks/useProfileForm";
-import { useProfileSave } from "@/components/Profile/hooks/useProfileSave";
 import { useProfileImage } from "@/components/Profile/hooks/useProfileImage";
 import { useSectionExpansion } from "@/components/Profile/hooks/useSectionExpansion";
+import { useAutosave } from "@/components/Profile/hooks/useAutosave";
+import { useProfileSave } from "@/components/Profile/hooks/useProfileSave";
 import { useProfileCompletion } from "@/contexts";
 import { buildShareableProfile } from "@/components/Profile/shareable-profile";
 import {
@@ -27,7 +27,6 @@ import {
 
 function ProfilePageContent() {
     const router = useRouter();
-    const { showSuccess, showError } = useToast();
 
     // Data fetching
     const { data: user, isLoading: userLoading } = useProfile();
@@ -44,17 +43,29 @@ function ProfilePageContent() {
         hasChanges,
     } = useProfileForm(user);
 
-    // Save operations
-    const { saveProfileAsync, savePersonalDetailsOnlyAsync, isSaving } = useProfileSave({
-        onSuccess: showSuccess,
-        onError: showError,
-    });
-
     // Profile image upload
     const { uploadImage, isUploading: isUploadingImage } = useProfileImage({
         userId: user?.id,
-        onSuccess: showSuccess,
-        onError: showError,
+    });
+
+    // Document operations state from context
+    const { isAnyOperationInProgress: isAnyDocumentOperationInProgress } = useDocumentOperations();
+
+    // Save operations
+    const { saveProfileAsync, isSaving } = useProfileSave();
+
+    // Autosave with debouncing
+    useAutosave({
+        formState,
+        hasChanges,
+        onSave: async (state) => {
+            await saveProfileAsync(state);
+            commitBaseline();
+        },
+        isSaving,
+        isUploadingImage,
+        isAnyDocumentOperationInProgress,
+        debounceMs: 1500, // Save after 1.5 seconds of inactivity
     });
 
     // Section expansion state
@@ -63,9 +74,6 @@ function ProfilePageContent() {
     // Profile completion from context
     const { calculateWithFormState } = useProfileCompletion();
 
-    // Document operations state from context
-    const { isAnyOperationInProgress: isAnyDocumentOperationInProgress } = useDocumentOperations();
-
     // Build derived data - calculate with current form state for real-time updates
     const profileCompletion = calculateWithFormState(
         { ...formState.incomeDetails, ...formState.residency },
@@ -73,45 +81,12 @@ function ProfilePageContent() {
     );
     const shareableProfile = user ? buildShareableProfile(user, formState) : null;
 
-    // Track when profile reaches 100% completion
-    const hasShownCompletionToast = useRef(false);
-
+    // Collapse all sections when profile is complete
     useEffect(() => {
-        if (profileCompletion.isComplete && !hasShownCompletionToast.current) {
-            // Collapse all sections
+        if (profileCompletion.isComplete) {
             collapseAll();
-
-            // Show success toast
-            showSuccess("Congratulations! You are ready to apply for any property 🎉");
-
-            // Mark as shown to prevent repeated toasts
-            hasShownCompletionToast.current = true;
         }
-
-        // Reset flag if profile becomes incomplete again
-        if (!profileCompletion.isComplete && hasShownCompletionToast.current) {
-            hasShownCompletionToast.current = false;
-        }
-    }, [profileCompletion.isComplete, collapseAll, showSuccess]);
-
-    // Handlers
-    const handleSavePersonalDetails = async () => {
-        try {
-            await savePersonalDetailsOnlyAsync(formState);
-            commitBaseline();
-        } catch {
-            // errors are handled by react-query + onError callback
-        }
-    };
-
-    const handleSaveWholeProfile = async () => {
-        try {
-            await saveProfileAsync(formState);
-            commitBaseline();
-        } catch {
-            // errors are handled by react-query + onError callback
-        }
-    };
+    }, [profileCompletion.isComplete, collapseAll]);
 
     // Loading and auth states
     if (userLoading) {
@@ -128,189 +103,180 @@ function ProfilePageContent() {
     }
 
     return (
-        <div className="min-h-[calc(100vh-64px)] bg-app-bg pb-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative bg-app-bg">
-                {/* Header */}
-                <div className="py-4 sm:py-6 flex items-center justify-between gap-4 sticky top-14 sm:top-16 z-10 bg-app-bg">
+        <div className="h-[calc(100vh-64px)] bg-app-bg flex flex-col">
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8">
                     <BackButton />
-
-                    <Button
-                        type="button"
-                        onClick={handleSaveWholeProfile}
-                        disabled={
-                            isSaving ||
-                            isUploadingImage ||
-                            !hasChanges ||
-                            isAnyDocumentOperationInProgress
-                        }
-                        loading={isSaving}
-                        variant="primary"
-                        size="md"
-                    >
-                        Save Profile
-                    </Button>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 ">
-                    {/* Left Column - Shareable Profile Card */}
-                    <div className="lg:col-span-1">
-                        <div className="sticky top-39">
-                            {shareableProfile && (
-                                <ProfileCard
-                                    profile={shareableProfile}
-                                    editable={true}
-                                    onImageUpdate={uploadImage}
-                                    isUploadingImage={isUploadingImage}
-                                />
-                            )}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 pb-8">
+                        {/* Left Column - Shareable Profile Card and Badges (Sticky on Desktop) */}
+                        <div className="lg:col-span-1">
+                            <div className="lg:sticky lg:top-4 space-y-4 sm:space-y-6">
+                                {shareableProfile && (
+                                    <ProfileCard
+                                        profile={shareableProfile}
+                                        editable={true}
+                                        onImageUpdate={uploadImage}
+                                        isUploadingImage={isUploadingImage}
+                                    />
+                                )}
 
-                            {/* Badges */}
-                            {profileCompletion.unlockedBadges.length > 0 && (
-                                <div className="mt-4 sm:mt-6 bg-card rounded-2xl shadow-lg border border-border p-4 sm:p-6">
-                                    <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-                                        <Icon name="star" className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
-                                        Your Badges
-                                    </h3>
-                                    <div className="space-y-2">
-                                        {profileCompletion.unlockedBadges.map((badge) => (
-                                            <div
-                                                key={badge}
-                                                className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg"
-                                            >
-                                                <Icon
-                                                    name="check-circle"
-                                                    className="w-5 h-5 text-yellow-600 dark:text-yellow-400"
-                                                />
-                                                <span className="text-sm font-medium text-text">
-                                                    {badge}
-                                                </span>
-                                            </div>
-                                        ))}
+                                {/* Badges */}
+                                {profileCompletion.unlockedBadges.length > 0 && (
+                                    <div className="bg-card rounded-2xl shadow-lg border border-border p-4 sm:p-6">
+                                        <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+                                            <Icon
+                                                name="star"
+                                                className="w-5 h-5 text-yellow-500 dark:text-yellow-400"
+                                            />
+                                            Your Badges
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {profileCompletion.unlockedBadges.map((badge) => (
+                                                <div
+                                                    key={badge}
+                                                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg"
+                                                >
+                                                    <Icon
+                                                        name="check-circle"
+                                                        className="w-5 h-5 text-yellow-600 dark:text-yellow-400"
+                                                    />
+                                                    <span className="text-sm font-medium text-text">
+                                                        {badge}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Right Column - Profile Sections */}
-                    <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-                        {/* Personal Details Section */}
-                        <ProfileSectionCard
-                            title="Personal Details"
-                            description="Basic information about you"
-                            icon="profile"
-                            completed={
-                                profileCompletion.sections.find((s) => s.id === "personal-details")
-                                    ?.completed || false
-                            }
-                            completionPercentage={
-                                profileCompletion.sections.find((s) => s.id === "personal-details")
-                                    ?.completionPercentage || 0
-                            }
-                            isExpanded={expandedSections["personal-details"]}
-                            onToggle={() => toggleSection("personal-details")}
-                        >
-                            <PersonalDetailsSection
-                                userEmail={user.email || ""}
-                                value={formState.personalDetails}
-                                onChange={updatePersonalDetails}
-                                onSave={handleSavePersonalDetails}
-                                isSaving={isSaving}
-                            />
-                        </ProfileSectionCard>
+                        {/* Right Column - Profile Sections (Scrollable) */}
+                        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+                            {/* Personal Details Section */}
+                            <ProfileSectionCard
+                                title="Personal Details"
+                                description="Basic information about you"
+                                icon="profile"
+                                completed={
+                                    profileCompletion.sections.find(
+                                        (s) => s.id === "personal-details"
+                                    )?.completed || false
+                                }
+                                completionPercentage={
+                                    profileCompletion.sections.find(
+                                        (s) => s.id === "personal-details"
+                                    )?.completionPercentage || 0
+                                }
+                                isExpanded={expandedSections["personal-details"]}
+                                onToggle={() => toggleSection("personal-details")}
+                            >
+                                <PersonalDetailsSection
+                                    userEmail={user.email || ""}
+                                    value={formState.personalDetails}
+                                    onChange={updatePersonalDetails}
+                                />
+                            </ProfileSectionCard>
 
-                        {/* Residency Section */}
-                        <ProfileSectionCard
-                            title="Residency"
-                            description="Citizenship status and visa documentation"
-                            icon="map-pin"
-                            completed={
-                                profileCompletion.sections.find((s) => s.id === "visa-details")
-                                    ?.completed || false
-                            }
-                            completionPercentage={
-                                profileCompletion.sections.find((s) => s.id === "visa-details")
-                                    ?.completionPercentage || 0
-                            }
-                            isExpanded={expandedSections["visa-details"]}
-                            onToggle={() => toggleSection("visa-details")}
-                        >
-                            <ResidencySection
-                                userId={user.id}
-                                data={formState.residency}
-                                onChange={updateResidency}
-                            />
-                        </ProfileSectionCard>
+                            {/* Residency Section */}
+                            <ProfileSectionCard
+                                title="Residency"
+                                description="Citizenship status and visa documentation"
+                                icon="map-pin"
+                                completed={
+                                    profileCompletion.sections.find((s) => s.id === "visa-details")
+                                        ?.completed || false
+                                }
+                                completionPercentage={
+                                    profileCompletion.sections.find((s) => s.id === "visa-details")
+                                        ?.completionPercentage || 0
+                                }
+                                isExpanded={expandedSections["visa-details"]}
+                                onToggle={() => toggleSection("visa-details")}
+                            >
+                                <ResidencySection
+                                    userId={user.id}
+                                    data={formState.residency}
+                                    onChange={updateResidency}
+                                />
+                            </ProfileSectionCard>
 
-                        {/* Income Details Section */}
-                        <ProfileSectionCard
-                            title="Financial Information"
-                            description="Employment and financial information"
-                            icon="dollar"
-                            completed={
-                                profileCompletion.sections.find((s) => s.id === "income-details")
-                                    ?.completed || false
-                            }
-                            completionPercentage={
-                                profileCompletion.sections.find((s) => s.id === "income-details")
-                                    ?.completionPercentage || 0
-                            }
-                            isExpanded={expandedSections["income-details"]}
-                            onToggle={() => toggleSection("income-details")}
-                        >
-                            <IncomeDetailsSection
-                                userId={user.id}
-                                data={formState.incomeDetails}
-                                onChange={updateIncomeDetails}
-                            />
-                        </ProfileSectionCard>
+                            {/* Income Details Section */}
+                            <ProfileSectionCard
+                                title="Financial Information"
+                                description="Employment and financial information"
+                                icon="dollar"
+                                completed={
+                                    profileCompletion.sections.find(
+                                        (s) => s.id === "income-details"
+                                    )?.completed || false
+                                }
+                                completionPercentage={
+                                    profileCompletion.sections.find(
+                                        (s) => s.id === "income-details"
+                                    )?.completionPercentage || 0
+                                }
+                                isExpanded={expandedSections["income-details"]}
+                                onToggle={() => toggleSection("income-details")}
+                            >
+                                <IncomeDetailsSection
+                                    userId={user.id}
+                                    data={formState.incomeDetails}
+                                    onChange={updateIncomeDetails}
+                                />
+                            </ProfileSectionCard>
 
-                        {/* Documents Section */}
-                        <ProfileSectionCard
-                            title="Additional Documents"
-                            description="Upload remaining documents"
-                            icon="upload"
-                            completed={
-                                profileCompletion.sections.find((s) => s.id === "documents")
-                                    ?.completed || false
-                            }
-                            completionPercentage={
-                                profileCompletion.sections.find((s) => s.id === "documents")
-                                    ?.completionPercentage || 0
-                            }
-                            isExpanded={expandedSections["documents"]}
-                            onToggle={() => toggleSection("documents")}
-                            showCompletion={false}
-                        >
-                            <DocumentsSection
-                                userId={user.id}
-                                uploadedDocs={formState.documents}
-                                onChange={updateDocuments}
-                            />
-                        </ProfileSectionCard>
+                            {/* Documents Section */}
+                            <ProfileSectionCard
+                                title="Additional Documents"
+                                description="Upload remaining documents"
+                                icon="upload"
+                                completed={
+                                    profileCompletion.sections.find((s) => s.id === "documents")
+                                        ?.completed || false
+                                }
+                                completionPercentage={
+                                    profileCompletion.sections.find((s) => s.id === "documents")
+                                        ?.completionPercentage || 0
+                                }
+                                isExpanded={expandedSections["documents"]}
+                                onToggle={() => toggleSection("documents")}
+                                showCompletion={false}
+                            >
+                                <DocumentsSection
+                                    userId={user.id}
+                                    uploadedDocs={formState.documents}
+                                    onChange={updateDocuments}
+                                />
+                            </ProfileSectionCard>
 
-                        {/* Rental Preference Section */}
-                        <ProfileSectionCard
-                            title="Rental Preference"
-                            description="Your preferred locality and budget"
-                            icon="map"
-                            completed={
-                                profileCompletion.sections.find(
-                                    (s) => s.id === "location-preferences"
-                                )?.completed || false
-                            }
-                            completionPercentage={
-                                profileCompletion.sections.find(
-                                    (s) => s.id === "location-preferences"
-                                )?.completionPercentage || 0
-                            }
-                            isExpanded={expandedSections["location-preferences"]}
-                            onToggle={() => toggleSection("location-preferences")}
-                        >
-                            <RentalPreferencesSection
-                                data={formState.rentalPreferences}
-                                onChange={updateRentalPreferences}
-                            />
-                        </ProfileSectionCard>
+                            {/* Rental Preference Section */}
+                            <ProfileSectionCard
+                                title="Rental Preference"
+                                description="Your preferred locality and budget"
+                                icon="map"
+                                completed={
+                                    profileCompletion.sections.find(
+                                        (s) => s.id === "location-preferences"
+                                    )?.completed || false
+                                }
+                                completionPercentage={
+                                    profileCompletion.sections.find(
+                                        (s) => s.id === "location-preferences"
+                                    )?.completionPercentage || 0
+                                }
+                                isExpanded={expandedSections["location-preferences"]}
+                                onToggle={() => toggleSection("location-preferences")}
+                            >
+                                <RentalPreferencesSection
+                                    data={formState.rentalPreferences}
+                                    onChange={updateRentalPreferences}
+                                />
+                            </ProfileSectionCard>
+                        </div>
                     </div>
                 </div>
             </div>

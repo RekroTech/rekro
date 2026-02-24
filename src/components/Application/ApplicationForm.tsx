@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, Select, Textarea } from "@/components/common";
+import { Input, SegmentedControl, Select, Textarea } from "@/components/common";
 import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
 import { LEASE_MONTH_OPTIONS } from "@/components/Property/constants";
@@ -22,12 +22,15 @@ export function ApplicationForm({
     rentalForm,
     updateRentalForm,
 }: ApplicationFormProps) {
+    const isEntireHome = selectedUnit.listing_type === "entire_home";
+    const canShowDualOccupancy = !isEntireHome && selectedUnit.max_occupants === 2;
+
     return (
         <div className="space-y-6">
             {/* Tenancy details */}
             <div>
-                <h3 className="text-base sm:text-lg font-semibold text-text mb-4">
-                    Tenancy Details
+                <h3 className="text-xl sm:text-2xl font-normal text-text mb-6 sm:mb-10 mt-0 sm:mt-4">
+                    Confirm your Rental Details
                 </h3>
 
                 <div className="space-y-4">
@@ -54,21 +57,24 @@ export function ApplicationForm({
                             />
                         </div>
 
-                        <div className="sm:col-span-2">
-                            <Input
-                                label="Proposed Weekly Rent (Optional)"
-                                type="number"
-                                value={rentalForm.proposedRent || ""}
-                                onChange={(e) => updateRentalForm({ proposedRent: e.target.value })}
-                                placeholder="Enter your proposed rent amount"
-                                min="0"
-                                step="0.01"
-                            />
-                            <p className="text-xs text-text-muted mt-1">
-                                Leave blank to accept the listed rent of $
-                                {totalWeeklyRent.toFixed(2)}/week
-                            </p>
-                        </div>
+                        {/* Occupancy Toggle */}
+                        {canShowDualOccupancy && (
+                            <div className="sm:col-span-2">
+                                <label className="block text-sm font-medium text-text mb-2">
+                                    Occupancy Type
+                                </label>
+
+                                <SegmentedControl<"single" | "dual">
+                                    ariaLabel="Occupancy type"
+                                    value={rentalForm.occupancyType}
+                                    onChange={(next) => updateRentalForm({ occupancyType: next })}
+                                    options={[
+                                        { value: "single", label: "Single" },
+                                        { value: "dual", label: "Dual Occupancy" },
+                                    ]}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -94,6 +100,18 @@ export function ApplicationForm({
                 </span>
             </div>
 
+
+            <div className="sm:col-span-2">
+                <Input
+                    label="Proposed Weekly Rent (Optional)"
+                    type="number"
+                    value={rentalForm.proposedRent || ""}
+                    onChange={(e) => updateRentalForm({ proposedRent: e.target.value })}
+                    placeholder="Enter your proposed rent amount"
+                    min="0"
+                    step="0.01"
+                />
+            </div>
             {/* Message to Rekro */}
             <div>
                 <label className="block text-sm font-medium text-text mb-2">

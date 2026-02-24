@@ -6,22 +6,16 @@ import { Modal, Button, Icon } from "@/components/common";
 interface ProfileCompletionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    nextUrl?: string;
 }
 
 export function ProfileCompletionModal({
     isOpen,
     onClose,
-    nextUrl,
 }: ProfileCompletionModalProps) {
     const router = useRouter();
 
     const handleContinueToProfile = () => {
-        const profileUrl = nextUrl
-            ? `/profile?toast=complete-profile&next=${encodeURIComponent(nextUrl)}`
-            : "/profile?toast=complete-profile";
-
-        router.push(profileUrl);
+        router.push("/profile");
         onClose();
     };
 

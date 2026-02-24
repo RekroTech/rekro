@@ -364,7 +364,6 @@ export function PropertySidebar({
             <ProfileCompletionModal
                 isOpen={isProfileCompletionModalOpen}
                 onClose={() => setIsProfileCompletionModalOpen(false)}
-                nextUrl={`/property/${property.id}`}
             />
 
             {selectedUnit && (

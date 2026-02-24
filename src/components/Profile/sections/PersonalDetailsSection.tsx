@@ -10,8 +10,6 @@ interface PersonalDetailsSectionProps {
     userEmail: string;
     value: PersonalDetailsFormState;
     onChange: (next: PersonalDetailsFormState) => void;
-    onSave: () => void;
-    isSaving?: boolean;
 }
 
 export function PersonalDetailsSection({
@@ -107,8 +105,6 @@ export function PersonalDetailsSection({
                 placeholder="Tell us a bit about yourself..."
                 rows={4}
             />
-
-            {/* Save button removed: saving is handled by the page-level "Save Profile" button */}
         </div>
     );
 }

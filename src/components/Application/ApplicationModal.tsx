@@ -66,10 +66,14 @@ export function ApplicationModal({
     // Get modal title based on current step
     const modalTitle = useMemo(() => {
         if (step === "application") {
-            return existingApplication?.id ? "Update Application" : "New Application";
+            return "Confirm your Rental Details";
+        } else if (step === "review") {
+            return "Review Your Application";
+        } else if (step === "confirm") {
+            return undefined; // No title for confirmation step
         }
         return "Review Your Application";
-    }, [step, existingApplication?.id]);
+    }, [step]);
 
     // Build modal buttons from action state
     const { primaryButton, secondaryButton } = useMemo(() => {

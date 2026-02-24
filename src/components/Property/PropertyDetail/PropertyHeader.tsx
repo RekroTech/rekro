@@ -56,7 +56,7 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
                 </p>
 
                 {selectedUnit?.size_sqm && (
-                    <div className="flex sm:hidden items-center gap-1 sm:gap-2 bg-gray-50 rounded-md px-2 py-1 self-start">
+                    <div className="flex sm:hidden items-center gap-1 sm:gap-2 bg-surface-muted rounded-md px-2 py-1 self-start">
                         <Icon
                             name="home"
                             className="h-3.5 w-3.5 flex-shrink-0 sm:h-4.5 sm:w-4.5 mb-0.5"

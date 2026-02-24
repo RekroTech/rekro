@@ -49,16 +49,14 @@ export function ProfileCard({
     const unlockedBadges = completion?.unlockedBadges || [];
     const badgeCount = unlockedBadges.length;
 
-    const starCount = badgeCount || 0;
-
-    const ribbonColorClass =
-        starCount === 1
-            ? "text-amber-700 dark:text-amber-400"
-            : starCount === 2
-              ? "text-slate-400 dark:text-slate-300"
-              : starCount === 3
-                ? "text-yellow-500 dark:text-yellow-400"
-                : "";
+    const badgeBorderColor =
+        badgeCount === 1
+            ? "border-amber-700 dark:border-amber-400"
+            : badgeCount === 2
+              ? "border-slate-400 dark:border-slate-300"
+              : badgeCount === 3
+                ? "border-yellow-500 dark:border-yellow-400"
+                : "border-border";
 
 
     const completionColor =
@@ -153,7 +151,7 @@ export function ProfileCard({
                         >
                             {hasValidImage ? (
                                 <>
-                                    <div className="w-20 h-20 rounded-full overflow-hidden bg-surface-muted border border-border">
+                                    <div className={`w-20 h-20 rounded-full overflow-hidden bg-surface-muted border-2 ${badgeBorderColor}`}>
                                         <Image
                                             src={currentImageUrl!}
                                             alt={profile.fullName}
@@ -184,7 +182,7 @@ export function ProfileCard({
                                     )}
                                 </>
                             ) : (
-                                <div className="w-20 h-20 rounded-full bg-surface-muted flex items-center justify-center border border-border relative">
+                                <div className={`w-20 h-20 rounded-full bg-surface-muted flex items-center justify-center border-2 ${badgeBorderColor} relative`}>
                                     <Icon name="profile" className="w-10 h-10 text-text-muted" />
                                     {editable && (
                                         <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -198,42 +196,6 @@ export function ProfileCard({
                                             )}
                                         </div>
                                     )}
-                                </div>
-                            )}
-
-                            {/* Badge level ribbon */}
-                            {starCount && (
-                                <div
-                                    className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[120%] flex items-center justify-center opacity-50"
-                                    title={`${starCount}/3 badges`}
-                                >
-                                    <svg
-                                        id="Layer_2"
-                                        data-name="Layer 2"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 18.41 4.16"
-                                        fill="currentColor"
-                                        className={ribbonColorClass}
-                                    >
-                                        <g id="Layer_1-2">
-                                            <g>
-                                                <polygon points="15.63 3.27 2.67 3.19 2.6 0 16.09 .1 15.63 3.27" />
-                                                <path d="M3.28,3.67l-3.28.33,1.41-1.73L.42.73l2-.05.07,2.69c.27.1.48.15.79.3Z" />
-                                                <polygon points="18.41 4.16 14.96 3.93 15.81 3.45 16.18 .92 17.46 .9 16.69 2.49 18.41 4.16" />
-                                            </g>
-                                        </g>
-                                    </svg>
-
-                                    {/* Stars overlay */}
-                                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-1 -translate-y-[2px]">
-                                        {Array.from({ length: starCount }).map((_, i) => (
-                                            <Icon
-                                                key={i}
-                                                name="star"
-                                                className="w-3 h-3 fill-current text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.55)] [stroke:none]"
-                                            />
-                                        ))}
-                                    </div>
                                 </div>
                             )}
                         </div>
@@ -334,7 +296,7 @@ export function ProfileCard({
                         {/* Rent Pass Info */}
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-base font-bold text-text">Rent Pass</h3>
+                                <h3 className="text-base font-bold text-primary-600 dark:text-primary-400">RENT PASS</h3>
                                 {profile.completionPercentage === 100 && (
                                     <Icon
                                         name="check-circle"
@@ -347,8 +309,8 @@ export function ProfileCard({
                                     Finish your profile to apply faster and get better matches.
                                 </p>
                             ) : (
-                                <p className="text-xs font-medium text-primary-600 dark:text-primary-400">
-                                    ✓ Ready to apply for properties!
+                                <p className="text-xs font-medium text-text-muted">
+                                    Ready to apply for properties!
                                 </p>
                             )}
                         </div>

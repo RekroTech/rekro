@@ -19,11 +19,11 @@ export function ApplicationConfirm({
     );
 
     return (
-        <div className="space-y-6 py-4">
+        <div className="space-y-4 sm:space-y-6 py-4">
             {/* Success Icon and Message */}
             <div className="text-center space-y-4">
                 <div className="flex justify-center">
-                    <div className="w-20 h-20 bg-success-100 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 sm:w-20 sm:h-20 bg-success-100 rounded-full flex items-center justify-center">
                         <Icon
                             name="check" 
                             className="w-12 h-12 text-success-600"
@@ -119,13 +119,13 @@ export function ApplicationConfirm({
             </div>
 
             {/* Action Items */}
-            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+            <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
                 <div className="flex gap-3">
                     <Icon name="info" className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 space-y-2">
                         <h4 className="font-semibold text-text">Keep an eye on your email</h4>
                         <p className="text-sm text-text-muted">
-                            We&#39;ll send you updates about your application status. Make sure to check your spam folder too.
+                            We&#39;ll send you updates about your application status within 24 hours. Make sure to check your spam folder too.
                         </p>
                     </div>
                 </div>
