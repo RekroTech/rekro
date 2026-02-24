@@ -37,7 +37,7 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
                     {title}
                 </h1>
             </div>
-            <div className="flex justify-between sm:justify-normal gap-6">
+            <div className="flex justify-between sm:justify-normal gap-6 mt-2">
                 <p className="mb-2 flex min-w-0 gap-2 text-sm text-text-muted sm:mb-4 sm:text-base items-center">
                     <Icon name="location" className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />
                     <span className="min-w-0 break-words">{addressText}</span>

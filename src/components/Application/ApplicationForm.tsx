@@ -6,6 +6,7 @@ import type { Unit } from "@/types/db";
 import { LEASE_MONTH_OPTIONS } from "@/components/Property/constants";
 import { RentalFormData } from "@/components/Property/types";
 import { Inclusions } from "@/components/Property/PropertyDetail/Inclusions/Inclusions";
+import { getMinStartDate, getMaxStartDate } from "@/components/Property/utils";
 
 interface ApplicationFormProps {
     property: Property;
@@ -26,56 +27,52 @@ export function ApplicationForm({
     const canShowDualOccupancy = !isEntireHome && selectedUnit.max_occupants === 2;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 mt-2">
             {/* Tenancy details */}
-            <div>
-                <h3 className="text-xl sm:text-2xl font-normal text-text mb-6 sm:mb-10 mt-0 sm:mt-4">
-                    Confirm your Rental Details
-                </h3>
-
-                <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <Input
-                                label="Move In Date"
-                                type="date"
-                                value={rentalForm.moveInDate}
-                                onChange={(e) => updateRentalForm({ moveInDate: e.target.value })}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <Select
-                                label="Rental Duration"
-                                value={rentalForm.rentalDuration.toString()}
-                                onChange={(e) =>
-                                    updateRentalForm({ rentalDuration: Number(e.target.value) })
-                                }
-                                options={LEASE_MONTH_OPTIONS}
-                                required
-                            />
-                        </div>
-
-                        {/* Occupancy Toggle */}
-                        {canShowDualOccupancy && (
-                            <div className="sm:col-span-2">
-                                <label className="block text-sm font-medium text-text mb-2">
-                                    Occupancy Type
-                                </label>
-
-                                <SegmentedControl<"single" | "dual">
-                                    ariaLabel="Occupancy type"
-                                    value={rentalForm.occupancyType}
-                                    onChange={(next) => updateRentalForm({ occupancyType: next })}
-                                    options={[
-                                        { value: "single", label: "Single" },
-                                        { value: "dual", label: "Dual Occupancy" },
-                                    ]}
-                                />
-                            </div>
-                        )}
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <Input
+                            label="Move In Date"
+                            type="date"
+                            value={rentalForm.moveInDate}
+                            onChange={(e) => updateRentalForm({ moveInDate: e.target.value })}
+                            min={getMinStartDate(selectedUnit.available_from)}
+                            max={getMaxStartDate(selectedUnit.available_from, selectedUnit.available_to)}
+                            required
+                        />
                     </div>
+
+                    <div>
+                        <Select
+                            label="Rental Duration"
+                            value={rentalForm.rentalDuration.toString()}
+                            onChange={(e) =>
+                                updateRentalForm({ rentalDuration: Number(e.target.value) })
+                            }
+                            options={LEASE_MONTH_OPTIONS}
+                            required
+                        />
+                    </div>
+
+                    {/* Occupancy Toggle */}
+                    {canShowDualOccupancy && (
+                        <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-text mb-2">
+                                Occupancy Type
+                            </label>
+
+                            <SegmentedControl<"single" | "dual">
+                                ariaLabel="Occupancy type"
+                                value={rentalForm.occupancyType}
+                                onChange={(next) => updateRentalForm({ occupancyType: next })}
+                                options={[
+                                    { value: "single", label: "Single" },
+                                    { value: "dual", label: "Dual Occupancy" },
+                                ]}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -99,7 +96,6 @@ export function ApplicationForm({
                     ${totalWeeklyRent.toFixed(2)}
                 </span>
             </div>
-
 
             <div className="sm:col-span-2">
                 <Input

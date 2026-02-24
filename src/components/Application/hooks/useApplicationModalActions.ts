@@ -6,14 +6,11 @@ import {
     useCreateSnapshot,
 } from "@/lib/react-query/hooks/application/useApplications";
 import { useToast } from "@/hooks/useToast";
-import type { Property } from "@/types/property.types";
-import type { Unit, ApplicationType, Application } from "@/types/db";
+import type { Application } from "@/types/db";
 import type { RentalFormData } from "@/components/Property/types";
 import { ModalActionState, ModalStep } from "@/components/Application/types";
 
 interface UseApplicationModalActionsParams {
-    property: Property;
-    selectedUnit: Unit;
     totalWeeklyRent: number;
     onClose: () => void;
     // Prop drilled state
@@ -25,8 +22,6 @@ interface UseApplicationModalActionsParams {
 }
 
 export function useApplicationModalActions({
-    property,
-    selectedUnit,
     totalWeeklyRent,
     onClose,
     rentalForm,
@@ -81,53 +76,6 @@ export function useApplicationModalActions({
         );
     }, [existingApplication, rentalForm, totalWeeklyRent]);
 
-    const upsertPayload = useMemo(
-        () => ({
-            applicationId: existingApplication?.id,
-            propertyId: property.id,
-            unitId: selectedUnit?.id || null,
-            applicationType: (selectedUnit.listing_type === "entire_home"
-                ? "group"
-                : "individual") as ApplicationType,
-            moveInDate: rentalForm.moveInDate,
-            rentalDuration: rentalForm.rentalDuration.toString(),
-            proposedRent: rentalForm.proposedRent,
-            totalRent: totalWeeklyRent,
-            inclusions: rentalForm.inclusions,
-            occupancyType: rentalForm.occupancyType,
-            message: rentalForm.message,
-        }),
-        [
-            existingApplication?.id,
-            property.id,
-            selectedUnit?.id,
-            selectedUnit.listing_type,
-            rentalForm,
-            totalWeeklyRent,
-        ]
-    );
-
-    // Application form submit handler - save or update application
-    const handleFormSubmit = useCallback(async () => {
-        // If updating and no changes, just continue
-        if (!hasChanges) {
-            setStep("review");
-            return;
-        }
-
-        try {
-            await upsertApplicationMutation.mutateAsync(upsertPayload);
-            setStep("review");
-        } catch (error) {
-            console.error("Application save failed:", error);
-            const errorMessage =
-                error instanceof Error
-                    ? error.message
-                    : "Failed to save application. Please try again.";
-            showToast(errorMessage, "error");
-        }
-    }, [hasChanges, setStep, upsertApplicationMutation, upsertPayload, showToast]);
-
     // Review submit handler - save application snapshot
     const handleReviewSubmit = useCallback(async () => {
         if (!existingApplication) {
@@ -157,16 +105,12 @@ export function useApplicationModalActions({
     // Sync action state with modal based on current step
     useEffect(() => {
         if (step === "application") {
-            let buttonText = "Save & Continue";
-            if (existingApplication?.id) {
-                buttonText = hasChanges ? "Update & Continue" : "Continue";
-            }
-
+            // Always show "Continue" - autosave handles data persistence
             setModalActionState({
-                onSubmit: handleFormSubmit,
-                isSubmitting: upsertApplicationMutation.isPending,
+                onSubmit: async () => setStep("review"),
+                isSubmitting: false, // Autosave handles the loading state
                 canSubmit: true,
-                submitText: buttonText,
+                submitText: "Continue",
                 onCancel: onClose,
             });
         } else if (step === "review") {

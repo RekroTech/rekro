@@ -3,7 +3,7 @@
 import React, { useMemo, useCallback } from "react";
 import { Modal } from "@/components/common";
 import { calculatePricing } from "@/components/Property/pricing";
-import { useApplicationModalActions } from "./hooks";
+import { useApplicationModalActions, useAutoSave } from "./hooks";
 import { ApplicationForm } from "./ApplicationForm";
 import { ApplicationReview } from "./ApplicationReview/ApplicationReview";
 import { ApplicationConfirm } from "./ApplicationConfirm";
@@ -43,6 +43,16 @@ export function ApplicationModal({
         [selectedUnit, property, rentalForm]
     );
 
+    // Auto-save functionality - only enabled on application step
+    const { isSaving } = useAutoSave({
+        property,
+        selectedUnit,
+        totalWeeklyRent: pricing.totalWeeklyRent,
+        rentalForm,
+        existingApplication,
+        enabled: step === "application",
+    });
+
     // Reset state when modal closes
     const handleClose = useCallback(() => {
         setStep("application");
@@ -52,8 +62,6 @@ export function ApplicationModal({
 
     // Use the unified hook to manage actions based on step
     useApplicationModalActions({
-        property,
-        selectedUnit,
         totalWeeklyRent: pricing.totalWeeklyRent,
         onClose: handleClose,
         rentalForm,
@@ -69,10 +77,8 @@ export function ApplicationModal({
             return "Confirm your Rental Details";
         } else if (step === "review") {
             return "Review Your Application";
-        } else if (step === "confirm") {
-            return undefined; // No title for confirmation step
         }
-        return "Review Your Application";
+        return undefined; // No title for confirmation step
     }, [step]);
 
     // Build modal buttons from action state
@@ -85,8 +91,9 @@ export function ApplicationModal({
             label: modalActionState.submitText,
             onClick: modalActionState.onSubmit,
             variant: "primary",
-            disabled: !modalActionState.canSubmit,
-            isLoading: modalActionState.isSubmitting,
+            // Disable button if: form validation fails, mutation in progress, OR autosave is in progress
+            disabled: !modalActionState.canSubmit || modalActionState.isSubmitting || isSaving,
+            isLoading: modalActionState.isSubmitting || isSaving,
             icon: step === "application" ? "chevron-right" : "check",
             iconPosition: "right",
         };
@@ -96,7 +103,7 @@ export function ApplicationModal({
                   label: "Back",
                   onClick: modalActionState.onBack,
                   variant: "secondary",
-                  disabled: modalActionState.isSubmitting,
+                  disabled: modalActionState.isSubmitting || isSaving,
                   icon: "chevron-left",
                   iconPosition: "left",
               }
@@ -104,11 +111,11 @@ export function ApplicationModal({
                   label: "Cancel",
                   onClick: modalActionState.onCancel,
                   variant: "secondary",
-                  disabled: modalActionState.isSubmitting,
+                  disabled: modalActionState.isSubmitting || isSaving,
               };
 
         return { primaryButton: primary, secondaryButton: secondary };
-    }, [step, modalActionState]);
+    }, [step, modalActionState, isSaving]);
 
     return (
         <Modal
