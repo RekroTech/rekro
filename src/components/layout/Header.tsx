@@ -92,9 +92,6 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                                                     user.email?.charAt(0).toUpperCase()
                                                 )}
                                             </div>
-                                            <span className="hidden sm:block text-sm text-text">
-                                                {user.email}
-                                            </span>
                                             <Icon
                                                 name="chevron-down"
                                                 className="w-4 h-4 text-text-muted"

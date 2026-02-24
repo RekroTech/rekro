@@ -244,19 +244,31 @@ export function calculateProfileCompletion(
   const totalPercentage = Math.round(requiredAvg);
 
   const unlockedBadges: string[] = [];
-  if (totalPercentage >= 25) unlockedBadges.push("Getting Started");
-  if (totalPercentage >= 50) unlockedBadges.push("Halfway There");
-  if (totalPercentage >= 75) unlockedBadges.push("Almost Done");
-  if (totalPercentage >= 100) unlockedBadges.push("Profile Complete");
 
-  if (sections.find((s) => s.id === "visa-details")?.completed) {
-    unlockedBadges.push("Residency Ready");
+  // Badge 1: Profile Verified - has image, name, and phone
+  const hasImage = isFilled(user.image_url);
+  const hasName = isFilled(user.full_name);
+  const hasPhone = isFilled(user.phone);
+
+  if (hasImage && hasName && hasPhone) {
+    unlockedBadges.push("Rekro Trusted");
   }
-  if (sections.find((s) => s.id === "income-details")?.completed) {
-    unlockedBadges.push("Financially Verified");
+
+  // Badge 2: Profile Complete - all required sections complete AND discoverable is true
+  const isDiscoverable = user.discoverable === true;
+  const personalComplete = sections.find((s) => s.id === "personal-details")?.completed;
+
+  if (personalComplete && isDiscoverable) {
+    unlockedBadges.push("Ready to Connect");
   }
-  if (sections.find((s) => s.id === "personal-details")?.completed) {
-    unlockedBadges.push("Identity Complete");
+
+  // Badge 3: Rent Pass - all required sections complete (ready to apply for rentals)
+  const visaComplete = sections.find((s) => s.id === "visa-details")?.completed;
+  const incomeComplete = sections.find((s) => s.id === "income-details")?.completed;
+  const rentalComplete = sections.find((s) => s.id === "location-preferences")?.completed;
+
+  if (visaComplete && incomeComplete && personalComplete && rentalComplete) {
+    unlockedBadges.push("Rent Pass Acquired");
   }
 
   return {

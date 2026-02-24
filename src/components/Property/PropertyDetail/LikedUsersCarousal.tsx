@@ -10,119 +10,14 @@ import { useUserLikes } from "@/lib/react-query/hooks/property";
 interface UsersWhoLikedCarouselProps {
     propertyId: string;
     className?: string;
-    useDummyData?: boolean; // For UI testing
 }
-
-// Dummy data for UI testing
-const DUMMY_USERS = [
-    {
-        property_id: "dummy-property-1",
-        user_id: "user-1",
-        full_name: "Sarah Johnson",
-        username: "sarahj",
-        image_url: "https://i.pravatar.cc/150?img=1",
-        occupation: "Software Engineer",
-        bio: "Looking for a cozy place near the city center. Love cooking and yoga!",
-        native_language: "English",
-        unit_ids: ["unit-1", "unit-2"],
-        unit_names: ["Unit A - 2BR", "Unit B - 1BR"],
-    },
-    {
-        property_id: "dummy-property-1",
-        user_id: "user-2",
-        full_name: "Michael Chen",
-        username: "mchen",
-        image_url: "https://i.pravatar.cc/150?img=12",
-        occupation: "Product Designer",
-        bio: "Minimalist who appreciates modern design and natural light. Non-smoker, quiet tenant.",
-        native_language: "Mandarin",
-        unit_ids: ["unit-3"],
-        unit_names: ["Unit C - Studio"],
-    },
-    {
-        property_id: "dummy-property-1",
-        user_id: "user-3",
-        full_name: "Emma Williams",
-        username: "emmaw",
-        image_url: "https://i.pravatar.cc/150?img=5",
-        occupation: "Marketing Manager",
-        bio: "Professional seeking a modern apartment. I work from home occasionally and value peace and quiet.",
-        native_language: "English",
-        unit_ids: ["unit-1"],
-        unit_names: ["Unit A - 2BR"],
-    },
-    {
-        property_id: "dummy-property-1",
-        user_id: "user-4",
-        full_name: "James Anderson",
-        username: null,
-        image_url: null,
-        occupation: "Teacher",
-        bio: null,
-        native_language: "Spanish",
-        unit_ids: ["unit-2", "unit-3"],
-        unit_names: ["Unit B - 1BR", "Unit C - Studio"],
-    },
-    {
-        property_id: "dummy-property-1",
-        user_id: "user-5",
-        full_name: "Priya Patel",
-        username: "priyap",
-        image_url: "https://i.pravatar.cc/150?img=9",
-        occupation: "Data Analyst",
-        bio: "Clean, responsible tenant looking for a long-term rental. Love reading and hiking on weekends.",
-        native_language: "Hindi",
-        unit_ids: ["unit-1", "unit-2", "unit-3"],
-        unit_names: ["Unit A - 2BR", "Unit B - 1BR", "Unit C - Studio"],
-    },
-    {
-        property_id: "dummy-property-1",
-        user_id: "user-6",
-        full_name: null,
-        username: "alexm",
-        image_url: "https://i.pravatar.cc/150?img=13",
-        occupation: null,
-        bio: "Recent graduate starting a new job in the area.",
-        native_language: null,
-        unit_ids: ["unit-2"],
-        unit_names: ["Unit B - 1BR"],
-    },
-    {
-        property_id: "dummy-property-1",
-        user_id: "user-7",
-        full_name: "Olivia Martinez",
-        username: "oliviam",
-        image_url: "https://i.pravatar.cc/150?img=10",
-        occupation: "Graphic Designer",
-        bio: "Creative professional with a cat. Looking for a pet-friendly place with good natural lighting.",
-        native_language: "English",
-        unit_ids: ["unit-1"],
-        unit_names: ["Unit A - 2BR"],
-    },
-    {
-        property_id: "dummy-property-1",
-        user_id: "user-8",
-        full_name: "Daniel Kim",
-        username: "dkim",
-        image_url: null,
-        occupation: "Financial Analyst",
-        bio: "Quiet professional seeking a clean, modern apartment. Non-smoker, no pets.",
-        native_language: "Korean",
-        unit_ids: ["unit-3"],
-        unit_names: ["Unit C - Studio"],
-    },
-];
 
 export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
     propertyId,
     className,
-    useDummyData = false,
 }) => {
     // Fetch users who liked any unit in this property
     const { data: users, isLoading } = useUserLikes(propertyId);
-
-    // Use dummy data if the prop is set, otherwise use real data
-    const displayUsers = useDummyData ? DUMMY_USERS : users;
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -160,7 +55,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
     };
 
     // Show loading state (skip if using dummy data)
-    if (isLoading && !useDummyData) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center py-8">
                 <Loader size="md" />
@@ -168,7 +63,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
         );
     }
 
-    if (!displayUsers || displayUsers.length === 0) {
+    if (!users || users.length === 0) {
         return null;
     }
 
@@ -177,7 +72,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
             {/* Header */}
             <div className="mb-4 sm:mb-6 px-2 sm:px-0">
                 <h6 className="text-xl sm:text-2xl font-bold text-text">
-                    People Interested in This Property
+                    People Interested
                 </h6>
             </div>
 
@@ -204,7 +99,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
                         msOverflowStyle: "none",
                     }}
                 >
-                    {displayUsers.map((user) => {
+                    {users.map((user) => {
                         const displayName = user.full_name || user.username || "Anonymous";
                         const altText = user.full_name || user.username || "User";
 
@@ -271,7 +166,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
 
             {/* User Details Modal */}
             {modalUserId && (() => {
-                const user = displayUsers.find(u => u.user_id === modalUserId);
+                const user = users.find(u => u.user_id === modalUserId);
                 if (!user) return null;
 
                 const displayName = user.full_name || user.username || "Anonymous";

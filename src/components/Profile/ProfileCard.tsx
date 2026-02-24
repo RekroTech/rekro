@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import { Icon } from "@/components/common";
 import type { ShareableProfile } from "@/types/user.types";
+import { useProfileCompletion } from "@/contexts/ProfileCompletionContext";
 
 interface ProfileCardProps {
     profile: ShareableProfile;
@@ -30,17 +31,6 @@ function calculateAge(dateOfBirth: string | null): number | null {
 }
 
 /**
- * Format visa status for display
- */
-function formatVisaStatus(visaStatus: string | null): string | null {
-    if (!visaStatus) return null;
-    return visaStatus
-        .split("_")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-}
-
-/**
  * Shareable profile card showing user's key information
  */
 export function ProfileCard({
@@ -54,6 +44,23 @@ export function ProfileCard({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [errorImageUrl, setErrorImageUrl] = useState<string | null | undefined>(null);
 
+    // Get unlocked badges from context
+    const { completion } = useProfileCompletion();
+    const unlockedBadges = completion?.unlockedBadges || [];
+    const badgeCount = unlockedBadges.length;
+
+    const starCount = badgeCount || 0;
+
+    const ribbonColorClass =
+        starCount === 1
+            ? "text-amber-700 dark:text-amber-400"
+            : starCount === 2
+              ? "text-slate-400 dark:text-slate-300"
+              : starCount === 3
+                ? "text-yellow-500 dark:text-yellow-400"
+                : "";
+
+
     const completionColor =
         profile.completionPercentage >= 75
             ? "text-primary-700 dark:text-primary-300"
@@ -61,12 +68,6 @@ export function ProfileCard({
               ? "text-warning-700 dark:text-warning-300"
               : "text-danger-600 dark:text-danger-400";
 
-    const completionBgColor =
-        profile.completionPercentage >= 75
-            ? "bg-primary-100 dark:bg-primary-800"
-            : profile.completionPercentage >= 50
-              ? "bg-warning-50 dark:bg-warning-700"
-              : "bg-danger-500/15 dark:bg-danger-700";
 
     const completionBarColor =
         profile.completionPercentage >= 75
@@ -76,7 +77,6 @@ export function ProfileCard({
               : "bg-danger-600 dark:bg-danger-500";
 
     const age = profile.age || (profile.dateOfBirth ? calculateAge(profile.dateOfBirth) : null);
-    const formattedVisaStatus = formatVisaStatus(profile.visaStatus);
 
     const handleImageClick = () => {
         if (editable && fileInputRef.current) {
@@ -123,8 +123,8 @@ export function ProfileCard({
 
             <div className="space-y-4">
                 {/* Profile Picture & Basic Info */}
-                <div className="flex items-start gap-4">
-                    <div className="relative">
+                <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="relative flex-shrink-0">
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -136,7 +136,7 @@ export function ProfileCard({
 
                         <div
                             onClick={handleImageClick}
-                            className={`relative ${editable ? "cursor-pointer group" : ""}`}
+                            className={`relative z-10 ${editable ? "cursor-pointer group" : ""}`}
                             role={editable ? "button" : undefined}
                             aria-label={editable ? "Click to update profile image" : undefined}
                             tabIndex={editable ? 0 : undefined}
@@ -201,12 +201,41 @@ export function ProfileCard({
                                 </div>
                             )}
 
-                            {/* Completion badge */}
-                            <div
-                                className={`absolute -bottom-1 -right-1 ${completionBgColor} ${completionColor} rounded-full px-2 py-1 text-xs font-bold shadow-[var(--shadow-soft)] border border-border`}
-                            >
-                                {profile.completionPercentage}%
-                            </div>
+                            {/* Badge level ribbon */}
+                            {starCount && (
+                                <div
+                                    className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[120%] flex items-center justify-center opacity-50"
+                                    title={`${starCount}/3 badges`}
+                                >
+                                    <svg
+                                        id="Layer_2"
+                                        data-name="Layer 2"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 18.41 4.16"
+                                        fill="currentColor"
+                                        className={ribbonColorClass}
+                                    >
+                                        <g id="Layer_1-2">
+                                            <g>
+                                                <polygon points="15.63 3.27 2.67 3.19 2.6 0 16.09 .1 15.63 3.27" />
+                                                <path d="M3.28,3.67l-3.28.33,1.41-1.73L.42.73l2-.05.07,2.69c.27.1.48.15.79.3Z" />
+                                                <polygon points="18.41 4.16 14.96 3.93 15.81 3.45 16.18 .92 17.46 .9 16.69 2.49 18.41 4.16" />
+                                            </g>
+                                        </g>
+                                    </svg>
+
+                                    {/* Stars overlay */}
+                                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-1 -translate-y-[2px]">
+                                        {Array.from({ length: starCount }).map((_, i) => (
+                                            <Icon
+                                                key={i}
+                                                name="star"
+                                                className="w-3 h-3 fill-current text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.55)] [stroke:none]"
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -263,141 +292,67 @@ export function ProfileCard({
                     )}
                 </div>
 
-                {/* Application Status */}
-                {(formattedVisaStatus || profile.employmentStatus || profile.studentStatus) && (
-                    <div className="p-3 bg-panel rounded-lg space-y-2 border border-border">
-                        <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
-                            Status
-                        </h3>
-                        {formattedVisaStatus && (
-                            <div className="flex items-center gap-2">
-                                <Icon name="map-pin" className="w-4 h-4 text-secondary-500 dark:text-secondary-400" />
-                                <span className="text-sm text-text font-medium">
-                                    {formattedVisaStatus}
+                {/* Rent Pass - Profile Completion */}
+                <div className="pt-3 border-t border-border">
+                    <div className="flex items-center gap-4">
+                        {/* Circular Progress Indicator */}
+                        <div className="relative flex-shrink-0">
+                            <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                                {/* Background circle */}
+                                <circle
+                                    cx="40"
+                                    cy="40"
+                                    r="34"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="6"
+                                    className="text-primary-100/60 dark:text-primary-900/30"
+                                />
+                                {/* Progress circle */}
+                                <circle
+                                    cx="40"
+                                    cy="40"
+                                    r="34"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="6"
+                                    strokeLinecap="round"
+                                    className={completionBarColor.replace("bg-", "text-")}
+                                    strokeDasharray={`${2 * Math.PI * 34}`}
+                                    strokeDashoffset={`${2 * Math.PI * 34 * (1 - profile.completionPercentage / 100)}`}
+                                    style={{ transition: "stroke-dashoffset 0.3s ease" }}
+                                />
+                            </svg>
+                            {/* Percentage in center */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className={`text-xl font-bold ${completionColor}`}>
+                                    {profile.completionPercentage}%
                                 </span>
                             </div>
-                        )}
-                        {profile.employmentStatus === "working" && (
-                            <div className="flex items-center gap-2">
-                                <Icon name="dollar" className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                                <span className="text-sm text-text font-medium">Employed</span>
-                            </div>
-                        )}
-                        {profile.studentStatus === "student" && (
-                            <div className="flex items-center gap-2">
-                                <Icon name="book" className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                                <span className="text-sm text-text font-medium">Student</span>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Rental Preferences */}
-                <div className="bg-panel rounded-lg p-4 space-y-3 border border-border">
-                    <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
-                        Rental Preferences
-                    </h3>
-
-                    {profile.currentLocation && (
-                        <div className="flex items-start gap-2">
-                            <Icon
-                                name="map"
-                                className="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0"
-                            />
-                            <div className="flex-1">
-                                <p className="text-xs text-text-subtle">Current location</p>
-                                <p className="text-sm font-medium text-text">
-                                    {profile.currentLocation}
-                                </p>
-                            </div>
                         </div>
-                    )}
 
-                    {profile.preferredLocality && (
-                        <div className="flex items-start gap-2">
-                            <Icon
-                                name="navigation"
-                                className="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0"
-                            />
-                            <div className="flex-1">
-                                <p className="text-xs text-text-subtle">Preferred locality</p>
-                                <p className="text-sm font-medium text-text">
-                                    {profile.preferredLocality}
+                        {/* Rent Pass Info */}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                                <h3 className="text-base font-bold text-text">Rent Pass</h3>
+                                {profile.completionPercentage === 100 && (
+                                    <Icon
+                                        name="check-circle"
+                                        className="w-4 h-4 text-primary-600 dark:text-primary-400"
+                                    />
+                                )}
+                            </div>
+                            {profile.completionPercentage < 100 ? (
+                                <p className="text-xs text-text-muted">
+                                    Finish your profile to apply faster and get better matches.
                                 </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {profile.budget && (
-                        <div className="flex items-start gap-2">
-                            <Icon
-                                name="dollar"
-                                className="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0"
-                            />
-                            <div className="flex-1">
-                                <p className="text-xs text-text-subtle">Max budget</p>
-                                <p className="text-sm font-medium text-text">
-                                    ${profile.budget}/week
+                            ) : (
+                                <p className="text-xs font-medium text-primary-600 dark:text-primary-400">
+                                    ✓ Ready to apply for properties!
                                 </p>
-                            </div>
+                            )}
                         </div>
-                    )}
-                </div>
-
-                {/* Lifestyle Preferences */}
-                {(profile.hasPets !== null || profile.smoker !== null) && (
-                    <div className="flex flex-wrap gap-2">
-                        {profile.hasPets !== null && (
-                            <div
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-border ${
-                                    profile.hasPets
-                                        ? "bg-warning-500/15 dark:bg-warning-500/25 text-text"
-                                        : "bg-surface-muted dark:bg-surface text-text"
-                                }`}
-                            >
-                                <Icon name={profile.hasPets ? "check" : "x"} className="w-3 h-3" />
-                                <span>{profile.hasPets ? "Has pets" : "No pets"}</span>
-                            </div>
-                        )}
-                        {profile.smoker !== null && (
-                            <div
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-border ${
-                                    profile.smoker
-                                        ? "bg-danger-500/15 dark:bg-danger-500/25 text-text"
-                                        : "bg-primary-100 dark:bg-primary-900/40 text-text"
-                                }`}
-                            >
-                                <Icon
-                                    name={profile.smoker ? "alert-circle" : "check-circle"}
-                                    className="w-3 h-3"
-                                />
-                                <span>{profile.smoker ? "Smoker" : "Non-smoker"}</span>
-                            </div>
-                        )}
                     </div>
-                )}
-
-                {/* Profile Completion */}
-                <div>
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-text-muted">
-                            Profile Completion
-                        </span>
-                        <span className={`text-sm font-bold ${completionColor}`}>
-                            {profile.completionPercentage}%
-                        </span>
-                    </div>
-                    <div className="w-full bg-primary-100/60 dark:bg-primary-900/30 rounded-full h-2">
-                        <div
-                            className={`h-2 rounded-full transition-all duration-300 ${completionBarColor}`}
-                            style={{ width: `${profile.completionPercentage}%` }}
-                        />
-                    </div>
-                    {profile.completionPercentage < 100 && (
-                        <p className="text-xs text-text-subtle mt-2">
-                            Finish your profile to apply faster and get better matches.
-                        </p>
-                    )}
                 </div>
             </div>
         </div>

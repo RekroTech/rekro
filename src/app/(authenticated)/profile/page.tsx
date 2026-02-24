@@ -218,9 +218,9 @@ function ProfilePageContent() {
                             />
                         </ProfileSectionCard>
 
-                        {/* Visa Details Section */}
+                        {/* Residency Section */}
                         <ProfileSectionCard
-                            title="Visa Details"
+                            title="Residency"
                             description="Citizenship status and visa documentation"
                             icon="map-pin"
                             completed={
@@ -243,7 +243,7 @@ function ProfilePageContent() {
 
                         {/* Income Details Section */}
                         <ProfileSectionCard
-                            title="Income Details"
+                            title="Financial Information"
                             description="Employment and financial information"
                             icon="dollar"
                             completed={
