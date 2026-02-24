@@ -18,7 +18,7 @@ import { getPropertyFileUrls } from "@/services/storage.service";
 import { Unit } from "@/types/db";
 import { updateRoomRentsOnOccupancySelection } from "@/components/Property/pricing";
 import { ProfileCompletionProvider } from "@/contexts";
-import { useProfile } from "@/lib/react-query/hooks/user/useProfile";
+import { useProfile } from "@/lib/react-query/hooks/user";
 
 export default function PropertyDetailPage() {
     const params = useParams();

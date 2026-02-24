@@ -15,7 +15,6 @@ export interface SessionUser {
     email: string;
     name?: string | null;
     image_url?: string | null;
-    username?: string | null;
     phone?: string | null;
     role: AppRole;
 }

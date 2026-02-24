@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Header, PropertyForm } from "@/components";
-import { useRoles } from "@/hooks/useRoles";
+import { useRoles } from "@/lib/react-query/hooks/roles";
 import { AuthModal } from "@/components/Auth";
 import { useAuthModal } from "@/contexts";
 import { useAuthStateSync } from "@/lib/react-query/hooks/auth";

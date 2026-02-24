@@ -4,7 +4,7 @@ import { useState, Suspense } from "react";
 import { PropertyList } from "@/components";
 import { Icon, Input, Select, Banner } from "@/components/common";
 import { usePropertyFilters, LISTING_TYPES, PROPERTY_TYPES } from "@/components/Property";
-import { useRoles } from "@/hooks/useRoles";
+import { useRoles } from "@/lib/react-query/hooks/roles";
 import { useEmailVerification, VerificationErrorModal } from "@/components/Auth";
 
 // This page needs to be dynamic to show property listings

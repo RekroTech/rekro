@@ -2,21 +2,14 @@
 
 import { useState } from "react";
 import { useProfile, useUpdateProfile } from "@/lib/react-query/hooks/user";
-import { BackButton, Button, Input, Checkbox, Loader } from "@/components/common";
+import { BackButton, Button, Checkbox, Loader } from "@/components/common";
 import { useToast } from "@/hooks/useToast";
-import { userService } from "@/services/user.service";
 import type { NotificationPreferences } from "@/types/user.types";
 
 export default function SettingsPage() {
     const { showSuccess, showError } = useToast();
     const { data: user, isLoading: userLoading } = useProfile();
     const updateProfileMutation = useUpdateProfile();
-
-    // Password change state
-    const [currentPassword, setCurrentPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     // Privacy settings state
     const [isDiscoverable, setIsDiscoverable] = useState(user?.discoverable ?? true);
@@ -53,36 +46,27 @@ export default function SettingsPage() {
         }
     });
 
-    const handleChangePassword = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!currentPassword || !newPassword || !confirmPassword) {
-            showError("Please fill in all password fields");
-            return;
+    const handleRequestPersonalData = async () => {
+        try {
+            showSuccess("Personal data request initiated. You will receive an email shortly with your data.");
+            // TODO: Implement API call to /api/user/request-data
+        } catch (error) {
+            showError(error instanceof Error ? error.message : "Failed to request personal data");
         }
+    };
 
-        if (newPassword !== confirmPassword) {
-            showError("New passwords do not match");
-            return;
-        }
+    const handleRemovePersonalData = async () => {
+        const confirmed = window.confirm(
+            "Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed."
+        );
 
-        if (newPassword.length < 8) {
-            showError("Password must be at least 8 characters long");
-            return;
-        }
-
-        setIsChangingPassword(true);
+        if (!confirmed) return;
 
         try {
-            await userService.changePassword(currentPassword, newPassword);
-            showSuccess("Password changed successfully");
-            setCurrentPassword("");
-            setNewPassword("");
-            setConfirmPassword("");
+            showSuccess("Account deletion request submitted. You will receive a confirmation email.");
+            // TODO: Implement API call to /api/user/delete-account
         } catch (error) {
-            showError(error instanceof Error ? error.message : "Failed to change password");
-        } finally {
-            setIsChangingPassword(false);
+            showError(error instanceof Error ? error.message : "Failed to delete account");
         }
     };
 
@@ -252,45 +236,39 @@ export default function SettingsPage() {
 
                     {/* Right Sidebar - 1/3 width */}
                     <aside className="lg:w-1/3">
-                        {/* Change Password Section */}
+                        {/* Data Management Section */}
                         <section className="bg-card rounded-[var(--radius-card)] p-6 shadow-[var(--shadow-card)] sticky top-8">
-                            <h2 className="text-xl font-semibold text-text mb-4">Change Password</h2>
-                            <form onSubmit={handleChangePassword} className="space-y-4">
-                                <Input
-                                    type="password"
-                                    label="Current Password"
-                                    value={currentPassword}
-                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                    placeholder="Enter current password"
-                                    autoComplete="current-password"
-                                />
-                                <Input
-                                    type="password"
-                                    label="New Password"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    placeholder="Enter new password (min 8 characters)"
-                                    autoComplete="new-password"
-                                />
-                                <Input
-                                    type="password"
-                                    label="Confirm New Password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    placeholder="Confirm new password"
-                                    autoComplete="new-password"
-                                />
-                                <div className="flex justify-end">
+                            <h2 className="text-xl font-semibold text-text mb-4">Data Management</h2>
+                            <p className="text-text-muted text-sm mb-6">
+                                Manage your personal data and account
+                            </p>
+                            <div className="space-y-3">
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleRequestPersonalData}
+                                    className="w-full justify-start"
+                                >
+                                    <span className="mr-2">📥</span>
+                                    Request Personal Data
+                                </Button>
+                                <p className="text-xs text-text-muted px-2">
+                                    Download a copy of all your personal data
+                                </p>
+
+                                <div className="pt-4 border-t border-border">
                                     <Button
-                                        type="submit"
-                                        variant="primary"
-                                        loading={isChangingPassword}
-                                        disabled={isChangingPassword}
+                                        variant="danger"
+                                        onClick={handleRemovePersonalData}
+                                        className="w-full justify-start"
                                     >
-                                        Change Password
+                                        <span className="mr-2">🗑️</span>
+                                        Delete Account
                                     </Button>
+                                    <p className="text-xs text-text-muted px-2 mt-2">
+                                        Permanently delete your account and all associated data
+                                    </p>
                                 </div>
-                            </form>
+                            </div>
                         </section>
                     </aside>
                 </div>

@@ -7,7 +7,7 @@ interface EmailSentSuccessProps {
 
 export function EmailSentSuccess({ email, message }: EmailSentSuccessProps) {
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 mb-4 sm:mb-6">
             <div className="flex justify-center">
                 <div className="h-16 w-16 rounded-full bg-primary-500/10 flex items-center justify-center">
                     <Icon name="mail" className="h-8 w-8 text-primary-500" />

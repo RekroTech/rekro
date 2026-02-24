@@ -1,12 +1,12 @@
 /**
  * React hooks for role-based access control
+ * Simplified to use session user from auth hooks
  */
 
 import { useCallback, useMemo } from "react";
 import type { AppRole } from "@/types/db";
-import { useSessionUser } from "@/lib/react-query/hooks/auth";
+import { useSessionUser } from "./auth";
 import { ROLE_HIERARCHY } from "@/lib/auth";
-
 
 export type RolesApi = {
     /** Current session user (auth identity + role). `null` when signed out. */
@@ -27,8 +27,7 @@ export type RolesApi = {
 
 /**
  * Single hook exposing role helpers.
- *
- * Session user is derived from the session; no need to pass user info around.
+ * Session user is derived from auth; no need to pass user info around.
  */
 export function useRoles(): RolesApi {
     const { data: user } = useSessionUser();
@@ -66,3 +65,4 @@ export function useRoles(): RolesApi {
         [user, role, roleLevel, hasRole, hasAnyRole, canManageProperties, canManageUsers]
     );
 }
+

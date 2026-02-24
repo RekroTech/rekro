@@ -72,11 +72,9 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
         .from("users")
         .select(
             `
-            id,
             email,
             full_name,
             image_url,
-            username,
             phone,
             user_roles!inner(role)
         `
@@ -99,11 +97,10 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
     }
 
     return {
-        id: userData.id,
+        id: data.user.id,
         email: userData.email ?? data.user.email,
         name: userData.full_name,
         image_url: userData.image_url,
-        username: userData.username,
         phone: userData.phone,
         role,
     };

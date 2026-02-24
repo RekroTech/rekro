@@ -29,44 +29,41 @@ export function useSessionUser(options?: { enabled?: boolean }) {
 
             if (error || !data.user) return null;
 
-            const { data: userData } = await supabase
+            // Fetch user profile and role data in a single query
+            const { data: userData, error: queryError } = await supabase
                 .from("users")
-                .select(
-                    `
-                    id,
+                .select(`
                     email,
                     full_name,
                     image_url,
-                    username,
                     phone,
                     user_roles!inner(role)
-                `
-                )
+                `)
                 .eq("id", data.user.id)
                 .single();
 
-            if (!userData) return null;
+            if (queryError || !userData) return null;
 
             // Extract role from the joined user_roles table
-            const roleData = userData.user_roles as unknown as
-                | { role: string }
-                | { role: string }[];
+            const roleData = userData.user_roles as unknown as { role: string } | { role: string }[];
             const role = Array.isArray(roleData) ? roleData[0]?.role : roleData?.role;
 
+            if (!role) return null;
+
+            // Build SessionUser from database data
             return {
-                id: userData.id,
-                email: userData.email,
-                name: userData.full_name,
-                image_url: userData.image_url,
-                username: userData.username,
-                phone: userData.phone,
+                id: data.user.id,
+                email: userData.email ?? data.user.email ?? "",
+                name: userData.full_name ?? null,
+                image_url: userData.image_url ?? null,
+                phone: userData.phone ?? null,
                 role,
             } as SessionUser;
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
         gcTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
-        refetchOnMount: true,
+        refetchOnMount: false, // Don't refetch on mount - rely on cache
         retry: false,
         enabled: options?.enabled ?? true,
     });
