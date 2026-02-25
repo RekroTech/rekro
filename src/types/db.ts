@@ -1,7 +1,7 @@
 // Database types and utilities
 // This file can be used for database-related types and helper functions
 
-import { Inclusions } from "@/components/Property/types";
+import { Inclusions } from "@/types/property.types";
 
 // User role types matching database enum
 export type AppRole = "user" | "tenant" | "landlord" | "admin" | "super_admin";

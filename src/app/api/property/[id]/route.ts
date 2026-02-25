@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireAuthForApi } from "@/lib/supabase/server";
 import { uploadPropertyFiles } from "@/lib/services/storage.service";
 import { successResponse, errorResponse } from "../../utils";
-import { isAdmin } from "@/lib/utils/auth";
+import { isAdmin } from "@/lib/utils/authorization";
 import type { UnitInsert, PropertyInsert } from "@/types/db";
 
 /**
@@ -15,17 +15,11 @@ export async function PUT(
 ) {
     try {
         const { id: propertyId } = await params;
+
+        // Get authenticated user with role (no extra DB query needed!)
+        const user = await requireAuthForApi();
+
         const supabase = await createClient();
-
-        // Check authentication
-        const {
-            data: { user },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return errorResponse("Unauthorized", 401);
-        }
 
         // Verify property exists and user has permission
         const { data: existingProperty, error: fetchError } = await supabase
@@ -39,8 +33,7 @@ export async function PUT(
         }
 
         // Check if user is admin or owns the property
-        const userIsAdmin = await isAdmin(supabase, user.id);
-        if (!userIsAdmin && existingProperty.created_by !== user.id) {
+        if (!isAdmin(user) && existingProperty.created_by !== user.id) {
             return errorResponse("Forbidden: You don't own this property", 403);
         }
 
@@ -128,6 +121,9 @@ export async function PUT(
         // Step 4: Update property
         const updateData: Partial<PropertyInsert> = { ...propertyData };
 
+        // Security: Never allow changing the owner
+        delete updateData.created_by;
+
         // Only update images if they were provided or modified
         if (imageFiles.length > 0 || existingImages.length > 0) {
             updateData.images = imagePaths.length > 0 ? imagePaths : null;
@@ -163,17 +159,11 @@ export async function DELETE(
 ) {
     try {
         const { id: propertyId } = await params;
+
+        // Get authenticated user with role (no extra DB query needed!)
+        const user = await requireAuthForApi();
+
         const supabase = await createClient();
-
-        // Check authentication
-        const {
-            data: { user },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return errorResponse("Unauthorized", 401);
-        }
 
         // Verify property exists and user has permission
         const { data: existingProperty, error: fetchError } = await supabase
@@ -187,8 +177,7 @@ export async function DELETE(
         }
 
         // Check if user is admin or owns the property
-        const userIsAdmin = await isAdmin(supabase, user.id);
-        if (!userIsAdmin && existingProperty.created_by !== user.id) {
+        if (!isAdmin(user) && existingProperty.created_by !== user.id) {
             return errorResponse("Forbidden: You don't own this property", 403);
         }
 

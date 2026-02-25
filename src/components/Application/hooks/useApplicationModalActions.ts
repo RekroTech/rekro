@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import {
     useUpsertApplication,
     useCreateSnapshot,
-} from "@/lib/react-query/hooks/application/useApplications";
+} from "@/lib/react-query/hooks/application";
 import { useToast } from "@/hooks/useToast";
 import type { Application } from "@/types/db";
 import type { RentalFormData } from "@/components/Property/types";

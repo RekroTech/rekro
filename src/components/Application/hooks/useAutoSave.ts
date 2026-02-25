@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import equal from "fast-deep-equal";
 import { useDebounce } from "@/hooks";
-import { useUpsertApplication } from "@/lib/react-query/hooks/application/useApplications";
+import { useUpsertApplication } from "@/lib/react-query/hooks/application";
 import type { Property } from "@/types/property.types";
 import type { Unit, ApplicationType, Application } from "@/types/db";
 import type { RentalFormData } from "@/components/Property/types";

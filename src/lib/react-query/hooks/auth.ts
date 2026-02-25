@@ -134,13 +134,6 @@ export function useSignInWithOtp() {
     });
 }
 
-/**
- * Resend OTP - same as sign in (Supabase handles resending)
- */
-export function useResendOtp() {
-    return useSignInWithOtp();
-}
-
 // ============================================================================
 // Auth State Synchronization
 // ============================================================================

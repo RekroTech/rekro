@@ -1,4 +1,4 @@
-import { InclusionType, Inclusions } from "@/components/Property/types";
+import { InclusionType, Inclusions } from "@/types/property.types";
 
 const INCLUSION_TYPES: readonly InclusionType[] = [
     "furniture",

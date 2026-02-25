@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Modal, Icon, Button, Input, Alert } from "@/components/common";
 import { EmailSentSuccess } from "./EmailSentSuccess";
-import { useSignInWithOtp, useResendOtp, useGoogleLogin } from "@/lib/react-query/hooks/auth";
+import { useSignInWithOtp, useGoogleLogin } from "@/lib/react-query/hooks/auth";
 import { processEmail } from "@/lib/utils/email";
 
 interface AuthModalProps {
@@ -26,8 +26,11 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps)
     const [errorMessage, setErrorMessage] = useState("");
 
     const { mutate: signInWithOtp, isPending, error } = useSignInWithOtp();
-    const { mutate: resendOtp, isPending: isResending } = useResendOtp();
-    const { mutate: loginWithGoogle, isPending: isGooglePending, error: googleError } = useGoogleLogin();
+    const {
+        mutate: loginWithGoogle,
+        isPending: isGooglePending,
+        error: googleError,
+    } = useGoogleLogin();
 
     // Reset state when modal closes
     useEffect(() => {
@@ -97,7 +100,7 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps)
             return;
         }
 
-        resendOtp(
+        signInWithOtp(
             { email: normalized, redirectTo },
             {
                 onSuccess: () => {
@@ -146,7 +149,8 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps)
                             Welcome to reKro
                         </h2>
                         <p className="text-center text-sm text-text-muted mb-6">
-                            Enter your email to continue. We&apos;ll send you a magic link to sign in.
+                            Enter your email to continue. We&apos;ll send you a magic link to sign
+                            in.
                         </p>
 
                         <form onSubmit={handleSubmitEmail} className="space-y-4">
@@ -194,7 +198,9 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps)
                                 onClick={handleGoogleLogin}
                                 className="border-input-border bg-card text-auth-text-strong hover:bg-hover"
                             >
-                                {!isGooglePending && <Icon name="google" className="h-5 w-5 mr-2" />}
+                                {!isGooglePending && (
+                                    <Icon name="google" className="h-5 w-5 mr-2" />
+                                )}
                                 Continue with Google
                             </Button>
 
@@ -207,8 +213,8 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps)
                                     className="text-primary-600 hover:opacity-80 dark:text-primary-300"
                                 >
                                     Terms
-                                </a>
-                                {" "}and{" "}
+                                </a>{" "}
+                                and{" "}
                                 <a
                                     href="https://www.rekro.com.au/privacy-policy"
                                     target="_blank"
@@ -237,16 +243,16 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps)
                                 variant="outline"
                                 size="lg"
                                 fullWidth
-                                loading={isResending}
-                                disabled={countdown > 0 || isResending}
+                                loading={isPending}
+                                disabled={countdown > 0 || isPending}
                                 onClick={handleResend}
                                 className="border-input-border bg-card text-auth-text-strong hover:bg-hover"
                             >
                                 {countdown > 0
                                     ? `Resend link in ${countdown}s`
-                                    : isResending
-                                    ? "Sending..."
-                                    : "Resend link"}
+                                    : isPending
+                                      ? "Sending..."
+                                      : "Resend link"}
                             </Button>
 
                             <Button
@@ -266,4 +272,3 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps)
         </Modal>
     );
 }
-

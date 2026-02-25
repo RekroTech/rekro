@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireAuthForApi } from "@/lib/supabase/server";
 import { createApplicationSnapshot } from "@/components/Application/applicationSnapshot";
 
 export const dynamic = "force-dynamic";
@@ -21,20 +21,11 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
     try {
+        // Get authenticated user with role (no extra DB query needed!)
+        const user = await requireAuthForApi();
+
         const supabase = await createClient();
 
-        // Check authentication
-        const {
-            data: { user },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401, headers: { "Cache-Control": "no-store" } }
-            );
-        }
 
         // Parse request body
         const body = await request.json();
@@ -147,94 +138,3 @@ export async function POST(request: NextRequest) {
         );
     }
 }
-
-/**
- * GET /api/application/snapshot
- *
- * Fetch snapshots for an application
- * Query params: applicationId (required)
- */
-export async function GET(request: NextRequest) {
-    try {
-        const supabase = await createClient();
-
-        // Check authentication
-        const {
-            data: { user },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401, headers: { "Cache-Control": "no-store" } }
-            );
-        }
-
-        // Parse query parameters
-        const { searchParams } = request.nextUrl;
-        const applicationId = searchParams.get("applicationId");
-
-        if (!applicationId) {
-            return NextResponse.json(
-                { error: "Application ID is required" },
-                { status: 400, headers: { "Cache-Control": "no-store" } }
-            );
-        }
-
-        // Verify application ownership
-        const { data: application, error: appError } = await supabase
-            .from("applications")
-            .select("user_id")
-            .eq("id", applicationId)
-            .single();
-
-        if (appError || !application) {
-            return NextResponse.json(
-                { error: "Application not found" },
-                { status: 404, headers: { "Cache-Control": "no-store" } }
-            );
-        }
-
-        if (application.user_id !== user.id) {
-            return NextResponse.json(
-                { error: "Unauthorized to view snapshots for this application" },
-                { status: 403, headers: { "Cache-Control": "no-store" } }
-            );
-        }
-
-        // Fetch snapshots
-        const { data: snapshots, error } = await supabase
-            .from("application_snapshot")
-            .select("*")
-            .eq("application_id", applicationId)
-            .order("created_at", { ascending: false });
-
-        if (error) {
-            console.error("Error fetching snapshots:", error);
-            return NextResponse.json(
-                { error: error.message },
-                { status: 500, headers: { "Cache-Control": "no-store" } }
-            );
-        }
-
-        return NextResponse.json(
-            {
-                success: true,
-                data: snapshots || [],
-            },
-            {
-                headers: {
-                    "Cache-Control": "private, max-age=300",
-                },
-            }
-        );
-    } catch (error) {
-        console.error("Error in GET /api/application/snapshot:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500, headers: { "Cache-Control": "no-store" } }
-        );
-    }
-}
-

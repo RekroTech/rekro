@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireAuthForApi } from "@/lib/supabase/server";
 import { uploadPropertyFiles } from "@/lib/services/storage.service";
 import { successResponse, errorResponse } from "../utils";
 import type { UnitInsert } from "@/types/db";
@@ -10,17 +10,11 @@ import type { UnitInsert } from "@/types/db";
  */
 export async function POST(request: NextRequest) {
     try {
+        // Get authenticated user with role (no extra DB query needed!)
+        const user = await requireAuthForApi();
+
         const supabase = await createClient();
 
-        // Check authentication
-        const {
-            data: { user },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return errorResponse("Unauthorized", 401);
-        }
 
         // Parse multipart form data
         const formData = await request.formData();

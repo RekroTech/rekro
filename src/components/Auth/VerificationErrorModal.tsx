@@ -5,6 +5,7 @@ import { Modal, Button, Input, Alert } from "@/components/common";
 import { EmailSentSuccess } from "./EmailSentSuccess";
 import type { EmailVerificationError } from "@/contexts/AuthModalContext";
 import { processEmail } from "@/lib/utils/email";
+import { useSignInWithOtp } from "@/lib/react-query/hooks/auth";
 
 interface VerificationErrorModalProps {
     /** Whether modal is open */
@@ -24,11 +25,12 @@ export function VerificationErrorModal({
     onTryDifferentEmail,
 }: VerificationErrorModalProps) {
     const [email, setEmail] = useState("");
-    const [isResending, setIsResending] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const handleResend = async () => {
+    const signInWithOtp = useSignInWithOtp();
+
+    const handleResend = () => {
         const { normalized, isValid, error: validationError } = processEmail(email);
 
         if (!isValid) {
@@ -36,34 +38,23 @@ export function VerificationErrorModal({
             return;
         }
 
-        try {
-            setIsResending(true);
-            setErrorMessage(null);
+        setErrorMessage(null);
 
-            const res = await fetch("/api/auth/resend-verification", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: normalized }),
-            });
-
-            const body = (await res.json().catch(() => null)) as
-                { message?: string; error?: string } | null;
-
-            if (!res.ok) {
-                setErrorMessage(
-                    body?.error || "Failed to resend verification email. Please try again."
-                );
-                return;
+        signInWithOtp.mutate(
+            { email: normalized },
+            {
+                onSuccess: () => {
+                    setSuccessMessage("Verification email sent. Please check your inbox.");
+                },
+                onError: (err) => {
+                    setErrorMessage(
+                        err instanceof Error
+                            ? err.message
+                            : "Failed to resend verification email. Please try again."
+                    );
+                },
             }
-
-            setSuccessMessage(
-                body?.message || "Verification email sent. Please check your inbox."
-            );
-        } catch {
-            setErrorMessage("Failed to resend verification email. Please try again.");
-        } finally {
-            setIsResending(false);
-        }
+        );
     };
 
     const handleClose = () => {
@@ -131,7 +122,7 @@ export function VerificationErrorModal({
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="you@example.com"
                                     autoComplete="email"
-                                    disabled={isResending}
+                                    disabled={signInWithOtp.isPending}
                                     error={errorMessage || undefined}
                                     fullWidth
                                 />
@@ -140,8 +131,8 @@ export function VerificationErrorModal({
                                     type="button"
                                     variant="outline"
                                     fullWidth
-                                    loading={isResending}
-                                    disabled={isResending}
+                                    loading={signInWithOtp.isPending}
+                                    disabled={signInWithOtp.isPending}
                                     onClick={handleResend}
                                     className="border-input-border bg-card text-auth-text-strong hover:bg-hover"
                                 >

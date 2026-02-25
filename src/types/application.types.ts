@@ -1,6 +1,6 @@
 // Application types
 import { ApplicationType, OccupancyType } from "@/types/db";
-import { Inclusions } from "@/components/Property/types";
+import { Inclusions } from "@/types/property.types";
 
 export interface ApplicationFormData {
     moveInDate: string;

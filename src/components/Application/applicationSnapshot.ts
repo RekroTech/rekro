@@ -1,7 +1,7 @@
 import type { ApplicationSnapshot } from "@/types/application.types";
 import type { ApplicationType, OccupancyType } from "@/types/db";
 import type { UserProfile } from "@/types/user.types";
-import type { Inclusions } from "@/components/Property/types";
+import type { Inclusions } from "@/types/property.types";
 
 /**
  * Creates an application snapshot from user profile and application data

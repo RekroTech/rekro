@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { handleFetchError } from "@/lib/utils/api-error";
 import type { UserProfile, UpdateProfile } from "@/types/user.types";
 import { authKeys } from "./auth";
 import { CACHE_STRATEGIES } from "@/lib/react-query/config";
@@ -86,7 +85,8 @@ export function useUpdateProfile() {
             });
 
             if (!response.ok) {
-                await handleFetchError(response, "Failed to update profile");
+                const error = await response.json().catch(() => ({ error: "Failed to update profile" }));
+                throw new Error(error.error || "Failed to update profile");
             }
 
             return (await response.json()) as UserProfile;

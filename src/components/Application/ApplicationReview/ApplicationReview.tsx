@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useApplicationById } from "@/lib/react-query/hooks/application/useApplications";
+import { useApplication } from "@/lib/react-query/hooks/application";
 import { useProfile } from "@/lib/react-query/hooks/user";
 import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
@@ -31,7 +31,7 @@ export function ApplicationReview({
         data: application,
         isLoading: isApplicationLoading,
         isError: isApplicationError,
-    } = useApplicationById(applicationId ?? null);
+    } = useApplication({ id: applicationId || "" });
 
     // Memoized values
     const propertyTypeDisplay = useMemo(

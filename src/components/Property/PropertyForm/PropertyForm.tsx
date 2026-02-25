@@ -3,7 +3,6 @@ import type { PropertyInsert, UnitInsert } from "@/types/db";
 import type { AddPropertyModalProps } from "../types";
 import { Button, Modal } from "@/components/common";
 import { useCreateProperty, useUpdateProperty } from "@/lib/react-query/hooks/property";
-import { useProfile } from "@/lib/react-query/hooks/user";
 import { deletePropertyFiles } from "@/lib/services/storage.service";
 import { usePropertyForm, useMediaFiles } from "../hooks";
 import { BasicInformationSection } from "./BasicInformationSection";
@@ -16,7 +15,6 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
     const [error, setError] = useState<string | null>(null);
     const createProperty = useCreateProperty();
     const updateProperty = useUpdateProperty();
-    const { data: user } = useProfile();
     const existingUnits = property?.units || [];
 
     // Custom hooks for form state management
@@ -149,12 +147,6 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
         e.preventDefault();
         setError(null);
 
-        // Check if user is logged in
-        if (!user) {
-            setError("You must be logged in to add a property");
-            return;
-        }
-
         try {
             if (isEditMode && property) {
                 // Delete removed images from storage
@@ -278,7 +270,6 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                             : null,
                     latitude: formData.latitude ?? null,
                     longitude: formData.longitude ?? null,
-                    created_by: user.id,
                     is_published: false,
                 };
 

@@ -11,7 +11,7 @@ import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
 import type { ModalButton } from "@/components/common/Modal";
 import type { RentalFormData } from "@/components/Property/types";
-import { useApplication } from "@/lib/react-query/hooks/application/useApplications";
+import { useApplication } from "@/lib/react-query/hooks/application";
 import { ModalActionState, ModalStep } from "@/components/Application/types";
 
 
@@ -35,7 +35,7 @@ export function ApplicationModal({
     // Modal step state (managed locally)
     const [step, setStep] = React.useState<ModalStep>("application");
     const [modalActionState, setModalActionState] = React.useState<ModalActionState | null>(null);
-    const existingApplication = useApplication(property.id, selectedUnit.id);
+    const { data: existingApplication } = useApplication({ propertyId: property.id, unitId: selectedUnit.id });
 
     // Calculate all pricing in one place
     const pricing = useMemo(

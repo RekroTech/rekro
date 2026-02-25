@@ -1,32 +1,26 @@
 /**
  * Application API Route Handler
  *
- * This file serves as the server-side API endpoint for handling rental applications.
- * It acts as the backend API layer between the frontend and the database.
+ * Server-side API endpoint for managing rental applications.
+ * Following Next.js App Router best practices.
  *
- * Architecture Flow:
- * Frontend (ApplicationForm) → React Query Hook (useSubmitApplication) →
- * This API Route → Supabase Database
+ * Endpoints:
+ * - POST /api/application - Create or update an application
  *
- * Note: This uses the server-side Supabase client for enhanced security and
- * server-level privileges. While there's some code similarity with
- * application.service.ts, this file handles server-side HTTP requests while
- * the service layer is designed for client-side operations.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { CreateApplicationRequest } from "@/types/application.types";
-import { parseInclusions } from "@/lib/validation/inclusions";
+import { parseInclusions } from "@/lib/utils/inclusions";
 
-// Force dynamic for user-specific data
 export const dynamic = "force-dynamic";
 
 /**
  * POST /api/application
  *
- * Creates a new rental application.
- * This endpoint handles the complete application submission process including:
+ * Creates or updates a rental application.
+ * Handles the complete application submission process including:
  * 1. User authentication verification
  * 2. Application record creation/update
  *
@@ -225,105 +219,6 @@ export async function POST(request: NextRequest) {
         );
     } catch (error) {
         console.error("Application submission error:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500, headers: { "Cache-Control": "no-store" } }
-        );
-    }
-}
-
-/**
- * GET /api/application
- *
- * Fetch user's applications with optional filtering
- * Query params: status, propertyId, limit
- */
-export async function GET(request: NextRequest) {
-    try {
-        const supabase = await createClient();
-
-        // Check authentication
-        const {
-            data: { user },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401, headers: { "Cache-Control": "no-store" } }
-            );
-        }
-
-        // Parse query parameters
-        const { searchParams } = request.nextUrl;
-        const applicationId = searchParams.get("applicationId");
-        const status = searchParams.get("status");
-        const propertyId = searchParams.get("propertyId");
-        const limit = parseInt(searchParams.get("limit") || "50", 10);
-
-        // If applicationId is provided, fetch a single application
-        if (applicationId) {
-            const { data: application, error } = await supabase
-                .from("applications")
-                .select("*")
-                .eq("id", applicationId)
-                .eq("user_id", user.id)
-                .single();
-
-            if (error || !application) {
-                return NextResponse.json(
-                    { error: error?.message || "Application not found" },
-                    { status: 404, headers: { "Cache-Control": "no-store" } }
-                );
-            }
-
-            return NextResponse.json(
-                { success: true, data: application },
-                { headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" } }
-            );
-        }
-
-        // Build query (list)
-        let query = supabase
-            .from("applications")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(limit);
-
-        // Apply filters
-        if (status) {
-            query = query.eq("status", status);
-        }
-        if (propertyId) {
-            query = query.eq("property_id", propertyId);
-        }
-
-        const { data: applications, error } = await query;
-
-        if (error) {
-            console.error("Error fetching applications:", error);
-            return NextResponse.json(
-                { error: error.message },
-                { status: 500, headers: { "Cache-Control": "no-store" } }
-            );
-        }
-
-        return NextResponse.json(
-            {
-                success: true,
-                data: applications || [],
-            },
-            {
-                headers: {
-                    // Cache for 60 seconds, revalidate in background
-                    "Cache-Control": "private, max-age=60, stale-while-revalidate=120",
-                },
-            }
-        );
-    } catch (error) {
-        console.error("Error in GET /api/application:", error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500, headers: { "Cache-Control": "no-store" } }

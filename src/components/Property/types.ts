@@ -1,5 +1,8 @@
-import { Property } from "@/types/property.types";
+import { Property, Inclusions, InclusionType, Inclusion } from "@/types/property.types";
 import { ListingType, OccupancyType } from "@/types/db";
+
+// Re-export for backward compatibility
+export type { InclusionType, Inclusion, Inclusions };
 
 export interface AddPropertyModalProps {
     isOpen: boolean;
@@ -45,15 +48,6 @@ export interface UnitFormData {
     is_available: boolean;
     availability_notes: string;
 }
-
-export type InclusionType = "furniture" | "bills" | "cleaning" | "carpark" | "storage";
-
-export interface Inclusion {
-    selected: boolean;
-    price: number;
-}
-
-export type Inclusions = Partial<Record<InclusionType, Inclusion>>;
 
 export interface RentalFormData {
     moveInDate: string;

@@ -1,6 +1,18 @@
 import { Property as BaseProperty, Unit } from "@/types/db";
 
 /**
+ * Inclusion types for rental properties
+ */
+export type InclusionType = "furniture" | "bills" | "cleaning" | "carpark" | "storage";
+
+export interface Inclusion {
+    selected: boolean;
+    price: number;
+}
+
+export type Inclusions = Partial<Record<InclusionType, Inclusion>>;
+
+/**
  * Property with detailed units (includes availability and likes)
  */
 export interface Property extends BaseProperty {

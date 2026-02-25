@@ -1,12 +1,19 @@
 /**
  * React hooks for role-based access control
- * Simplified to use session user from auth hooks
+ * Simplified to use session user from auth hooks + authorization helpers
  */
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import type { AppRole } from "@/types/db";
 import { useSessionUser } from "./auth";
-import { ROLE_HIERARCHY } from "@/lib/auth";
+import {
+    hasRole,
+    hasAnyRole,
+    hasRoleLevel,
+    canManageProperties as canManagePropertiesHelper,
+    canManageUsers as canManageUsersHelper,
+    ROLE_HIERARCHY
+} from "@/lib/utils/authorization";
 
 export type RolesApi = {
     /** Current session user (auth identity + role). `null` when signed out. */
@@ -18,10 +25,19 @@ export type RolesApi = {
     /** Numeric level for the current role (0 when signed out). */
     roleLevel: number;
 
+    /** Check if user has a specific role */
     hasRole: (role: AppRole) => boolean;
+
+    /** Check if user has any of the specified roles */
     hasAnyRole: (roles: AppRole[]) => boolean;
 
+    /** Check if user has role level or higher */
+    hasRoleLevel: (minimumRole: AppRole) => boolean;
+
+    /** Can manage properties (landlord+) */
     canManageProperties: boolean;
+
+    /** Can manage users (admin+) */
     canManageUsers: boolean;
 };
 
@@ -32,37 +48,20 @@ export type RolesApi = {
 export function useRoles(): RolesApi {
     const { data: user } = useSessionUser();
 
-    const role = user?.role ?? null;
-    const roleLevel = role ? ROLE_HIERARCHY[role] ?? 0 : 0;
-
-    const hasRole = useCallback(
-        (target: AppRole) => {
-            return role === target;
-        },
-        [role]
-    );
-
-    const hasAnyRole = useCallback(
-        (roles: AppRole[]) => {
-            return role ? roles.includes(role) : false;
-        },
-        [role]
-    );
-
-    const canManageProperties = roleLevel >= ROLE_HIERARCHY.landlord;
-    const canManageUsers = roleLevel >= ROLE_HIERARCHY.admin;
-
     return useMemo(
         () => ({
             user,
-            role,
-            roleLevel,
-            hasRole,
-            hasAnyRole,
-            canManageProperties,
-            canManageUsers,
+            role: user?.role ?? null,
+            roleLevel: user ? (ROLE_HIERARCHY[user.role] ?? 0) : 0,
+            hasRole: (role: AppRole) => hasRole(user ?? null, role),
+            hasAnyRole: (roles: AppRole[]) => hasAnyRole(user ?? null, roles),
+            hasRoleLevel: (minimumRole: AppRole) => hasRoleLevel(user ?? null, minimumRole),
+            canManageProperties: canManagePropertiesHelper(user ?? null),
+            canManageUsers: canManageUsersHelper(user ?? null),
         }),
-        [user, role, roleLevel, hasRole, hasAnyRole, canManageProperties, canManageUsers]
+        [user]
     );
 }
+
+
 

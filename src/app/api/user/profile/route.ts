@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireAuthForApi } from "@/lib/supabase/server";
 import { errorResponse, successResponse } from "@/app/api/utils";
 import type {
     Profile,
@@ -50,16 +50,11 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
     try {
+        // Get authenticated user with role (no extra DB query needed!)
+        const authUser = await requireAuthForApi();
+
         const supabase = await createClient();
 
-        const {
-            data: { user: authUser },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !authUser) {
-            return errorResponse("Unauthorized", 401);
-        }
 
         const body = (await req.json()) as Record<string, unknown>;
 

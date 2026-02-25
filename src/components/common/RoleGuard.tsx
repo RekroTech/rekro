@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import type { AppRole } from "@/types/db";
 import type { SessionUser } from "@/types/auth.types";
-import { ROLE_HIERARCHY } from "@/lib/auth";
+import { ROLE_HIERARCHY } from "@/lib/utils/authorization";
 
 interface RoleGuardProps {
     user: SessionUser | null;

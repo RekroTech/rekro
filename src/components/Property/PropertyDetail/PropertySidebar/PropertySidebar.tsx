@@ -12,7 +12,7 @@ import {
     useUnitLike,
     useUnitLikesCount,
 } from "@/lib/react-query/hooks/units";
-import { useApplication } from "@/lib/react-query/hooks/application/useApplications";
+import { useApplication } from "@/lib/react-query/hooks/application";
 import { EnquiryForm } from "./EnquiryForm";
 import { ShareDropdown } from "./ShareDropdown";
 import { ApplicationModal } from "@/components/Application";
@@ -54,7 +54,7 @@ export function PropertySidebar({
     const { isComplete: isProfileComplete, isLoading: isProfileLoading } = useProfileCompletion();
 
     // Fetch existing application for this unit
-    const existingApplication = useApplication(property.id, selectedUnit?.id);
+    const { data: existingApplication } = useApplication({ propertyId: property.id, unitId: selectedUnit?.id });
 
     // Initialize rental form when unit changes or existing application loads
     useEffect(() => {
