@@ -5,6 +5,7 @@ import { useProperties } from "@/lib/react-query/hooks/property";
 import { useSessionUser } from "@/lib/react-query/hooks/auth";
 import { PropertyCard } from "@/components";
 import { Icon, Loader } from "@/components/common";
+import type { Property } from "@/types/property.types";
 
 export interface PropertyListProps {
     search?: string;
@@ -113,7 +114,7 @@ export function PropertyList({
     }
 
     // Get all properties from all pages
-    const allProperties = data?.pages.flatMap((page) => page.data) ?? [];
+    const allProperties = data?.pages.flatMap((page: { data: Property[] }) => page.data) ?? [];
 
     // Empty state
     if (allProperties.length === 0) {
@@ -132,7 +133,7 @@ export function PropertyList({
         <div>
             {/* Property Grid */}
             <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {allProperties.map((property) => (
+                {allProperties.map((property: Property) => (
                     <PropertyCard
                         key={property.id}
                         property={property}

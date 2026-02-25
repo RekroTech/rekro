@@ -14,7 +14,7 @@ import {
 } from "@/components/Property/PropertyDetail";
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getPropertyFileUrls } from "@/services/storage.service";
+import { getPropertyFileUrls } from "@/lib/services/storage.service";
 import { Unit } from "@/types/db";
 import { updateRoomRentsOnOccupancySelection } from "@/components/Property/pricing";
 import { ProfileCompletionProvider } from "@/contexts";

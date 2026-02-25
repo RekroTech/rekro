@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCreatePropertyShare } from "@/lib/react-query/hooks/property";
+import { useCreateUnitShare } from "@/lib/react-query/hooks/units";
 import { useSessionUser } from "@/lib/react-query/hooks/auth";
 
 interface UseSharePropertyProps {
@@ -11,7 +11,7 @@ interface UseSharePropertyProps {
 export function useShareProperty({ propertyId, unitId, propertyTitle }: UseSharePropertyProps) {
     const [copied, setCopied] = useState(false);
     const { data: sessionUser } = useSessionUser();
-    const createShare = useCreatePropertyShare();
+    const createShare = useCreateUnitShare();
 
     const propertyUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/property/${propertyId}`;
 

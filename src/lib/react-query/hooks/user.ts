@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/client";
 import { handleFetchError } from "@/lib/utils/api-error";
 import type { UserProfile, UpdateProfile } from "@/types/user.types";
 import { authKeys } from "./auth";
+import { CACHE_STRATEGIES } from "@/lib/react-query/config";
+import { propertyKeys } from "@/lib/react-query/hooks/property";
 
 // ============================================================================
 // Query Keys
@@ -11,6 +13,8 @@ import { authKeys } from "./auth";
 export const userKeys = {
     all: ["user"] as const,
     profile: () => [...userKeys.all, "profile"] as const,
+    likedUsers: (propertyId: string) =>
+        [...propertyKeys.detail(propertyId), "liked-users"] as const,
 };
 
 // ============================================================================
@@ -110,6 +114,33 @@ export function useUpdateProfile() {
                 queryClient.setQueryData(userKeys.profile(), context.previousProfile);
             }
         },
+    });
+}
+
+/**
+ * Hook to fetch users who liked any unit in a property
+ * Uses the liked_profiles view
+ */
+export function useUserLikes(propertyId: string) {
+    return useQuery({
+        queryKey: userKeys.likedUsers(propertyId),
+        queryFn: async () => {
+            const supabase = createClient();
+
+            const { data: likedProfiles, error } = await supabase
+                .from("liked_profiles")
+                .select("*")
+                .eq("property_id", propertyId);
+
+            if (error) {
+                console.error("Error fetching users who liked property:", error);
+                throw new Error(error.message);
+            }
+
+            return likedProfiles || [];
+        },
+        enabled: !!propertyId,
+        ...CACHE_STRATEGIES.USER_SPECIFIC,
     });
 }
 

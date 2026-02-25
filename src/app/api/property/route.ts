@@ -1,128 +1,12 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse } from "@/app/api/utils";
-
-// Enable edge runtime for better performance
-export const runtime = "nodejs";
-
-/**
- * GET /api/property
- * Fetch properties with filtering and pagination
- */
-export async function GET(request: NextRequest) {
-    try {
-        const supabase = await createClient();
-        const { searchParams } = request.nextUrl;
-
-        // Parse query parameters
-        const limit = parseInt(searchParams.get("limit") || "12", 10);
-        const offset = parseInt(searchParams.get("offset") || "0", 10);
-        const isPublished = searchParams.get("isPublished") !== "false";
-        const search = searchParams.get("search") || undefined;
-        const propertyType = searchParams.get("propertyType") || undefined;
-        const minBedrooms = searchParams.get("minBedrooms")
-            ? parseInt(searchParams.get("minBedrooms")!, 10)
-            : undefined;
-        const minBathrooms = searchParams.get("minBathrooms")
-            ? parseInt(searchParams.get("minBathrooms")!, 10)
-            : undefined;
-        const furnished = searchParams.get("furnished") === "true" ? true : undefined;
-        const listingType = searchParams.get("listingType") || undefined;
-
-        // Build query - if filtering by listing type, join with units
-        const selectQuery = listingType ? "*, units!inner(listing_type)" : "*";
-
-        let query = supabase
-            .from("properties")
-            .select(selectQuery, { count: "exact" })
-            .order("created_at", { ascending: false });
-
-        // Apply filters
-        if (isPublished !== undefined) {
-            query = query.eq("is_published", isPublished);
-        }
-
-        if (propertyType) {
-            query = query.eq("property_type", propertyType);
-        }
-
-        if (typeof minBedrooms === "number" && !isNaN(minBedrooms)) {
-            query = query.gte("bedrooms", minBedrooms);
-        }
-
-        if (typeof minBathrooms === "number" && !isNaN(minBathrooms)) {
-            query = query.gte("bathrooms", minBathrooms);
-        }
-
-        if (furnished === true) {
-            query = query.eq("furnished", true);
-        }
-
-        // Filter by listing type from units table
-        if (listingType) {
-            query = query.eq("units.listing_type", listingType);
-        }
-
-        if (search && search.trim() !== "") {
-            const term = `%${search.trim()}%`;
-            query = query.or(
-                `title.ilike.${term},description.ilike.${term},address->>street.ilike.${term},address->>city.ilike.${term},address->>state.ilike.${term},address->>suburb.ilike.${term}`
-            );
-        }
-
-        const { data, error, count } = await query.range(offset, offset + limit - 1);
-
-        if (error) {
-            console.error("Error fetching properties:", error);
-            return errorResponse(error.message, 500);
-        }
-
-        // If we joined with units, remove the units data and return unique properties.
-        // Supabase typing for dynamic select strings can be complex, so we treat the response as unknown records here.
-        const rawProperties = (data ?? []) as unknown as Array<Record<string, unknown>>;
-        const responseProperties =
-            listingType && rawProperties.length > 0
-                ? (() => {
-                      const uniquePropertyMap = new Map<string, Record<string, unknown>>();
-                      rawProperties.forEach((prop) => {
-                          const id = prop.id;
-                          if (typeof id === "string" && !uniquePropertyMap.has(id)) {
-                              // Drop `units` from the response if present.
-                              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                              const { units: _units, ...propertyData } = prop;
-                              uniquePropertyMap.set(id, propertyData);
-                          }
-                      });
-                      return Array.from(uniquePropertyMap.values());
-                  })()
-                : rawProperties;
-
-        const total = count ?? 0;
-        const nextOffset = offset + limit;
-        const hasMore = nextOffset < total;
-
-        return successResponse(
-            {
-                properties: responseProperties,
-                nextOffset: hasMore ? nextOffset : null,
-                hasMore,
-                total,
-            },
-            200,
-            {
-                // Cache for 2 minutes with revalidation
-                cacheControl: "public, max-age=120, stale-while-revalidate=240",
-            }
-        );
-    } catch (error) {
-        console.error("Error in GET /api/property:", error);
-        return errorResponse("Internal server error", 500);
-    }
-}
+import { uploadPropertyFiles } from "@/lib/services/storage.service";
+import { successResponse, errorResponse } from "../utils";
+import type { UnitInsert } from "@/types/db";
 
 /**
  * POST /api/property
- * Create a new property (authenticated users only)
+ * Create a new property with units and media files
  */
 export async function POST(request: NextRequest) {
     try {
@@ -138,26 +22,87 @@ export async function POST(request: NextRequest) {
             return errorResponse("Unauthorized", 401);
         }
 
-        const body = await request.json();
+        // Parse multipart form data
+        const formData = await request.formData();
+        const propertyDataStr = formData.get("propertyData") as string;
+        const unitsDataStr = formData.get("unitsData") as string;
 
-        // Create property
-        const { data: property, error } = await supabase
+        if (!propertyDataStr) {
+            return errorResponse("Property data is required", 400);
+        }
+
+        const propertyData = JSON.parse(propertyDataStr);
+        const unitsData = unitsDataStr ? JSON.parse(unitsDataStr) : [];
+        const imageFiles = formData.getAll("images") as File[];
+
+        // Step 1: Create property (without images initially)
+        const { data: property, error: propertyError } = await supabase
             .from("properties")
             .insert({
-                ...body,
+                ...propertyData,
                 created_by: user.id,
+                images: null,
+                video_url: null,
             })
             .select()
             .single();
 
-        if (error) {
-            console.error("Error creating property:", error);
-            return errorResponse(error.message, 500);
+        if (propertyError) {
+            console.error("Error creating property:", propertyError);
+            return errorResponse(propertyError.message, 500);
+        }
+
+        // Step 2: Create units for this property
+        if (unitsData.length > 0) {
+            const unitsToInsert = unitsData.map((unit: Omit<UnitInsert, "id" | "property_id">) => ({
+                ...unit,
+                property_id: property.id,
+            }));
+
+            const { error: unitsError } = await supabase
+                .from("units")
+                .insert(unitsToInsert);
+
+            if (unitsError) {
+                console.error("Error creating units:", unitsError);
+                // Rollback: delete the property
+                await supabase.from("properties").delete().eq("id", property.id);
+                return errorResponse(unitsError.message, 500);
+            }
+        }
+
+        // Step 3: Upload images if provided
+        if (imageFiles.length > 0) {
+            try {
+                const uploadResults = await uploadPropertyFiles(imageFiles, property.id);
+                const imagePaths = uploadResults.map((result) => result.path);
+
+                // Update property with image paths
+                const { data: updatedProperty, error: updateError } = await supabase
+                    .from("properties")
+                    .update({ images: imagePaths })
+                    .eq("id", property.id)
+                    .select()
+                    .single();
+
+                if (updateError) {
+                    console.error("Error updating property with images:", updateError);
+                    return errorResponse(updateError.message, 500);
+                }
+
+                return successResponse(updatedProperty, 201);
+            } catch (uploadError) {
+                const message = uploadError instanceof Error ? uploadError.message : "Upload failed";
+                console.error("Error uploading images:", uploadError);
+                return errorResponse(message, 500);
+            }
         }
 
         return successResponse(property, 201);
     } catch (error) {
+        const message = error instanceof Error ? error.message : "Internal server error";
         console.error("Error in POST /api/property:", error);
-        return errorResponse("Internal server error", 500);
+        return errorResponse(message, 500);
     }
 }
+

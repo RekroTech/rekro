@@ -347,7 +347,7 @@ export interface Database {
                     notes?: string | null;
                 };
             };
-            property_shares: {
+            unit_shares: {
                 Row: {
                     id: string;
                     shared_by: string | null;
@@ -490,9 +490,9 @@ export type UnitAvailability = Database["public"]["Tables"]["unit_availability"]
 export type UnitAvailabilityInsert = Database["public"]["Tables"]["unit_availability"]["Insert"];
 export type UnitAvailabilityUpdate = Database["public"]["Tables"]["unit_availability"]["Update"];
 
-export type PropertyShare = Database["public"]["Tables"]["property_shares"]["Row"];
-export type PropertyShareInsert = Database["public"]["Tables"]["property_shares"]["Insert"];
-export type PropertyShareUpdate = Database["public"]["Tables"]["property_shares"]["Update"];
+export type UnitShare = Database["public"]["Tables"]["unit_shares"]["Row"];
+export type UnitShareInsert = Database["public"]["Tables"]["unit_shares"]["Insert"];
+export type UnitShareUpdate = Database["public"]["Tables"]["unit_shares"]["Update"];
 
 export type Application = Database["public"]["Tables"]["applications"]["Row"];
 export type ApplicationInsert = Database["public"]["Tables"]["applications"]["Insert"];

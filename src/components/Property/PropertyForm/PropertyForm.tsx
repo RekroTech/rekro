@@ -4,7 +4,7 @@ import type { AddPropertyModalProps } from "../types";
 import { Button, Modal } from "@/components/common";
 import { useCreateProperty, useUpdateProperty } from "@/lib/react-query/hooks/property";
 import { useProfile } from "@/lib/react-query/hooks/user";
-import { deletePropertyFiles } from "@/services/storage.service";
+import { deletePropertyFiles } from "@/lib/services/storage.service";
 import { usePropertyForm, useMediaFiles } from "../hooks";
 import { BasicInformationSection } from "./BasicInformationSection";
 import { PropertyDetailsSection } from "./PropertyDetailsSection";

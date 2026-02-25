@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Property, Unit } from "@/types/db";
 import { Icon, Visual } from "@/components/common";
 import { PropertyForm } from "@/components";
-import { getPropertyFileUrl } from "@/services/storage.service";
+import { getPropertyFileUrl } from "@/lib/services/storage.service";
 import { getLocalityString } from "@/lib/utils/locationPrivacy";
 import { ImageGallery } from "./PropertyDetail/ImageGalleryMobile";
 

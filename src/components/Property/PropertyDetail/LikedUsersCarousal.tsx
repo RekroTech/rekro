@@ -5,7 +5,7 @@ import Image from "next/image";
 import { clsx } from "clsx";
 import { Icon } from "@/components/common/Icon";
 import { Loader } from "@/components/common";
-import { useUserLikes } from "@/lib/react-query/hooks/property";
+import { useUserLikes } from "@/lib/react-query/hooks/user";
 
 interface UsersWhoLikedCarouselProps {
     propertyId: string;
@@ -261,7 +261,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
                                     <div className="mb-6">
                                         <h4 className="text-sm font-semibold text-text mb-3">Interested In</h4>
                                         <div className="flex flex-wrap gap-2">
-                                            {user.unit_names.map((unitName, idx) => (
+                                            {user.unit_names.map((unitName: string, idx: number) => (
                                                 <span
                                                     key={idx}
                                                     className="px-4 py-2 bg-primary-100 text-primary-700 text-sm font-medium rounded-full"

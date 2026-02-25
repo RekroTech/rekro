@@ -1,65 +1,20 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse } from "@/app/api/utils";
-
-export const runtime = "nodejs";
-
-/**
- * GET /api/property/[id]
- * Fetch a single property with its units
- */
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    try {
-        const { id } = await params;
-        const supabase = await createClient();
-
-        // Fetch property
-        const { data: property, error: propertyError } = await supabase
-            .from("properties")
-            .select("*")
-            .eq("id", id)
-            .single();
-
-        if (propertyError || !property) {
-            return errorResponse("Property not found", 404);
-        }
-
-        // Fetch units for this property
-        const { data: units, error: unitsError } = await supabase
-            .from("units")
-            .select("*")
-            .eq("property_id", id)
-            .order("unit_number", { ascending: true });
-
-        if (unitsError) {
-            console.error("Error fetching units:", unitsError);
-            // Continue without units rather than failing
-        }
-
-        return successResponse(
-            {
-                ...property,
-                units: units ?? [],
-            },
-            200,
-            {
-                // Cache for 5 minutes with revalidation
-                cacheControl: "public, max-age=300, stale-while-revalidate=600",
-            }
-        );
-    } catch (error) {
-        console.error("Error in GET /api/property/[id]:", error);
-        return errorResponse("Internal server error", 500);
-    }
-}
+import { uploadPropertyFiles } from "@/lib/services/storage.service";
+import { successResponse, errorResponse } from "../../utils";
+import { isAdmin } from "@/lib/utils/auth";
+import type { UnitInsert, PropertyInsert } from "@/types/db";
 
 /**
- * PATCH /api/property/[id]
- * Update a property (authenticated users only)
+ * PUT /api/property/[id]
+ * Update an existing property with units and media files
  */
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
-        const { id } = await params;
+        const { id: propertyId } = await params;
         const supabase = await createClient();
 
         // Check authentication
@@ -72,43 +27,142 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             return errorResponse("Unauthorized", 401);
         }
 
-        const body = await request.json();
-
-        // Update property
-        const { data: property, error } = await supabase
+        // Verify property exists and user has permission
+        const { data: existingProperty, error: fetchError } = await supabase
             .from("properties")
-            .update(body)
-            .eq("id", id)
-            .eq("created_by", user.id) // Ensure user owns the property
+            .select("id, created_by")
+            .eq("id", propertyId)
+            .single();
+
+        if (fetchError || !existingProperty) {
+            return errorResponse("Property not found", 404);
+        }
+
+        // Check if user is admin or owns the property
+        const userIsAdmin = await isAdmin(supabase, user.id);
+        if (!userIsAdmin && existingProperty.created_by !== user.id) {
+            return errorResponse("Forbidden: You don't own this property", 403);
+        }
+
+        // Parse multipart form data
+        const formData = await request.formData();
+        const propertyDataStr = formData.get("propertyData") as string;
+        const unitsDataStr = formData.get("unitsData") as string;
+        const existingImagesStr = formData.get("existingImages") as string;
+        const deletedUnitIdsStr = formData.get("deletedUnitIds") as string;
+
+        const propertyData = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+        const unitsData = unitsDataStr ? JSON.parse(unitsDataStr) : [];
+        const existingImages = existingImagesStr ? JSON.parse(existingImagesStr) : [];
+        const deletedUnitIds = deletedUnitIdsStr ? JSON.parse(deletedUnitIdsStr) : [];
+        const imageFiles = formData.getAll("images") as File[];
+
+        // Step 1: Delete units marked for deletion
+        if (deletedUnitIds.length > 0) {
+            const { error: deleteError } = await supabase
+                .from("units")
+                .delete()
+                .in("id", deletedUnitIds)
+                .eq("property_id", propertyId); // Extra safety check
+
+            if (deleteError) {
+                console.error("Error deleting units:", deleteError);
+                return errorResponse(deleteError.message, 500);
+            }
+        }
+
+        // Step 2: Handle units - separate new and existing
+        if (unitsData.length > 0) {
+            type UnitData = Omit<UnitInsert, "id" | "property_id"> & { id?: string };
+            const newUnits = unitsData.filter((u: UnitData) => !u.id);
+            const existingUnits = unitsData.filter((u: UnitData) => u.id);
+
+            // Insert new units
+            if (newUnits.length > 0) {
+                const unitsToInsert = newUnits.map((unit: UnitData) => ({
+                    ...unit,
+                    property_id: propertyId,
+                }));
+
+                const { error: insertError } = await supabase
+                    .from("units")
+                    .insert(unitsToInsert);
+
+                if (insertError) {
+                    console.error("Error inserting new units:", insertError);
+                    return errorResponse(insertError.message, 500);
+                }
+            }
+
+            // Update existing units
+            if (existingUnits.length > 0) {
+                const { error: upsertError } = await supabase
+                    .from("units")
+                    .upsert(existingUnits.map((unit: UnitData) => ({
+                        ...unit,
+                        property_id: propertyId,
+                    })));
+
+                if (upsertError) {
+                    console.error("Error updating units:", upsertError);
+                    return errorResponse(upsertError.message, 500);
+                }
+            }
+        }
+
+        // Step 3: Handle images
+        let imagePaths = [...existingImages];
+
+        if (imageFiles.length > 0) {
+            try {
+                const uploadResults = await uploadPropertyFiles(imageFiles, propertyId);
+                const newImagePaths = uploadResults.map((result) => result.path);
+                imagePaths = [...imagePaths, ...newImagePaths];
+            } catch (uploadError) {
+                const message = uploadError instanceof Error ? uploadError.message : "Upload failed";
+                console.error("Error uploading images:", uploadError);
+                return errorResponse(message, 500);
+            }
+        }
+
+        // Step 4: Update property
+        const updateData: Partial<PropertyInsert> = { ...propertyData };
+
+        // Only update images if they were provided or modified
+        if (imageFiles.length > 0 || existingImages.length > 0) {
+            updateData.images = imagePaths.length > 0 ? imagePaths : null;
+        }
+
+        const { data: updatedProperty, error: updateError } = await supabase
+            .from("properties")
+            .update(updateData)
+            .eq("id", propertyId)
             .select()
             .single();
 
-        if (error) {
-            console.error("Error updating property:", error);
-            return errorResponse(error.message, 500);
+        if (updateError) {
+            console.error("Error updating property:", updateError);
+            return errorResponse(updateError.message, 500);
         }
 
-        if (!property) {
-            return errorResponse("Property not found or unauthorized", 404);
-        }
-
-        return successResponse(property, 200);
+        return successResponse(updatedProperty, 200);
     } catch (error) {
-        console.error("Error in PATCH /api/property/[id]:", error);
-        return errorResponse("Internal server error", 500);
+        const message = error instanceof Error ? error.message : "Internal server error";
+        console.error("Error in PUT /api/property/[id]:", error);
+        return errorResponse(message, 500);
     }
 }
 
 /**
  * DELETE /api/property/[id]
- * Delete a property (authenticated users only)
+ * Delete a property and all associated units
  */
 export async function DELETE(
     _request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = await params;
+        const { id: propertyId } = await params;
         const supabase = await createClient();
 
         // Check authentication
@@ -121,21 +175,39 @@ export async function DELETE(
             return errorResponse("Unauthorized", 401);
         }
 
-        // Delete property
-        const { error } = await supabase
+        // Verify property exists and user has permission
+        const { data: existingProperty, error: fetchError } = await supabase
             .from("properties")
-            .delete()
-            .eq("id", id)
-            .eq("created_by", user.id); // Ensure user owns the property
+            .select("id, created_by")
+            .eq("id", propertyId)
+            .single();
 
-        if (error) {
-            console.error("Error deleting property:", error);
-            return errorResponse(error.message, 500);
+        if (fetchError || !existingProperty) {
+            return errorResponse("Property not found", 404);
         }
 
-        return successResponse({ deleted: true }, 200);
+        // Check if user is admin or owns the property
+        const userIsAdmin = await isAdmin(supabase, user.id);
+        if (!userIsAdmin && existingProperty.created_by !== user.id) {
+            return errorResponse("Forbidden: You don't own this property", 403);
+        }
+
+        // Delete property (units will be cascade deleted if FK is set up)
+        const { error: deleteError } = await supabase
+            .from("properties")
+            .delete()
+            .eq("id", propertyId);
+
+        if (deleteError) {
+            console.error("Error deleting property:", deleteError);
+            return errorResponse(deleteError.message, 500);
+        }
+
+        return successResponse({ message: "Property deleted successfully" }, 200);
     } catch (error) {
+        const message = error instanceof Error ? error.message : "Internal server error";
         console.error("Error in DELETE /api/property/[id]:", error);
-        return errorResponse("Internal server error", 500);
+        return errorResponse(message, 500);
     }
 }
+

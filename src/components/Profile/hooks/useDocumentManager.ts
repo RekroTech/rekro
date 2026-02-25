@@ -4,7 +4,7 @@ import {
     deleteUserDocument,
     listUserDocuments,
     uploadUserDocument,
-} from "@/services/storage.service";
+} from "@/lib/services/storage.service";
 import { useDocumentOperations } from "../contexts/DocumentOperationsContext";
 
 /**

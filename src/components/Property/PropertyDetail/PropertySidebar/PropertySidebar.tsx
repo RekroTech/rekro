@@ -11,7 +11,7 @@ import {
     useToggleUnitLike,
     useUnitLike,
     useUnitLikesCount,
-} from "@/lib/react-query/hooks/property";
+} from "@/lib/react-query/hooks/units";
 import { useApplication } from "@/lib/react-query/hooks/application/useApplications";
 import { EnquiryForm } from "./EnquiryForm";
 import { ShareDropdown } from "./ShareDropdown";
@@ -111,7 +111,7 @@ export function PropertySidebar({
         try {
             await toggleLikeMutation.mutateAsync({
                 unitId: selectedUnit.id,
-                checked: isLiked,
+                isLiked,
             });
         } catch (error) {
             console.error("Error toggling unit like:", error);
