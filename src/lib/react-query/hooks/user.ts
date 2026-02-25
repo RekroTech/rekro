@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { UserProfile, UpdateProfile } from "@/types/user.types";
-import { authKeys } from "./auth";
+import { authKeys, useSessionUser } from "./auth";
 import { CACHE_STRATEGIES } from "@/lib/react-query/config";
 import { propertyKeys } from "@/lib/react-query/hooks/property";
 
@@ -22,20 +22,17 @@ export const userKeys = {
 
 /**
  * Fetches full user profile (users + user_application_profile)
- * Calls Supabase directly - no API route needed for reads!
+ * Uses cached session user to prevent duplicate auth calls
  */
 export function useProfile(options?: { enabled?: boolean }) {
+    const { data: sessionUser } = useSessionUser();
+
     return useQuery({
         queryKey: userKeys.profile(),
         queryFn: async () => {
+            if (!sessionUser) return null;
+
             const supabase = createClient();
-            const {
-                data: { user: authUser },
-                error: authError,
-            } = await supabase.auth.getUser();
-
-            if (authError || !authUser) return null;
-
             const { data, error } = await supabase
                 .from("users")
                 .select(
@@ -46,7 +43,7 @@ export function useProfile(options?: { enabled?: boolean }) {
                     )
                 `
                 )
-                .eq("id", authUser.id)
+                .eq("id", sessionUser.id)
                 .single<UserProfile>();
 
             if (error) {
@@ -61,7 +58,7 @@ export function useProfile(options?: { enabled?: boolean }) {
         refetchOnWindowFocus: false,
         refetchOnMount: false,
         retry: false,
-        enabled: options?.enabled ?? true,
+        enabled: (options?.enabled ?? true) && !!sessionUser,
     });
 }
 

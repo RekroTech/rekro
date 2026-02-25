@@ -84,6 +84,7 @@ export function buildInitialFormData(selectedUnit: Unit | null): RentalFormData 
         inclusions: getDefaultInclusions(Boolean(isEntireHome)),
         message: "",
         proposedRent: "",
+        totalRent: 0, // Will be calculated based on pricing
     };
 }
 
@@ -98,5 +99,6 @@ export function toFormData(app: Application): RentalFormData {
         inclusions: app.inclusions || {},
         message: app.message || "",
         proposedRent: app.proposed_rent?.toString() || "",
+        totalRent: app.total_rent || 0,
     };
 }

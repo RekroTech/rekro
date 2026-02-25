@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { useSessionUser } from "@/lib/react-query/hooks/auth";
-import type { Unit, UnitShareInsert } from "@/types/db";
+import type { UnitShareInsert } from "@/types/db";
 import { CACHE_STRATEGIES } from "@/lib/react-query/config";
 
 // ============================================================================
@@ -11,7 +11,7 @@ import { CACHE_STRATEGIES } from "@/lib/react-query/config";
 export const unitKeys = {
     all: ["units"] as const,
     byProperty: (propertyId: string) => [...unitKeys.all, propertyId] as const,
-    likes: (unitId: string, userId: string) => ["unit-likes", unitId, userId] as const,
+    likes: (unitId: string) => ["unit-likes", unitId] as const,
     likeCount: (unitId: string) => ["unit-like-count", unitId] as const,
     bulkLikeCounts: (unitIds: string[]) =>
         ["unit-like-counts", unitIds.sort().join(",")] as const,
@@ -20,79 +20,11 @@ export const unitKeys = {
 };
 
 // ============================================================================
-// Query Functions (Direct Supabase - Following Next.js 15 Best Practices)
+// Shared Helper Functions (used by multiple hooks)
 // ============================================================================
 
 /**
- * Get a single unit by property ID
- */
-async function fetchUnitByPropertyId(propertyId: string): Promise<Unit | null> {
-    const supabase = createClient();
-
-    const { data, error } = await supabase
-        .from("units")
-        .select("*")
-        .eq("property_id", propertyId)
-        .single();
-
-    if (error) {
-        if (error.code === "PGRST116") {
-            return null; // No unit found
-        }
-        console.error("Error fetching unit:", error);
-        throw new Error(error.message);
-    }
-
-    return data;
-}
-
-/**
- * Get all units for a property
- */
-async function fetchUnitsByPropertyId(propertyId: string): Promise<Unit[]> {
-    const supabase = createClient();
-
-    const { data, error } = await supabase
-        .from("units")
-        .select("*")
-        .eq("property_id", propertyId)
-        .eq("is_active", true)
-        .order("listing_type", { ascending: true })
-        .order("name", { ascending: true });
-
-    if (error) {
-        console.error("Error fetching units:", error);
-        throw new Error(error.message);
-    }
-
-    return data ?? [];
-}
-
-/**
- * Check if a unit is liked by a user
- */
-async function checkUnitLiked(unitId: string, userId: string): Promise<boolean> {
-    if (!userId) return false;
-
-    const supabase = createClient();
-
-    const { data, error } = await supabase
-        .from("unit_likes")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("unit_id", unitId)
-        .maybeSingle();
-
-    if (error) {
-        console.error("Error checking unit like:", error);
-        return false;
-    }
-
-    return !!data;
-}
-
-/**
- * Toggle unit like (like/unlike)
+ * Toggle unit like (like/unlike) - shared by mutation hook
  */
 async function toggleUnitLike(
     unitId: string,
@@ -128,109 +60,6 @@ async function toggleUnitLike(
     }
 }
 
-/**
- * Get the number of likes for a unit
- */
-async function fetchUnitLikesCount(unitId: string): Promise<number> {
-    const supabase = createClient();
-
-    const { count, error } = await supabase
-        .from("unit_likes")
-        .select("*", { count: "exact", head: true })
-        .eq("unit_id", unitId);
-
-    if (error) {
-        console.error("Error fetching unit likes count:", error);
-        return 0;
-    }
-
-    return count ?? 0;
-}
-
-/**
- * Get the number of likes for multiple units
- * Returns a map of unitId -> count
- */
-async function fetchBulkUnitLikesCounts(unitIds: string[]): Promise<Record<string, number>> {
-    if (unitIds.length === 0) return {};
-
-    const supabase = createClient();
-
-    const { data, error } = await supabase
-        .from("unit_likes")
-        .select("unit_id")
-        .in("unit_id", unitIds);
-
-    if (error) {
-        console.error("Error fetching bulk unit likes counts:", error);
-        return {};
-    }
-
-    // Initialize counts for all units
-    const counts: Record<string, number> = {};
-    unitIds.forEach((id) => (counts[id] = 0));
-
-    // Count likes per unit
-    data?.forEach((like) => {
-        counts[like.unit_id] = (counts[like.unit_id] || 0) + 1;
-    });
-
-    return counts;
-}
-
-/**
- * Get all shares for a unit
- */
-async function fetchUnitSharesByUnit(unitId: string) {
-    const supabase = createClient();
-
-    const { data, error } = await supabase
-        .from("unit_shares")
-        .select("*")
-        .eq("unit_id", unitId)
-        .order("created_at", { ascending: false });
-
-    if (error) {
-        console.error("Error fetching unit shares:", error);
-        throw new Error(error.message);
-    }
-
-    return data ?? [];
-}
-
-/**
- * Get the count of shares for a unit
- */
-async function fetchUnitSharesCount(unitId: string): Promise<number> {
-    const supabase = createClient();
-
-    const { count, error } = await supabase
-        .from("unit_shares")
-        .select("*", { count: "exact", head: true })
-        .eq("unit_id", unitId);
-
-    if (error) {
-        console.error("Error fetching unit shares count:", error);
-        return 0;
-    }
-
-    return count ?? 0;
-}
-
-/**
- * Create a new unit share
- */
-async function createUnitShareMutation(
-    shareData: Omit<UnitShareInsert, "id" | "created_at">
-): Promise<void> {
-    const supabase = createClient();
-    const { error } = await supabase.from("unit_shares").insert([shareData]);
-
-    if (error) {
-        console.error("Error creating unit share:", error);
-        throw new Error(error.message);
-    }
-}
 
 // ============================================================================
 // Hooks
@@ -242,7 +71,25 @@ async function createUnitShareMutation(
 export function useUnit(propertyId: string) {
     return useQuery({
         queryKey: unitKeys.byProperty(propertyId),
-        queryFn: () => fetchUnitByPropertyId(propertyId),
+        queryFn: async () => {
+            const supabase = createClient();
+
+            const { data, error } = await supabase
+                .from("units")
+                .select("*")
+                .eq("property_id", propertyId)
+                .single();
+
+            if (error) {
+                if (error.code === "PGRST116") {
+                    return null; // No unit found
+                }
+                console.error("Error fetching unit:", error);
+                throw new Error(error.message);
+            }
+
+            return data;
+        },
         enabled: !!propertyId,
         ...CACHE_STRATEGIES.STATIC,
     });
@@ -254,7 +101,24 @@ export function useUnit(propertyId: string) {
 export function useUnits(propertyId: string) {
     return useQuery({
         queryKey: unitKeys.byProperty(propertyId),
-        queryFn: () => fetchUnitsByPropertyId(propertyId),
+        queryFn: async () => {
+            const supabase = createClient();
+
+            const { data, error } = await supabase
+                .from("units")
+                .select("*")
+                .eq("property_id", propertyId)
+                .eq("is_active", true)
+                .order("listing_type", { ascending: true })
+                .order("name", { ascending: true });
+
+            if (error) {
+                console.error("Error fetching units:", error);
+                throw new Error(error.message);
+            }
+
+            return data ?? [];
+        },
         enabled: !!propertyId,
         ...CACHE_STRATEGIES.STATIC,
     });
@@ -262,17 +126,38 @@ export function useUnits(propertyId: string) {
 
 /**
  * Check if a unit is liked by the current user
+ * Uses session user internally - no need to pass userId
  */
 export function useUnitLike(unitId: string, options?: { enabled?: boolean }) {
     const { data: sessionUser } = useSessionUser();
 
     return useQuery({
-        queryKey: unitKeys.likes(unitId, sessionUser?.id ?? "anonymous"),
-        queryFn: () => checkUnitLiked(unitId, sessionUser?.id ?? ""),
+        queryKey: unitKeys.likes(unitId),
+        queryFn: async () => {
+            if (!sessionUser?.id) {
+                return false; // Not logged in = not liked
+            }
+
+            const supabase = createClient();
+
+            const { data, error } = await supabase
+                .from("unit_likes")
+                .select("*")
+                .eq("user_id", sessionUser.id)
+                .eq("unit_id", unitId)
+                .maybeSingle();
+
+            if (error) {
+                console.error("Error checking unit like:", error);
+                return false;
+            }
+
+            return !!data;
+        },
         enabled:
             options?.enabled !== undefined
-                ? options.enabled && !!unitId && !!sessionUser?.id
-                : !!unitId && !!sessionUser?.id,
+                ? options.enabled && !!unitId && !!sessionUser
+                : !!unitId && !!sessionUser,
         ...CACHE_STRATEGIES.USER_SPECIFIC,
     });
 }
@@ -292,8 +177,7 @@ export function useToggleUnitLike() {
             return toggleUnitLike(unitId, sessionUser.id, isLiked);
         },
         onSuccess: (_data, variables) => {
-            const userId = sessionUser?.id || "anonymous";
-            queryClient.invalidateQueries({ queryKey: unitKeys.likes(variables.unitId, userId) });
+            queryClient.invalidateQueries({ queryKey: unitKeys.likes(variables.unitId) });
             queryClient.invalidateQueries({ queryKey: ["unit-likes"] });
             queryClient.invalidateQueries({ queryKey: unitKeys.likeCount(variables.unitId) });
             queryClient.invalidateQueries({ queryKey: ["unit-like-count"] });
@@ -307,25 +191,22 @@ export function useToggleUnitLike() {
 export function useUnitLikesCount(unitId: string, options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: unitKeys.likeCount(unitId),
-        queryFn: () => fetchUnitLikesCount(unitId),
-        enabled: options?.enabled !== undefined ? options.enabled && !!unitId : !!unitId,
-        ...CACHE_STRATEGIES.USER_SPECIFIC,
-    });
-}
-
-/**
- * Get the count of likes for multiple units
- */
-export function useBulkUnitLikesCounts(unitIds: string[], options?: { enabled?: boolean }) {
-    const hasUnits = unitIds.length > 0;
-
-    return useQuery({
-        queryKey: unitKeys.bulkLikeCounts(unitIds),
         queryFn: async () => {
-            if (!hasUnits) return {};
-            return fetchBulkUnitLikesCounts(unitIds);
+            const supabase = createClient();
+
+            const { count, error } = await supabase
+                .from("unit_likes")
+                .select("*", { count: "exact", head: true })
+                .eq("unit_id", unitId);
+
+            if (error) {
+                console.error("Error fetching unit likes count:", error);
+                return 0;
+            }
+
+            return count ?? 0;
         },
-        enabled: options?.enabled !== undefined ? options.enabled && hasUnits : hasUnits,
+        enabled: options?.enabled !== undefined ? options.enabled && !!unitId : !!unitId,
         ...CACHE_STRATEGIES.USER_SPECIFIC,
     });
 }
@@ -336,7 +217,22 @@ export function useBulkUnitLikesCounts(unitIds: string[], options?: { enabled?: 
 export function useUnitShares(unitId: string) {
     return useQuery({
         queryKey: unitKeys.shares(unitId),
-        queryFn: () => fetchUnitSharesByUnit(unitId),
+        queryFn: async () => {
+            const supabase = createClient();
+
+            const { data, error } = await supabase
+                .from("unit_shares")
+                .select("*")
+                .eq("unit_id", unitId)
+                .order("created_at", { ascending: false });
+
+            if (error) {
+                console.error("Error fetching unit shares:", error);
+                throw new Error(error.message);
+            }
+
+            return data ?? [];
+        },
         enabled: !!unitId,
         ...CACHE_STRATEGIES.USER_SPECIFIC,
     });
@@ -348,7 +244,21 @@ export function useUnitShares(unitId: string) {
 export function useUnitSharesCount(unitId: string) {
     return useQuery({
         queryKey: unitKeys.shareCount(unitId),
-        queryFn: () => fetchUnitSharesCount(unitId),
+        queryFn: async () => {
+            const supabase = createClient();
+
+            const { count, error } = await supabase
+                .from("unit_shares")
+                .select("*", { count: "exact", head: true })
+                .eq("unit_id", unitId);
+
+            if (error) {
+                console.error("Error fetching unit shares count:", error);
+                return 0;
+            }
+
+            return count ?? 0;
+        },
         enabled: !!unitId,
         ...CACHE_STRATEGIES.USER_SPECIFIC,
     });
@@ -362,7 +272,13 @@ export function useCreateUnitShare() {
 
     return useMutation({
         mutationFn: async (shareData: Omit<UnitShareInsert, "id" | "created_at">) => {
-            return createUnitShareMutation(shareData);
+            const supabase = createClient();
+            const { error } = await supabase.from("unit_shares").insert([shareData]);
+
+            if (error) {
+                console.error("Error creating unit share:", error);
+                throw new Error(error.message);
+            }
         },
         onSuccess: (_, variables) => {
             // Invalidate shares queries for this unit

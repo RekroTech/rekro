@@ -16,8 +16,8 @@ export function QueryProvider({ children }: { children: ReactNode }) {
                         gcTime: 10 * 60 * 1000,
                         // Refetch on window focus only in dev
                         refetchOnWindowFocus: process.env.NODE_ENV === "development",
-                        // Refetch on mount if data is stale
-                        refetchOnMount: true,
+                        // Don't refetch on mount - rely on staleTime instead
+                        refetchOnMount: false,
                         // Refetch on reconnect
                         refetchOnReconnect: true,
                         // Retry failed requests once

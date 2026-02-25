@@ -56,4 +56,5 @@ export interface RentalFormData {
     occupancyType: OccupancyType;
     message: string;
     proposedRent: string;
+    totalRent: number; // Calculated total rent including all inclusions
 }

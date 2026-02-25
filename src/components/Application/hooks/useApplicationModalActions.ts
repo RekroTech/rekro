@@ -1,80 +1,90 @@
-import { useCallback, useEffect, useMemo } from "react";
-import equal from "fast-deep-equal";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     useUpsertApplication,
     useCreateSnapshot,
 } from "@/lib/react-query/hooks/application";
 import { useToast } from "@/hooks/useToast";
-import type { Application } from "@/types/db";
+import type { Application, ApplicationType, Unit } from "@/types/db";
+import type { Property } from "@/types/property.types";
 import type { RentalFormData } from "@/components/Property/types";
 import { ModalActionState, ModalStep } from "@/components/Application/types";
 
 interface UseApplicationModalActionsParams {
-    totalWeeklyRent: number;
+    property: Property;
+    selectedUnit: Unit;
     onClose: () => void;
     // Prop drilled state
     rentalForm: RentalFormData;
     step: ModalStep;
     setStep: (step: ModalStep) => void;
     existingApplication?: Application | null;
-    setModalActionState: (state: ModalActionState | null) => void;
 }
 
 export function useApplicationModalActions({
-    totalWeeklyRent,
+    property,
+    selectedUnit,
     onClose,
     rentalForm,
     step,
     setStep,
     existingApplication,
-    setModalActionState,
 }: UseApplicationModalActionsParams) {
     const { showToast } = useToast();
     const router = useRouter();
+    const [modalActionState, setModalActionState] = useState<ModalActionState | null>(null);
 
     // Mutations
     const upsertApplicationMutation = useUpsertApplication();
     const createSnapshotMutation = useCreateSnapshot();
 
-    // Detect if form has changes by comparing individual fields
-    const hasChanges = useMemo(() => {
-        // If no existing application, this is a new application - always needs to be saved
-        if (!existingApplication) return true;
 
-        // Compare each field individually, normalizing empty strings to null where appropriate
-        const formProposedRent = rentalForm.proposedRent
-            ? parseFloat(rentalForm.proposedRent)
-            : null;
+    // Form submit handler - save application and proceed to review
+    const handleFormSubmit = useCallback(async () => {
+        // Validate required fields
+        if (!rentalForm.moveInDate) {
+            showToast("Please select a move-in date", "error");
+            return;
+        }
 
-        // Treat empty string and null as equivalent for optional string fields
-        const normalizedFormMoveInDate = rentalForm.moveInDate || null;
-        const normalizedExistingMoveInDate = existingApplication.move_in_date || null;
-        const moveInDateChanged = normalizedFormMoveInDate !== normalizedExistingMoveInDate;
+        try {
+            const payload = {
+                applicationId: existingApplication?.id,
+                propertyId: property.id,
+                unitId: selectedUnit?.id || null,
+                applicationType: (selectedUnit.listing_type === "entire_home"
+                    ? "group"
+                    : "individual") as ApplicationType,
+                moveInDate: rentalForm.moveInDate,
+                rentalDuration: rentalForm.rentalDuration.toString(),
+                proposedRent: rentalForm.proposedRent,
+                totalRent: rentalForm.totalRent,
+                inclusions: rentalForm.inclusions,
+                occupancyType: rentalForm.occupancyType,
+                message: rentalForm.message,
+            };
 
-        const rentalDurationChanged =
-            rentalForm.rentalDuration !== existingApplication.rental_duration;
-        const proposedRentChanged = formProposedRent !== existingApplication.proposed_rent;
-        const totalRentChanged = totalWeeklyRent !== existingApplication.total_rent;
-        const inclusionsChanged = !equal(rentalForm.inclusions, existingApplication.inclusions);
-        const occupancyTypeChanged =
-            rentalForm.occupancyType !== existingApplication.occupancy_type;
-
-        // Treat empty string and null as equivalent for message field
-        const normalizedFormMessage = rentalForm.message || null;
-        const normalizedExistingMessage = existingApplication.message || null;
-        const messageChanged = normalizedFormMessage !== normalizedExistingMessage;
-
-        return (
-            moveInDateChanged ||
-            rentalDurationChanged ||
-            proposedRentChanged ||
-            totalRentChanged ||
-            inclusionsChanged ||
-            occupancyTypeChanged ||
-            messageChanged
-        );
-    }, [existingApplication, rentalForm, totalWeeklyRent]);
+            await upsertApplicationMutation.mutateAsync(payload);
+            showToast("Application saved successfully", "success");
+            setStep("review");
+        } catch (error) {
+            console.error("Failed to save application:", error);
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to save application. Please try again.";
+            showToast(errorMessage, "error");
+        }
+    }, [
+        existingApplication?.id,
+        property.id,
+        selectedUnit?.id,
+        selectedUnit.listing_type,
+        rentalForm,
+        upsertApplicationMutation,
+        showToast,
+        setStep,
+    ]);
 
     // Review submit handler - save application snapshot
     const handleReviewSubmit = useCallback(async () => {
@@ -105,11 +115,11 @@ export function useApplicationModalActions({
     // Sync action state with modal based on current step
     useEffect(() => {
         if (step === "application") {
-            // Always show "Continue" - autosave handles data persistence
+            // Save application on Continue click
             setModalActionState({
-                onSubmit: async () => setStep("review"),
-                isSubmitting: false, // Autosave handles the loading state
-                canSubmit: true,
+                onSubmit: handleFormSubmit,
+                isSubmitting: upsertApplicationMutation.isPending,
+                canSubmit: Boolean(rentalForm.moveInDate),
                 submitText: "Continue",
                 onCancel: onClose,
             });
@@ -123,7 +133,7 @@ export function useApplicationModalActions({
                 onCancel: onClose,
             });
         } else if (step === "confirm") {
-            // redirect to my appllications page
+            // redirect to my applications page
             setModalActionState({
                 onSubmit: async () => {
                     router.push("/applications");
@@ -140,11 +150,13 @@ export function useApplicationModalActions({
     }, [
         step,
         existingApplication,
-        hasChanges,
+        rentalForm.moveInDate,
         upsertApplicationMutation.isPending,
         createSnapshotMutation.isPending,
         setModalActionState,
         onClose,
         setStep,
     ]);
+
+    return { modalActionState };
 }

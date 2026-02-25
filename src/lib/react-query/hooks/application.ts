@@ -11,6 +11,8 @@ export const applicationKeys = {
     all: ["applications"] as const,
     list: () => [...applicationKeys.all, "list"] as const,
     detail: (id: string) => [...applicationKeys.all, "detail", id] as const,
+    byPropertyUnit: (propertyId?: string, unitId?: string | null) =>
+        [...applicationKeys.all, "byPropertyUnit", propertyId ?? null, unitId ?? null] as const,
     snapshots: () => [...applicationKeys.all, "snapshots"] as const,
     snapshotsList: (filters?: {
         status?: string;
@@ -41,7 +43,9 @@ export function useApplication(params?: {
     const { data: user } = useSessionUser();
 
     return useQuery({
-        queryKey: params?.id ? applicationKeys.detail(params.id) : applicationKeys.list(),
+        queryKey: params?.id
+            ? applicationKeys.detail(params.id)
+            : applicationKeys.byPropertyUnit(params?.propertyId, params?.unitId),
         queryFn: async () => {
             if (!user) {
                 throw new Error("Not authenticated");
@@ -196,19 +200,13 @@ export function useUpsertApplication() {
             const { data } = await response.json();
             return data;
         },
-        onMutate: async () => {
-            await queryClient.cancelQueries({ queryKey: applicationKeys.all });
-            const previousApplications = queryClient.getQueryData(applicationKeys.all);
-            return { previousApplications };
+        onSuccess: (data, request) => {
+            // Update the cache directly with the new data - no need to invalidate
+            const queryKey = applicationKeys.byPropertyUnit(request.propertyId, request.unitId);
+            queryClient.setQueryData(queryKey, data);
         },
-        onError: (err, _newApplication, context) => {
-            if (context?.previousApplications) {
-                queryClient.setQueryData(applicationKeys.all, context.previousApplications);
-            }
+        onError: (err) => {
             console.error("Failed to save application:", err);
-        },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: applicationKeys.all });
         },
     });
 }

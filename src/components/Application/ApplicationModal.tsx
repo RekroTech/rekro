@@ -2,8 +2,7 @@
 
 import React, { useMemo, useCallback } from "react";
 import { Modal } from "@/components/common";
-import { calculatePricing } from "@/components/Property/pricing";
-import { useApplicationModalActions, useAutoSave } from "./hooks";
+import { useApplicationModalActions } from "./hooks";
 import { ApplicationForm } from "./ApplicationForm";
 import { ApplicationReview } from "./ApplicationReview/ApplicationReview";
 import { ApplicationConfirm } from "./ApplicationConfirm";
@@ -12,7 +11,7 @@ import type { Unit } from "@/types/db";
 import type { ModalButton } from "@/components/common/Modal";
 import type { RentalFormData } from "@/components/Property/types";
 import { useApplication } from "@/lib/react-query/hooks/application";
-import { ModalActionState, ModalStep } from "@/components/Application/types";
+import { ModalStep } from "@/components/Application/types";
 
 
 interface ApplicationModalProps {
@@ -34,41 +33,17 @@ export function ApplicationModal({
 }: ApplicationModalProps) {
     // Modal step state (managed locally)
     const [step, setStep] = React.useState<ModalStep>("application");
-    const [modalActionState, setModalActionState] = React.useState<ModalActionState | null>(null);
     const { data: existingApplication } = useApplication({ propertyId: property.id, unitId: selectedUnit.id });
 
-    // Calculate all pricing in one place
-    const pricing = useMemo(
-        () => calculatePricing({ selectedUnit, property, rentalForm }),
-        [selectedUnit, property, rentalForm]
-    );
-
-    // Auto-save functionality - only enabled on application step
-    const { isSaving } = useAutoSave({
+    // Use the unified hook to manage actions based on step
+    const { modalActionState } = useApplicationModalActions({
         property,
         selectedUnit,
-        totalWeeklyRent: pricing.totalWeeklyRent,
-        rentalForm,
-        existingApplication,
-        enabled: step === "application",
-    });
-
-    // Reset state when modal closes
-    const handleClose = useCallback(() => {
-        setStep("application");
-        setModalActionState(null);
-        onClose();
-    }, [onClose]);
-
-    // Use the unified hook to manage actions based on step
-    useApplicationModalActions({
-        totalWeeklyRent: pricing.totalWeeklyRent,
-        onClose: handleClose,
+        onClose,
         rentalForm,
         step,
         setStep,
         existingApplication,
-        setModalActionState,
     });
 
     // Get modal title based on current step
@@ -81,6 +56,12 @@ export function ApplicationModal({
         return undefined; // No title for confirmation step
     }, [step]);
 
+    // Reset step when modal closes
+    const handleClose = useCallback(() => {
+        setStep("application");
+        onClose();
+    }, [onClose]);
+
     // Build modal buttons from action state
     const { primaryButton, secondaryButton } = useMemo(() => {
         if (!modalActionState) {
@@ -91,9 +72,8 @@ export function ApplicationModal({
             label: modalActionState.submitText,
             onClick: modalActionState.onSubmit,
             variant: "primary",
-            // Disable button if: form validation fails, mutation in progress, OR autosave is in progress
-            disabled: !modalActionState.canSubmit || modalActionState.isSubmitting || isSaving,
-            isLoading: modalActionState.isSubmitting || isSaving,
+            disabled: !modalActionState.canSubmit || modalActionState.isSubmitting,
+            isLoading: modalActionState.isSubmitting,
             icon: step === "application" ? "chevron-right" : "check",
             iconPosition: "right",
         };
@@ -103,7 +83,7 @@ export function ApplicationModal({
                   label: "Back",
                   onClick: modalActionState.onBack,
                   variant: "secondary",
-                  disabled: modalActionState.isSubmitting || isSaving,
+                  disabled: modalActionState.isSubmitting,
                   icon: "chevron-left",
                   iconPosition: "left",
               }
@@ -111,11 +91,11 @@ export function ApplicationModal({
                   label: "Cancel",
                   onClick: modalActionState.onCancel,
                   variant: "secondary",
-                  disabled: modalActionState.isSubmitting || isSaving,
+                  disabled: modalActionState.isSubmitting,
               };
 
         return { primaryButton: primary, secondaryButton: secondary };
-    }, [step, modalActionState, isSaving]);
+    }, [step, modalActionState]);
 
     return (
         <Modal
@@ -130,7 +110,6 @@ export function ApplicationModal({
                 <ApplicationForm
                     property={property}
                     selectedUnit={selectedUnit}
-                    totalWeeklyRent={pricing.totalWeeklyRent}
                     rentalForm={rentalForm}
                     updateRentalForm={updateRentalForm}
                 />

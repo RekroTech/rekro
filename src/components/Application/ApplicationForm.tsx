@@ -11,7 +11,6 @@ import { getMinStartDate, getMaxStartDate } from "@/components/Property/utils";
 interface ApplicationFormProps {
     property: Property;
     selectedUnit: Unit;
-    totalWeeklyRent: number;
     rentalForm: RentalFormData;
     updateRentalForm: (updates: Partial<RentalFormData>) => void;
 }
@@ -19,7 +18,6 @@ interface ApplicationFormProps {
 export function ApplicationForm({
     property,
     selectedUnit,
-    totalWeeklyRent,
     rentalForm,
     updateRentalForm,
 }: ApplicationFormProps) {
@@ -93,7 +91,7 @@ export function ApplicationForm({
             <div className="flex items-center justify-between pt-4 border-t border-border">
                 <span className="text-sm font-medium text-text-muted">Total Weekly Rent:</span>
                 <span className="text-xl sm:text-2xl font-bold text-primary-600 dark:text-primary-400">
-                    ${totalWeeklyRent.toFixed(2)}
+                    ${rentalForm.totalRent.toFixed(2)}
                 </span>
             </div>
 

@@ -15,57 +15,35 @@ import {
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getPropertyFileUrls } from "@/lib/services/storage.service";
-import { Unit } from "@/types/db";
 import { updateRoomRentsOnOccupancySelection } from "@/components/Property/pricing";
 import { ProfileCompletionProvider } from "@/contexts";
 import { useProfile } from "@/lib/react-query/hooks/user";
+import { useMediaQuery } from "@/hooks";
 
 export default function PropertyDetailPage() {
     const params = useParams();
     const router = useRouter();
     const propertyId = params.id as string;
-
-    // Fetch property data (no longer includes likes)
-    const { data: property, isLoading, error } = useProperty(propertyId);
-
-
-    // Fetch current user's profile to check discoverability setting
+    const isDesktop = useMediaQuery("(min-width: 1024px)");
     const { data: userProfile } = useProfile();
 
-    const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+    const { data: property, isLoading, error } = useProperty(propertyId);
 
-    // Track unit occupancies for dynamic pricing
+    const [selectedUnitId, setSelectedUnitId] = useState<string>("");
     const [unitOccupancies, setUnitOccupancies] = useState<Record<string, number>>({});
 
-    const units = useMemo(() => property?.units || [], [property?.units]);
-
-    const selectedUnit = useMemo(() => {
-        if (units.length === 0) return null;
-        const found = units.find((u: Unit) => u.id === selectedUnitId);
-        return found ?? units[0] ?? null;
-    }, [units, selectedUnitId]);
-
-    // Initialize selectedUnitId and unitOccupancies when units are available
+    // Initialize selectedUnitId when units are available (must be before early returns)
     useEffect(() => {
-        if (units.length > 0) {
-            const firstUnit = units[0];
-            if (firstUnit && selectedUnitId !== firstUnit.id) {
-                requestAnimationFrame(() => {
-                    setSelectedUnitId(firstUnit.id);
-                });
-            }
-        } else if (selectedUnitId !== null) {
-            requestAnimationFrame(() => {
-                setSelectedUnitId(null);
-            });
+        if (property?.units && property.units.length > 0 && !selectedUnitId) {
+            setSelectedUnitId(property.units[0]!.id);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [units, propertyId]); // selectedUnitId intentionally excluded to prevent infinite loop
+    }, [property?.units, propertyId]); // selectedUnitId intentionally excluded to prevent infinite loop
 
     // Calculate dynamic pricing for all rooms based on current occupancy selections
     // Only apply dynamic pricing when dual occupancy is actually selected
     const dynamicPricing = useMemo(() => {
-        if (!property || !property.units || property.units.length <= 1) {
+        if (!property?.units || property.units.length <= 1) {
             return undefined; // No dynamic pricing for single unit or entire home
         }
 
@@ -100,6 +78,7 @@ export default function PropertyDetailPage() {
         return result.roomRentsById;
     }, [property, unitOccupancies]);
 
+    // Early returns for loading/error states - AFTER all hooks
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -123,6 +102,29 @@ export default function PropertyDetailPage() {
             </div>
         );
     }
+
+    // Defensive: properties must have at least one unit for this page
+    if (!property.units || property.units.length === 0) {
+        return (
+            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold text-red-600 mb-4">
+                        No units available
+                    </h1>
+                    <p className="text-text-muted mb-6">
+                        This property doesn&apos;t have any rentable units configured.
+                    </p>
+                    <Button variant="primary" onClick={() => router.push("/")}>
+                        Back to Properties
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    // After all checks, property and units are guaranteed to exist
+    const units = property.units;
+    const selectedUnit = units.find((unit) => unit.id === selectedUnitId) ?? units[0]!;
 
     // Convert storage paths to URLs
     const propertyMedia =
@@ -174,14 +176,18 @@ export default function PropertyDetailPage() {
                         )}
 
                         {/* Sidebar on mobile - Show after units, before description */}
-                        <div className="lg:hidden mt-4">
-                            <PropertySidebar
-                                selectedUnit={selectedUnit}
-                                property={property}
-                                unitOccupancies={unitOccupancies}
-                                onUnitOccupanciesChange={setUnitOccupancies}
-                            />
-                        </div>
+                        {!isDesktop && (
+                            <div className="mt-4">
+                                <PropertySidebar
+                                    selectedUnit={selectedUnit}
+                                    property={property}
+                                    dynamicPricing={dynamicPricing}
+                                    onUnitOccupancyChange={(unitId, occupancy) =>
+                                        setUnitOccupancies((prev) => ({ ...prev, [unitId]: occupancy }))
+                                    }
+                                />
+                            </div>
+                        )}
 
                         {/* Content */}
                         <div className="px-2 sm:px-0 space-y-6 sm:space-y-8 mt-6 sm:mt-8">
@@ -197,15 +203,19 @@ export default function PropertyDetailPage() {
                         </div>
                     </div>
 
-                    {/* Sidebar - Hidden on mobile (shown above), visible on desktop */}
-                    <div className="hidden lg:block lg:col-span-1 min-w-0">
-                        <PropertySidebar
-                            selectedUnit={selectedUnit}
-                            property={property}
-                            unitOccupancies={unitOccupancies}
-                            onUnitOccupanciesChange={setUnitOccupancies}
-                        />
-                    </div>
+                    {/* Sidebar - Desktop only */}
+                    {isDesktop && (
+                        <div className="col-span-1 min-w-0">
+                            <PropertySidebar
+                                selectedUnit={selectedUnit}
+                                property={property}
+                                dynamicPricing={dynamicPricing}
+                                onUnitOccupancyChange={(unitId, occupancy) =>
+                                    setUnitOccupancies((prev) => ({ ...prev, [unitId]: occupancy }))
+                                }
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Users Who Liked Carousel - Only visible if viewing user is discoverable (reciprocal privacy) */}

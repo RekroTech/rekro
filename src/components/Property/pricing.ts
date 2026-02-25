@@ -5,7 +5,7 @@
  * - All inputs are normalized to safe finite numbers (≥ 0)
  * - Occupancy is clamped to [1, maxCapacity]
  * - Single shared drift-fix implementation prevents rounding errors
- * - Dynamic pricing and legacy dual premium are mutually exclusive
+ * - Dynamic pricing from parent overrides unit base price when available
  * - No NaN/Infinity paths - all public functions return finite numbers
  */
 import type { Unit } from "@/types/db";
@@ -205,8 +205,8 @@ function fixRoundingDrift(params: {
  * Single consolidated function to calculate all pricing
  *
  * GUARANTEES:
- * - Uses selectedUnit.price as canonical weekly rent (normalized to finite ≥ 0)
- * - Dynamic pricing and legacy dual premium are mutually exclusive
+ * - Uses dynamic pricing when available, otherwise selectedUnit.price as base rent
+ * - All base rents are normalized to finite ≥ 0
  * - All returned values are finite numbers (no NaN/Infinity)
  * - Bond calculated from base rent before lease adjustments
  * - Furniture cost guards against division by zero
@@ -215,8 +215,9 @@ export function calculatePricing(params: {
     selectedUnit: Unit | null;
     property: Property;
     rentalForm: RentalFormData;
+    dynamicPricing?: Record<string, number>; // Dynamic pricing map from parent
 }) {
-    const { selectedUnit, property, rentalForm } = params;
+    const { selectedUnit, property, rentalForm, dynamicPricing } = params;
 
     // Early return if no unit selected
     if (!selectedUnit) {
@@ -242,23 +243,12 @@ export function calculatePricing(params: {
     const canBeDualOccupancy = !isEntireHome && selectedUnit.max_occupants === 2;
     const isDualOccupancy = canBeDualOccupancy && rentalForm.occupancyType === "dual";
 
-    // CANONICAL WEEKLY RENT: Normalize selectedUnit.price to safe value
-    const canonicalWeeklyRent = normalizeWeeklyRent(selectedUnit.price);
-    let baseRent = canonicalWeeklyRent;
-
-    // DYNAMIC PRICING vs LEGACY DUAL PREMIUM (mutually exclusive)
-    let usedDynamicPricing = false;
-
-    // For room listings with multiple units, check if dynamic pricing should apply
-    if (isRoomListing && property.units && property.units.length > 1) {
-        // For now, dynamic pricing is disabled in this simplified version
-        // It would require tracking occupancies for all units, not just the selected one
-        usedDynamicPricing = false;
-    }
-
-    // Legacy dual occupancy premium (only if dynamic pricing was NOT used)
-    if (!usedDynamicPricing && isDualOccupancy) {
-        baseRent += PRICING_CONFIG.dualOccupancyPremium;
+    // Use dynamic pricing if available, otherwise use selectedUnit.price
+    let baseRent: number;
+    if (dynamicPricing && selectedUnit.id in dynamicPricing) {
+        baseRent = normalizeWeeklyRent(dynamicPricing[selectedUnit.id]);
+    } else {
+        baseRent = normalizeWeeklyRent(selectedUnit.price);
     }
 
     // Apply lease period multiplier (with fallback to 1.0)

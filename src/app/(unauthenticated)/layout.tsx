@@ -1,23 +1,20 @@
-import React from "react";
+"use client";
+
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/supabase/server";
+import React, { useEffect } from "react";
+import { useSessionUser } from "@/lib/react-query/hooks/auth";
 
-// Force dynamic rendering for auth checks
-export const dynamic = "force-dynamic";
+export default function UnauthenticatedLayout({ children }: { children: React.ReactNode }) {
+    const { data: user, isLoading } = useSessionUser();
 
-export default async function UnauthenticatedLayout({ children }: { children: React.ReactNode }) {
-    let user = null;
+    useEffect(() => {
+        if (!isLoading && user) {
+            // Redirect authenticated users to dashboard
+            redirect("/dashboard");
+        }
+    }, [user, isLoading]);
 
-    try {
-        user = await getSession();
-    } catch (error) {
-        console.error("Unauthenticated layout error:", error);
-        // allow access
-    }
-
-    if (user) {
-        redirect("/dashboard");
-    }
-
+    // Don't block rendering while checking auth
+    // Unauthenticated pages should be accessible immediately
     return <>{children}</>;
 }
