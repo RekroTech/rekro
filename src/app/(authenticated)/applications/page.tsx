@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import type { Address, Location } from "@/types/db";
-import { Button, Icon } from "@/components/common";
+import { Button, Icon, Dropdown } from "@/components/common";
+import type { DropdownItem } from "@/components/common/Dropdown";
 import { useApplications, useWithdrawApplication } from "@/lib/hooks";
 import {
     formatDateShort,
@@ -38,10 +39,163 @@ interface ApplicationWithDetails {
     };
 }
 
+interface GroupedApplication {
+    property: ApplicationWithDetails["properties"];
+    applications: ApplicationWithDetails[];
+}
+
+interface ApplicationCardProps {
+    application: ApplicationWithDetails;
+    onWithdraw: (id: string) => void;
+    onDownload: (application: ApplicationWithDetails) => void;
+    isWithdrawing: boolean;
+    getStatusColor: (status: string) => string;
+    getStatusIcon: (status: string) => "document" | "info-circle" | "check-circle" | "alert-circle" | "x";
+    canWithdraw: (status: string) => boolean;
+}
+
+function ApplicationCard({
+    application,
+    onWithdraw,
+    onDownload,
+    isWithdrawing,
+    getStatusColor,
+    getStatusIcon,
+    canWithdraw,
+}: ApplicationCardProps) {
+    const unit = application.units;
+
+    const dropdownItems: DropdownItem[] = [
+        {
+            label: "Download PDF",
+            icon: <Icon name="download" className="w-4 h-4" />,
+            onClick: () => onDownload(application),
+        },
+        ...(canWithdraw(application.status)
+            ? [
+                  {
+                      label: isWithdrawing ? "Withdrawing..." : "Withdraw Application",
+                      icon: <Icon name="x" className="w-4 h-4" />,
+                      onClick: () => onWithdraw(application.id),
+                      variant: "danger" as const,
+                      disabled: isWithdrawing,
+                  },
+              ]
+            : []),
+    ];
+
+    return (
+        <div className="bg-card rounded-[var(--radius-card)] border border-border p-3 sm:p-4 sm:px-5">
+            {/* First Row: Unit Name with Status Chip, Price, and Settings */}
+            <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center flex-wrap gap-2 sm:gap-2 mb-1">
+                        <h4 className="text-sm sm:text-base font-semibold text-text">
+                            {unit.name}
+                        </h4>
+                        <div
+                            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full border text-xs font-medium ${getStatusColor(application.status)} whitespace-nowrap`}
+                        >
+                            <Icon name={getStatusIcon(application.status)} className="w-3.5 h-3.5" />
+                            <span className="capitalize">{application.status.replace("_", " ")}</span>
+                        </div>
+                    </div>
+                    <p className="text-lg sm:text-xl font-bold text-primary-600">
+                        ${application.total_rent}
+                        <span className="text-sm font-normal text-text-muted">/week</span>
+                    </p>
+                </div>
+
+                {/* Settings Dropdown */}
+                <Dropdown
+                    trigger={
+                        <div className="hover:bg-surface-muted rounded-md transition-colors">
+                            <Icon name="settings" className="w-5 h-5 text-text-subtle" />
+                        </div>
+                    }
+                    items={dropdownItems}
+                    align="right"
+                />
+            </div>
+
+            {/* Second Row: Application Details with Labels */}
+            <div className="flex items-center justify-between gap-2 sm:gap-6">
+                <div className="flex items-start sm:items-center gap-3 sm:gap-6 overflow-x-auto">
+                    <div className="flex-shrink-0">
+                        <p className="text-xs text-text-subtle mb-1">Reference</p>
+                        <p className="text-xs sm:text-sm text-text font-mono font-medium">
+                            #{application.id.substring(0, 8).toUpperCase()}
+                        </p>
+                    </div>
+                    <div className="flex-shrink-0">
+                        <p className="text-xs text-text-subtle mb-1">Move-in Date</p>
+                        <p className="text-xs sm:text-sm text-text font-medium">
+                            {formatDateShort(application.move_in_date)}
+                        </p>
+                    </div>
+                    <div className="flex-shrink-0">
+                        <p className="text-xs text-text-subtle mb-1">Duration</p>
+                        <p className="text-xs sm:text-sm text-text font-medium">
+                            {formatRentalDuration(application.rental_duration)}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Timestamp */}
+                <div className="text-right flex-shrink-0 self-end">
+                    <p className="text-[10px] sm:text-sm text-text-muted whitespace-nowrap">
+                        {formatDistanceToNow(new Date(application.submitted_at), {
+                            addSuffix: true,
+                        })}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function ApplicationsPage() {
     const { data: applications, isLoading } = useApplications();
     const { mutate: withdrawApplication, isPending } = useWithdrawApplication();
     const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+
+    // Group applications by property
+    const groupedApplications = useMemo(() => {
+        const typedApplications = ((applications || []) as ApplicationWithDetails[]).filter(
+            (app) => app.status !== "draft"
+        );
+
+        const grouped = new Map<string, GroupedApplication>();
+
+        typedApplications.forEach((app) => {
+            const propertyId = app.properties.id;
+            if (!grouped.has(propertyId)) {
+                grouped.set(propertyId, {
+                    property: app.properties,
+                    applications: [],
+                });
+            }
+            grouped.get(propertyId)!.applications.push(app);
+        });
+
+        // Sort applications within each property by listing_type (entire_home first) then by submitted_at (most recent first)
+        grouped.forEach((group) => {
+            group.applications.sort((a, b) => {
+                // First, sort by listing_type: entire_home before room
+                const aIsEntireHome = a.units.listing_type === "entire_home";
+                const bIsEntireHome = b.units.listing_type === "entire_home";
+
+                if (aIsEntireHome && !bIsEntireHome) return -1;
+                if (!aIsEntireHome && bIsEntireHome) return 1;
+
+                // If both are same type, sort by submitted_at (most recent first)
+                return new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime();
+            });
+        });
+
+        return Array.from(grouped.values());
+    }, [applications]);
+
 
     const handleWithdraw = (applicationId: string) => {
         if (
@@ -57,21 +211,21 @@ export default function ApplicationsPage() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case "submitted":
-                return "bg-primary-50 text-primary-700 border-primary-200";
+                return "bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-700";
             case "under_review":
-                return "bg-warning-50 text-warning-700 border-warning-200";
+                return "bg-warning-50 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300 border-warning-200 dark:border-warning-700";
             case "approved":
-                return "bg-success-bg text-primary-600 border-primary-200";
+                return "bg-success-bg dark:bg-success-bg text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-700";
             case "rejected":
-                return "bg-danger-500/10 text-danger-600 border-danger-500/20";
+                return "bg-danger-500/10 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400 border-danger-500/20 dark:border-danger-700";
             case "withdrawn":
-                return "bg-surface-muted text-text-muted border-border";
+                return "bg-surface-muted dark:bg-surface-muted text-text-muted dark:text-text-muted border-border dark:border-border";
             default:
-                return "bg-surface-muted text-text-muted border-border";
+                return "bg-surface-muted dark:bg-surface-muted text-text-muted dark:text-text-muted border-border dark:border-border";
         }
     };
 
-    const getStatusIcon = (status: string) => {
+    const getStatusIcon = (status: string): "document" | "info-circle" | "check-circle" | "alert-circle" | "x" => {
         switch (status) {
             case "submitted":
                 return "document";
@@ -127,11 +281,11 @@ export default function ApplicationsPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-app-bg">
+            <div className="h-full bg-app-bg">
                 <div className="container mx-auto px-4 py-8">
                     <div className="flex items-center justify-center min-h-[400px]">
                         <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400 mx-auto mb-4"></div>
                             <p className="text-text-muted">Loading applications...</p>
                         </div>
                     </div>
@@ -140,14 +294,10 @@ export default function ApplicationsPage() {
         );
     }
 
-    const typedApplications = ((applications || []) as ApplicationWithDetails[]).filter(
-        (app) => app.status !== "draft"
-    );
-
     return (
-        <div className="min-h-screen bg-app-bg">
-            <div className="mx-auto max-w-7xl px-3 py-6 sm:px-4 sm:py-8 lg:px-8">
-                {typedApplications.length === 0 ? (
+        <div className="h-full bg-app-bg">
+            <div className="mx-auto max-w-7xl p-4 sm:px-4 sm:py-8 lg:px-8">
+                {groupedApplications.length === 0 ? (
                     <div className="bg-card rounded-[var(--radius-card-lg)] shadow-[var(--shadow-card)] border border-border p-8 sm:p-12 text-center">
                         <div className="max-w-md mx-auto">
                             <div className="bg-surface-muted rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
@@ -172,25 +322,27 @@ export default function ApplicationsPage() {
                     </div>
                 ) : (
                     <div className="space-y-4 sm:space-y-6">
-                        {typedApplications.map((application) => {
-                            const property = application.properties;
-                            const unit = application.units;
+                        {groupedApplications.map((group) => {
+                            const property = group.property;
+                            const applications = group.applications;
                             const image = property.images?.[0];
 
                             return (
                                 <div
-                                    key={application.id}
-                                    className="bg-card rounded-[var(--radius-card-lg)] shadow-[var(--shadow-card)] border border-border overflow-hidden hover:shadow-[var(--shadow-lift)] transition-all duration-200"
+                                    key={property.id}
+                                    className=""
                                 >
-                                    <div className="flex flex-col lg:flex-row">
+                                    {/* Property Header */}
+                                    <div className="flex flex-col lg:flex-row lg:items-start">
                                         {/* Property Image */}
-                                        <div className="relative w-full lg:w-64 xl:w-80 h-48 lg:h-auto flex-shrink-0">
+                                        <div className="rounded-t-[var(--radius-card-lg)] lg:rounded-l-[var(--radius-card-lg)] lg:rounded-tr-none relative w-full lg:w-72 xl:w-80 h-48 sm:h-56 lg:h-64 flex-shrink-0 shadow-[var(--shadow-card)] overflow-hidden">
                                             {image ? (
                                                 <Image
                                                     src={image}
                                                     alt={property.title}
                                                     fill
                                                     className="object-cover"
+                                                    sizes="(max-width: 1024px) 100vw, 320px"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full bg-surface-muted flex items-center justify-center">
@@ -202,133 +354,55 @@ export default function ApplicationsPage() {
                                             )}
                                         </div>
 
-                                        {/* Application Details */}
-                                        <div className="flex-1 p-5 sm:p-6">
-                                            {/* Header with Title and Status */}
-                                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-                                                <div className="flex-1">
-                                                    <h3 className="text-lg sm:text-xl font-semibold text-text mb-1.5">
+                                        {/* Property Info & Applications */}
+                                        <div className="flex-1">
+                                            {/* Property Header */}
+                                            <div className="bg-card flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-3 p-4 sm:p-6 sm:pb-4 rounded-b-[var(--radius-card-lg)] lg:rounded-r-[var(--radius-card-lg)] lg:rounded-bl-none border border-border shadow-[var(--shadow-card)]">
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-text mb-1.5">
                                                         {property.title}
                                                     </h3>
-                                                    <div className="flex items-center gap-2 text-sm text-text-muted mb-3">
-                                                        <Icon name="location" className="w-4 h-4" />
-                                                        <span>
+                                                    <div className="flex items-center gap-2 text-xs sm:text-sm text-text-muted">
+                                                        <Icon
+                                                            name="location"
+                                                            className="w-4 h-4 flex-shrink-0"
+                                                        />
+                                                        <span className="truncate">
                                                             {property.location.city},{" "}
                                                             {property.location.state}
                                                         </span>
                                                     </div>
-                                                    <div className="flex items-center gap-3 text-sm">
-                                                        <span className="px-2.5 py-1 bg-surface-subtle text-text-muted rounded-md">
-                                                            {unit.listing_type === "entire_home"
-                                                                ? "Entire Home"
-                                                                : "Room"}
-                                                        </span>
-                                                        <span className="font-semibold text-base text-text">
-                                                            ${application.total_rent}/week
-                                                        </span>
-                                                    </div>
                                                 </div>
-
-                                                {/* Status Badge */}
-                                                <div className="flex sm:flex-col items-start sm:items-end gap-2">
-                                                    <div
-                                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${getStatusColor(application.status)} whitespace-nowrap`}
-                                                    >
-                                                        <Icon
-                                                            name={getStatusIcon(application.status)}
-                                                            className="w-4 h-4"
-                                                        />
-                                                        <span className="text-sm font-medium capitalize">
-                                                            {application.status.replace("_", " ")}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-xs text-text-subtle sm:text-right">
-                                                        {formatDistanceToNow(
-                                                            new Date(application.submitted_at),
-                                                            { addSuffix: true }
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {/* Application Info Grid */}
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-4 border-y border-border">
-                                                <div>
-                                                    <p className="text-xs text-text-subtle mb-1">
-                                                        Reference
-                                                    </p>
-                                                    <p className="text-sm text-text font-mono">
-                                                        #
-                                                        {application.id
-                                                            .substring(0, 8)
-                                                            .toUpperCase()}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-text-subtle mb-1">
-                                                        Move-in Date
-                                                    </p>
-                                                    <p className="text-sm text-text font-medium">
-                                                        {formatDateShort(application.move_in_date)}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-text-subtle mb-1">
-                                                        Duration
-                                                    </p>
-                                                    <p className="text-sm text-text font-medium">
-                                                        {formatRentalDuration(
-                                                            application.rental_duration
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {/* Actions */}
-                                            <div className="flex flex-wrap gap-2 pt-4">
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() =>
                                                         (window.location.href = `/property/${property.id}`)
                                                     }
-                                                    className="border border-border"
+                                                    className="border border-border flex-shrink-0 w-full sm:w-auto justify-center"
                                                 >
                                                     <Icon name="eye" className="w-4 h-4 mr-2" />
                                                     View Property
                                                 </Button>
-                                                <div className="flex-1" />
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => downloadApplication(application)}
-                                                    className="border border-border"
-                                                >
-                                                    <Icon
-                                                        name="download"
-                                                        className="w-4 h-4 mr-2"
-                                                    />
-                                                    Download
-                                                </Button>
-                                                {canWithdraw(application.status) && (
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            handleWithdraw(application.id)
-                                                        }
-                                                        disabled={
+                                            </div>
+
+                                            {/* Applications List - All Visible */}
+                                            <div className="space-y-3 sm:pl-3">
+                                                {applications.map((application) => (
+                                                    <ApplicationCard
+                                                        key={application.id}
+                                                        application={application}
+                                                        onWithdraw={handleWithdraw}
+                                                        onDownload={downloadApplication}
+                                                        isWithdrawing={
                                                             isPending &&
                                                             withdrawingId === application.id
                                                         }
-                                                    >
-                                                        <Icon name="x" className="w-4 h-4 mr-2" />
-                                                        {isPending &&
-                                                        withdrawingId === application.id
-                                                            ? "Withdrawing..."
-                                                            : "Withdraw"}
-                                                    </Button>
-                                                )}
+                                                        getStatusColor={getStatusColor}
+                                                        getStatusIcon={getStatusIcon}
+                                                        canWithdraw={canWithdraw}
+                                                    />
+                                                ))}
                                             </div>
                                         </div>
                                     </div>

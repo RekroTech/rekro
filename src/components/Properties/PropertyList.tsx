@@ -16,6 +16,7 @@ export interface PropertyListProps {
     showEditButton?: boolean;
     likedOnly?: boolean;
     emptyMessage?: string;
+    emptyStateAction?: React.ReactNode;
 }
 
 export function PropertyList({
@@ -28,6 +29,7 @@ export function PropertyList({
     showEditButton = false,
     likedOnly = false,
     emptyMessage,
+    emptyStateAction,
 }: PropertyListProps = {}) {
     const normalizedListingType = listingType && listingType !== "all" ? listingType : undefined;
 
@@ -124,6 +126,7 @@ export function PropertyList({
                 <p className="mt-2 text-sm text-text-muted">
                     {emptyMessage || "Try adjusting your search or filters."}
                 </p>
+                {emptyStateAction && <div className="mt-6">{emptyStateAction}</div>}
             </div>
         );
     }

@@ -37,7 +37,9 @@ export default function AppShell({ children }: AppShellProps) {
     return (
         <>
             <Header onAddPropertyAction={() => setIsModalOpen(true)} />
-            <div className="pt-14 sm:pt-16">{children}</div>
+            <main className="absolute top-14 sm:top-16 left-0 right-0 h-[calc(100vh-56px)] sm:h-[calc(100vh-64px)] overflow-y-auto">
+                {children}
+            </main>
 
             {/* Add Property Modal - only for admin */}
             {canManageProperties && (

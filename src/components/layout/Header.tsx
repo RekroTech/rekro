@@ -27,13 +27,13 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
         },
         {
             label: "Liked properties",
-            href: "/profile/likes",
+            href: "/property/liked",
             icon: <Icon name="heart" className="w-4 h-4" />,
         },
         {
             label: "Applications",
             href: "/applications",
-            icon: <Icon name="heart" className="w-4 h-4" />,
+            icon: <Icon name="document" className="w-4 h-4" />,
         },
         {
             label: "Settings",

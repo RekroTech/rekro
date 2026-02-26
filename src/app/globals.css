@@ -66,8 +66,14 @@
     --secondary-900: #121826;
 
     /* Status */
-    --danger-500: #ff3b30;
-    --danger-600: #d32f2f;
+    --danger-50: #fef2f2;
+    --danger-100: #fee2e2;
+    --danger-200: #fecaca;
+    --danger-300: #fca5a5;
+    --danger-400: #f87171;
+    --danger-500: #dc2626;
+    --danger-600: #b91c1c;
+    --danger-700: #991b1b;
     --warning-50: #fff7ed;
     --warning-200: #fed7aa;
     --warning-500: #ff9500;
@@ -128,6 +134,14 @@
         --focus-ring: rgba(58, 127, 121, 0.25);
 
         /* Status colors for dark mode */
+        --danger-50: rgba(220, 38, 38, 0.1);
+        --danger-100: rgba(220, 38, 38, 0.15);
+        --danger-200: rgba(220, 38, 38, 0.25);
+        --danger-300: rgba(220, 38, 38, 0.35);
+        --danger-400: #ef4444;
+        --danger-500: #dc2626;
+        --danger-600: #b91c1c;
+        --danger-700: #991b1b;
         --warning-50: rgba(255, 149, 0, 0.15);
         --warning-200: rgba(255, 149, 0, 0.3);
         --warning-700: #ffa500;
@@ -199,8 +213,14 @@
     --color-secondary-900: var(--secondary-900);
 
     /* Status */
+    --color-danger-50: var(--danger-50);
+    --color-danger-100: var(--danger-100);
+    --color-danger-200: var(--danger-200);
+    --color-danger-300: var(--danger-300);
+    --color-danger-400: var(--danger-400);
     --color-danger-500: var(--danger-500);
     --color-danger-600: var(--danger-600);
+    --color-danger-700: var(--danger-700);
     --color-warning-50: var(--warning-50);
     --color-warning-200: var(--warning-200);
     --color-warning-500: var(--warning-500);

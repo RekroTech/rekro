@@ -18,7 +18,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center h-full">
                 <Loader />
             </div>
         );

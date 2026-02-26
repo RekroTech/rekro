@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { NotificationPreferences } from "@/types/user.types";
 import { useProfile, useUpdateProfile } from "@/lib/hooks";
 import { useToast } from "@/hooks";
-import { BackButton, Button, Checkbox, Loader } from "@/components/common";
+import { Button, Checkbox, Loader } from "@/components/common";
 
 export default function SettingsPage() {
     const { showSuccess, showError } = useToast();
@@ -113,7 +113,7 @@ export default function SettingsPage() {
 
     if (userLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center h-full">
                 <Loader size="lg" />
             </div>
         );
@@ -121,12 +121,7 @@ export default function SettingsPage() {
 
     return (
         <div className="min-h-[calc(100vh-64px)] bg-app-bg pb-20">
-            <div className="max-w-7xl mx-auto px-4 py-8">
-                {/* Header */}
-                <div className="mb-6">
-                    <BackButton />
-                </div>
-
+            <div className="max-w-7xl mx-auto px-4 py-4 sm:py-8">
                 {/* Two Column Layout */}
                 <div className="flex flex-col lg:flex-row gap-6">
                     {/* Left Column - 2/3 width */}

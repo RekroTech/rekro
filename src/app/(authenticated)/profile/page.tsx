@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/lib/hooks";
-import { BackButton, Icon, Loader } from "@/components/common";
+import { Icon, Loader } from "@/components/common";
 import {
     ProfileCard,
     ProfileSectionCard,
@@ -91,7 +91,7 @@ function ProfilePageContent() {
     // Loading and auth states
     if (userLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center h-full">
                 <Loader />
             </div>
         );
@@ -103,17 +103,14 @@ function ProfilePageContent() {
     }
 
     return (
-        <div className="h-[calc(100vh-64px)] bg-app-bg flex flex-col">
+        <div className="h-full bg-app-bg flex flex-col">
             {/* Scrollable Body */}
             <div className="flex-1 overflow-y-auto">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8">
-                    <BackButton />
-                </div>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 pb-8">
                         {/* Left Column - Shareable Profile Card and Badges (Sticky on Desktop) */}
                         <div className="lg:col-span-1">
-                            <div className="lg:sticky lg:top-4 space-y-4 sm:space-y-6">
+                            <div className="lg:sticky lg:top-6 space-y-4 sm:space-y-6">
                                 {shareableProfile && (
                                     <ProfileCard
                                         profile={shareableProfile}
