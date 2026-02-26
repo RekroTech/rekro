@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import type { Property } from "@/types/property.types";
 import { useProperties, useSessionUser } from "@/lib/hooks";
 import { Icon, Loader } from "@/components/common";
@@ -13,6 +13,7 @@ export interface PropertyListProps {
     minBathrooms?: number;
     furnished?: boolean;
     listingType?: string;
+    status?: "active" | "leased" | "inactive";
     showEditButton?: boolean;
     likedOnly?: boolean;
     emptyMessage?: string;
@@ -26,6 +27,7 @@ export function PropertyList({
     minBathrooms,
     furnished,
     listingType,
+    status,
     showEditButton = false,
     likedOnly = false,
     emptyMessage,
@@ -50,6 +52,7 @@ export function PropertyList({
                 minBathrooms,
                 furnished,
                 listingType: normalizedListingType,
+                status,
                 userId,
                 likedOnly,
             },

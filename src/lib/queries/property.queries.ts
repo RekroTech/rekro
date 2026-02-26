@@ -53,15 +53,16 @@ export async function getProperties(
         minBathrooms,
         furnished,
         listingType,
+        status,
     } = params;
 
     // Always fetch units with properties to avoid N+1 query problem
     const unitColumns =
         "id, listing_type, name, description, price, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
 
-    // Use inner join for filtering by liked properties or listing type
+    // Use inner join for filtering by liked properties, listing type, or status
     const selectQuery =
-        listingType || likedOnly ? `*, units!inner(${unitColumns})` : `*, units(${unitColumns})`;
+        listingType || likedOnly || status ? `*, units!inner(${unitColumns})` : `*, units(${unitColumns})`;
 
     let query = supabase
         .from("properties")
@@ -86,6 +87,17 @@ export async function getProperties(
         }
 
         query = query.in("units.id", likedUnitIds);
+    }
+
+    // Filter by status (admin-only)
+    if (status) {
+        if (status === "active") {
+            query = query.eq("units.is_active", true).eq("units.is_available", true);
+        } else if (status === "leased") {
+            query = query.eq("units.is_available", false);
+        } else if (status === "inactive") {
+            query = query.eq("units.is_active", false);
+        }
     }
 
     // Apply filters
@@ -131,7 +143,7 @@ export async function getProperties(
     let properties: Property[] = data ?? [];
 
     // Handle duplicate properties when using inner join
-    if (listingType && properties.length > 0) {
+    if ((listingType || status) && properties.length > 0) {
         const propertyMap = new Map<string, Property>();
 
         properties.forEach((prop: Property) => {

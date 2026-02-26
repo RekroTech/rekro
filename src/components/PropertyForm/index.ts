@@ -22,6 +22,7 @@ export type { AddPropertyModalProps } from "../Property/types";
 export {
     PROPERTY_TYPES,
     LISTING_TYPES,
+    STATUS_TABS,
     LEASE_MONTH_OPTIONS,
     PARKING_OPTIONS,
     AMENITIES,

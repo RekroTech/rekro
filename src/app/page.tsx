@@ -6,14 +6,15 @@ import { Icon, Input, Select, Banner } from "@/components/common";
 import { useRoles } from "@/lib/hooks";
 import { useEmailVerification, VerificationErrorModal } from "@/components/Auth";
 import { usePropertyFilters } from "@/components/Properties";
-import { LISTING_TYPES, PROPERTY_TYPES } from "@/components/PropertyForm";
+import { LISTING_TYPES, PROPERTY_TYPES, STATUS_TABS } from "@/components/PropertyForm";
 
 // This page needs to be dynamic to show property listings
 export const dynamic = "force-dynamic";
 
 function HomePageContent() {
-    const { canManageProperties } = useRoles();
+    const { canManageProperties, canManageUsers } = useRoles();
     const [showFilters, setShowFilters] = useState(false);
+    const [status, setStatus] = useState<"active" | "leased" | "inactive">("active");
 
     const {
         filters: {
@@ -143,34 +144,60 @@ function HomePageContent() {
                     </div>
                 </div>
 
-                {/* Listing type tabs */}
+                {/* Listing type tabs - Show admin tabs if user can manage users (admin) */}
                 <div className="mb-4 sm:mb-6 flex justify-center px-1">
                     <div
                         role="tablist"
-                        aria-label="Listing type"
+                        aria-label={canManageUsers ? "Property status" : "Listing type"}
                         className="flex items-center gap-1 sm:gap-2 rounded-4xl border border-border bg-card p-1 w-full max-w-md"
                     >
-                        {LISTING_TYPES.map((tab) => {
-                            const isActive = listingType === tab.value;
-                            return (
-                                <button
-                                    key={tab.value}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={isActive}
-                                    tabIndex={isActive ? 0 : -1}
-                                    onClick={() => setListingType(tab.value)}
-                                    className={
-                                        "flex-1 rounded-4xl px-3 py-2 text-xs sm:text-sm font-medium text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 whitespace-nowrap touch-manipulation " +
-                                        (isActive
-                                            ? "bg-primary-600 text-white ring-2 ring-primary-500"
-                                            : "bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted")
-                                    }
-                                >
-                                    {tab.label}
-                                </button>
-                            );
-                        })}
+                        {canManageUsers ? (
+                            // Admin tabs: Active, Leased, Inactive
+                            STATUS_TABS.map((tab) => {
+                                const isActive = status === tab.value;
+                                return (
+                                    <button
+                                        key={tab.value}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={isActive}
+                                        tabIndex={isActive ? 0 : -1}
+                                        onClick={() => setStatus(tab.value as "active" | "leased" | "inactive")}
+                                        className={
+                                            "flex-1 rounded-4xl px-3 py-2 text-xs sm:text-sm font-medium text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 whitespace-nowrap touch-manipulation " +
+                                            (isActive
+                                                ? "bg-primary-600 text-white ring-2 ring-primary-500"
+                                                : "bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted")
+                                        }
+                                    >
+                                        {tab.label}
+                                    </button>
+                                );
+                            })
+                        ) : (
+                            // Regular user tabs: All, Entire Home, Private Room
+                            LISTING_TYPES.map((tab) => {
+                                const isActive = listingType === tab.value;
+                                return (
+                                    <button
+                                        key={tab.value}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={isActive}
+                                        tabIndex={isActive ? 0 : -1}
+                                        onClick={() => setListingType(tab.value)}
+                                        className={
+                                            "flex-1 rounded-4xl px-3 py-2 text-xs sm:text-sm font-medium text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 whitespace-nowrap touch-manipulation " +
+                                            (isActive
+                                                ? "bg-primary-600 text-white ring-2 ring-primary-500"
+                                                : "bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted")
+                                        }
+                                    >
+                                        {tab.label}
+                                    </button>
+                                );
+                            })
+                        )}
                     </div>
                 </div>
 
@@ -180,7 +207,8 @@ function HomePageContent() {
                     propertyType={propertyType}
                     minBedrooms={bedrooms ? parseInt(bedrooms) : undefined}
                     minBathrooms={bathrooms ? parseInt(bathrooms) : undefined}
-                    listingType={listingType}
+                    listingType={canManageUsers ? undefined : listingType}
+                    status={canManageUsers ? status ?? undefined : undefined}
                     showEditButton={canManageProperties}
                 />
             </div>

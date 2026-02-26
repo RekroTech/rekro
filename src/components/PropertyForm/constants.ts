@@ -14,6 +14,12 @@ export const LISTING_TYPES = [
     { value: "room", label: "Private Room" },
 ];
 
+export const STATUS_TABS = [
+    { value: "active", label: "Active" },
+    { value: "leased", label: "Leased" },
+    { value: "inactive", label: "Inactive" },
+];
+
 export const LEASE_MONTH_OPTIONS = [
     { value: "3", label: "3 months" },
     { value: "6", label: "6 months" },

@@ -32,6 +32,7 @@ export interface GetPropertiesParams {
     minBathrooms?: number;
     furnished?: boolean;
     listingType?: string;
+    status?: "active" | "leased" | "inactive"; // Admin-only filter
 }
 
 export interface GetPropertiesResponse {
