@@ -1,3 +1,11 @@
+/**
+ * Application Review Sub-Components Index
+ * All components are CLIENT-ONLY (used within ApplicationReview)
+ *
+ * Usage:
+ * import { ApplicantHeader, PersonalInformationSection } from "@/components/ApplicationReview/components";
+ */
+
 export { ApplicantHeader } from "./ApplicantHeader";
 export { PersonalInformationSection } from "./PersonalInformationSection";
 export { FinancialInformationSection } from "./FinancialInformationSection";

@@ -147,16 +147,6 @@ export default function ApplicationsPage() {
     return (
         <div className="min-h-screen bg-app-bg">
             <div className="mx-auto max-w-7xl px-3 py-6 sm:px-4 sm:py-8 lg:px-8">
-                {/* Header */}
-                <div className="mb-6 sm:mb-8">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-text mb-2">
-                        My Applications
-                    </h1>
-                    <p className="text-sm sm:text-base text-text-muted">
-                        Track and manage your rental applications
-                    </p>
-                </div>
-
                 {typedApplications.length === 0 ? (
                     <div className="bg-card rounded-[var(--radius-card-lg)] shadow-[var(--shadow-card)] border border-border p-8 sm:p-12 text-center">
                         <div className="max-w-md mx-auto">
