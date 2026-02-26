@@ -13,16 +13,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
     try {
+        // Get authenticated user with role (no extra DB query needed!)
+        const authUser = await requireAuthForApi();
         const supabase = await createClient();
-
-        const {
-            data: { user: authUser },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !authUser) {
-            return errorResponse("Unauthorized", 401);
-        }
 
         const { data: profileData, error: profileError } = await supabase
             .from("users")
@@ -44,6 +37,12 @@ export async function GET() {
         return successResponse(profileData);
     } catch (error) {
         console.error("Profile fetch error:", error);
+
+        // Handle authentication errors from requireAuthForApi
+        if (error instanceof Error && error.message === "Unauthorized") {
+            return errorResponse("Unauthorized", 401);
+        }
+
         return errorResponse("Internal server error", 500);
     }
 }
@@ -160,6 +159,12 @@ export async function PATCH(req: NextRequest) {
         return successResponse(updatedProfile);
     } catch (error) {
         console.error("Profile update error:", error);
+
+        // Handle authentication errors from requireAuthForApi
+        if (error instanceof Error && error.message === "Unauthorized") {
+            return errorResponse("Unauthorized", 401);
+        }
+
         return errorResponse("Internal server error", 500);
     }
 }

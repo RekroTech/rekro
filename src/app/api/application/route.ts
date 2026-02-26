@@ -10,9 +10,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireAuthForApi } from "@/lib/supabase/server";
+import { getCurrentTimestamp, parseInclusions } from "@/lib/utils";
 import { CreateApplicationRequest } from "@/types/application.types";
-import { parseInclusions } from "@/lib/utils/inclusions";
 
 export const dynamic = "force-dynamic";
 
@@ -30,20 +30,9 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createClient();
-
         // Check authentication - only authenticated users can submit applications
-        const {
-            data: { user },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401, headers: { "Cache-Control": "no-store" } }
-            );
-        }
+        const user = await requireAuthForApi();
+        const supabase = await createClient();
 
         // Parse request body
         const body: CreateApplicationRequest = await request.json();
@@ -59,6 +48,7 @@ export async function POST(request: NextRequest) {
             inclusions,
             occupancyType,
             message,
+            status,
         } = body;
 
         // Validate required fields
@@ -110,16 +100,16 @@ export async function POST(request: NextRequest) {
             property_id: propertyId,
             unit_id: unitId || null,
             application_type: applicationType,
-            status: "draft" as const,
+            status: status || "draft",
             message: message || null,
-            submitted_at: applicationId ? undefined : new Date().toISOString(),
+            submitted_at: status === "submitted" ? getCurrentTimestamp() : undefined,
             move_in_date: moveInDate || null,
             rental_duration: rentalDuration ? parseInt(rentalDuration, 10) : null,
             proposed_rent: proposedRent ? parseFloat(proposedRent) : null,
             total_rent: totalRent || null,
             inclusions: parsedInclusions,
             occupancy_type: occupancyType,
-            updated_at: new Date().toISOString(),
+            updated_at: getCurrentTimestamp(),
         };
 
         // Upsert the application
@@ -132,9 +122,9 @@ export async function POST(request: NextRequest) {
         if (applicationError) {
             console.error("Application upsert error:", {
                 message: applicationError.message,
-                code: (applicationError as any).code,
-                details: (applicationError as any).details,
-                hint: (applicationError as any).hint,
+                code: "code" in applicationError ? applicationError.code : undefined,
+                details: "details" in applicationError ? applicationError.details : undefined,
+                hint: "hint" in applicationError ? applicationError.hint : undefined,
             });
             return NextResponse.json(
                 { error: applicationError.message || "Failed to save application" },
@@ -219,6 +209,15 @@ export async function POST(request: NextRequest) {
         );
     } catch (error) {
         console.error("Application submission error:", error);
+
+        // Handle authentication errors from requireAuthForApi
+        if (error instanceof Error && error.message === "Unauthorized") {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401, headers: { "Cache-Control": "no-store" } }
+            );
+        }
+
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500, headers: { "Cache-Control": "no-store" } }

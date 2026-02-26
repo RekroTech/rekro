@@ -1,5 +1,5 @@
 // Application types
-import { ApplicationType, OccupancyType } from "@/types/db";
+import { ApplicationStatus, ApplicationType, OccupancyType } from "@/types/db";
 import { Inclusions } from "@/types/property.types";
 
 export interface ApplicationFormData {
@@ -72,4 +72,5 @@ export interface CreateApplicationRequest {
     inclusions: Inclusions;
     occupancyType: OccupancyType;
     message?: string;
+    status?: ApplicationStatus; // Optional: defaults to "draft"
 }

@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { createClient, requireAuthForApi } from "@/lib/supabase/server";
-import { uploadPropertyFiles } from "@/lib/services/storage.service";
-import { successResponse, errorResponse } from "../../utils";
-import { isAdmin } from "@/lib/utils/authorization";
+import { uploadPropertyFiles } from "@/lib/services";
+import { isAdmin } from "@/lib/utils";
 import type { UnitInsert, PropertyInsert } from "@/types/db";
+import { errorResponse, successResponse } from "@/app/api/utils";
 
 /**
  * PUT /api/property/[id]
@@ -18,7 +18,6 @@ export async function PUT(
 
         // Get authenticated user with role (no extra DB query needed!)
         const user = await requireAuthForApi();
-
         const supabase = await createClient();
 
         // Verify property exists and user has permission

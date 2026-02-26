@@ -1,5 +1,5 @@
 import { useAuthModal } from "@/contexts";
-import { useRoles } from "@/lib/react-query/hooks/roles";
+import { useRoles } from "@/lib/hooks/roles";
 
 /**
  * Hook for gating actions behind authentication

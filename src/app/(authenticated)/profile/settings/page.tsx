@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useProfile, useUpdateProfile } from "@/lib/react-query/hooks/user";
-import { BackButton, Button, Checkbox, Loader } from "@/components/common";
-import { useToast } from "@/hooks/useToast";
 import type { NotificationPreferences } from "@/types/user.types";
+import { useProfile, useUpdateProfile } from "@/lib/hooks";
+import { useToast } from "@/hooks";
+import { BackButton, Button, Checkbox, Loader } from "@/components/common";
 
 export default function SettingsPage() {
     const { showSuccess, showError } = useToast();

@@ -1,6 +1,11 @@
 "use client";
 
-import { useProperty } from "@/lib/react-query/hooks/property";
+import { useState, useMemo, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { ProfileCompletionProvider } from "@/contexts";
+import { getPropertyFileUrls } from "@/lib/services";
+import { useProperty, useProfile } from "@/lib/hooks";
+import { useMediaQuery } from "@/hooks";
 import { Loader, Button, BackButton } from "@/components/common";
 import {
     PropertyHeader,
@@ -11,14 +16,8 @@ import {
     PropertySidebar,
     LikedUsersCarousal,
     DiscoverabilityPrompt,
-} from "@/components/Property/PropertyDetail";
-import { useState, useMemo, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { getPropertyFileUrls } from "@/lib/services/storage.service";
-import { updateRoomRentsOnOccupancySelection } from "@/components/Property/pricing";
-import { ProfileCompletionProvider } from "@/contexts";
-import { useProfile } from "@/lib/react-query/hooks/user";
-import { useMediaQuery } from "@/hooks";
+} from "@/components/Property";
+import { updateRoomRentsOnOccupancySelection } from "@/components/Property/utils/pricing";
 
 export default function PropertyDetailPage() {
     const params = useParams();

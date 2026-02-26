@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthModal } from "@/contexts/AuthModalContext";
-import type { EmailVerificationError } from "@/contexts/AuthModalContext";
+import { EmailVerificationError } from "@/components/Auth";
 
 /**
  * Hook to handle email verification flow from URL params

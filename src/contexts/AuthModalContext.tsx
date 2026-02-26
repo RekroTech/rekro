@@ -1,13 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-
-export interface EmailVerificationError {
-    title: string;
-    message: string;
-    icon: "info" | "x";
-    canResend: boolean;
-}
+import { EmailVerificationError } from "@/components/Auth";
 
 interface AuthModalContextType {
     isAuthModalOpen: boolean;

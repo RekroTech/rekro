@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { processEmail } from "@/lib/utils/email";
+import { processEmail } from "@/lib/utils";
 import { authErrorResponse, authSuccessResponse } from "@/app/api/utils";
 
 export const dynamic = "force-dynamic";

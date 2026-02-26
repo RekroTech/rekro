@@ -54,6 +54,10 @@ const config: Config = {
                     500: "var(--danger-500)",
                     600: "var(--danger-600)",
                 },
+                success: {
+                    bg: "var(--success-bg)",
+                    soft: "var(--success-soft)",
+                },
                 warning: {
                     50: "var(--warning-50)",
                     200: "var(--warning-200)",

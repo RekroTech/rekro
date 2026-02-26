@@ -6,7 +6,7 @@ import { Profile, ProfileUpdate, UserApplicationProfile, UserApplicationProfileU
 
 export type UserLocation = Record<string, unknown>;
 
-export type NotificationPreferences = {
+export interface NotificationPreferences {
     emailNotifications?: boolean;
     smsNotifications?: boolean;
     propertyUpdates?: boolean;
@@ -16,11 +16,11 @@ export type NotificationPreferences = {
 }
 
 // UserProfile matches the API response structure with nested user_application_profile
-export type UserProfile = Profile & {
+export interface UserProfile extends Profile {
     user_application_profile: UserApplicationProfile | null;
-};
+}
 
-export type UpdateProfile = ProfileUpdate & UserApplicationProfileUpdate;
+export interface UpdateProfile extends ProfileUpdate, UserApplicationProfileUpdate {}
 
 // ============================================================================
 // Liked Profile Type (from liked_profiles view)

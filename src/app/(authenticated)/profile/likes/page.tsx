@@ -1,6 +1,6 @@
 "use client";
 
-import { PropertyList } from "@/components";
+import { PropertyList } from "@/components/Properties/PropertyList";
 import { BackButton } from "@/components/common";
 
 export default function LikedPropertiesPage() {

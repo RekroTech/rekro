@@ -55,12 +55,12 @@ export type DocumentType =
     | "referenceLetter"
     | "guarantorLetter"
 
-export type Document = {
-        url: string;
-        path: string;
-        uploadedAt: string;
-        filename: string;
-};
+export interface Document {
+    url: string;
+    path: string;
+    uploadedAt: string;
+    filename: string;
+}
 
 export type Documents = Partial<Record<DocumentType, Document>>
 

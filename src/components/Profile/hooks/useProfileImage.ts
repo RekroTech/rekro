@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useUpdateProfile } from "@/lib/react-query/hooks/user";
+import { useUpdateProfile } from "@/lib/hooks/user";
 import { uploadProfileImage } from "@/lib/services/storage.service";
 
 interface UseProfileImageOptions {

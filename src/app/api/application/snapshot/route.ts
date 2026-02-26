@@ -7,7 +7,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, requireAuthForApi } from "@/lib/supabase/server";
-import { createApplicationSnapshot } from "@/components/Application/applicationSnapshot";
+import { createApplicationSnapshot } from "@/app/api/utils";
+
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +24,7 @@ export async function POST(request: NextRequest) {
     try {
         // Get authenticated user with role (no extra DB query needed!)
         const user = await requireAuthForApi();
-
         const supabase = await createClient();
-
 
         // Parse request body
         const body = await request.json();

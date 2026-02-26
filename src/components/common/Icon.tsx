@@ -40,6 +40,8 @@ export type IconName =
     | "document"
     | "file"
     | "arrow-up"
+    | "arrow-down"
+    | "download"
     | "share"
     | "dot"
     | "circle"
@@ -424,6 +426,22 @@ const iconPaths: Record<IconName, React.ReactNode> = {
             strokeLinejoin="round"
             strokeWidth={2}
             d="M5 10l7-7m0 0l7 7m-7-7v18"
+        />
+    ),
+    "arrow-down": (
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 14l-7 7m0 0l-7-7m7 7V3"
+        />
+    ),
+    download: (
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
         />
     ),
     share: (

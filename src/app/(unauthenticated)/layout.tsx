@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import React, { useEffect } from "react";
-import { useSessionUser } from "@/lib/react-query/hooks/auth";
+import { useSessionUser } from "@/lib/hooks/auth";
 
 export default function UnauthenticatedLayout({ children }: { children: React.ReactNode }) {
     const { data: user, isLoading } = useSessionUser();

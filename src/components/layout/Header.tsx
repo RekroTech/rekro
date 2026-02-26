@@ -4,13 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button, Dropdown, Icon, LogoIcon, LogoText } from "@/components/common";
 import type { DropdownItem } from "@/components/common";
-import { useLogout } from "@/lib/react-query/hooks/auth";
-import { useRoles } from "@/lib/react-query/hooks/roles";
+import { useLogout } from "@/lib/hooks/auth";
+import { useRoles } from "@/lib/hooks/roles";
 import { useAuthModal } from "@/contexts";
 
-type HeaderProps = {
+interface HeaderProps {
     onAddPropertyAction?: () => void;
-};
+}
 
 export function Header({ onAddPropertyAction }: HeaderProps) {
     const { mutate: logout, isPending } = useLogout();
@@ -28,6 +28,11 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
         {
             label: "Liked properties",
             href: "/profile/likes",
+            icon: <Icon name="heart" className="w-4 h-4" />,
+        },
+        {
+            label: "Applications",
+            href: "/applications",
             icon: <Icon name="heart" className="w-4 h-4" />,
         },
         {

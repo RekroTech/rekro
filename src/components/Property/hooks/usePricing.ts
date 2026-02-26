@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
 import type { RentalFormData } from "@/components/Property/types";
-import { calculatePricing } from "@/components/Property/pricing";
+import { calculatePricing } from "@/components/Property/utils/pricing";
 
 interface UsePricingParams {
     selectedUnit: Unit | null;

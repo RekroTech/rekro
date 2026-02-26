@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useProfile } from "@/lib/react-query/hooks/user";
+import { useRouter } from "next/navigation";
+import { useProfile } from "@/lib/hooks";
 import { BackButton, Icon, Loader } from "@/components/common";
 import {
     ProfileCard,
@@ -12,18 +12,18 @@ import {
     ResidencySection,
     IncomeDetailsSection,
     PersonalDetailsSection,
+    useProfileImage,
+    useProfileSave,
+    useAutosave,
+    useSectionExpansion,
+    useProfileForm,
+    buildShareableProfile,
 } from "@/components/Profile";
-import { useProfileForm } from "@/components/Profile/hooks/useProfileForm";
-import { useProfileImage } from "@/components/Profile/hooks/useProfileImage";
-import { useSectionExpansion } from "@/components/Profile/hooks/useSectionExpansion";
-import { useAutosave } from "@/components/Profile/hooks/useAutosave";
-import { useProfileSave } from "@/components/Profile/hooks/useProfileSave";
-import { useProfileCompletion } from "@/contexts";
-import { buildShareableProfile } from "@/components/Profile/shareable-profile";
 import {
     DocumentOperationsProvider,
     useDocumentOperations,
-} from "@/components/Profile/contexts/DocumentOperationsContext";
+    useProfileCompletion,
+} from "@/contexts";
 
 function ProfilePageContent() {
     const router = useRouter();

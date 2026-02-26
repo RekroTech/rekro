@@ -1,4 +1,3 @@
-export { Header } from "./layout/Header";
-export { PropertyCard } from "./Property/PropertyCard";
-export { PropertyList } from "./Property/PropertyList";
-export { PropertyForm } from "./Property/PropertyForm";
+// Re-export only what's safe for server components
+// Client components should be imported directly from their source files
+export * from "./layout";

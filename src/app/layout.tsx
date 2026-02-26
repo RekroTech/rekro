@@ -2,7 +2,7 @@ import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { clsx } from "clsx";
-import { QueryProvider } from "@/lib/react-query/QueryProvider";
+import { QueryProvider } from "@/components";
 import { AuthModalProvider, ToastProvider } from "@/contexts";
 import AppShell from "./AppShell";
 

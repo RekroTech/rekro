@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useCreateUnitShare } from "@/lib/react-query/hooks/units";
-import { useSessionUser } from "@/lib/react-query/hooks/auth";
+import { useCreateUnitShare } from "@/lib/hooks/units";
+import { useSessionUser } from "@/lib/hooks/auth";
 
 interface UseSharePropertyProps {
     propertyId: string;

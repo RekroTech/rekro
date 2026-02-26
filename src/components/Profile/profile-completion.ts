@@ -1,33 +1,11 @@
 import type { UserProfile, ProfileSection, ProfileCompletion } from "@/types/user.types";
 import type { Documents, EmploymentStatus, StudentStatus } from "@/types/db";
+import type { ProfileCompletionDetails } from "./types";
 
 /**
  * These details are provided by the Profile UI (see `src/app/(authenticated)/profile/page.tsx`).
  * We keep this shape local to avoid coupling completion logic to UI component state types.
  */
-export type ProfileCompletionDetails = {
-  // Residency
-  isCitizen: boolean | null;
-  visaStatus?: string | null;
-
-  // Income / study - using DB enum types
-  employmentStatus: EmploymentStatus;
-  employmentType: string | null;
-  incomeSource: string | null;
-  incomeFrequency: string | null;
-  incomeAmount: number | null;
-  studentStatus: StudentStatus;
-  financeSupportType: string | null;
-  financeSupportDetails: string | null;
-
-  // (Future/optional) preferences – currently not used in completion
-  preferredMoveInDate?: string | null;
-  preferredRentalDuration?: string | null;
-
-  // Rental prefs (these are mostly stored in DB, but UI might pass them too)
-  max_budget_per_week?: number | null;
-  preferred_locality?: string | null;
-};
 
 function isFilled(value: unknown): boolean {
   if (value === null || value === undefined) return false;

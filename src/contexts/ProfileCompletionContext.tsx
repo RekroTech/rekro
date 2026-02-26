@@ -1,10 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useRef } from "react";
-import { useProfile } from "@/lib/react-query/hooks/user";
-import { calculateProfileCompletion, type ProfileCompletionDetails } from "@/components/Profile/profile-completion";
+import { useProfile } from "@/lib/hooks/user";
+import { calculateProfileCompletion } from "@/components/Profile/profile-completion";
 import type { ProfileCompletion } from "@/types/user.types";
 import type { Documents } from "@/types/db";
+import type { ProfileCompletionDetails } from "@/components/Profile";
 
 interface ProfileCompletionContextValue {
     /** Current profile completion data */

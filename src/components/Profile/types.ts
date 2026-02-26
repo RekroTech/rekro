@@ -13,7 +13,7 @@ import type { Gender, PreferredContactMethod, EmploymentStatus, StudentStatus, D
 // Personal details (top-level `users` table)
 // ---------------------------------------------------------------------------
 
-export type PersonalDetailsFormState = {
+export interface PersonalDetailsFormState {
   full_name: string;
   username: string;
   phone: string;
@@ -23,26 +23,26 @@ export type PersonalDetailsFormState = {
   gender: "" | Gender;
   preferred_contact_method: PreferredContactMethod;
   native_language: string;
-};
+}
 
 // ---------------------------------------------------------------------------
 // Residency (stored in `user_application_profile.visa_status`)
 // ---------------------------------------------------------------------------
 
-export type ResidencyFormState = {
+export interface ResidencyFormState {
   isCitizen: boolean | null;
   visaStatus: string | null;
   documents: {
     passport?: Document;
     visa?: Document;
   };
-};
+}
 
 // ---------------------------------------------------------------------------
 // Income (stored in `user_application_profile.*`)
 // ---------------------------------------------------------------------------
 
-export type IncomeDetailsFormState = {
+export interface IncomeDetailsFormState {
   // Employment - using DB enum types directly
   employmentStatus: EmploymentStatus;
   employmentType: string | null;
@@ -64,23 +64,47 @@ export type IncomeDetailsFormState = {
     coe?: Document;
     proofOfFunds?: Document;
   };
-};
+}
 
 // ---------------------------------------------------------------------------
 // Rental preferences (mix of top-level and application profile)
 // ---------------------------------------------------------------------------
 
-export type RentalPreferencesFormState = {
+export interface RentalPreferencesFormState {
   current_location: Record<string, unknown> | null;
   destination_location: Record<string, unknown> | null;
   max_budget_per_week: number | null;
   preferred_locality: string | null;
   has_pets: boolean | null;
   smoker: boolean | null;
-};
+}
 
-export type AdditionalDocumentsFormState = {
+export interface AdditionalDocumentsFormState {
     referenceLetter?: Document;
     guarantorLetter?: Document;
     drivingLicense?: Document;
 }
+
+export type ProfileCompletionDetails = {
+  // Residency
+  isCitizen: boolean | null;
+  visaStatus?: string | null;
+
+  // Income / study - using DB enum types
+  employmentStatus: EmploymentStatus;
+  employmentType: string | null;
+  incomeSource: string | null;
+  incomeFrequency: string | null;
+  incomeAmount: number | null;
+  studentStatus: StudentStatus;
+  financeSupportType: string | null;
+  financeSupportDetails: string | null;
+
+  // (Future/optional) preferences – currently not used in completion
+  preferredMoveInDate?: string | null;
+  preferredRentalDuration?: string | null;
+
+  // Rental prefs (these are mostly stored in DB, but UI might pass them too)
+  max_budget_per_week?: number | null;
+  preferred_locality?: string | null;
+};

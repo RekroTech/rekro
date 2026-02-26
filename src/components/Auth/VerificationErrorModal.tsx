@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Modal, Button, Input, Alert } from "@/components/common";
+import { processEmail } from "@/lib/utils";
+import { useSignInWithOtp } from "@/lib/hooks";
 import { EmailSentSuccess } from "./EmailSentSuccess";
-import type { EmailVerificationError } from "@/contexts/AuthModalContext";
-import { processEmail } from "@/lib/utils/email";
-import { useSignInWithOtp } from "@/lib/react-query/hooks/auth";
+import { EmailVerificationError } from "./types";
 
 interface VerificationErrorModalProps {
     /** Whether modal is open */

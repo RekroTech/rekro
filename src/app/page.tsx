@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { PropertyList } from "@/components";
+import { PropertyList } from "@/components/Properties/PropertyList";
 import { Icon, Input, Select, Banner } from "@/components/common";
-import { usePropertyFilters, LISTING_TYPES, PROPERTY_TYPES } from "@/components/Property";
-import { useRoles } from "@/lib/react-query/hooks/roles";
+import { useRoles } from "@/lib/hooks";
 import { useEmailVerification, VerificationErrorModal } from "@/components/Auth";
+import { usePropertyFilters } from "@/components/Properties";
+import { LISTING_TYPES, PROPERTY_TYPES } from "@/components/PropertyForm";
 
 // This page needs to be dynamic to show property listings
 export const dynamic = "force-dynamic";

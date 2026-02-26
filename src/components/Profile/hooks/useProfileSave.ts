@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useUpdateProfile } from "@/lib/react-query/hooks/user";
+import { useUpdateProfile } from "@/lib/hooks/user";
 import type { UpdateProfile } from "@/types/user.types";
 import type { ProfileFormState } from "./useProfileForm";
 

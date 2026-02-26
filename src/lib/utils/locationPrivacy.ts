@@ -62,7 +62,7 @@ export function getLocalityString(address?: {
  * Check if a coordinate is within a certain radius of the original
  * Useful for validation
  */
-export function isWithinRadius(
+export function isWithinRadiusV2(
     original: { lat: number; lng: number },
     test: { lat: number; lng: number },
     radiusKm: number

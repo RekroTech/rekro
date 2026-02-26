@@ -1,8 +1,8 @@
 "use client";
 
-import { redirect } from "next/navigation";
 import React, { useEffect } from "react";
-import { useSessionUser } from "@/lib/react-query/hooks/auth";
+import { redirect } from "next/navigation";
+import { useSessionUser } from "@/lib/hooks";
 import { ProfileCompletionProvider } from "@/contexts";
 import { Loader } from "@/components/common";
 

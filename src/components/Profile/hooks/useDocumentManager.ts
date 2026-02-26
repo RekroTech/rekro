@@ -4,8 +4,9 @@ import {
     deleteUserDocument,
     listUserDocuments,
     uploadUserDocument,
-} from "@/lib/services/storage.service";
-import { useDocumentOperations } from "../contexts/DocumentOperationsContext";
+} from "@/lib/services";
+import { useDocumentOperations } from "@/contexts";
+import { getCurrentTimestamp } from "@/lib/utils";
 
 /**
  * Custom hook for managing document uploads and deletions
@@ -88,7 +89,7 @@ export function useDocumentManager({
                     [docType]: {
                         url: result.url,
                         path: result.path,
-                        uploadedAt: new Date().toISOString(),
+                        uploadedAt: getCurrentTimestamp(),
                         filename: file.name,
                     },
                 };

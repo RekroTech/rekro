@@ -2,15 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Header, PropertyForm } from "@/components";
-import { useRoles } from "@/lib/react-query/hooks/roles";
+import { Header } from "@/components/layout/Header";
+import { PropertyForm } from "@/components/PropertyForm";
+import { useRoles } from "@/lib/hooks/roles";
 import { AuthModal } from "@/components/Auth";
 import { useAuthModal } from "@/contexts";
-import { useAuthStateSync } from "@/lib/react-query/hooks/auth";
+import { useAuthStateSync } from "@/lib/hooks/auth";
 
-type AppShellProps = {
+interface AppShellProps {
     children: React.ReactNode;
-};
+}
 
 export default function AppShell({ children }: AppShellProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);

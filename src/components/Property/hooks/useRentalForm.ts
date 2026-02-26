@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import type { Unit } from "@/types/db";
-import type { Application } from "@/types/db";
-import type { RentalFormData } from "@/components/Property/types";
-import { buildInitialFormData, toFormData } from "@/components/Application/utils";
+import type { Application, Unit } from "@/types/db";
+import { RentalFormData } from "@/components/Property";
+import { buildInitialFormData, toFormData } from "@/components/ApplicationForm";
 
 interface UseRentalFormParams {
     selectedUnit: Unit;
@@ -56,4 +55,3 @@ export function useRentalForm({
         resetRentalForm,
     };
 }
-
