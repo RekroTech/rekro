@@ -24,6 +24,7 @@ function percent(filled: number, total: number): number {
  */
 export function calculatePersonalDetailsCompletion(user: UserProfile): number {
   const fields: unknown[] = [
+    user.image_url,
     user.full_name,
     user.username,
     user.phone,

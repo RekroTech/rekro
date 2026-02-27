@@ -7,7 +7,7 @@ import { PropertyForm } from "@/components/PropertyForm";
 import { useRoles } from "@/lib/hooks/roles";
 import { AuthModal } from "@/components/Auth";
 import { useAuthModal } from "@/contexts";
-import { useAuthStateSync } from "@/lib/hooks/auth";
+import { useAuthStateSync, useSessionUser } from "@/lib/hooks/auth";
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -19,6 +19,9 @@ export default function AppShell({ children }: AppShellProps) {
 
     const { canManageProperties } = useRoles();
     const { isAuthModalOpen, closeAuthModal, redirectTo } = useAuthModal();
+
+    // Check session on initial load
+    const { isLoading: isSessionLoading } = useSessionUser();
 
     // Ensure we react to Supabase auth state changes (OAuth callback, sign out, token refresh)
     // This hook keeps our session-dependent React Query caches in sync.
@@ -33,6 +36,18 @@ export default function AppShell({ children }: AppShellProps) {
 
         return () => clearTimeout(timer);
     }, [pathname]);
+
+    // Show loading state while checking session on initial load
+    if (isSessionLoading) {
+        return (
+            <div className="fixed inset-0 flex items-center justify-center bg-background">
+                <div className="text-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent mx-auto"></div>
+                    <p className="mt-4 text-sm text-text-muted">Loading...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>

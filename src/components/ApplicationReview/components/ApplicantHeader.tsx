@@ -21,6 +21,7 @@ export const ApplicantHeader = React.memo(({ user, propertyTypeDisplay }: Applic
                                     src={user.image_url}
                                     alt={user.full_name || "Applicant"}
                                     fill
+                                    sizes="(max-width: 640px) 96px, 112px"
                                     className="object-cover"
                                 />
                             </div>

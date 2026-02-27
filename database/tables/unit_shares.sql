@@ -1,4 +1,4 @@
-create table public.property_shares (
+create table public.unit_shares (
   id uuid not null default gen_random_uuid (),
   shared_by uuid null,
   unit_id uuid null,

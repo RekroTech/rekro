@@ -1,163 +1,26 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import Image from "next/image";
-import type { Address, Location } from "@/types/db";
-import { Button, Icon, Dropdown } from "@/components/common";
-import type { DropdownItem } from "@/components/common/Dropdown";
-import { useApplications, useWithdrawApplication } from "@/lib/hooks";
+import { Button, Icon } from "@/components/common";
 import {
-    formatDateShort,
-    formatDistanceToNow,
-    formatRentalDuration,
-    generateApplicationPDF,
-} from "@/lib/utils";
+    ApplicationCard,
+    AdminApplicationCard,
+} from "@/components/Applications";
+import type { ApplicationWithDetails, GroupedApplication } from "@/components/Applications";
+import { useApplications, useAdminApplications, useRoles } from "@/lib/hooks";
 
-interface ApplicationWithDetails {
-    id: string;
-    status: string;
-    created_at: string;
-    submitted_at: string;
-    updated_at: string;
-    move_in_date: string;
-    rental_duration: number;
-    proposed_rent: number | null;
-    total_rent: number;
-    message: string | null;
-    properties: {
-        id: string;
-        title: string;
-        address: Address;
-        images: string[] | null;
-        location: Location;
-    };
-    units: {
-        id: string;
-        name: string;
-        listing_type: string;
-        price: number;
-    };
-}
-
-interface GroupedApplication {
-    property: ApplicationWithDetails["properties"];
-    applications: ApplicationWithDetails[];
-}
-
-interface ApplicationCardProps {
-    application: ApplicationWithDetails;
-    onWithdraw: (id: string) => void;
-    onDownload: (application: ApplicationWithDetails) => void;
-    isWithdrawing: boolean;
-    getStatusColor: (status: string) => string;
-    getStatusIcon: (status: string) => "document" | "info-circle" | "check-circle" | "alert-circle" | "x";
-    canWithdraw: (status: string) => boolean;
-}
-
-function ApplicationCard({
-    application,
-    onWithdraw,
-    onDownload,
-    isWithdrawing,
-    getStatusColor,
-    getStatusIcon,
-    canWithdraw,
-}: ApplicationCardProps) {
-    const unit = application.units;
-
-    const dropdownItems: DropdownItem[] = [
-        {
-            label: "Download PDF",
-            icon: <Icon name="download" className="w-4 h-4" />,
-            onClick: () => onDownload(application),
-        },
-        ...(canWithdraw(application.status)
-            ? [
-                  {
-                      label: isWithdrawing ? "Withdrawing..." : "Withdraw Application",
-                      icon: <Icon name="x" className="w-4 h-4" />,
-                      onClick: () => onWithdraw(application.id),
-                      variant: "danger" as const,
-                      disabled: isWithdrawing,
-                  },
-              ]
-            : []),
-    ];
-
-    return (
-        <div className="bg-card rounded-[var(--radius-card)] border border-border p-3 sm:p-4 sm:px-5">
-            {/* First Row: Unit Name with Status Chip, Price, and Settings */}
-            <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 sm:mb-4">
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center flex-wrap gap-2 sm:gap-2 mb-1">
-                        <h4 className="text-sm sm:text-base font-semibold text-text">
-                            {unit.name}
-                        </h4>
-                        <div
-                            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full border text-xs font-medium ${getStatusColor(application.status)} whitespace-nowrap`}
-                        >
-                            <Icon name={getStatusIcon(application.status)} className="w-3.5 h-3.5" />
-                            <span className="capitalize">{application.status.replace("_", " ")}</span>
-                        </div>
-                    </div>
-                    <p className="text-lg sm:text-xl font-bold text-primary-600">
-                        ${application.total_rent}
-                        <span className="text-sm font-normal text-text-muted">/week</span>
-                    </p>
-                </div>
-
-                {/* Settings Dropdown */}
-                <Dropdown
-                    trigger={
-                        <div className="hover:bg-surface-muted rounded-md transition-colors">
-                            <Icon name="settings" className="w-5 h-5 text-text-subtle" />
-                        </div>
-                    }
-                    items={dropdownItems}
-                    align="right"
-                />
-            </div>
-
-            {/* Second Row: Application Details with Labels */}
-            <div className="flex items-center justify-between gap-2 sm:gap-6">
-                <div className="flex items-start sm:items-center gap-3 sm:gap-6 overflow-x-auto">
-                    <div className="flex-shrink-0">
-                        <p className="text-xs text-text-subtle mb-1">Reference</p>
-                        <p className="text-xs sm:text-sm text-text font-mono font-medium">
-                            #{application.id.substring(0, 8).toUpperCase()}
-                        </p>
-                    </div>
-                    <div className="flex-shrink-0">
-                        <p className="text-xs text-text-subtle mb-1">Move-in Date</p>
-                        <p className="text-xs sm:text-sm text-text font-medium">
-                            {formatDateShort(application.move_in_date)}
-                        </p>
-                    </div>
-                    <div className="flex-shrink-0">
-                        <p className="text-xs text-text-subtle mb-1">Duration</p>
-                        <p className="text-xs sm:text-sm text-text font-medium">
-                            {formatRentalDuration(application.rental_duration)}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Timestamp */}
-                <div className="text-right flex-shrink-0 self-end">
-                    <p className="text-[10px] sm:text-sm text-text-muted whitespace-nowrap">
-                        {formatDistanceToNow(new Date(application.submitted_at), {
-                            addSuffix: true,
-                        })}
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
-}
 
 export default function ApplicationsPage() {
-    const { data: applications, isLoading } = useApplications();
-    const { mutate: withdrawApplication, isPending } = useWithdrawApplication();
-    const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+    const { hasRoleLevel } = useRoles();
+    const isAdmin = hasRoleLevel("admin");
+
+    // Use appropriate hook based on role
+    const { data: userApplications, isLoading: isLoadingUser } = useApplications();
+    const { data: adminApplications, isLoading: isLoadingAdmin } = useAdminApplications();
+
+    const applications = isAdmin ? adminApplications : userApplications;
+    const isLoading = isAdmin ? isLoadingAdmin : isLoadingUser;
 
     // Group applications by property
     const groupedApplications = useMemo(() => {
@@ -195,89 +58,6 @@ export default function ApplicationsPage() {
 
         return Array.from(grouped.values());
     }, [applications]);
-
-
-    const handleWithdraw = (applicationId: string) => {
-        if (
-            confirm(
-                "Are you sure you want to withdraw this application? This action cannot be undone."
-            )
-        ) {
-            setWithdrawingId(applicationId);
-            withdrawApplication(applicationId);
-        }
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "submitted":
-                return "bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-700";
-            case "under_review":
-                return "bg-warning-50 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300 border-warning-200 dark:border-warning-700";
-            case "approved":
-                return "bg-success-bg dark:bg-success-bg text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-700";
-            case "rejected":
-                return "bg-danger-500/10 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400 border-danger-500/20 dark:border-danger-700";
-            case "withdrawn":
-                return "bg-surface-muted dark:bg-surface-muted text-text-muted dark:text-text-muted border-border dark:border-border";
-            default:
-                return "bg-surface-muted dark:bg-surface-muted text-text-muted dark:text-text-muted border-border dark:border-border";
-        }
-    };
-
-    const getStatusIcon = (status: string): "document" | "info-circle" | "check-circle" | "alert-circle" | "x" => {
-        switch (status) {
-            case "submitted":
-                return "document";
-            case "under_review":
-                return "info-circle";
-            case "approved":
-                return "check-circle";
-            case "rejected":
-                return "alert-circle";
-            case "withdrawn":
-                return "x";
-            default:
-                return "document";
-        }
-    };
-
-    const canWithdraw = (status: string) => {
-        return status === "submitted" || status === "under_review";
-    };
-
-    const downloadApplication = (application: ApplicationWithDetails) => {
-        const property = application.properties;
-        const unit = application.units;
-
-        if (!property || !unit) return;
-
-        // Generate PDF using the utility function
-        generateApplicationPDF({
-            id: application.id,
-            status: application.status,
-            submitted_at: application.submitted_at,
-            created_at: application.created_at,
-            updated_at: application.updated_at,
-            move_in_date: application.move_in_date,
-            rental_duration: application.rental_duration,
-            proposed_rent: application.proposed_rent,
-            total_rent: application.total_rent,
-            message: application.message,
-            property: {
-                title: property.title,
-                location: {
-                    city: property.location.city,
-                    state: property.location.state,
-                },
-            },
-            unit: {
-                name: unit.name,
-                listing_type: unit.listing_type,
-                price: unit.price,
-            },
-        });
-    };
 
     if (isLoading) {
         return (
@@ -389,19 +169,17 @@ export default function ApplicationsPage() {
                                             {/* Applications List - All Visible */}
                                             <div className="space-y-3 sm:pl-3">
                                                 {applications.map((application) => (
-                                                    <ApplicationCard
-                                                        key={application.id}
-                                                        application={application}
-                                                        onWithdraw={handleWithdraw}
-                                                        onDownload={downloadApplication}
-                                                        isWithdrawing={
-                                                            isPending &&
-                                                            withdrawingId === application.id
-                                                        }
-                                                        getStatusColor={getStatusColor}
-                                                        getStatusIcon={getStatusIcon}
-                                                        canWithdraw={canWithdraw}
-                                                    />
+                                                    isAdmin ? (
+                                                        <AdminApplicationCard
+                                                            key={application.id}
+                                                            application={application}
+                                                        />
+                                                    ) : (
+                                                        <ApplicationCard
+                                                            key={application.id}
+                                                            application={application}
+                                                        />
+                                                    )
                                                 ))}
                                             </div>
                                         </div>

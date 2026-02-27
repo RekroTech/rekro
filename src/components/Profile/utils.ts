@@ -26,15 +26,41 @@ export function buildShareableProfile(
     user: UserProfile,
     formState: ProfileFormState
 ): ShareableProfile {
-    const { incomeDetails, residency, documents } = formState;
+    const { incomeDetails, residency, documents, rentalPreferences, personalDetails } = formState;
 
     // Calculate profile completion
+    // IMPORTANT: completion logic reads personal + rental fields from `user`.
+    // While editing, those changes live in form state until autosave completes.
+    // Build a lightweight "virtual user" so completion updates immediately.
+    const virtualUser: UserProfile = {
+        ...user,
+        full_name: personalDetails.full_name,
+        username: personalDetails.username,
+        phone: personalDetails.phone,
+        date_of_birth: personalDetails.date_of_birth,
+        gender: personalDetails.gender as UserProfile["gender"],
+        occupation: personalDetails.occupation,
+        bio: personalDetails.bio,
+        native_language: personalDetails.native_language,
+        preferred_contact_method: personalDetails.preferred_contact_method,
+        current_location: rentalPreferences.current_location,
+        user_application_profile: {
+            ...(user.user_application_profile ?? null),
+            preferred_locality: rentalPreferences.preferred_locality,
+            max_budget_per_week: rentalPreferences.max_budget_per_week,
+            has_pets: rentalPreferences.has_pets,
+            smoker: rentalPreferences.smoker,
+        } as UserProfile["user_application_profile"],
+    };
+
     const combinedUserDetails = {
         ...incomeDetails,
         ...residency,
+        // Include rental prefs too so the completion helper doesn't have to read from user.
+        ...rentalPreferences,
     };
     const profileCompletion = calculateProfileCompletion(
-        user,
+        virtualUser,
         combinedUserDetails,
         documents
     );

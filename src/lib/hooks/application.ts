@@ -145,6 +145,97 @@ export function useApplications() {
     });
 }
 
+/**
+ * Hook to fetch all applications (admin only)
+ * Includes property, unit, and full applicant details with profile information
+ */
+export function useAdminApplications(filters?: {
+    status?: string;
+    propertyId?: string;
+    unitId?: string;
+}) {
+    const { data: user } = useSessionUser();
+
+    return useQuery({
+        queryKey: [...applicationKeys.list(), "admin", filters ?? null],
+        queryFn: async () => {
+            if (!user) {
+                throw new Error("Not authenticated");
+            }
+
+            const supabase = createClient();
+            let query = supabase
+                .from("applications")
+                .select(`
+                    *,
+                    properties!inner (
+                        id,
+                        title,
+                        address,
+                        images,
+                        location
+                    ),
+                    units!inner (
+                        id,
+                        name,
+                        listing_type,
+                        price
+                    ),
+                    applicant:users!applications_user_id_fkey (
+                        id,
+                        full_name,
+                        email,
+                        phone,
+                        image_url,
+                        date_of_birth,
+                        gender,
+                        occupation,
+                        bio,
+                        user_application_profile (
+                            visa_status,
+                            employment_status,
+                            employment_type,
+                            income_source,
+                            income_frequency,
+                            income_amount,
+                            student_status,
+                            finance_support_type,
+                            finance_support_details,
+                            has_pets,
+                            smoker,
+                            emergency_contact_name,
+                            emergency_contact_phone,
+                            documents
+                        )
+                    )
+                `);
+
+            // Apply filters if provided
+            if (filters?.status) {
+                query = query.eq("status", filters.status);
+            }
+            if (filters?.propertyId) {
+                query = query.eq("property_id", filters.propertyId);
+            }
+            if (filters?.unitId) {
+                query = query.eq("unit_id", filters.unitId);
+            }
+
+            const { data, error } = await query.order("submitted_at", { ascending: false, nullsFirst: false });
+
+            if (error) {
+                console.error("Error fetching admin applications:", error);
+                throw new Error(error.message);
+            }
+
+            return data || [];
+        },
+        enabled: !!user,
+        staleTime: 30 * 1000, // 30 seconds for admin data
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
 // ============================================================================
 // Mutations
 // ============================================================================
@@ -298,6 +389,42 @@ export function useWithdrawApplication() {
         },
         onError: (err) => {
             console.error("Failed to withdraw application:", err);
+        },
+    });
+}
+
+/**
+ * Hook to update application status (admin only)
+ */
+export function useUpdateApplicationStatus() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ applicationId, status }: { applicationId: string; status: string }) => {
+            const response = await fetch("/api/application/status", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ applicationId, status }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || "Failed to update application status");
+            }
+
+            const result = await response.json();
+            return result.data;
+        },
+        onSuccess: () => {
+            // Invalidate all application queries to refresh the list
+            queryClient.invalidateQueries({
+                queryKey: applicationKeys.all,
+            });
+        },
+        onError: (err) => {
+            console.error("Failed to update application status:", err);
         },
     });
 }

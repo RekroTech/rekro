@@ -14,6 +14,7 @@ import type { Gender, PreferredContactMethod, EmploymentStatus, StudentStatus, D
 // ---------------------------------------------------------------------------
 
 export interface PersonalDetailsFormState {
+  image_url: string | null;
   full_name: string;
   username: string;
   phone: string;

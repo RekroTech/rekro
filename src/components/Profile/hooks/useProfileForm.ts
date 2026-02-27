@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useCallback, useMemo, useState } from "react";
+import { useEffect, useReducer, useCallback, useMemo, useState, useRef } from "react";
 import type { UserProfile } from "@/types/user.types";
 import type {
     PersonalDetailsFormState,
@@ -82,6 +82,7 @@ type ProfileFormAction =
 function createInitialState(): ProfileFormState {
     return {
         personalDetails: {
+            image_url: null,
             full_name: "",
             username: "",
             phone: "",
@@ -151,6 +152,7 @@ function hydrateFromUser(user: UserProfile): ProfileFormState {
 
     return {
         personalDetails: {
+            image_url: user.image_url ?? null,
             full_name: user.full_name ?? "",
             username: user.username ?? "",
             phone: user.phone ?? "",
@@ -254,14 +256,27 @@ export function useProfileForm(user: UserProfile | null | undefined) {
     // Baseline snapshot (last hydrated or last committed after save)
     const [originalState, setOriginalState] = useState<ProfileFormState | null>(null);
 
+    // Track if we've already hydrated to prevent re-hydration on save updates
+    const hasHydratedRef = useRef(false);
+    const userIdRef = useRef<string | null>(null);
+
     // Hydrate form state from user data on mount or when user changes
     useEffect(() => {
         if (!user) return;
 
-        const hydratedState = hydrateFromUser(user);
-        dispatch({ type: "HYDRATE_FROM_USER", payload: user });
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setOriginalState(deepClone(hydratedState));
+        // Only hydrate if:
+        // 1. We haven't hydrated yet, OR
+        // 2. The user ID has changed (different user logged in)
+        const isNewUser = userIdRef.current !== user.id;
+
+        if (!hasHydratedRef.current || isNewUser) {
+            const hydratedState = hydrateFromUser(user);
+            dispatch({ type: "HYDRATE_FROM_USER", payload: user });
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setOriginalState(deepClone(hydratedState));
+            hasHydratedRef.current = true;
+            userIdRef.current = user.id;
+        }
     }, [user]);
 
     // Update handlers

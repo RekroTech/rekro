@@ -22,8 +22,9 @@ export function PersonalDetailsSection({
     const isOtherSelected = value.native_language === "Other";
 
     return (
-        <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <Input
                     label="Full Name"
                     value={value.full_name}
@@ -105,6 +106,14 @@ export function PersonalDetailsSection({
                 placeholder="Tell us a bit about yourself..."
                 rows={4}
             />
+
+            {/* Profile image prompt */}
+            {!value.image_url && (
+                <p className="mt-2 text-sm text-right">
+                    <span className="text-warning-800 dark:text-warning-100">Add a profile photo.</span>
+                    <span className="ml-1 text-text-muted">(Click on the avatar to upload.)</span>
+                </p>
+            )}
         </div>
     );
 }
