@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import type { Property } from "@/types/property.types";
 import { useProperties, useSessionUser } from "@/lib/hooks";
 import { Icon, Loader } from "@/components/common";
 import { PropertyCard } from "./PropertyCard";
+import { PropertyListSkeleton } from "@/components/common/Skeleton";
 
 export interface PropertyListProps {
     search?: string;
@@ -19,6 +20,7 @@ export interface PropertyListProps {
     emptyMessage?: string;
     emptyStateAction?: React.ReactNode;
 }
+
 
 export function PropertyList({
     search,
@@ -58,48 +60,34 @@ export function PropertyList({
             },
             { enabled: canFetch }
         );
+    const allProperties = useMemo(
+        () => data?.pages.flatMap((page: { data: Property[] }) => page.data) ?? [],
+        [data]
+    );
 
     const observerTarget = useRef<HTMLDivElement>(null);
 
-    // Infinite scroll observer
+    // Simple infinite scroll with IntersectionObserver
     useEffect(() => {
+        if (!observerTarget.current || !hasNextPage || isFetchingNextPage) return;
+
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+                if (entries[0]?.isIntersecting) {
                     fetchNextPage();
                 }
             },
-            { threshold: 0.1 }
+            { threshold: 0.1, rootMargin: "200px" }
         );
 
-        const currentTarget = observerTarget.current;
-        if (currentTarget) {
-            observer.observe(currentTarget);
-        }
+        observer.observe(observerTarget.current);
 
-        return () => {
-            if (currentTarget) {
-                observer.unobserve(currentTarget);
-            }
-        };
+        return () => observer.disconnect();
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-    // Loading state
-    if (!canFetch) {
-        return (
-            <div className="flex justify-center items-center py-12">
-                <Loader size="lg" />
-            </div>
-        );
-    }
-
-    // Loading state
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center py-12">
-                <Loader size="lg" />
-            </div>
-        );
+    // Loading state - show skeleton grid instead of spinner
+    if (!canFetch || isLoading) {
+        return <PropertyListSkeleton count={12} />;
     }
 
     // Error state
@@ -117,9 +105,6 @@ export function PropertyList({
         );
     }
 
-    // Get all properties from all pages
-    const allProperties = data?.pages.flatMap((page: { data: Property[] }) => page.data) ?? [];
-
     // Empty state
     if (allProperties.length === 0) {
         return (
@@ -135,8 +120,8 @@ export function PropertyList({
     }
 
     return (
-        <div>
-            {/* Property Grid */}
+        <div className="w-full">
+            {/* Simple responsive grid - works perfectly on all screen sizes */}
             <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {allProperties.map((property: Property) => (
                     <PropertyCard
@@ -147,14 +132,15 @@ export function PropertyList({
                 ))}
             </div>
 
-            {/* Intersection Observer Target */}
-            <div ref={observerTarget} className="mt-6 sm:mt-8">
-                {isFetchingNextPage && (
-                    <div className="flex justify-center items-center py-4">
-                        <Loader size="md" />
-                    </div>
-                )}
-            </div>
+            {/* Infinite scroll trigger */}
+            <div ref={observerTarget} className="mt-6 sm:mt-8 h-12" />
+
+            {/* Loading indicator */}
+            {isFetchingNextPage && (
+                <div className="flex justify-center items-center py-4">
+                    <Loader size="md" />
+                </div>
+            )}
 
             {/* Scroll to top button */}
             {!hasNextPage && allProperties.length > 0 && (

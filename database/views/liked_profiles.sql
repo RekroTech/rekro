@@ -11,7 +11,7 @@ select
   array_agg(distinct u.id) as unit_ids,
   array_agg(distinct u.name) filter (where u.name is not null) as unit_names
 from public.units u
-join public.property_likes pl on pl.unit_id = u.id
+join public.unit_likes pl on pl.unit_id = u.id
 join public.users usr on usr.id = pl.user_id
 where usr.discoverable = true
 group by

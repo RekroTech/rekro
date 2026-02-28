@@ -16,6 +16,7 @@ export { ImageGallery as ImageGalleryMobile } from "./ImageGalleryMobile";
 export { PropertyAmenities } from "./PropertyAmenities";
 export { LikedUsersCarousal } from "./LikedUsersCarousal";
 export { DiscoverabilityPrompt } from "./DiscoverabilityPrompt";
+export { PropertyErrorBoundary } from "./PropertyErrorBoundary";
 
 // ============================================================================
 // Property Sidebar Components (Client-only)

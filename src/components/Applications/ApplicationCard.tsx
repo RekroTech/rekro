@@ -6,6 +6,7 @@ import type { DropdownItem } from "@/components/common/Dropdown";
 import { formatDateShort, formatDistanceToNow, formatRentalDuration } from "@/lib/utils";
 import type { ApplicationWithDetails } from "./types";
 import { getStatusColor, getStatusIcon, canWithdraw, downloadApplication } from "./utils";
+import { ApplicationDetailsModal } from "./ApplicationDetailsModal";
 import { useWithdrawApplication } from "@/lib/hooks";
 
 export interface ApplicationCardProps {
@@ -17,6 +18,7 @@ export function ApplicationCard({
 }: ApplicationCardProps) {
     const { mutate: withdrawApplication } = useWithdrawApplication();
     const [isWithdrawingThis, setIsWithdrawingThis] = useState(false);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const unit = application.units;
 
     const handleWithdraw = (applicationId: string) => {
@@ -35,6 +37,11 @@ export function ApplicationCard({
     };
 
     const dropdownItems: DropdownItem[] = [
+        {
+            label: "View Application",
+            icon: <Icon name="eye" className="w-4 h-4" />,
+            onClick: () => setIsDetailsModalOpen(true),
+        },
         {
             label: "Download PDF",
             icon: <Icon name="download" className="w-4 h-4" />,
@@ -88,21 +95,21 @@ export function ApplicationCard({
             </div>
 
             {/* Second Row: Application Details with Labels */}
-            <div className="flex items-center justify-between gap-2 sm:gap-6">
-                <div className="flex items-start sm:items-center gap-3 sm:gap-6 overflow-x-auto">
-                    <div className="flex-shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-6">
+                <div className="flex items-start sm:items-center gap-3 sm:gap-6 w-full sm:w-auto">
+                    <div className="flex-1 sm:flex-shrink-0 sm:flex-initial text-center sm:text-left">
                         <p className="text-xs text-text-subtle mb-1">Reference</p>
                         <p className="text-xs sm:text-sm text-text font-mono font-medium">
                             #{application.id.substring(0, 8).toUpperCase()}
                         </p>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex-1 sm:flex-shrink-0 sm:flex-initial text-center sm:text-left">
                         <p className="text-xs text-text-subtle mb-1">Move-in Date</p>
                         <p className="text-xs sm:text-sm text-text font-medium">
                             {formatDateShort(application.move_in_date)}
                         </p>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex-1 sm:flex-shrink-0 sm:flex-initial text-center sm:text-left">
                         <p className="text-xs text-text-subtle mb-1">Duration</p>
                         <p className="text-xs sm:text-sm text-text font-medium">
                             {formatRentalDuration(application.rental_duration)}
@@ -111,7 +118,7 @@ export function ApplicationCard({
                 </div>
 
                 {/* Timestamp */}
-                <div className="text-right flex-shrink-0 self-end">
+                <div className="text-right flex-shrink-0 sm:self-end">
                     <p className="text-[10px] sm:text-sm text-text-muted whitespace-nowrap">
                         {formatDistanceToNow(new Date(application.submitted_at), {
                             addSuffix: true,
@@ -119,6 +126,13 @@ export function ApplicationCard({
                     </p>
                 </div>
             </div>
+
+            {/* Application Details Modal */}
+            <ApplicationDetailsModal
+                isOpen={isDetailsModalOpen}
+                onClose={() => setIsDetailsModalOpen(false)}
+                application={application}
+            />
         </div>
     );
 }

@@ -1,9 +1,20 @@
 "use client";
 
 import { useMemo } from "react";
-import { Icon, MapView, Modal } from "@/components/common";
-import type { Property } from "@/types/db";
+import dynamic from "next/dynamic";
+import { Icon, Modal, Loader } from "@/components/common";
 import { getApproximateLocation, getLocalityString } from "@/lib/utils/locationPrivacy";
+import type { Property } from "@/types/db";
+
+// Lazy load MapView to defer Google Maps API loading (~500KB)
+const MapView = dynamic(() => import("@/components/common/MapView").then(mod => ({ default: mod.MapView })), {
+    loading: () => (
+        <div className="h-96 w-full rounded-lg bg-surface-muted flex items-center justify-center">
+            <Loader size="md" />
+        </div>
+    ),
+    ssr: false,
+});
 
 export interface LocationMapModalProps {
     isOpen: boolean;

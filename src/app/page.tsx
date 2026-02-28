@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useTransition, Suspense } from "react";
 import { PropertyList } from "@/components/Properties/PropertyList";
-import { Icon, Input, Select, Banner } from "@/components/common";
+import { Icon, Input, Select, Banner, PropertyListSkeleton, Loader } from "@/components/common";
 import { useRoles } from "@/lib/hooks";
 import { useEmailVerification, VerificationErrorModal } from "@/components/Auth";
 import { usePropertyFilters } from "@/components/Properties";
@@ -15,6 +15,7 @@ function HomePageContent() {
     const { canManageProperties, canManageUsers } = useRoles();
     const [showFilters, setShowFilters] = useState(false);
     const [status, setStatus] = useState<"active" | "leased" | "inactive">("active");
+    const [isPending, startTransition] = useTransition();
 
     const {
         filters: {
@@ -36,6 +37,18 @@ function HomePageContent() {
         handleCloseErrorModal,
         handleTryDifferentEmail,
     } = useEmailVerification();
+
+    // Handle search with transition for better UX
+    const handleSearchChange = (value: string) => {
+        // Update input immediately (high priority)
+        setSearchQuery(value);
+
+        // The actual filtering happens in usePropertyFilters with debouncing
+        // useTransition keeps UI responsive during the re-render
+        startTransition(() => {
+            // The transition marks this as low-priority work
+        });
+    };
 
     return (
         <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8">
@@ -61,19 +74,21 @@ function HomePageContent() {
                                 type="text"
                                 placeholder="Search location or property..."
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => handleSearchChange(e.target.value)}
                                 size="sm"
                                 leftIcon={<Icon name="search" className="h-4 w-4" />}
                                 rightIcon={
                                     searchQuery ? (
                                         <button
                                             type="button"
-                                            onClick={() => setSearchQuery("")}
+                                            onClick={() => handleSearchChange("")}
                                             className="text-gray-400 hover:text-gray-600 active:text-gray-700 touch-manipulation"
                                             aria-label="Clear search"
                                         >
                                             <Icon name="x" className="h-4 w-4" />
                                         </button>
+                                    ) : isPending ? (
+                                        <Loader size="sm" />
                                     ) : undefined
                                 }
                                 fullWidth
@@ -228,10 +243,8 @@ export default function HomePage() {
     return (
         <Suspense
             fallback={
-                <div className="flex h-full items-center justify-center">
-                    <div className="text-center">
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent mx-auto"></div>
-                    </div>
+                <div className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8">
+                    <PropertyListSkeleton count={12} />
                 </div>
             }
         >

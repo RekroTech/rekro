@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import { Modal, Icon } from "@/components/common";
 
@@ -21,6 +21,16 @@ const isHttpUrl = (value: string) => {
     }
 };
 
+const getPathnameForTypeDetection = (rawUrl: string) => {
+    try {
+        const u = new URL(rawUrl);
+        return (u.pathname || "").toLowerCase();
+    } catch {
+        // Fall back to raw string checks if URL parsing fails
+        return (rawUrl || "").toLowerCase();
+    }
+};
+
 export function DocumentPreviewModal({
     isOpen,
     onClose,
@@ -28,31 +38,100 @@ export function DocumentPreviewModal({
     documentName,
     documentType,
 }: DocumentPreviewModalProps) {
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const pathname = useMemo(() => getPathnameForTypeDetection(documentUrl), [documentUrl]);
+    const urlLower = (documentUrl || "").toLowerCase();
 
-    const url = documentUrl?.toLowerCase() ?? "";
+    // Determine file type (prefer pathname so signed URLs / querystrings don't break detection)
     const previewType: "image" | "pdf" | "unsupported" =
-        url.includes(".pdf") || url.includes("application/pdf")
+        pathname.endsWith(".pdf") || urlLower.includes("application/pdf")
             ? "pdf"
-            : url.includes(".jpg") ||
-                url.includes(".jpeg") ||
-                url.includes(".png") ||
-                url.includes(".gif") ||
-                url.includes(".webp") ||
-                url.includes("image/")
+            : pathname.endsWith(".jpg") ||
+                pathname.endsWith(".jpeg") ||
+                pathname.endsWith(".png") ||
+                pathname.endsWith(".gif") ||
+                pathname.endsWith(".webp") ||
+                urlLower.includes("image/")
               ? "image"
               : "unsupported";
 
+    const isValidPreviewUrl = isHttpUrl(documentUrl);
+
+    // Only show loading for supported types and valid URLs
+    const shouldInitiallyLoad =
+        isValidPreviewUrl && (previewType === "pdf" || previewType === "image");
+
+    const [isLoading, setIsLoading] = useState(shouldInitiallyLoad);
+    const [error, setError] = useState<string | null>(null);
+
     // When a new document is selected, remount the preview node so internal loading/error state is naturally reset.
     const previewKey = `${previewType}:${documentUrl}`;
+
+    const loadTimeoutRef = useRef<number | null>(null);
+
+    // Reset loading state when modal opens with a new document
+    useEffect(() => {
+        // Clear any previous timers
+        if (loadTimeoutRef.current) {
+            window.clearTimeout(loadTimeoutRef.current);
+            loadTimeoutRef.current = null;
+        }
+
+        if (!isOpen) return;
+
+        // Basic URL guardrail
+        if (!documentUrl || !isValidPreviewUrl) {
+            setIsLoading(false);
+            setError(documentUrl ? "Invalid document URL" : "No document URL provided");
+            return;
+        }
+
+        if (previewType === "unsupported") {
+            setIsLoading(false);
+            setError(null);
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+
+        // PDFs in iframes can fail to trigger onLoad when blocked by X-Frame-Options/CSP,
+        // but they may still render. Just clear the loading state after a reasonable timeout.
+        if (previewType === "pdf") {
+            loadTimeoutRef.current = window.setTimeout(() => {
+                setIsLoading(false);
+                // Don't set error - the PDF may be rendering even without onLoad event
+            }, 2000);
+        }
+
+        if (previewType === "image") {
+            loadTimeoutRef.current = window.setTimeout(() => {
+                setIsLoading(false);
+                // Don't set error - the image may be rendering even without onLoad event
+            }, 3000);
+        }
+
+        return () => {
+            if (loadTimeoutRef.current) {
+                window.clearTimeout(loadTimeoutRef.current);
+                loadTimeoutRef.current = null;
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [previewKey, isOpen]);
 
     const handleDownload = () => {
         window.open(documentUrl, "_blank");
     };
 
+    const clearLoadTimeout = () => {
+        if (loadTimeoutRef.current) {
+            window.clearTimeout(loadTimeoutRef.current);
+            loadTimeoutRef.current = null;
+        }
+    };
+
     const renderPreview = () => {
-        if (isLoading) {
+        if (isLoading && previewType !== "unsupported") {
             return (
                 <div className="flex items-center justify-center h-[500px]">
                     <div className="flex flex-col items-center gap-3">
@@ -68,7 +147,7 @@ export function DocumentPreviewModal({
                 <div className="flex items-center justify-center h-[500px]">
                     <div className="flex flex-col items-center gap-3">
                         <Icon name="alert-circle" className="w-12 h-12 text-red-500" />
-                        <p className="text-sm text-text">{error}</p>
+                        <p className="text-sm text-text text-center max-w-md">{error}</p>
                         <button
                             onClick={handleDownload}
                             className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors text-sm font-medium"
@@ -82,23 +161,6 @@ export function DocumentPreviewModal({
 
         switch (previewType) {
             case "image": {
-                if (!isHttpUrl(documentUrl)) {
-                    return (
-                        <div className="flex items-center justify-center h-[500px]">
-                            <div className="flex flex-col items-center gap-3 text-center">
-                                <Icon name="alert-circle" className="w-12 h-12 text-red-500" />
-                                <p className="text-sm text-text">Invalid document URL</p>
-                                <button
-                                    onClick={handleDownload}
-                                    className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors text-sm font-medium"
-                                >
-                                    Open in New Tab
-                                </button>
-                            </div>
-                        </div>
-                    );
-                }
-
                 return (
                     <div
                         key={previewKey}
@@ -108,13 +170,17 @@ export function DocumentPreviewModal({
                             src={documentUrl}
                             alt={documentName}
                             fill
-                            sizes="(max-width: 768px) 100vw, 80vw"
                             className="object-contain"
+                            sizes="(max-width: 1200px) 100vw, 1200px"
                             unoptimized
-                            onLoad={() => setIsLoading(false)}
-                            onError={() => {
+                            onLoad={() => {
+                                clearLoadTimeout();
                                 setIsLoading(false);
-                                setError("Failed to load image");
+                            }}
+                            onError={() => {
+                                clearLoadTimeout();
+                                setIsLoading(false);
+                                setError("Failed to load image. Please open it in a new tab.");
                             }}
                         />
                     </div>
@@ -131,10 +197,10 @@ export function DocumentPreviewModal({
                             src={`${documentUrl}#toolbar=1&navpanes=0&scrollbar=1`}
                             className="w-full h-full"
                             title={documentName}
-                            onLoad={() => setIsLoading(false)}
                             onError={() => {
+                                clearLoadTimeout();
                                 setIsLoading(false);
-                                setError("Failed to load PDF");
+                                setError("This PDF couldn't be previewed here. Please open it in a new tab.");
                             }}
                         />
                     </div>

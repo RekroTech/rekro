@@ -64,14 +64,14 @@ export function canWithdraw(status: string): boolean {
  * Download application as PDF
  * @param application - Application with full details
  */
-export function downloadApplication(application: ApplicationWithDetails): void {
+export async function downloadApplication(application: ApplicationWithDetails): Promise<void> {
     const property = application.properties;
     const unit = application.units;
 
     if (!property || !unit) return;
 
-    // Generate PDF using the utility function
-    generateApplicationPDF({
+    // Generate PDF using the utility function (now async)
+    await generateApplicationPDF({
         id: application.id,
         status: application.status,
         submitted_at: application.submitted_at,

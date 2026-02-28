@@ -6,6 +6,7 @@ import type { Property, Unit } from "@/types/db";
 import { Icon, Visual } from "@/components/common";
 import { getPropertyFileUrl } from "@/lib/services";
 import { getLocalityString } from "@/lib/utils";
+import { usePrefetchProperty } from "@/lib/hooks/property";
 import { ImageGallery } from "../Property/ImageGalleryMobile";
 import { PropertyForm } from "../PropertyForm";
 
@@ -16,6 +17,7 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, showEditButton = false }: PropertyCardProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const prefetchProperty = usePrefetchProperty();
 
     const {
         id,
@@ -50,6 +52,8 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
         <>
             <Link
                 href={`/property/${id}`}
+                onMouseEnter={() => prefetchProperty(id)}
+                onTouchStart={() => prefetchProperty(id)}
                 className="group relative block rounded-[var(--radius-lg)] border border-border bg-card overflow-hidden shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-deep)] transition-all duration-200"
             >
                 {/* Property Image Gallery - Swipeable on mobile, simple Visual on desktop */}
@@ -87,7 +91,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                     )}
                     {pricePerWeek && (
                         <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-card/90 backdrop-blur-sm text-foreground text-sm font-bold px-3 py-1.5 rounded-[var(--radius-md)] shadow-md border border-border z-20 pointer-events-none">
-                            ${pricePerWeek}/week
+                            ${pricePerWeek} <span className="sm:hidden">/wk</span><span className="hidden sm:inline">/week</span>
                         </div>
                     )}
                     {showEditButton && (

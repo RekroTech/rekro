@@ -1,13 +1,39 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+// React & Next.js
+import React, { useState } from "react";
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
+
+// Components
 import { Header } from "@/components/layout/Header";
-import { PropertyForm } from "@/components/PropertyForm";
+import { Loader } from "@/components/common";
+
+// Hooks & Context
 import { useRoles } from "@/lib/hooks/roles";
-import { AuthModal } from "@/components/Auth";
 import { useAuthModal } from "@/contexts";
 import { useAuthStateSync, useSessionUser } from "@/lib/hooks/auth";
+
+// Lazy-loaded components (reduce initial bundle by ~200KB)
+const PropertyForm = dynamic(
+    () => import("@/components/PropertyForm").then((mod) => ({ default: mod.PropertyForm })),
+    {
+        loading: () => (
+            <div className="flex items-center justify-center p-8">
+                <Loader size="md" />
+            </div>
+        ),
+        ssr: false,
+    }
+);
+
+const AuthModal = dynamic(
+    () => import("@/components/Auth").then((mod) => ({ default: mod.AuthModal })),
+    {
+        loading: () => null,
+        ssr: false,
+    }
+);
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -27,15 +53,6 @@ export default function AppShell({ children }: AppShellProps) {
     // This hook keeps our session-dependent React Query caches in sync.
     useAuthStateSync();
 
-    // Close global modals on route change to avoid stale UI.
-    useEffect(() => {
-        // Use setTimeout to avoid cascading renders
-        const timer = setTimeout(() => {
-            setIsModalOpen(false);
-        }, 0);
-
-        return () => clearTimeout(timer);
-    }, [pathname]);
 
     // Show loading state while checking session on initial load
     if (isSessionLoading) {
@@ -58,7 +75,11 @@ export default function AppShell({ children }: AppShellProps) {
 
             {/* Add Property Modal - only for admin */}
             {canManageProperties && (
-                <PropertyForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+                <PropertyForm
+                    key={pathname}
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                />
             )}
 
             {/* Global Auth Modal */}

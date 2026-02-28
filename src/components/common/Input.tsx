@@ -1,3 +1,5 @@
+"use client";
+
 import React, { forwardRef, useId, useRef, useImperativeHandle } from "react";
 import { clsx } from "clsx";
 

@@ -1,4 +1,3 @@
-import jsPDF from "jspdf";
 import { formatDateLong, formatRentalDuration } from "@/lib/utils";
 
 interface ApplicationPDFData {
@@ -26,7 +25,10 @@ interface ApplicationPDFData {
     };
 }
 
-export const generateApplicationPDF = (application: ApplicationPDFData) => {
+export const generateApplicationPDF = async (application: ApplicationPDFData) => {
+    // Dynamically import jsPDF only when needed (~150KB saved from initial bundle)
+    const { default: jsPDF } = await import("jspdf");
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;

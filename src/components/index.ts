@@ -12,3 +12,4 @@
 // Layout Components (Server & Client Compatible)
 // ============================================================================
 export { Header, QueryProvider } from "./layout";
+export { ErrorBoundary } from "./common";

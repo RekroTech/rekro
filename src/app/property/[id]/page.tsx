@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProfileCompletionProvider } from "@/contexts";
 import { getPropertyFileUrls } from "@/lib/services";
 import { useProperty, useProfile } from "@/lib/hooks";
 import { useMediaQuery } from "@/hooks";
-import { Loader, Button, BackButton } from "@/components/common";
+import { Button, BackButton, PropertyDetailSkeleton } from "@/components/common";
 import {
     PropertyHeader,
     UnitsSelector,
@@ -16,6 +16,7 @@ import {
     PropertySidebar,
     LikedUsersCarousal,
     DiscoverabilityPrompt,
+    PropertyErrorBoundary,
 } from "@/components/Property";
 import { updateRoomRentsOnOccupancySelection } from "@/components/Property/utils/pricing";
 
@@ -79,11 +80,7 @@ export default function PropertyDetailPage() {
 
     // Early returns for loading/error states - AFTER all hooks
     if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader size="lg" />
-            </div>
-        );
+        return <PropertyDetailSkeleton />;
     }
 
     if (error || !property) {
@@ -136,13 +133,14 @@ export default function PropertyDetailPage() {
     };
 
     return (
-        <ProfileCompletionProvider>
-            <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8 overflow-x-hidden">
-                {/* Back Button */}
-                <BackButton className="mb-4 sm:mb-6" />
+        <PropertyErrorBoundary>
+            <ProfileCompletionProvider>
+                <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8 overflow-x-hidden">
+                    {/* Back Button */}
+                    <BackButton className="mb-4 sm:mb-6" />
 
-                {/* Property Header */}
-                <PropertyHeader property={property} selectedUnit={selectedUnit} />
+                    {/* Property Header */}
+                    <PropertyHeader property={property} selectedUnit={selectedUnit} />
 
                 {/* Main Grid: Image Gallery + Content (stacked on mobile, 2/3 on desktop) + Sidebar (1/3 on desktop) */}
                 <div className="grid gap-4 sm:gap-6 mb-8 lg:grid-cols-3">
@@ -219,13 +217,16 @@ export default function PropertyDetailPage() {
 
                 {/* Users Who Liked Carousel - Only visible if viewing user is discoverable (reciprocal privacy) */}
                 {userProfile?.discoverable ? (
-                    <div className="my-4 sm:my-12">
-                        <LikedUsersCarousal propertyId={propertyId} />
-                    </div>
+                    <Suspense fallback={<div className="h-32 animate-pulse bg-surface-subtle rounded-lg" />}>
+                        <div className="my-4 sm:my-12">
+                            <LikedUsersCarousal propertyId={propertyId} />
+                        </div>
+                    </Suspense>
                 ) : (
                     <DiscoverabilityPrompt />
                 )}
             </main>
         </ProfileCompletionProvider>
+    </PropertyErrorBoundary>
     );
 }

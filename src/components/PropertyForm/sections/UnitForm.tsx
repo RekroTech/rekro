@@ -45,9 +45,9 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
 
     return (
         <div className="space-y-4 rounded-md border border-border bg-surface-subtle/50 p-3 sm:p-4">
-            {/* Main Details - Responsive layout */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:gap-4">
-                <div className="relative flex-1 min-w-0 sm:col-span-2">
+            {/* Row 1: Price per Week, Max Occupants, Area */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="relative">
                     <Input
                         label="Price per Week"
                         type="number"
@@ -66,17 +66,7 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         </div>
                     )}
                 </div>
-                <div className="lg:w-32">
-                    <Input
-                        label="Area (sqm)"
-                        type="number"
-                        value={unit.size_sqm}
-                        onChange={(e) => onUpdate(index, { size_sqm: e.target.value })}
-                        placeholder="0"
-                        min="0"
-                    />
-                </div>
-                <div className="lg:w-32">
+                <div>
                     <Input
                         label="Max Occupants"
                         type="number"
@@ -86,7 +76,21 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         min="0"
                     />
                 </div>
-                <div className="lg:w-36">
+                <div>
+                    <Input
+                        label="Area (sqm)"
+                        type="number"
+                        value={unit.size_sqm}
+                        onChange={(e) => onUpdate(index, { size_sqm: e.target.value })}
+                        placeholder="0"
+                        min="0"
+                    />
+                </div>
+            </div>
+
+            {/* Row 2: Min Lease, Max Lease, Available From, Available To */}
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div>
                     <Select
                         label="Min Lease"
                         value={unit.min_lease}
@@ -94,7 +98,7 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         options={LEASE_MONTH_OPTIONS}
                     />
                 </div>
-                <div className="lg:w-36">
+                <div>
                     <Select
                         label="Max Lease"
                         value={unit.max_lease}
@@ -102,18 +106,7 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         options={LEASE_MONTH_OPTIONS}
                     />
                 </div>
-            </div>
-
-            {/* Availability Section */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                <div className="flex items-end sm:pb-2">
-                    <Checkbox
-                        label="Currently Available"
-                        checked={unit.is_available}
-                        onChange={(e) => onUpdate(index, { is_available: e.target.checked })}
-                    />
-                </div>
-                <div className="flex-1">
+                <div>
                     <Input
                         label="Available From"
                         type="date"
@@ -121,7 +114,7 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         onChange={(e) => onUpdate(index, { available_from: e.target.value })}
                     />
                 </div>
-                <div className="flex-1">
+                <div>
                     <Input
                         label="Available To (Optional)"
                         type="date"
@@ -131,7 +124,7 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                 </div>
             </div>
 
-            {/* Additional Details */}
+            {/* Row 3: Bills Included, Currently Available */}
             <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-end pb-2">
                     <Checkbox
@@ -140,9 +133,16 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         onChange={(e) => onUpdate(index, { bills_included: e.target.checked })}
                     />
                 </div>
+                <div className="flex items-end pb-2">
+                    <Checkbox
+                        label="Currently Available"
+                        checked={unit.is_available}
+                        onChange={(e) => onUpdate(index, { is_available: e.target.checked })}
+                    />
+                </div>
             </div>
 
-            {/* Optional Details */}
+            {/* Row 4: Unit Description */}
             <div>
                 <Textarea
                     label="Unit Description"

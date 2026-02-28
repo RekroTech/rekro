@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useQueryState, parseAsString } from "nuqs";
 
 export interface PropertyFilters {
     search: string;
@@ -9,15 +10,38 @@ export interface PropertyFilters {
     listingType: string;
 }
 
+/**
+ * Hook for managing property filters with URL state persistence
+ * Filters are synced to URL query params for shareable URLs
+ * Example: /?search=sydney&bedrooms=2&propertyType=apartment
+ */
 export function usePropertyFilters() {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-    const [propertyType, setPropertyType] = useState("");
-    const [bedrooms, setBedrooms] = useState("");
-    const [bathrooms, setBathrooms] = useState("");
-    const [listingType, setListingType] = useState("all");
+    // URL state management with nuqs - filters persist in URL!
+    const [searchQuery, setSearchQuery] = useQueryState(
+        "search",
+        parseAsString.withDefault("")
+    );
+    const [propertyType, setPropertyType] = useQueryState(
+        "propertyType",
+        parseAsString.withDefault("")
+    );
+    const [bedrooms, setBedrooms] = useQueryState(
+        "bedrooms",
+        parseAsString.withDefault("")
+    );
+    const [bathrooms, setBathrooms] = useQueryState(
+        "bathrooms",
+        parseAsString.withDefault("")
+    );
+    const [listingType, setListingType] = useQueryState(
+        "listingType",
+        parseAsString.withDefault("all")
+    );
 
-    // Debounce search query
+    // Local state for debounced search (don't want to update URL on every keystroke)
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+
+    // Debounce search query for API calls
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearchQuery(searchQuery);
@@ -39,7 +63,7 @@ export function usePropertyFilters() {
         propertyType ||
         bedrooms ||
         bathrooms ||
-        listingType
+        (listingType && listingType !== "all")
     );
 
     return {

@@ -42,6 +42,22 @@ export function useProperty(id: string) {
 }
 
 /**
+ * Hook to prefetch property details on hover for instant navigation
+ * Call this in onMouseEnter/onTouchStart handlers
+ */
+export function usePrefetchProperty() {
+    const queryClient = useQueryClient();
+
+    return (id: string) => {
+        queryClient.prefetchQuery({
+            queryKey: propertyKeys.detail(id),
+            queryFn: () => getPropertyById(id),
+            ...CACHE_STRATEGIES.STATIC,
+        });
+    };
+}
+
+/**
  * Input type for creating a property with units and media
  */
 export interface CreatePropertyInput {

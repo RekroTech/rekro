@@ -2,7 +2,8 @@ import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { clsx } from "clsx";
-import { QueryProvider } from "@/components";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { QueryProvider, ErrorBoundary } from "@/components";
 import { AuthModalProvider, ToastProvider } from "@/contexts";
 import AppShell from "./AppShell";
 
@@ -65,13 +66,17 @@ export default function RootLayout({
                 className={clsx(geistSans.variable, geistMono.variable, "antialiased")}
                 suppressHydrationWarning
             >
-                <QueryProvider>
-                    <ToastProvider>
-                        <AuthModalProvider>
-                            <AppShell>{children}</AppShell>
-                        </AuthModalProvider>
-                    </ToastProvider>
-                </QueryProvider>
+                <ErrorBoundary>
+                    <NuqsAdapter>
+                        <QueryProvider>
+                            <ToastProvider>
+                                <AuthModalProvider>
+                                    <AppShell>{children}</AppShell>
+                                </AuthModalProvider>
+                            </ToastProvider>
+                        </QueryProvider>
+                    </NuqsAdapter>
+                </ErrorBoundary>
             </body>
         </html>
     );
