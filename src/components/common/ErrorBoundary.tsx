@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorBoundary as ReactErrorBoundary, FallbackProps } from "react-error-boundary";
+import * as Sentry from "@sentry/nextjs";
 import { Button } from "./Button";
 import { Icon } from "./Icon";
 
@@ -60,13 +61,21 @@ export function ErrorBoundary({ children }: ErrorBoundaryProps) {
                 // Log to console in development
                 console.error("Error caught by boundary:", error, errorInfo);
 
-                // TODO: Add Sentry error tracking here
-                // Sentry.captureException(error, {
-                //     contexts: { react: errorInfo }
-                // });
+                // Capture error in Sentry with React context
+                Sentry.captureException(error, {
+                    contexts: {
+                        react: {
+                            componentStack: errorInfo.componentStack,
+                        },
+                    },
+                    tags: {
+                        errorBoundary: "ErrorBoundary",
+                    },
+                    level: "error",
+                });
             }}
             onReset={() => {
-                // Optional: Clear any error state
+                // Optional: Clear any error state if needed
                 // queryClient.clear();
             }}
         >

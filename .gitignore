@@ -13,6 +13,11 @@
 # testing
 /coverage
 
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
 # next.js
 /.next/
 /out/
@@ -41,3 +46,5 @@ yarn-error.log*
 next-env.d.ts
 
 /.idea
+# Sentry Config File
+.env.sentry-build-plugin

@@ -68,8 +68,26 @@ export default function AppShell({ children }: AppShellProps) {
 
     return (
         <>
+            {/* Skip to main content link for keyboard users */}
+            <a
+                href="#main-content"
+                onClick={(e) => {
+                    e.preventDefault();
+                    const mainContent = document.getElementById('main-content');
+                    mainContent?.focus();
+                }}
+                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-primary-500 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg"
+            >
+                Skip to main content
+            </a>
+
             <Header onAddPropertyAction={() => setIsModalOpen(true)} />
-            <main className="absolute top-14 sm:top-16 left-0 right-0 h-[calc(100vh-56px)] sm:h-[calc(100vh-64px)] overflow-y-auto">
+            <main
+                id="main-content"
+                role="main"
+                tabIndex={-1}
+                className="absolute top-14 sm:top-16 left-0 right-0 h-[calc(100vh-56px)] sm:h-[calc(100vh-64px)] overflow-y-auto"
+            >
                 {children}
             </main>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorBoundary as ReactErrorBoundary, FallbackProps } from "react-error-boundary";
+import * as Sentry from "@sentry/nextjs";
 import { Button } from "@/components/common";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -46,7 +47,20 @@ export function PropertyErrorBoundary({ children }: PropertyErrorBoundaryProps) 
             FallbackComponent={PropertyErrorFallback}
             onError={(error, errorInfo) => {
                 console.error("Property page error:", error, errorInfo);
-                // TODO: Track with Sentry
+
+                // Capture error in Sentry with property context
+                Sentry.captureException(error, {
+                    contexts: {
+                        react: {
+                            componentStack: errorInfo.componentStack,
+                        },
+                    },
+                    tags: {
+                        errorBoundary: "PropertyErrorBoundary",
+                        feature: "property-detail",
+                    },
+                    level: "error",
+                });
             }}
         >
             {children}

@@ -7,7 +7,16 @@
         "build": "next build",
         "start": "next start",
         "lint": "eslint",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "test": "playwright test",
+        "test:ui": "playwright test --ui",
+        "test:headed": "playwright test --headed",
+        "test:chromium": "playwright test --project=chromium",
+        "test:firefox": "playwright test --project=firefox",
+        "test:webkit": "playwright test --project=webkit",
+        "test:mobile": "playwright test --project='Mobile Chrome' --project='Mobile Safari'",
+        "test:debug": "playwright test --debug",
+        "test:report": "playwright show-report"
     },
     "dependencies": {
         "@react-google-maps/api": "^2.20.8",
@@ -21,6 +30,7 @@
         "date-fns": "^4.1.0",
         "embla-carousel-autoplay": "^8.6.0",
         "embla-carousel-react": "^8.6.0",
+        "focus-trap-react": "^12.0.0",
         "jspdf": "^4.2.0",
         "next": "16.1.5",
         "nuqs": "^2.8.9",
@@ -32,10 +42,11 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
+        "@playwright/test": "^1.58.2",
         "@tailwindcss/postcss": "^4",
         "@tanstack/react-query-devtools": "^5.91.2",
         "@types/google.maps": "^3.58.1",
-        "@types/node": "^20",
+        "@types/node": "^20.19.35",
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "babel-plugin-react-compiler": "1.0.0",

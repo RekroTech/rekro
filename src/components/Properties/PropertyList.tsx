@@ -121,6 +121,11 @@ export function PropertyList({
 
     return (
         <div className="w-full">
+            {/* Screen reader announcement for property count */}
+            <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {allProperties.length} {allProperties.length === 1 ? 'property' : 'properties'} found
+            </div>
+
             {/* Simple responsive grid - works perfectly on all screen sizes */}
             <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {allProperties.map((property: Property) => (

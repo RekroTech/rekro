@@ -51,7 +51,10 @@ function HomePageContent() {
     };
 
     return (
-        <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8">
+            {/* Page Title - Visually hidden but accessible to screen readers */}
+            <h1 className="sr-only">Property Listings</h1>
+
             {/* Email Verification Success Banner */}
             {verified && (
                 <Banner
@@ -71,7 +74,8 @@ function HomePageContent() {
                         <div className="relative flex-1">
                             <Input
                                 id="search-input"
-                                type="text"
+                                type="search"
+                                aria-label="Search properties by location or name"
                                 placeholder="Search location or property..."
                                 value={searchQuery}
                                 onChange={(e) => handleSearchChange(e.target.value)}
@@ -235,7 +239,7 @@ function HomePageContent() {
                 error={errorInfo}
                 onTryDifferentEmail={handleTryDifferentEmail}
             />
-        </main>
+        </div>
     );
 }
 

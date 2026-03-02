@@ -49,6 +49,75 @@ export function Modal({
     fullWidthButtons = false,
 }: ModalProps) {
     const modalRef = useRef<HTMLDivElement>(null);
+    const previouslyFocusedElement = useRef<HTMLElement | null>(null);
+
+    // Store previously focused element and restore on close
+    useEffect(() => {
+        if (isOpen) {
+            // Store the currently focused element before modal takes focus
+            const activeEl = document.activeElement as HTMLElement;
+            // Only store if it's a focusable element (not body)
+            if (activeEl && activeEl !== document.body) {
+                previouslyFocusedElement.current = activeEl;
+            }
+        } else if (previouslyFocusedElement.current) {
+            // Delay to ensure modal is fully closed before restoring focus
+            const timer = setTimeout(() => {
+                const elementToFocus = previouslyFocusedElement.current;
+                if (elementToFocus && typeof elementToFocus.focus === 'function') {
+                    try {
+                        elementToFocus.focus();
+                    } catch (e) {
+                        // Element might not be focusable anymore, ignore error
+                        console.warn('Failed to restore focus:', e);
+                    }
+                }
+                previouslyFocusedElement.current = null;
+            }, 200);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
+
+    // Implement focus trap
+    useEffect(() => {
+        if (!isOpen || !modalRef.current) return;
+
+        const modal = modalRef.current;
+        const focusableElements = modal.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        const handleTab = (e: KeyboardEvent) => {
+            if (e.key !== 'Tab') return;
+
+            if (e.shiftKey) {
+                // Shift + Tab
+                if (document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement?.focus();
+                }
+            } else {
+                // Tab
+                if (document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement?.focus();
+                }
+            }
+        };
+
+        modal.addEventListener('keydown', handleTab);
+
+        // Focus first element when modal opens
+        setTimeout(() => {
+            firstElement?.focus();
+        }, 100);
+
+        return () => {
+            modal.removeEventListener('keydown', handleTab);
+        };
+    }, [isOpen]);
 
     // Handle escape key
     useEffect(() => {
@@ -99,17 +168,21 @@ export function Modal({
                 <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
                     <div
                         ref={modalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby={title ? "modal-title" : undefined}
                         onClick={(e) => e.stopPropagation()}
                         className={`relative w-full ${sizeClasses[size]} transform rounded-lg bg-card shadow-xl transition-all my-4 sm:my-8 flex flex-col max-h-[90vh] sm:max-h-[85vh]`}
                     >
                         {/* Header */}
                         {title && (
                             <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0">
-                                <h3 className="text-base sm:text-lg font-semibold text-foreground">
+                                <h3 id="modal-title" className="text-base sm:text-lg font-semibold text-foreground">
                                     {title}
                                 </h3>
                                 <button
                                     onClick={onClose}
+                                    aria-label="Close dialog"
                                     className="text-text-muted hover:text-foreground transition-colors"
                                 >
                                     <Icon name="close" className="h-5 w-5 sm:h-6 sm:w-6" />
