@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, requireAuthForApi } from "@/lib/supabase/server";
 import { getCurrentTimestamp, parseInclusions } from "@/lib/utils";
-import { CreateApplicationRequest } from "@/types/application.types";
+import { CreateApplicationRequestSchema } from "@/lib/validators";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,20 @@ export async function POST(request: NextRequest) {
         const supabase = await createClient();
 
         // Parse request body
-        const body: CreateApplicationRequest = await request.json();
+        const rawBody = await request.json();
+
+        // Validate request body with Zod
+        let body;
+        try {
+            body = CreateApplicationRequestSchema.parse(rawBody);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Invalid request data";
+            return NextResponse.json(
+                { error: `Validation error: ${message}` },
+                { status: 400, headers: { "Cache-Control": "no-store" } }
+            );
+        }
+
         const {
             applicationId,
             propertyId,

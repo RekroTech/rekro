@@ -4,6 +4,8 @@ import { uploadPropertyFiles } from "@/lib/services";
 import { isAdmin } from "@/lib/utils";
 import type { UnitInsert, PropertyInsert } from "@/types/db";
 import { errorResponse, successResponse } from "@/app/api/utils";
+import { PropertyDataSchema, UnitDataSchema } from "@/lib/validators";
+import { z } from "zod";
 
 /**
  * PUT /api/property/[id]
@@ -43,10 +45,54 @@ export async function PUT(
         const existingImagesStr = formData.get("existingImages") as string;
         const deletedUnitIdsStr = formData.get("deletedUnitIds") as string;
 
-        const propertyData = propertyDataStr ? JSON.parse(propertyDataStr) : {};
-        const unitsData = unitsDataStr ? JSON.parse(unitsDataStr) : [];
-        const existingImages = existingImagesStr ? JSON.parse(existingImagesStr) : [];
-        const deletedUnitIds = deletedUnitIdsStr ? JSON.parse(deletedUnitIdsStr) : [];
+        // Parse and validate property data
+        let propertyData = {};
+        if (propertyDataStr) {
+            try {
+                const parsed = JSON.parse(propertyDataStr);
+                propertyData = PropertyDataSchema.partial().parse(parsed);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Invalid property data";
+                return errorResponse(`Validation error: ${message}`, 400);
+            }
+        }
+
+        // Parse and validate units data
+        type ValidatedUnit = z.infer<typeof UnitDataSchema>;
+        let unitsData: ValidatedUnit[] = [];
+        if (unitsDataStr) {
+            try {
+                const parsed = JSON.parse(unitsDataStr);
+                unitsData = Array.isArray(parsed)
+                    ? parsed.map(unit => UnitDataSchema.parse(unit))
+                    : [];
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Invalid units data";
+                return errorResponse(`Validation error: ${message}`, 400);
+            }
+        }
+
+        // Parse other data
+        let existingImages: string[] = [];
+        if (existingImagesStr) {
+            try {
+                const parsed = JSON.parse(existingImagesStr);
+                existingImages = z.array(z.string()).parse(parsed);
+            } catch {
+                return errorResponse("Invalid existingImages format", 400);
+            }
+        }
+
+        let deletedUnitIds: string[] = [];
+        if (deletedUnitIdsStr) {
+            try {
+                const parsed = JSON.parse(deletedUnitIdsStr);
+                deletedUnitIds = z.array(z.string().uuid()).parse(parsed);
+            } catch {
+                return errorResponse("Invalid deletedUnitIds format", 400);
+            }
+        }
+
         const imageFiles = formData.getAll("images") as File[];
 
         // Step 1: Delete units marked for deletion
@@ -65,16 +111,16 @@ export async function PUT(
 
         // Step 2: Handle units - separate new and existing
         if (unitsData.length > 0) {
-            type UnitData = Omit<UnitInsert, "id" | "property_id"> & { id?: string };
-            const newUnits = unitsData.filter((u: UnitData) => !u.id);
-            const existingUnits = unitsData.filter((u: UnitData) => u.id);
+            type ValidatedUnit = z.infer<typeof UnitDataSchema>;
+            const newUnits = unitsData.filter((u: ValidatedUnit) => !u.id);
+            const existingUnits = unitsData.filter((u: ValidatedUnit) => u.id);
 
             // Insert new units
             if (newUnits.length > 0) {
-                const unitsToInsert = newUnits.map((unit: UnitData) => ({
+                const unitsToInsert = newUnits.map((unit: ValidatedUnit) => ({
                     ...unit,
                     property_id: propertyId,
-                }));
+                })) as UnitInsert[];
 
                 const { error: insertError } = await supabase
                     .from("units")
@@ -88,12 +134,14 @@ export async function PUT(
 
             // Update existing units
             if (existingUnits.length > 0) {
+                const unitsToUpdate = existingUnits.map((unit: ValidatedUnit) => ({
+                    ...unit,
+                    property_id: propertyId,
+                })) as UnitInsert[];
+
                 const { error: upsertError } = await supabase
                     .from("units")
-                    .upsert(existingUnits.map((unit: UnitData) => ({
-                        ...unit,
-                        property_id: propertyId,
-                    })));
+                    .upsert(unitsToUpdate);
 
                 if (upsertError) {
                     console.error("Error updating units:", upsertError);

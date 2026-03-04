@@ -3,6 +3,8 @@ import { createClient, requireAuthForApi } from "@/lib/supabase/server";
 import { uploadPropertyFiles } from "@/lib/services";
 import type { UnitInsert } from "@/types/db";
 import { errorResponse, successResponse } from "@/app/api/utils";
+import { PropertyDataSchema, UnitDataSchema } from "@/lib/validators";
+import { z } from "zod";
 
 /**
  * POST /api/property
@@ -24,8 +26,31 @@ export async function POST(request: NextRequest) {
             return errorResponse("Property data is required", 400);
         }
 
-        const propertyData = JSON.parse(propertyDataStr);
-        const unitsData = unitsDataStr ? JSON.parse(unitsDataStr) : [];
+        // Parse and validate property data
+        let propertyData;
+        try {
+            const parsed = JSON.parse(propertyDataStr);
+            propertyData = PropertyDataSchema.parse(parsed);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Invalid property data";
+            return errorResponse(`Validation error: ${message}`, 400);
+        }
+
+        // Parse and validate units data
+        type ValidatedUnit = z.infer<typeof UnitDataSchema>;
+        let unitsData: ValidatedUnit[] = [];
+        if (unitsDataStr) {
+            try {
+                const parsed = JSON.parse(unitsDataStr);
+                unitsData = Array.isArray(parsed)
+                    ? parsed.map(unit => UnitDataSchema.parse(unit))
+                    : [];
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Invalid units data";
+                return errorResponse(`Validation error: ${message}`, 400);
+            }
+        }
+
         const imageFiles = formData.getAll("images") as File[];
 
         // Step 1: Create property (without images initially)
@@ -47,10 +72,10 @@ export async function POST(request: NextRequest) {
 
         // Step 2: Create units for this property
         if (unitsData.length > 0) {
-            const unitsToInsert = unitsData.map((unit: Omit<UnitInsert, "id" | "property_id">) => ({
+            const unitsToInsert = unitsData.map((unit: ValidatedUnit) => ({
                 ...unit,
                 property_id: property.id,
-            }));
+            })) as UnitInsert[];
 
             const { error: unitsError } = await supabase
                 .from("units")

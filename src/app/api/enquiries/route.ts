@@ -9,19 +9,10 @@ import { createClient, getSession } from "@/lib/supabase/server";
 import { errorResponse, successResponse } from "@/app/api/utils";
 import { sendEnquiryNotification, sendEnquiryConfirmation } from "@/lib/email";
 import type { EnquiryInsert } from "@/types/db";
+import { EnquiryRequestSchema } from "@/lib/validators";
 
 export const dynamic = "force-dynamic";
 
-interface EnquiryRequestBody {
-    unit_id: string;
-    message: string;
-    // Guest fields (required if not logged in)
-    guest_name?: string;
-    guest_email?: string;
-    guest_phone?: string;
-    // Honeypot field to catch bots
-    website?: string;
-}
 
 /**
  * POST /api/enquiries
@@ -36,8 +27,17 @@ export async function POST(request: NextRequest) {
     try {
         const supabase = await createClient();
 
-        // Parse request body
-        const body: EnquiryRequestBody = await request.json();
+        // Parse and validate request body
+        const rawBody = await request.json();
+
+        let body;
+        try {
+            body = EnquiryRequestSchema.parse(rawBody);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Invalid request data";
+            return errorResponse(`Validation error: ${message}`, 400);
+        }
+
         const { unit_id, message, guest_name, guest_email, guest_phone, website } = body;
 
         // Honeypot check - if website field is filled, it's likely a bot
@@ -46,25 +46,14 @@ export async function POST(request: NextRequest) {
             return successResponse({ ok: true, enquiry_id: "bot-detected" }, 201);
         }
 
-        // Validate required fields
-        if (!unit_id || !message) {
-            return errorResponse("Missing required fields: unit_id and message are required", 400);
-        }
-
         // Check if user is authenticated
         const user = await getSession();
         const isAuthenticated = !!user;
 
-        // If guest, validate guest fields
+        // If guest, validate guest fields (Zod already did basic validation)
         if (!isAuthenticated) {
             if (!guest_email || !guest_email.trim()) {
                 return errorResponse("Guest email is required for unauthenticated enquiries", 400);
-            }
-
-            // Basic email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(guest_email)) {
-                return errorResponse("Invalid email format", 400);
             }
         }
 

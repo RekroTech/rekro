@@ -8,6 +8,7 @@ import type {
     UserApplicationProfileInsert,
     UserApplicationProfileUpdate,
 } from "@/types/db";
+import { ApplicationProfileUpdateSchema, ProfileUpdateSchema } from "@/lib/validators";
 
 export const dynamic = "force-dynamic";
 
@@ -54,60 +55,35 @@ export async function PATCH(req: NextRequest) {
 
         const supabase = await createClient();
 
+        const rawBody = (await req.json()) as Record<string, unknown>;
 
-        const body = (await req.json()) as Record<string, unknown>;
+        // Validate the entire body with both schemas
+        let usersUpdateData: ProfileUpdate = {};
+        let applicationProfileUpdateData: UserApplicationProfileUpdate = {};
 
-        // Columns that exist on `public.users` table
-        const usersTableFields: (keyof ProfileUpdate)[] = [
-            "full_name",
-            "username",
-            "phone",
-            "image_url",
-            "current_location",
-            "native_language",
-            "receive_marketing_email",
-            "date_of_birth",
-            "gender",
-            "occupation",
-            "bio",
-            "preferred_contact_method",
-            "notification_preferences",
-            "discoverable",
-            "share_contact",
-        ];
-
-        // Columns that exist on `user_application_profile` table
-        const applicationProfileFields: (keyof UserApplicationProfileUpdate)[] = [
-            "visa_status",
-            "employment_status",
-            "employment_type",
-            "income_source",
-            "income_frequency",
-            "income_amount",
-            "student_status",
-            "finance_support_type",
-            "finance_support_details",
-            "preferred_locality",
-            "max_budget_per_week",
-            "has_pets",
-            "smoker",
-            "emergency_contact_name",
-            "emergency_contact_phone",
-            "documents",
-        ];
-
-        const usersUpdateData: ProfileUpdate = {};
-        for (const key of usersTableFields) {
-            if (key in body) {
-                (usersUpdateData as Record<string, unknown>)[key] = body[key as string];
+        try {
+            // Validate profile fields
+            const profileResult = ProfileUpdateSchema.safeParse(rawBody);
+            if (profileResult.success) {
+                usersUpdateData = profileResult.data as ProfileUpdate;
             }
-        }
 
-        const applicationProfileUpdateData: UserApplicationProfileUpdate = {};
-        for (const key of applicationProfileFields) {
-            if (key in body) {
-                (applicationProfileUpdateData as Record<string, unknown>)[key] = body[key as string];
+            // Validate application profile fields
+            const appProfileResult = ApplicationProfileUpdateSchema.safeParse(rawBody);
+            if (appProfileResult.success) {
+                applicationProfileUpdateData = appProfileResult.data as UserApplicationProfileUpdate;
             }
+
+            // If both failed, throw an error
+            if (!profileResult.success && !appProfileResult.success) {
+                return errorResponse(
+                    `Validation error: ${profileResult.error.message}`,
+                    400
+                );
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Invalid request data";
+            return errorResponse(`Validation error: ${message}`, 400);
         }
 
         if (Object.keys(usersUpdateData).length > 0) {

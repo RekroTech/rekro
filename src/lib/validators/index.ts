@@ -18,8 +18,29 @@ export type {
     PropertyWithUnits,
     GetPropertiesParams,
     GetPropertiesResponse,
-    PropertyFormData,
+    PropertyFormData as PropertyFormDataLegacy,
 } from "./property";
+
+// Property Form validators
+export {
+    ListingTypeSelectionSchema,
+    UnitStatusSchema,
+    PropertyFormDataSchema,
+    UnitFormDataSchema,
+    PropertyAPIRequestSchema,
+    PropertyDataSchema,
+    UnitDataSchema,
+} from "./propertyForm";
+
+export type {
+    ListingTypeSelection,
+    UnitStatus,
+    PropertyFormData,
+    UnitFormData,
+    PropertyAPIRequest,
+    PropertyData,
+    UnitData,
+} from "./propertyForm";
 
 // Application validators
 export {
@@ -51,4 +72,45 @@ export type {
     CreateApplicationRequest,
     Application,
 } from "./application";
+
+// User validators
+export {
+    UserProfileSchema,
+    UserApplicationProfileSchema,
+    ProfileUpdateSchema,
+    ApplicationProfileUpdateSchema,
+    CompleteProfileSchema,
+} from "./user";
+
+export type {
+    UserProfile,
+    UserApplicationProfile,
+    ProfileUpdate,
+    ApplicationProfileUpdate,
+    CompleteProfile,
+} from "./user";
+
+// Enquiry validators
+export {
+    EnquiryRequestSchema,
+    EnquirySchema,
+    EnquiryInsertSchema,
+} from "./enquiry";
+
+export type {
+    EnquiryRequest,
+    Enquiry,
+    EnquiryInsert,
+} from "./enquiry";
+
+// Email validators (re-exported from email module for convenience)
+export {
+    enquiryNotificationSchema,
+    enquiryConfirmationSchema,
+} from "../email/schemas";
+
+export type {
+    EnquiryNotification,
+    EnquiryConfirmation,
+} from "../email/schemas";
 
