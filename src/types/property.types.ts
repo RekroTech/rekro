@@ -5,6 +5,8 @@ import { Property as BaseProperty, Unit } from "@/types/db";
  */
 export type InclusionType = "furniture" | "bills" | "cleaning" | "carpark" | "storage";
 
+export type UnitStatus = "active" | "leased" | "inactive";
+
 export interface Inclusion {
     selected: boolean;
     price: number;

@@ -146,6 +146,13 @@
         --warning-200: rgba(255, 149, 0, 0.3);
         --warning-700: #ffa500;
         --warning-800: #ffb733;
+
+        /* Shadows for dark mode - use lighter shadows for elevation effect */
+        --shadow-card: 0 3px 12px rgba(255, 255, 255, 0.10);
+        --shadow-soft: 0 1px 6px rgba(255, 255, 255, 0.08);
+        --shadow-lift: 0 6px 18px rgba(255, 255, 255, 0.18);
+        --shadow-deep: 0 8px 24px rgba(255, 255, 255, 0.22);
+        --shadow-pill: 0 2px 8px rgba(255, 255, 255, 0.10);
     }
 }
 

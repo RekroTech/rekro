@@ -60,7 +60,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
         <>
             <div
                 onClick={handleCardClick}
-                className="bg-card rounded-[var(--radius-card)] border border-border hover:shadow-[var(--shadow-lift)] transition-shadow cursor-pointer p-3 sm:p-0"
+                className="bg-card rounded-[var(--radius-card)] overflow-hidden border border-border hover:border-primary-500/30 hover:shadow-[var(--shadow-lift)] transition-all duration-200 cursor-pointer p-3 sm:p-0"
             >
                 {/* Mobile & Tablet Layout */}
                 <div className="flex flex-col gap-3 sm:hidden">
@@ -238,7 +238,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                     {/* Left: Applicant Photo */}
                     <div className="flex-shrink-0">
                         {application.applicant?.image_url ? (
-                            <div className="relative w-32 h-32 md:w-48 md:h-48 rounded-lg overflow-hidden border-2 border-border">
+                            <div className="relative w-32 h-32 md:w-48 md:h-48">
                                 <Image
                                     src={application.applicant.image_url}
                                     alt={application.applicant.full_name || "Applicant"}
@@ -248,7 +248,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                 />
                             </div>
                         ) : (
-                            <div className="w-32 h-32 md:w-48 md:h-48 rounded-lg bg-primary-100 dark:bg-primary-900/30 border-2 border-primary-500/20 flex items-center justify-center">
+                            <div className="w-32 h-32 md:w-48 md:h-48 bg-primary-100 dark:bg-primary-900/30 border-2 border-primary-500/20 flex items-center justify-center">
                                 <Icon
                                     name="user"
                                     className="w-12 h-12 md:w-16 md:h-16 text-primary-600 dark:text-primary-400"

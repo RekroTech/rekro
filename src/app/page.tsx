@@ -7,6 +7,7 @@ import { useRoles } from "@/lib/hooks";
 import { useEmailVerification, VerificationErrorModal } from "@/components/Auth";
 import { usePropertyFilters } from "@/components/Properties";
 import { LISTING_TYPES, PROPERTY_TYPES, STATUS_TABS } from "@/components/PropertyForm";
+import { UnitStatus } from "@/types/property.types";
 
 // This page needs to be dynamic to show property listings
 export const dynamic = "force-dynamic";
@@ -181,7 +182,7 @@ function HomePageContent() {
                                         role="tab"
                                         aria-selected={isActive}
                                         tabIndex={isActive ? 0 : -1}
-                                        onClick={() => setStatus(tab.value as "active" | "leased" | "inactive")}
+                                        onClick={() => setStatus(tab.value as UnitStatus)}
                                         className={
                                             "flex-1 rounded-4xl px-3 py-2 text-xs sm:text-sm font-medium text-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 whitespace-nowrap touch-manipulation " +
                                             (isActive

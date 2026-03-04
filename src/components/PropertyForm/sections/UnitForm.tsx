@@ -1,7 +1,8 @@
 import { Input, Checkbox, Select, Textarea } from "@/components/common";
 import { UnitFormData } from "../types";
 import { ListingType } from "@/types/db";
-import { LEASE_MONTH_OPTIONS } from "../constants";
+import { LEASE_MONTH_OPTIONS, STATUS_TABS } from "../constants";
+import { UnitStatus } from "@/types/property.types";
 
 interface UnitFormProps {
     unit: UnitFormData;
@@ -41,6 +42,13 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
         } else {
             onUpdate(index, { max_lease: value });
         }
+    };
+
+    const handleStatusChange = (value: string) => {
+        const status = value as UnitStatus;
+        const isActive = status !== "inactive";
+        const isAvailable = status === "active";
+        onUpdate(index, { status, is_active: isActive, is_available: isAvailable });
     };
 
     return (
@@ -124,8 +132,8 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                 </div>
             </div>
 
-            {/* Row 3: Bills Included, Currently Available */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Row 3: Bills Included, Status */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex items-end pb-2">
                     <Checkbox
                         label="Bills Included"
@@ -133,11 +141,13 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                         onChange={(e) => onUpdate(index, { bills_included: e.target.checked })}
                     />
                 </div>
-                <div className="flex items-end pb-2">
-                    <Checkbox
-                        label="Currently Available"
-                        checked={unit.is_available}
-                        onChange={(e) => onUpdate(index, { is_available: e.target.checked })}
+                <div>
+                    <Select
+                        label="Status"
+                        value={unit.status}
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                        options={STATUS_TABS}
+                        required
                     />
                 </div>
             </div>

@@ -56,9 +56,9 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
             aria-label="Main navigation"
         >
             <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                <Link href="/" className="flex items-end gap-2.5 sm:gap-3" aria-label="Go to home">
-                    <LogoIcon className="h-8 w-auto" />
-                    <LogoText className="h-6 w-auto mb-0.5" />
+                <Link href="/" className="flex items-end gap-2 sm:gap-3" aria-label="Go to home">
+                    <LogoIcon className="h-7 sm:h-8 w-auto" />
+                    <LogoText className="h-5 sm:h-6 w-auto mb-0.5" />
                 </Link>
                 <div className="flex flex-row">
                     <div className="flex items-center gap-2 sm:gap-4">
