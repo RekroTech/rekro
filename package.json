@@ -39,6 +39,7 @@
         "react-dom": "19.2.3",
         "react-error-boundary": "^6.1.1",
         "react-intersection-observer": "^10.0.3",
+        "resend": "^6.9.3",
         "zod": "^4.3.6"
     },
     "devDependencies": {

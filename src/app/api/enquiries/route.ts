@@ -7,6 +7,7 @@
 import { NextRequest } from "next/server";
 import { createClient, getSession } from "@/lib/supabase/server";
 import { errorResponse, successResponse } from "@/app/api/utils";
+import { sendEnquiryNotification, sendEnquiryConfirmation } from "@/lib/email";
 import type { EnquiryInsert } from "@/types/db";
 
 export const dynamic = "force-dynamic";
@@ -127,39 +128,105 @@ export async function POST(request: NextRequest) {
             return errorResponse("Failed to submit enquiry", 500);
         }
 
-        // TODO: Send notification emails
-        // 1. Email to property landlord/agent
+        // Send notification emails
+        // 1. Email to property creator/agent
         // 2. Optional confirmation email to user/guest
-        // This can be implemented using a service like Resend or SendGrid
 
         try {
-            // Get property details for email notification
+            // Get property details and creator information for email notification
             const { data: property } = await supabase
                 .from("properties")
-                .select("title, landlord_id, created_by")
+                .select(`
+                    title,
+                    created_by,
+                    users!properties_created_by_fkey (
+                        email,
+                        full_name
+                    )
+                `)
                 .eq("id", unit.property_id)
                 .single();
 
             if (property) {
-                // Here you would send emails
-                // Example:
-                // await sendEnquiryNotification({
-                //     enquiryId: enquiry.id,
-                //     propertyTitle: property.title,
-                //     landlordId: property.landlord_id,
-                //     message,
-                //     senderEmail: isAuthenticated ? user.email : guest_email,
-                // });
+                // Get unit details for email
+                const { data: unitDetails } = await supabase
+                    .from("units")
+                    .select("unit_number, floor_level")
+                    .eq("id", unit_id)
+                    .single();
 
-                console.log("Enquiry notification would be sent for:", {
-                    enquiryId: enquiry.id,
-                    propertyTitle: property.title,
-                    isAuthenticated,
-                });
+                const unitName = unitDetails?.unit_number ||
+                    (unitDetails?.floor_level ? `Floor ${unitDetails.floor_level}` : undefined);
+
+                // Get property creator's information
+                const creatorData = Array.isArray(property.users)
+                    ? property.users[0]
+                    : property.users;
+
+                const recipientEmail = creatorData?.email;
+                const recipientName = creatorData?.full_name;
+
+                if (recipientEmail) {
+                    // 1. Send notification to property creator
+                    try {
+                        await sendEnquiryNotification({
+                            enquiryId: enquiry.id,
+                            propertyTitle: property.title,
+                            unitName,
+                            message,
+                            senderName: isAuthenticated
+                                ? enquiryData.contact_name || undefined
+                                : enquiryData.guest_name || undefined,
+                            senderEmail: isAuthenticated
+                                ? enquiryData.contact_email!
+                                : enquiryData.guest_email!,
+                            senderPhone: isAuthenticated
+                                ? enquiryData.contact_phone || undefined
+                                : enquiryData.guest_phone || undefined,
+                            recipientEmail,
+                            recipientName: recipientName || undefined,
+                            isAuthenticated,
+                        });
+
+                        console.log("Enquiry notification sent to:", recipientEmail);
+                    } catch (notificationError) {
+                        console.error("Error sending enquiry notification:", notificationError);
+                        // Don't fail the request if notification fails
+                    }
+
+                    // 2. Send confirmation to enquirer (optional, configurable)
+                    const shouldSendConfirmation = process.env.SEND_ENQUIRY_CONFIRMATION !== "false";
+
+                    if (shouldSendConfirmation) {
+                        try {
+                            await sendEnquiryConfirmation({
+                                enquiryId: enquiry.id,
+                                propertyTitle: property.title,
+                                unitName,
+                                message,
+                                recipientEmail: isAuthenticated
+                                    ? enquiryData.contact_email!
+                                    : enquiryData.guest_email!,
+                                recipientName: isAuthenticated
+                                    ? enquiryData.contact_name || undefined
+                                    : enquiryData.guest_name || undefined,
+                            });
+
+                            console.log("Enquiry confirmation sent to:",
+                                isAuthenticated ? enquiryData.contact_email : enquiryData.guest_email
+                            );
+                        } catch (confirmationError) {
+                            console.error("Error sending enquiry confirmation:", confirmationError);
+                            // Don't fail the request if confirmation fails
+                        }
+                    }
+                } else {
+                    console.warn("No recipient email found for property:", property.title);
+                }
             }
         } catch (emailError) {
             // Log email error but don't fail the request
-            console.error("Error sending enquiry notification:", emailError);
+            console.error("Error in email notification process:", emailError);
         }
 
         return successResponse(
