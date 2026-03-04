@@ -301,10 +301,7 @@ export function PropertySidebar({
             <EnquiryForm
                 isOpen={isEnquiryModalOpen}
                 onClose={() => setIsEnquiryModalOpen(false)}
-                propertyTitle={property.title}
-                propertyId={property.id}
                 unitId={selectedUnit?.id}
-                isEntireHome={isEntireHome}
             />
         </div>
     );

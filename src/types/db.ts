@@ -468,6 +468,51 @@ export interface Database {
                     role?: AppRole;
                 };
             };
+            enquiries: {
+                Row: {
+                    id: string;
+                    created_at: string;
+                    unit_id: string;
+                    user_id: string | null;
+                    message: string;
+                    guest_name: string | null;
+                    guest_email: string | null;
+                    guest_phone: string | null;
+                    contact_name: string | null;
+                    contact_email: string | null;
+                    contact_phone: string | null;
+                    ip: string | null;
+                    user_agent: string | null;
+                };
+                Insert: {
+                    id?: string;
+                    created_at?: string;
+                    unit_id: string;
+                    user_id?: string | null;
+                    message: string;
+                    guest_name?: string | null;
+                    guest_email?: string | null;
+                    guest_phone?: string | null;
+                    contact_name?: string | null;
+                    contact_email?: string | null;
+                    contact_phone?: string | null;
+                    ip?: string | null;
+                    user_agent?: string | null;
+                };
+                Update: {
+                    unit_id?: string;
+                    user_id?: string | null;
+                    message?: string;
+                    guest_name?: string | null;
+                    guest_email?: string | null;
+                    guest_phone?: string | null;
+                    contact_name?: string | null;
+                    contact_email?: string | null;
+                    contact_phone?: string | null;
+                    ip?: string | null;
+                    user_agent?: string | null;
+                };
+            };
             // Add more tables as needed
         };
     };
@@ -513,3 +558,6 @@ export type UserApplicationProfileInsert =
 export type UserApplicationProfileUpdate =
     Database["public"]["Tables"]["user_application_profile"]["Update"];
 
+export type Enquiry = Database["public"]["Tables"]["enquiries"]["Row"];
+export type EnquiryInsert = Database["public"]["Tables"]["enquiries"]["Insert"];
+export type EnquiryUpdate = Database["public"]["Tables"]["enquiries"]["Update"];

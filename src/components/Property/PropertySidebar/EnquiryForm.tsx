@@ -11,10 +11,7 @@ import { useProfile } from "@/lib/hooks/user";
 interface EnquiryModalProps {
     isOpen: boolean;
     onClose: () => void;
-    propertyTitle: string;
-    propertyId: string;
     unitId?: string;
-    isEntireHome: boolean;
 }
 
 interface FormData {
@@ -22,6 +19,7 @@ interface FormData {
     email: string;
     phone: string;
     message: string;
+    website: string; // Honeypot field
 }
 
 interface FormErrors {
@@ -34,10 +32,7 @@ interface FormErrors {
 export function EnquiryForm({
     isOpen,
     onClose,
-    propertyTitle,
-    propertyId,
     unitId,
-    isEntireHome,
 }: EnquiryModalProps) {
     const { data: user } = useProfile();
     const isLoggedIn = !!user;
@@ -47,6 +42,7 @@ export function EnquiryForm({
         email: "",
         phone: "",
         message: "",
+        website: "", // Honeypot - should remain empty
     });
 
     // Pre-fill name and email from user data if logged in
@@ -103,30 +99,34 @@ export function EnquiryForm({
             return;
         }
 
+        // Ensure unitId is provided
+        if (!unitId) {
+            console.error("Unit ID is required for enquiries");
+            setSubmitStatus("error");
+            return;
+        }
+
         setIsSubmitting(true);
         setSubmitStatus("idle");
 
         try {
-            // Only include name and email in body if user is not logged in
-            // Only include phone if user doesn't have it or provided a new one
+            // Prepare request body based on authentication status
             const bodyData = isLoggedIn
                 ? {
-                      ...(user?.phone ? {} : { phone: formData.phone }),
+                      unit_id: unitId,
                       message: formData.message,
-                      propertyTitle,
-                      propertyId,
-                      unitId,
-                      isEntireHome,
+                      website: formData.website, // Honeypot
                   }
                 : {
-                      ...formData,
-                      propertyTitle,
-                      propertyId,
-                      unitId,
-                      isEntireHome,
+                      unit_id: unitId,
+                      message: formData.message,
+                      guest_name: formData.name,
+                      guest_email: formData.email,
+                      guest_phone: formData.phone || undefined,
+                      website: formData.website, // Honeypot
                   };
 
-            const response = await fetch("/api/enquiry", {
+            const response = await fetch("/api/enquiries", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -135,6 +135,8 @@ export function EnquiryForm({
             });
 
             if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error("Error sending enquiry:", errorData);
                 setSubmitStatus("error");
                 return;
             }
@@ -143,7 +145,13 @@ export function EnquiryForm({
 
             // Reset form after successful submission
             setTimeout(() => {
-                setFormData({ name: "", email: "", phone: "", message: "" });
+                setFormData({
+                    name: "",
+                    email: "",
+                    phone: "",
+                    message: "",
+                    website: "",
+                });
                 setSubmitStatus("idle");
                 onClose();
             }, 2000);
@@ -167,7 +175,13 @@ export function EnquiryForm({
 
     const handleClose = () => {
         if (!isSubmitting) {
-            setFormData({ name: "", email: "", phone: "", message: "" });
+            setFormData({
+                name: "",
+                email: "",
+                phone: "",
+                message: "",
+                website: "",
+            });
             setErrors({});
             setSubmitStatus("idle");
             onClose();
@@ -189,7 +203,7 @@ export function EnquiryForm({
                     </p>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Property Information Card */}
                     <div className="bg-panel border border-border rounded-xl p-5 mb-4">
                         {/* Info Message */}
@@ -249,6 +263,20 @@ export function EnquiryForm({
                             required
                         />
                     )}
+
+                    {/* Honeypot field - hidden from real users, catches bots */}
+                    <div style={{ position: "absolute", left: "-9999px" }} aria-hidden="true">
+                        <Input
+                            label="Website"
+                            name="website"
+                            type="text"
+                            value={formData.website}
+                            onChange={handleChange}
+                            placeholder="Leave this field empty"
+                            tabIndex={-1}
+                            autoComplete="off"
+                        />
+                    </div>
 
                     <Textarea
                         label="Message"

@@ -215,15 +215,17 @@ export default function PropertyDetailPage() {
                     )}
                 </div>
 
-                {/* Users Who Liked Carousel - Only visible if viewing user is discoverable (reciprocal privacy) */}
-                {userProfile?.discoverable ? (
-                    <Suspense fallback={<div className="h-32 animate-pulse bg-surface-subtle rounded-lg" />}>
-                        <div className="my-4 sm:my-12">
-                            <LikedUsersCarousal propertyId={propertyId} />
-                        </div>
-                    </Suspense>
-                ) : (
-                    <DiscoverabilityPrompt />
+                {/* Users Who Liked Carousel - Only visible for authenticated users */}
+                {userProfile && (
+                    userProfile.discoverable ? (
+                        <Suspense fallback={<div className="h-32 animate-pulse bg-surface-subtle rounded-lg" />}>
+                            <div className="my-4 sm:my-12">
+                                <LikedUsersCarousal propertyId={propertyId} />
+                            </div>
+                        </Suspense>
+                    ) : (
+                        <DiscoverabilityPrompt />
+                    )
                 )}
             </main>
         </ProfileCompletionProvider>

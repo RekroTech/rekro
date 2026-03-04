@@ -209,9 +209,10 @@ export const getRegularCleaningCostPerWeek = (isDualOccupied: boolean = false): 
     return isDualOccupied ? 60 : 35;
 };
 
-// Calculate cleaning costs for entire homes based on individual room units only
+// Calculate cleaning costs for entire homes based on individual room units or bedrooms
 export const getEntireHomeCleaningCosts = (
-    units: Array<{ max_occupants: number | null; listing_type: string }>
+    units: Array<{ max_occupants: number | null; listing_type: string }>,
+    bedroomsCount?: number | null
 ) => {
     let regularWeekly = 0;
     let endOfLease = 0;
@@ -219,13 +220,25 @@ export const getEntireHomeCleaningCosts = (
     // Only consider room-type units (individual bedrooms), not the entire_home unit
     const roomUnits = units.filter((unit) => unit.listing_type === "room");
 
-    roomUnits.forEach((unit) => {
-        const maxOccupants = unit.max_occupants || 1;
-        // If max_occupants is 2, charge $60/week, otherwise $35/week
-        regularWeekly += maxOccupants === 2 ? 60 : 35;
-        // Each room costs $200 for end of lease cleaning
-        endOfLease += 200;
-    });
+    if (roomUnits.length > 0) {
+        // If there are individual room units, calculate based on them
+        roomUnits.forEach((unit) => {
+            const maxOccupants = unit.max_occupants || 1;
+            // Use pricing config for cleaning costs based on occupancy
+            regularWeekly += maxOccupants === 2
+                ? PRICING_CONFIG.regularCleaningDualOccupiedPerWeek
+                : PRICING_CONFIG.regularCleaningPerRoomPerWeek;
+            // Each room costs standard end of lease cleaning
+            endOfLease += PRICING_CONFIG.endOfLeaseCleaningBase;
+        });
+    } else if (bedroomsCount && bedroomsCount > 0) {
+        // For entire_home listings without separate room units, use bedroom count
+        // Formula: First bedroom = dual price, each additional bedroom = single price per room
+        const firstBedroomPrice = PRICING_CONFIG.regularCleaningDualOccupiedPerWeek;
+        const additionalBedroomsPrice = (bedroomsCount - 1) * PRICING_CONFIG.regularCleaningPerRoomPerWeek;
+        regularWeekly = firstBedroomPrice + additionalBedroomsPrice;
+        endOfLease = bedroomsCount * PRICING_CONFIG.endOfLeaseCleaningBase;
+    }
 
     return {
         regularWeekly,
@@ -330,7 +343,7 @@ export function calculatePricing(params: {
     const cleaningSelected = isInclusionSelected(rentalForm.inclusions, "cleaning");
     const cleaning = cleaningSelected
         ? isEntireHome
-            ? getEntireHomeCleaningCosts(property.units || []).regularWeekly
+            ? getEntireHomeCleaningCosts(property.units || [], property.bedrooms).regularWeekly
             : getRegularCleaningCostPerWeek(isDualOccupancy)
         : 0;
 

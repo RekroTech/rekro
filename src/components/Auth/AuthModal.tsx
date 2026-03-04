@@ -11,6 +11,7 @@ interface AuthModalProps {
     isOpen: boolean;
     onClose: () => void;
     redirectTo?: string;
+    initialError?: string;
 }
 
 export type { AuthModalProps };
@@ -19,7 +20,7 @@ type AuthStep = "email-entry" | "check-email";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
-export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, redirectTo = "/", initialError }: AuthModalProps) {
     const [email, setEmail] = useState("");
     const [step, setStep] = useState<AuthStep>("email-entry");
     const [countdown, setCountdown] = useState(0);
@@ -42,8 +43,14 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps)
                 setErrorMessage("");
             }, 0);
             return () => clearTimeout(timer);
+        } else if (initialError) {
+            // Set error message when modal opens with an initial error
+            const timer = setTimeout(() => {
+                setErrorMessage(initialError);
+            }, 0);
+            return () => clearTimeout(timer);
         }
-    }, [isOpen]);
+    }, [isOpen, initialError]);
 
     // Countdown timer for resend button
     useEffect(() => {
@@ -153,6 +160,10 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps)
                             in.
                         </p>
 
+                        {errorMessage && (
+                            <Alert variant="error" message={errorMessage} className="mb-4" />
+                        )}
+
                         <form onSubmit={handleSubmitEmail} className="space-y-4">
                             <Input
                                 id="auth-email"
@@ -163,7 +174,6 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/" }: AuthModalProps)
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Enter your email"
-                                error={errorMessage || undefined}
                                 autoFocus
                                 fullWidth
                             />

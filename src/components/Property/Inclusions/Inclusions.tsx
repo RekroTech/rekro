@@ -5,7 +5,7 @@ import type { Property,  Inclusions as InclusionsType } from "@/types/property.t
 import { hasCarpark, hasStorage } from "@/components/Property";
 import {
     CARPARK_COST_PER_WEEK,
-    FURNITURE_COST,
+    FURNITURE_COST, PRICING_CONFIG,
     STORAGE_CAGE_COST_PER_WEEK,
 } from "@/lib/config/pricing_config";
 import {
@@ -113,10 +113,23 @@ export function Inclusions({
                 price={
                     isEntireHome ? (
                         <span>
-                            ${getEntireHomeCleaningCosts(property.units || []).regularWeekly}/week
+                            $
+                            {
+                                getEntireHomeCleaningCosts(
+                                    property.units || [],
+                                    property.bedrooms
+                                ).regularWeekly
+                            }
+                            /week
                         </span>
                     ) : (
-                        <span>${effectiveOccupancyType === "dual" ? 60 : 35}/week</span>
+                        <span>
+                            $
+                            {effectiveOccupancyType === "dual"
+                                ? PRICING_CONFIG.regularCleaningDualOccupiedPerWeek
+                                : PRICING_CONFIG.regularCleaningPerRoomPerWeek}
+                            /week
+                        </span>
                     )
                 }
                 selected={inclusions.cleaning?.selected || false}

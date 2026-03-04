@@ -1,7 +1,7 @@
 import { Inclusion, Inclusions, InclusionType, type Property } from "@/types/property.types";
 import {
     CARPARK_COST_PER_WEEK,
-    FURNITURE_COST,
+    FURNITURE_COST, PRICING_CONFIG,
     STORAGE_CAGE_COST_PER_WEEK,
 } from "@/lib/config/pricing_config";
 import { getBillsCostPerWeek, getEntireHomeCleaningCosts } from "../utils/pricing";
@@ -53,9 +53,14 @@ export function getInclusionPricePerWeek(params: {
         }
         case "cleaning": {
             if (isEntireHome) {
-                return getEntireHomeCleaningCosts(property.units || []).regularWeekly;
+                return getEntireHomeCleaningCosts(
+                    property.units || [],
+                    property.bedrooms
+                ).regularWeekly;
             }
-            return effectiveOccupancyType === "dual" ? 60 : 35;
+            return effectiveOccupancyType === "dual"
+                ? PRICING_CONFIG.regularCleaningDualOccupiedPerWeek
+                : PRICING_CONFIG.regularCleaningPerRoomPerWeek;
         }
         case "carpark":
             return isEntireHome ? 0 : CARPARK_COST_PER_WEEK;

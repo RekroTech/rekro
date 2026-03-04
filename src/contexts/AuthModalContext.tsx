@@ -5,9 +5,10 @@ import { EmailVerificationError } from "@/components/Auth";
 
 interface AuthModalContextType {
     isAuthModalOpen: boolean;
-    openAuthModal: (redirectTo?: string) => void;
+    openAuthModal: (redirectTo?: string, errorMessage?: string) => void;
     closeAuthModal: () => void;
     redirectTo?: string;
+    authModalError?: string;
     verificationError: EmailVerificationError | null;
     setVerificationError: (error: EmailVerificationError | null) => void;
     isVerified: boolean;
@@ -19,18 +20,23 @@ const AuthModalContext = createContext<AuthModalContextType | undefined>(undefin
 export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [redirectTo, setRedirectTo] = useState<string | undefined>();
+    const [authModalError, setAuthModalError] = useState<string | undefined>();
     const [verificationError, setVerificationError] = useState<EmailVerificationError | null>(null);
     const [isVerified, setIsVerified] = useState(false);
 
-    const openAuthModal = useCallback((redirect?: string) => {
+    const openAuthModal = useCallback((redirect?: string, errorMessage?: string) => {
         setRedirectTo(redirect);
+        setAuthModalError(errorMessage);
         setIsAuthModalOpen(true);
     }, []);
 
     const closeAuthModal = useCallback(() => {
         setIsAuthModalOpen(false);
-        // Clear redirect after a delay to avoid flash during close animation
-        setTimeout(() => setRedirectTo(undefined), 300);
+        // Clear redirect and error after a delay to avoid flash during close animation
+        setTimeout(() => {
+            setRedirectTo(undefined);
+            setAuthModalError(undefined);
+        }, 300);
     }, []);
 
     return (
@@ -40,6 +46,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
                 openAuthModal,
                 closeAuthModal,
                 redirectTo,
+                authModalError,
                 verificationError,
                 setVerificationError,
                 isVerified,

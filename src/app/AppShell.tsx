@@ -44,7 +44,7 @@ export default function AppShell({ children }: AppShellProps) {
     const pathname = usePathname();
 
     const { canManageProperties } = useRoles();
-    const { isAuthModalOpen, closeAuthModal, redirectTo } = useAuthModal();
+    const { isAuthModalOpen, closeAuthModal, redirectTo, authModalError } = useAuthModal();
 
     // Check session on initial load
     const { isLoading: isSessionLoading } = useSessionUser();
@@ -105,6 +105,7 @@ export default function AppShell({ children }: AppShellProps) {
                 isOpen={isAuthModalOpen}
                 onClose={closeAuthModal}
                 redirectTo={redirectTo}
+                initialError={authModalError}
             />
         </>
     );

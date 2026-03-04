@@ -22,12 +22,20 @@ export function useEmailVerification() {
     // Parse error from URL params and set it in context
     useEffect(() => {
         if (error || errorCode) {
+            // Special handling for OAuth cancellation - show in auth modal instead
+            if (error === "access_denied") {
+                openAuthModal(undefined, "Sign-in was cancelled or the link has already been used. Please try again.");
+                // Clear query params from URL
+                router.replace("/", { scroll: false });
+                return;
+            }
+
             const errorInfo = parseVerificationError(error, errorCode, errorDescription);
             setVerificationError(errorInfo);
             // Clear query params from URL
             router.replace("/", { scroll: false });
         }
-    }, [error, errorCode, errorDescription, setVerificationError, router]);
+    }, [error, errorCode, errorDescription, setVerificationError, router, openAuthModal]);
 
     // Handle successful verification - redirect after delay
     useEffect(() => {
@@ -72,16 +80,6 @@ function parseVerificationError(
         return {
             title: "Link expired",
             message: "This sign-in link has expired. Links are valid for 1 hour.",
-            icon: "info",
-            canResend: true,
-        };
-    }
-
-    // OAuth cancelled or link already used
-    if (error === "access_denied") {
-        return {
-            title: "Access denied",
-            message: "Sign-in was cancelled or the link has already been used. Please try again.",
             icon: "info",
             canResend: true,
         };

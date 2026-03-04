@@ -1,79 +1,73 @@
--- Create enquiries table to store property enquiries
-CREATE TABLE IF NOT EXISTS enquiries (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-    property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
-    unit_id UUID REFERENCES units(id) ON DELETE SET NULL,
+create table if not exists public.enquiries (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
 
-    -- Contact Information
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    phone VARCHAR(50) NOT NULL,
-    message TEXT NOT NULL,
+  unit_id uuid not null,
+  user_id uuid null, -- nullable for guests
 
-    -- Metadata
-    is_entire_home BOOLEAN DEFAULT false,
-    status VARCHAR(50) DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'scheduled', 'completed', 'cancelled')),
+  message text not null,
 
-    -- Timestamps
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+  -- Guest-only (unauthenticated) contact fields
+  guest_name text null,
+  guest_email text null,
+  guest_phone text null,
 
-    -- Indexes for faster queries
-    CONSTRAINT valid_email CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+  -- Optional snapshots (useful even for logged-in users)
+  contact_name text null,
+  contact_email text null,
+  contact_phone text null,
+
+  -- Optional meta (good for abuse/debug)
+  ip inet null,
+  user_agent text null,
+
+  constraint enquiries_unit_fk
+    foreign key (unit_id) references public.units(id) on delete cascade,
+
+  constraint enquiries_user_fk
+    foreign key (user_id) references auth.users(id) on delete set null,
+
+  -- Data hygiene: require either a logged-in user OR a guest email
+  constraint enquiries_require_identity
+    check (
+      user_id is not null
+      or (guest_email is not null and length(trim(guest_email)) > 0)
+    ),
+
+  -- If it's a guest enquiry, force user_id to be null (keeps intent clear)
+  constraint enquiries_guest_has_no_user
+    check (
+      not (guest_email is not null and length(trim(guest_email)) > 0 and user_id is not null)
+    )
 );
 
--- Create indexes for better query performance
-CREATE INDEX IF NOT EXISTS idx_enquiries_property_id ON enquiries(property_id);
-CREATE INDEX IF NOT EXISTS idx_enquiries_user_id ON enquiries(user_id);
-CREATE INDEX IF NOT EXISTS idx_enquiries_created_at ON enquiries(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_enquiries_status ON enquiries(status);
+-- Indexes
+create index if not exists enquiries_unit_created_at_idx
+  on public.enquiries (unit_id, created_at desc);
 
--- Create updated_at trigger
-CREATE OR REPLACE FUNCTION update_enquiries_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = TIMEZONE('utc', NOW());
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+create index if not exists enquiries_user_created_at_idx
+  on public.enquiries (user_id, created_at desc);
 
-CREATE TRIGGER set_enquiries_updated_at
-    BEFORE UPDATE ON enquiries
-    FOR EACH ROW
-    EXECUTE FUNCTION update_enquiries_updated_at();
+create index if not exists enquiries_guest_email_idx
+  on public.enquiries (guest_email);
 
--- Enable Row Level Security
-ALTER TABLE enquiries ENABLE ROW LEVEL SECURITY;
+-- RLS
+alter table public.enquiries enable row level security;
 
--- RLS Policies
--- Users can view their own enquiries
-CREATE POLICY "Users can view their own enquiries"
-    ON enquiries FOR SELECT
-    USING (auth.uid() = user_id);
+-- 1) Users can read their own enquiries
+drop policy if exists "enquiries_select_own" on public.enquiries;
+create policy "enquiries_select_own"
+on public.enquiries
+for select
+to authenticated
+using (user_id = auth.uid());
 
--- Anyone can create an enquiry (even if not authenticated)
-CREATE POLICY "Anyone can create enquiries"
-    ON enquiries FOR INSERT
-    WITH CHECK (true);
-
--- Users can update their own enquiries
-CREATE POLICY "Users can update their own enquiries"
-    ON enquiries FOR UPDATE
-    USING (auth.uid() = user_id);
-
--- Landlords can view enquiries for their properties
--- Note: This assumes you have a way to identify landlords for properties
--- You may need to adjust this based on your landlords table structure
-CREATE POLICY "Landlords can view enquiries for their properties"
-    ON enquiries FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM properties p
-            WHERE p.id = enquiries.property_id
-            AND p.landlord_id = auth.uid()
-        )
-    );
-
--- Add comment
-COMMENT ON TABLE enquiries IS 'Stores property enquiries from potential tenants';
+-- 2) Users can insert their own enquiries (must match auth.uid())
+drop policy if exists "enquiries_insert_auth" on public.enquiries;
+create policy "enquiries_insert_auth"
+on public.enquiries
+for insert
+to authenticated
+with check (
+  user_id = auth.uid()
+);
