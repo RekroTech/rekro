@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { ListingType, Unit } from "@/types/db";
-import type { Property } from "@/types/property.types";
+import type { Property, UnitStatus } from "@/types/property.types";
 import { formatDateForInput } from "@/lib/utils";
 import { PropertyFormData, UnitFormData } from "../types";
 import { DEFAULT_UNIT_DATA } from "../constants";
@@ -52,6 +52,8 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
                 size_sqm: unit.size_sqm?.toString() || "",
                 available_from: formatDateForInput(unit.available_from),
                 available_to: formatDateForInput(unit.available_to),
+                status: (unit.is_active ? "active" : "inactive") as UnitStatus,
+                is_active: unit.is_active ?? true,
                 is_available: unit.is_available ?? true,
                 availability_notes: "",
             };

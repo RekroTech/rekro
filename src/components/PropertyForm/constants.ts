@@ -88,6 +88,8 @@ export const DEFAULT_UNIT_DATA = {
     size_sqm: "",
     available_from: "",
     available_to: "",
+    status: "active" as const,
+    is_active: true,
     is_available: true,
     availability_notes: "",
 };
