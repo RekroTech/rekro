@@ -5,7 +5,7 @@
  */
 
 import { NextRequest } from "next/server";
-import { createClient, getSession } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { errorResponse, successResponse } from "@/app/api/utils";
 import { sendEnquiryNotification, sendEnquiryConfirmation } from "@/lib/email";
 import type { EnquiryInsert } from "@/types/db";
@@ -46,8 +46,11 @@ export async function POST(request: NextRequest) {
             return successResponse({ ok: true, enquiry_id: "bot-detected" }, 201);
         }
 
-        // Check if user is authenticated
-        const user = await getSession();
+        // Check if user is authenticated.
+        // NOTE: Other routes use requireAuthForApi() which internally calls getSession() with
+        // React cache() — that only works in Server Components, not API routes. For optional
+        // auth (guests allowed), call auth.getUser() directly on the already-created client.
+        const { data: { user } } = await supabase.auth.getUser();
         const isAuthenticated = !!user;
 
         // If guest, validate guest fields (Zod already did basic validation)
@@ -73,7 +76,9 @@ export async function POST(request: NextRequest) {
         }
 
         // Get client IP and user agent for tracking
-        const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null;
+        // x-forwarded-for can be a comma-separated list; take only the first (client) IP
+        const rawIp = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null;
+        const ip = rawIp ? (rawIp.split(",")[0]?.trim() ?? null) : null;
         const userAgent = request.headers.get("user-agent") || null;
 
         // Prepare enquiry data
@@ -105,12 +110,15 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        // Generate ID client-side so we can return it without needing a SELECT after insert
+        // (RLS does not grant SELECT on enquiries for anon/guest callers)
+        const enquiryId = crypto.randomUUID();
+        enquiryData.id = enquiryId;
+
         // Insert enquiry into database
-        const { data: enquiry, error: insertError } = await supabase
+        const { error: insertError } = await supabase
             .from("enquiries")
-            .insert(enquiryData)
-            .select("id")
-            .single();
+            .insert(enquiryData);
 
         if (insertError) {
             console.error("Error inserting enquiry:", insertError);
@@ -159,7 +167,7 @@ export async function POST(request: NextRequest) {
                     // 1. Send notification to property creator
                     try {
                         await sendEnquiryNotification({
-                            enquiryId: enquiry.id,
+                            enquiryId,
                             propertyTitle: property.title,
                             unitName,
                             message,
@@ -189,7 +197,7 @@ export async function POST(request: NextRequest) {
                     if (shouldSendConfirmation) {
                         try {
                             await sendEnquiryConfirmation({
-                                enquiryId: enquiry.id,
+                                enquiryId,
                                 propertyTitle: property.title,
                                 unitName,
                                 message,
@@ -221,7 +229,7 @@ export async function POST(request: NextRequest) {
         return successResponse(
             {
                 ok: true,
-                enquiry_id: enquiry.id,
+                enquiry_id: enquiryId,
             },
             201
         );

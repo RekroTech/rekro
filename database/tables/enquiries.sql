@@ -53,21 +53,8 @@ create index if not exists enquiries_guest_email_idx
 
 -- RLS
 alter table public.enquiries enable row level security;
-
--- 1) Users can read their own enquiries
-drop policy if exists "enquiries_select_own" on public.enquiries;
-create policy "enquiries_select_own"
-on public.enquiries
-for select
-to authenticated
-using (user_id = auth.uid());
-
--- 2) Users can insert their own enquiries (must match auth.uid())
-drop policy if exists "enquiries_insert_auth" on public.enquiries;
-create policy "enquiries_insert_auth"
-on public.enquiries
-for insert
-to authenticated
-with check (
-  user_id = auth.uid()
-);
+create policy "Public can insert enquiries" on public.enquiries for insert to anon, authenticated with check (
+-- anon can only insert with user_id null
+(auth.uid() is null and user_id is null) OR
+-- authenticated can only insert for themselves (or set null if you want)
+(auth.uid() is not null and (user_id is null or user_id = auth.uid())) );
