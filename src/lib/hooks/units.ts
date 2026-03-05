@@ -178,9 +178,7 @@ export function useToggleUnitLike() {
         },
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: unitKeys.likes(variables.unitId) });
-            queryClient.invalidateQueries({ queryKey: ["unit-likes"] });
             queryClient.invalidateQueries({ queryKey: unitKeys.likeCount(variables.unitId) });
-            queryClient.invalidateQueries({ queryKey: ["unit-like-count"] });
         },
     });
 }

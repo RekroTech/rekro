@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Image from "next/image";
-import { Button, Icon } from "@/components/common";
+import { Button, Icon, BackButton } from "@/components/common";
 import {
     ApplicationCard,
     AdminApplicationCard,
@@ -82,6 +82,7 @@ export default function ApplicationsPage() {
     return (
         <div className="h-full bg-app-bg" data-testid="applications-page">
             <div className="mx-auto max-w-7xl p-4 sm:px-4 sm:py-8 lg:px-8">
+                <BackButton className="mb-4 sm:mb-6" />
                 {groupedApplications.length === 0 ? (
                     <div
                         className="bg-card rounded-[var(--radius-card-lg)] shadow-[var(--shadow-card)] border border-border p-8 sm:p-12 text-center"

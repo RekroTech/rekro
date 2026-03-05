@@ -46,7 +46,7 @@ export function UnitLikeButton({ unitId, propertyId, isEntireHome = false }: Uni
         try {
             await toggleLikeMutation.mutateAsync({
                 unitId,
-                isLiked: !isLiked, // Use actual server state for mutation
+                isLiked, // Pass current server state so the mutation knows whether to like or unlike
             });
         } catch (error) {
             // Revert optimistic update on error

@@ -79,8 +79,14 @@ export function EnquiryForm({
 
         // Validate phone only if not already available from user data
         if (!isLoggedIn || !user?.phone) {
-            if (!formData.phone.trim()) {
+            const phone = formData.phone.trim();
+            // Accept: 10 digits (local AU), or +61 followed by 9 digits (international AU)
+            const localFormat = /^\d{10}$/;
+            const intlFormat = /^\+61\d{9}$/;
+            if (!phone) {
                 newErrors.phone = "Phone number is required";
+            } else if (!localFormat.test(phone) && !intlFormat.test(phone)) {
+                newErrors.phone = "Enter a valid 10-digit number (e.g. 0412 345 678) or with country code (e.g. +61412345678)";
             }
         }
 
@@ -165,7 +171,10 @@ export function EnquiryForm({
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        const sanitizedValue = name === "phone"
+            ? value.replace(/[^\d+]/g, "").replace(/(?!^\+)\+/g, "").slice(0, 13)
+            : value;
+        setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
 
         // Clear error when user starts typing
         if (errors[name as keyof FormErrors]) {
@@ -255,10 +264,13 @@ export function EnquiryForm({
                             label="Phone Number"
                             name="phone"
                             type="tel"
+                            inputMode="numeric"
+                            pattern="(\+61\d{9}|\d{10})"
+                            maxLength={13}
                             value={formData.phone}
                             onChange={handleChange}
                             error={errors.phone}
-                            placeholder="+1 (555) 000-0000"
+                            placeholder="Starting with 0 or country code"
                             disabled={isSubmitting}
                             required
                         />

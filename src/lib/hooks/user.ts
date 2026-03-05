@@ -119,6 +119,8 @@ export function useUpdateProfile() {
  * Uses the liked_profiles view
  */
 export function useUserLikes(propertyId: string) {
+    const { data: sessionUser } = useSessionUser();
+
     return useQuery({
         queryKey: userKeys.likedUsers(propertyId),
         queryFn: async () => {
@@ -136,7 +138,7 @@ export function useUserLikes(propertyId: string) {
 
             return likedProfiles || [];
         },
-        enabled: !!propertyId,
+        enabled: !!propertyId && !!sessionUser,
         ...CACHE_STRATEGIES.USER_SPECIFIC,
     });
 }

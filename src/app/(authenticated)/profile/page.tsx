@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/lib/hooks";
-import { Icon, Loader } from "@/components/common";
+import { Icon, Loader, BackButton } from "@/components/common";
 import {
     ProfileCard,
     ProfileSectionCard,
@@ -107,6 +107,7 @@ function ProfilePageContent() {
             {/* Scrollable Body */}
             <div className="flex-1 overflow-y-auto">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                    <BackButton className="mb-4 sm:mb-6" />
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 pb-8">
                         {/* Left Column - Shareable Profile Card and Badges (Sticky on Desktop) */}
                         <div className="lg:col-span-1">

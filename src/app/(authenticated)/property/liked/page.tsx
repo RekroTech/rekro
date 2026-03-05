@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { PropertyList } from "@/components/Properties/PropertyList";
-import { Icon } from "@/components/common";
+import { Icon, BackButton } from "@/components/common";
 
 export default function LikedPropertiesPage() {
     return (
         <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8">
+            <BackButton className="mb-4 sm:mb-6" />
 
             {/* Property List */}
             <PropertyList
