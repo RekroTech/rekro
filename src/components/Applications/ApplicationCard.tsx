@@ -61,7 +61,10 @@ export function ApplicationCard({
     ];
 
     return (
-        <div className="bg-card rounded-[var(--radius-card)] border border-border p-3 sm:p-4 sm:px-5">
+        <div
+            className="bg-card rounded-[var(--radius-card)] border border-border p-3 sm:p-4 sm:px-5"
+            data-testid="application-card"
+        >
             {/* First Row: Unit Name with Status Chip, Price, and Settings */}
             <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 sm:mb-4">
                 <div className="flex-1 min-w-0">
@@ -136,4 +139,3 @@ export function ApplicationCard({
         </div>
     );
 }
-

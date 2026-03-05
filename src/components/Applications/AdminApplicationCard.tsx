@@ -61,6 +61,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
             <div
                 onClick={handleCardClick}
                 className="bg-card rounded-[var(--radius-card)] overflow-hidden border border-border hover:border-primary-500/30 hover:shadow-[var(--shadow-lift)] transition-all duration-200 cursor-pointer p-3 sm:p-0"
+                data-testid="application-card"
             >
                 {/* Mobile & Tablet Layout */}
                 <div className="flex flex-col gap-3 sm:hidden">

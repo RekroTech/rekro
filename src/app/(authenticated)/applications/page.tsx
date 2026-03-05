@@ -62,7 +62,7 @@ export default function ApplicationsPage() {
 
     if (isLoading) {
         return (
-            <div className="h-full bg-app-bg">
+            <div className="h-full bg-app-bg" data-testid="applications-loading">
                 <div className="mx-auto max-w-7xl p-4 sm:px-4 sm:py-8 lg:px-8">
                     <div className="mb-6">
                         <div className="h-8 w-48 bg-surface-muted animate-pulse rounded-md mb-2"></div>
@@ -80,10 +80,13 @@ export default function ApplicationsPage() {
     }
 
     return (
-        <div className="h-full bg-app-bg">
+        <div className="h-full bg-app-bg" data-testid="applications-page">
             <div className="mx-auto max-w-7xl p-4 sm:px-4 sm:py-8 lg:px-8">
                 {groupedApplications.length === 0 ? (
-                    <div className="bg-card rounded-[var(--radius-card-lg)] shadow-[var(--shadow-card)] border border-border p-8 sm:p-12 text-center">
+                    <div
+                        className="bg-card rounded-[var(--radius-card-lg)] shadow-[var(--shadow-card)] border border-border p-8 sm:p-12 text-center"
+                        data-testid="applications-empty"
+                    >
                         <div className="max-w-md mx-auto">
                             <div className="bg-surface-muted rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
                                 <Icon name="document" className="w-10 h-10 text-text-subtle" />
@@ -106,17 +109,14 @@ export default function ApplicationsPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-4 sm:space-y-6">
+                    <div className="space-y-4 sm:space-y-6" data-testid="applications-list">
                         {groupedApplications.map((group) => {
                             const property = group.property;
                             const applications = group.applications;
                             const image = property.images?.[0];
 
                             return (
-                                <div
-                                    key={property.id}
-                                    className=""
-                                >
+                                <div key={property.id} className="" data-testid="applications-property-group">
                                     {/* Property Header */}
                                     <div className="flex flex-col lg:flex-row lg:items-start">
                                         {/* Property Image */}
