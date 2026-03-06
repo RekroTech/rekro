@@ -84,6 +84,9 @@ export function ProfileCompletionProvider({
         const app = user.user_application_profile;
 
         return {
+            // Phone verification
+            phoneVerifiedAt: user.phone_verified_at ?? null,
+
             // Residency
             isCitizen: !app?.visa_status,
             visaStatus: app?.visa_status ?? null,

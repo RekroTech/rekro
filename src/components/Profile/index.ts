@@ -11,6 +11,7 @@
 // ============================================================================
 export { ProfileCard } from "./ProfileCard";
 export { ProfileSectionCard } from "./ProfileSectionCard";
+export { PhoneVerificationModal } from "./PhoneVerificationModal";
 
 // ============================================================================
 // Profile Section Components (Client-only)

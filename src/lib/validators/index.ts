@@ -18,7 +18,6 @@ export type {
     PropertyWithUnits,
     GetPropertiesParams,
     GetPropertiesResponse,
-    PropertyFormData as PropertyFormDataLegacy,
 } from "./property";
 
 // Property Form validators
@@ -80,6 +79,8 @@ export {
     ProfileUpdateSchema,
     ApplicationProfileUpdateSchema,
     CompleteProfileSchema,
+    PhoneSendOtpSchema,
+    PhoneVerifyOtpSchema,
 } from "./user";
 
 export type {
@@ -88,6 +89,8 @@ export type {
     ProfileUpdate,
     ApplicationProfileUpdate,
     CompleteProfile,
+    PhoneSendOtp,
+    PhoneVerifyOtp,
 } from "./user";
 
 // Enquiry validators

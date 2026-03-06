@@ -72,3 +72,16 @@ export type ProfileUpdate = z.infer<typeof ProfileUpdateSchema>;
 export type ApplicationProfileUpdate = z.infer<typeof ApplicationProfileUpdateSchema>;
 export type CompleteProfile = z.infer<typeof CompleteProfileSchema>;
 
+// Phone verification schemas
+export const PhoneSendOtpSchema = z.object({
+    phone: z.string().min(7, "Phone number is too short").max(20, "Phone number is too long"),
+});
+
+export const PhoneVerifyOtpSchema = z.object({
+    phone: z.string().min(7, "Phone number is too short").max(20, "Phone number is too long"),
+    token: z.string().length(6, "OTP must be exactly 6 digits").regex(/^\d{6}$/, "OTP must contain only digits"),
+});
+
+export type PhoneSendOtp = z.infer<typeof PhoneSendOtpSchema>;
+export type PhoneVerifyOtp = z.infer<typeof PhoneVerifyOtpSchema>;
+

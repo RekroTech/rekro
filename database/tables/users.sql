@@ -18,6 +18,7 @@ create table public.users (
   native_language text null,
   discoverable boolean not null default false,
   share_contact boolean not null default false,
+  phone_verified_at timestamp with time zone null,
   constraint profiles_pkey primary key (id),
   constraint profiles_email_key unique (email),
   constraint profiles_id_fkey foreign KEY (id) references auth.users (id) on delete CASCADE,

@@ -28,6 +28,7 @@ export function calculatePersonalDetailsCompletion(user: UserProfile): number {
     user.full_name,
     user.username,
     user.phone,
+    user.phone_verified_at, // verified phone counts as a separate required field
     user.date_of_birth,
     user.gender,
     user.occupation,
@@ -224,12 +225,12 @@ export function calculateProfileCompletion(
 
   const unlockedBadges: string[] = [];
 
-  // Badge 1: Profile Verified - has image, name, and phone
+  // Badge 1: Rekro Trusted - has image, name, and a verified phone number
   const hasImage = isFilled(user.image_url);
   const hasName = isFilled(user.full_name);
-  const hasPhone = isFilled(user.phone);
+  const hasVerifiedPhone = isFilled(user.phone_verified_at);
 
-  if (hasImage && hasName && hasPhone) {
+  if (hasImage && hasName && hasVerifiedPhone) {
     unlockedBadges.push("Rekro Trusted");
   }
 
@@ -271,6 +272,9 @@ export function isProfileCompleteFromUser(user: UserProfile | null | undefined):
   const docs = (app?.documents as Documents) ?? ({} as Documents);
 
   const details: ProfileCompletionDetails = {
+    // Phone verification
+    phoneVerifiedAt: user.phone_verified_at ?? null,
+
     // Residency
     isCitizen: !app?.visa_status,
     visaStatus: app?.visa_status ?? null,

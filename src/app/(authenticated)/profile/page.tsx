@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/lib/hooks";
 import { Icon, Loader, BackButton } from "@/components/common";
@@ -29,7 +29,7 @@ function ProfilePageContent() {
     const router = useRouter();
 
     // Data fetching
-    const { data: user, isLoading: userLoading } = useProfile();
+    const { data: user, isLoading: userLoading, refetch: refetchUser } = useProfile();
 
     // Form state management
     const {
@@ -71,12 +71,18 @@ function ProfilePageContent() {
     // Section expansion state
     const { expandedSections, toggleSection, collapseAll } = useSectionExpansion();
 
+    // Refresh user data after phone verification
+    const handlePhoneVerified = useCallback(async () => {
+        await refetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Profile completion from context
     const { calculateWithFormState } = useProfileCompletion();
 
     // Build derived data - calculate with current form state for real-time updates
     const profileCompletion = calculateWithFormState(
-        { ...formState.incomeDetails, ...formState.residency },
+        { ...formState.incomeDetails, ...formState.residency, phoneVerifiedAt: user?.phone_verified_at ?? null },
         formState.documents
     );
     const shareableProfile = user ? buildShareableProfile(user, formState) : null;
@@ -176,6 +182,8 @@ function ProfilePageContent() {
                                     userEmail={user.email || ""}
                                     value={formState.personalDetails}
                                     onChange={updatePersonalDetails}
+                                    phoneVerifiedAt={user.phone_verified_at}
+                                    onPhoneVerified={handlePhoneVerified}
                                 />
                             </ProfileSectionCard>
 

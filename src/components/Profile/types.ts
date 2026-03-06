@@ -87,6 +87,9 @@ export interface AdditionalDocumentsFormState {
 }
 
 export type ProfileCompletionDetails = {
+  // Phone verification
+  phoneVerifiedAt?: string | null;
+
   // Residency
   isCitizen: boolean | null;
   visaStatus?: string | null;
