@@ -73,12 +73,23 @@ export type ApplicationProfileUpdate = z.infer<typeof ApplicationProfileUpdateSc
 export type CompleteProfile = z.infer<typeof CompleteProfileSchema>;
 
 // Phone verification schemas
+const phoneField = z
+    .string()
+    .trim()
+    .refine(
+        (v) => {
+            const digits = v.replace(/\D/g, "");
+            return digits.length >= 10 && digits.length <= 13;
+        },
+        { message: "Phone number must contain 10–13 digits." }
+    );
+
 export const PhoneSendOtpSchema = z.object({
-    phone: z.string().min(7, "Phone number is too short").max(20, "Phone number is too long"),
+    phone: phoneField,
 });
 
 export const PhoneVerifyOtpSchema = z.object({
-    phone: z.string().min(7, "Phone number is too short").max(20, "Phone number is too long"),
+    phone: phoneField,
     token: z.string().length(6, "OTP must be exactly 6 digits").regex(/^\d{6}$/, "OTP must contain only digits"),
 });
 

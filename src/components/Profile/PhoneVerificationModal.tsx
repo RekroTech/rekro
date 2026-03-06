@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Modal } from "@/components/common/Modal";
-import { Alert } from "@/components/common/Alert";
 import { Icon } from "@/components/common/Icon";
+import { Button } from "@/components/common/Button";
+import { Input } from "@/components/common/Input";
+import { useToast } from "@/hooks/useToast";
 
 interface PhoneVerificationModalProps {
     isOpen: boolean;
@@ -18,30 +20,66 @@ type Step = "send" | "verify";
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN_SECONDS = 60;
 
+/** Circular countdown SVG ring */
+function CountdownRing({ seconds, total }: { seconds: number; total: number }) {
+    const radius = 18;
+    const circumference = 2 * Math.PI * radius;
+    const progress = seconds / total;
+    const dashOffset = circumference * (1 - progress);
+
+    return (
+        <div className="relative inline-flex items-center justify-center w-12 h-12">
+            <svg className="absolute inset-0 -rotate-90" width="48" height="48" viewBox="0 0 48 48">
+                {/* Track */}
+                <circle
+                    cx="24"
+                    cy="24"
+                    r={radius}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    className="text-border opacity-40"
+                />
+                {/* Progress */}
+                <circle
+                    cx="24"
+                    cy="24"
+                    r={radius}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={dashOffset}
+                    strokeLinecap="round"
+                    className="text-primary-500 transition-all duration-1000 ease-linear"
+                />
+            </svg>
+            <span className="text-xs font-bold text-primary-500 tabular-nums">{seconds}s</span>
+        </div>
+    );
+}
+
 export function PhoneVerificationModal({
     isOpen,
     phone,
     onClose,
     onVerified,
 }: PhoneVerificationModalProps) {
+    const { showError } = useToast();
     const [step, setStep] = useState<Step>("send");
     const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
     const [isSending, setIsSending] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [cooldown, setCooldown] = useState(0);
 
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Reset state when modal opens
+    // Reset state when modal opens/closes
     useEffect(() => {
         if (isOpen) {
             setStep("send");
             setOtp(Array(OTP_LENGTH).fill(""));
-            setError(null);
-            setSuccess(null);
             setIsSending(false);
             setIsVerifying(false);
             setCooldown(0);
@@ -64,91 +102,83 @@ export function PhoneVerificationModal({
     }, []);
 
     const handleSendOtp = useCallback(async () => {
-        setError(null);
-        setSuccess(null);
         setIsSending(true);
-
         try {
             const res = await fetch("/api/user/phone-verification/send", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ phone }),
             });
-
             const data = (await res.json()) as { message?: string; error?: string };
-
             if (!res.ok) {
-                setError(data.error ?? "Failed to send OTP. Please try again.");
+                showError(data.error ?? "Failed to send OTP. Please try again.");
                 return;
             }
-
-            setSuccess(`OTP sent to ${phone}`);
             setStep("verify");
+            setOtp(Array(OTP_LENGTH).fill(""));
             startCooldown();
-
-            // Focus first OTP input after short delay
             setTimeout(() => inputRefs.current[0]?.focus(), 150);
         } catch {
-            setError("Network error. Please check your connection and try again.");
+            showError("Network error. Please check your connection and try again.");
         } finally {
             setIsSending(false);
         }
-    }, [phone, startCooldown]);
+    }, [phone, startCooldown, showError]);
 
     const handleVerifyOtp = useCallback(async () => {
         const token = otp.join("");
         if (token.length < OTP_LENGTH) {
-            setError("Please enter the complete 6-digit OTP.");
+            showError("Please enter the complete 6-digit code.");
             return;
         }
-
-        setError(null);
         setIsVerifying(true);
-
         try {
             const res = await fetch("/api/user/phone-verification/verify", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ phone, token }),
             });
-
             const data = (await res.json()) as {
                 message?: string;
                 verified_at?: string;
                 error?: string;
             };
-
             if (!res.ok) {
-                setError(data.error ?? "Invalid OTP. Please try again.");
+                showError(data.error ?? "Invalid code. Please try again.");
+                setOtp(Array(OTP_LENGTH).fill(""));
+                setTimeout(() => inputRefs.current[0]?.focus(), 50);
                 return;
             }
-
             onVerified(data.verified_at ?? new Date().toISOString());
         } catch {
-            setError("Network error. Please check your connection and try again.");
+            showError("Network error. Please check your connection and try again.");
         } finally {
             setIsVerifying(false);
         }
-    }, [otp, phone, onVerified]);
+    }, [otp, phone, onVerified, showError]);
 
-    // Handle individual OTP digit input
     const handleOtpChange = (index: number, value: string) => {
-        // Accept only digits
         const digit = value.replace(/\D/g, "").slice(-1);
         const next = [...otp];
         next[index] = digit;
         setOtp(next);
-
-        // Auto-advance
         if (digit && index < OTP_LENGTH - 1) {
             inputRefs.current[index + 1]?.focus();
         }
     };
 
     const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Backspace" && !otp[index] && index > 0) {
-            inputRefs.current[index - 1]?.focus();
+        if (e.key === "Backspace") {
+            if (otp[index]) {
+                const next = [...otp];
+                next[index] = "";
+                setOtp(next);
+            } else if (index > 0) {
+                inputRefs.current[index - 1]?.focus();
+            }
         }
+        if (e.key === "ArrowLeft" && index > 0) inputRefs.current[index - 1]?.focus();
+        if (e.key === "ArrowRight" && index < OTP_LENGTH - 1) inputRefs.current[index + 1]?.focus();
     };
 
     const handleOtpPaste = (e: React.ClipboardEvent) => {
@@ -156,9 +186,7 @@ export function PhoneVerificationModal({
         if (pasted.length > 0) {
             e.preventDefault();
             const next = Array(OTP_LENGTH).fill("");
-            pasted.split("").forEach((char, i) => {
-                next[i] = char;
-            });
+            pasted.split("").forEach((char, i) => { next[i] = char; });
             setOtp(next);
             const nextFocus = Math.min(pasted.length, OTP_LENGTH - 1);
             inputRefs.current[nextFocus]?.focus();
@@ -167,83 +195,68 @@ export function PhoneVerificationModal({
 
     const otpComplete = otp.every((d) => d !== "");
 
+    const handleBack = () => {
+        setStep("send");
+        setOtp(Array(OTP_LENGTH).fill(""));
+        if (cooldownRef.current) clearInterval(cooldownRef.current);
+        setCooldown(0);
+    };
+
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
             title="Verify Mobile Number"
             size="sm"
-            primaryButton={
-                step === "send"
-                    ? {
-                          label: isSending ? "Sending…" : "Send OTP",
-                          onClick: handleSendOtp,
-                          isLoading: isSending,
-                          disabled: isSending,
-                      }
-                    : {
-                          label: isVerifying ? "Verifying…" : "Verify",
-                          onClick: handleVerifyOtp,
-                          isLoading: isVerifying,
-                          disabled: isVerifying || !otpComplete,
-                          icon: "check",
-                          iconPosition: "left",
-                      }
-            }
-            secondaryButton={
-                step === "verify"
-                    ? {
-                          label: "Back",
-                          onClick: () => {
-                              setStep("send");
-                              setOtp(Array(OTP_LENGTH).fill(""));
-                              setError(null);
-                          },
-                          icon: "chevron-left",
-                          iconPosition: "left",
-                      }
-                    : {
-                          label: "Cancel",
-                          onClick: onClose,
-                      }
-            }
         >
-            <div className="space-y-5">
-                {/* Header */}
-                <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                        <Icon name="shield" className="w-5 h-5 text-primary-500" />
+            <div className="space-y-6">
+
+                {/* Phone display */}
+                <div className="flex flex-col items-center gap-1 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center mb-1">
+                        <Icon name="phone" className="w-5 h-5 text-primary-500" />
                     </div>
-                    <div>
-                        <p className="text-sm text-text-muted">
-                            {step === "send"
-                                ? "We'll send a 6-digit code to:"
-                                : "Enter the 6-digit code sent to:"}
-                        </p>
-                        <p className="text-sm font-semibold text-foreground">{phone}</p>
-                    </div>
+                    <p className="text-xs text-text-muted uppercase tracking-widest font-medium">
+                        {step === "send" ? "Send code to" : "Code sent to"}
+                    </p>
+                    <p className="text-base font-bold text-foreground tracking-wide">{phone}</p>
                 </div>
 
-                {/* Status messages */}
-                {error && <Alert variant="error" message={error} />}
-                {success && step === "verify" && <Alert variant="success" message={success} />}
+                {/* ── SEND STEP ── */}
+                {step === "send" && (
+                    <div className="space-y-4">
+                        <div className="rounded-xl border border-border bg-surface-subtle p-4 text-center">
+                            <p className="text-sm text-text-muted leading-relaxed">
+                                We&apos;ll send a{" "}
+                                <span className="font-semibold text-foreground">6-digit verification code</span>{" "}
+                                via SMS. Standard rates may apply.
+                            </p>
+                        </div>
+                        <div className="flex justify-center">
+                            <Button
+                                variant="primary"
+                                loading={isSending}
+                                disabled={isSending}
+                                onClick={handleSendOtp}
+                            >
+                                {isSending ? "Sending…" : "Send OTP"}
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
-                {/* OTP digit inputs (only shown on verify step) */}
+                {/* ── VERIFY STEP ── */}
                 {step === "verify" && (
-                    <div className="space-y-3">
-                        <p className="text-sm text-text-muted text-center">
-                            Enter the verification code
-                        </p>
+                    <div className="space-y-5">
+                        {/* OTP inputs */}
                         <div
-                            className="flex items-center justify-center gap-2"
+                            className="flex items-center justify-center gap-2 sm:gap-3"
                             onPaste={handleOtpPaste}
                         >
                             {otp.map((digit, i) => (
-                                <input
+                                <Input
                                     key={i}
-                                    ref={(el) => {
-                                        inputRefs.current[i] = el;
-                                    }}
+                                    ref={(el) => { inputRefs.current[i] = el; }}
                                     type="text"
                                     inputMode="numeric"
                                     pattern="[0-9]*"
@@ -251,41 +264,71 @@ export function PhoneVerificationModal({
                                     value={digit}
                                     onChange={(e) => handleOtpChange(i, e.target.value)}
                                     onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                                    className="w-11 h-14 text-center text-xl font-bold rounded-lg border border-border bg-card text-foreground
-                                               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                                               transition-all caret-primary-500"
-                                    aria-label={`OTP digit ${i + 1}`}
+                                    fullWidth={false}
+                                    className={[
+                                        "!w-11 !h-14 text-center !text-2xl !font-bold !px-0",
+                                        digit ? "border-primary-400 bg-primary-500/5" : "",
+                                    ].join(" ")}
+                                    aria-label={`Digit ${i + 1}`}
                                 />
                             ))}
                         </div>
 
-                        {/* Resend button */}
-                        <div className="text-center">
+                        {/* Resend row */}
+                        <div className="flex items-center justify-center gap-3">
                             {cooldown > 0 ? (
-                                <p className="text-xs text-text-subtle">
-                                    Resend code in{" "}
-                                    <span className="font-semibold text-primary-500">
-                                        {cooldown}s
-                                    </span>
-                                </p>
+                                <>
+                                    <CountdownRing seconds={cooldown} total={RESEND_COOLDOWN_SECONDS} />
+                                    <p className="text-sm text-text-muted">
+                                        Resend available in{" "}
+                                        <span className="font-semibold text-foreground">{cooldown}s</span>
+                                    </p>
+                                </>
                             ) : (
-                                <button
-                                    type="button"
-                                    onClick={handleSendOtp}
-                                    disabled={isSending}
-                                    className="text-xs text-primary-500 hover:text-primary-600 font-semibold underline underline-offset-2 disabled:opacity-50"
-                                >
-                                    {isSending ? "Sending…" : "Resend code"}
-                                </button>
+                                <div className="flex items-center gap-2 text-sm text-text-muted">
+                                    <span>Didn&apos;t receive the code?</span>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleSendOtp}
+                                        loading={isSending}
+                                        className="text-primary-500 hover:text-primary-600 font-semibold px-1 py-0 min-h-0 h-auto"
+                                    >
+                                        Resend
+                                    </Button>
+                                </div>
                             )}
                         </div>
+
+                        {/* Action buttons */}
+                        <div className="flex gap-3">
+                            <Button
+                                variant="secondary"
+                                fullWidth
+                                onClick={handleBack}
+                            >
+                                <Icon name="chevron-left" className="w-4 h-4 mr-1" />
+                                Back
+                            </Button>
+                            <Button
+                                variant="primary"
+                                fullWidth
+                                loading={isVerifying}
+                                disabled={isVerifying || !otpComplete}
+                                onClick={handleVerifyOtp}
+                            >
+                                <Icon name="check" className="w-4 h-4 mr-1" />
+                                {isVerifying ? "Verifying…" : "Submit"}
+                            </Button>
+                        </div>
+
+                        {/* Footer note */}
+                        <p className="text-xs text-text-subtle text-center">
+                            Code expires in{" "}
+                            <span className="font-medium text-text-muted">10 minutes</span>
+                        </p>
                     </div>
                 )}
-
-                {/* Info note */}
-                <p className="text-xs text-text-subtle text-center">
-                    Standard SMS rates may apply. Code expires in 10 minutes.
-                </p>
             </div>
         </Modal>
     );

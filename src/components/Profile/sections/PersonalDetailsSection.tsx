@@ -12,10 +12,26 @@ interface PersonalDetailsSectionProps {
     userEmail: string;
     value: PersonalDetailsFormState;
     onChange: (next: PersonalDetailsFormState) => void;
-    /** ISO timestamp set once the phone has been verified */
     phoneVerifiedAt?: string | null;
-    /** Called after successful OTP verification so parent can refresh the profile */
     onPhoneVerified?: (verifiedAt: string) => void;
+}
+
+/** Strip everything except digits and leading + */
+function normalisePhone(raw: string): string {
+    return raw.replace(/[^\d+]/g, "");
+}
+
+/**
+ * Validate a phone number:
+ * - Optional leading +
+ * - 10–13 digits total (digits only, ignoring the +)
+ */
+function validatePhone(phone: string): string | null {
+    if (!phone.trim()) return null; // empty is fine – field is not required to save
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 10) return "Phone number is too short (minimum 10 digits).";
+    if (digits.length > 13) return "Phone number is too long (maximum 13 digits).";
+    return null;
 }
 
 export function PersonalDetailsSection({
@@ -27,10 +43,25 @@ export function PersonalDetailsSection({
 }: PersonalDetailsSectionProps) {
     const [nativeLanguageOther, setNativeLanguageOther] = useState("");
     const [showVerifyModal, setShowVerifyModal] = useState(false);
+    const [phoneError, setPhoneError] = useState<string | null>(null);
+    // Track the phone number that is actually verified on the server.
+    // Initialised from the prop; kept in sync when verification succeeds.
+    const [verifiedPhone, setVerifiedPhone] = useState<string | null>(
+        phoneVerifiedAt ? value.phone : null
+    );
 
     const isOtherSelected = value.native_language === "Other";
-    const isPhoneVerified = Boolean(phoneVerifiedAt);
+    // Phone is considered verified only when the current value matches the
+    // number that was actually verified — editing away invalidates the badge.
+    const isPhoneVerified = Boolean(phoneVerifiedAt) && value.phone === verifiedPhone;
     const hasPhone = value.phone.trim().length > 0;
+    const isPhoneValid = hasPhone && !validatePhone(value.phone);
+
+    function handlePhoneChange(raw: string) {
+        const next = normalisePhone(raw);
+        onChange({ ...value, phone: next });
+        setPhoneError(validatePhone(next));
+    }
 
     return (
         <div>
@@ -50,50 +81,42 @@ export function PersonalDetailsSection({
                 <Input label="Email" value={userEmail} disabled />
 
                 {/* Phone number with verification */}
-                <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-foreground">
-                        Phone Number
-                    </label>
-                    <div className="flex items-center gap-2">
-                        <div className="flex-1">
-                            <Input
-                                type="tel"
-                                value={value.phone}
-                                onChange={(e) => onChange({ ...value, phone: e.target.value })}
-                                placeholder="+61 4XX XXX XXX"
-                            />
-                        </div>
-                        {isPhoneVerified ? (
+                <Input
+                    label="Phone Number"
+                    type="tel"
+                    value={value.phone}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    placeholder="+61 4XX XXX XXX"
+                    error={phoneError ?? undefined}
+                    rightIcon={
+                        isPhoneVerified ? (
                             <div
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success-500/10 border border-success-500/30 text-success-600 dark:text-success-400 text-xs font-semibold whitespace-nowrap"
+                                className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-success-bg text-[11px] font-semibold whitespace-nowrap"
+                                style={{ color: "var(--primary-600)" }}
                                 title={`Verified on ${new Date(phoneVerifiedAt!).toLocaleDateString()}`}
                             >
-                                <Icon name="check-circle" className="w-4 h-4" />
+                                <Icon name="shield" className="w-3.5 h-3.5" />
                                 Verified
                             </div>
                         ) : (
                             <button
                                 type="button"
-                                disabled={!hasPhone}
+                                disabled={!isPhoneValid}
                                 onClick={() => setShowVerifyModal(true)}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-primary-500 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-xs font-semibold whitespace-nowrap transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="text-primary-500 text-xs font-medium whitespace-nowrap px-2 py-0.5 rounded-md transition-all duration-150 hover:scale-105 hover:text-primary-400 hover:bg-primary-500/10 active:scale-95 active:bg-primary-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-transparent"
                                 title={
-                                    hasPhone
-                                        ? "Verify your phone number"
-                                        : "Enter a phone number first"
+                                    !hasPhone
+                                        ? "Enter a phone number first"
+                                        : phoneError
+                                          ? phoneError
+                                          : "Verify your phone number"
                                 }
                             >
-                                <Icon name="shield" className="w-4 h-4" />
                                 Verify
                             </button>
-                        )}
-                    </div>
-                    {!isPhoneVerified && hasPhone && (
-                        <p className="text-xs text-text-subtle">
-                            Verify your number to unlock benefits like SMS notifications.
-                        </p>
-                    )}
-                </div>
+                        )
+                    }
+                />
 
                 <Input
                     label="Date of Birth"
@@ -157,14 +180,28 @@ export function PersonalDetailsSection({
                 rows={4}
             />
 
-            {/* Profile image prompt */}
-            {!value.image_url && (
-                <p className="mt-2 text-sm text-right">
-                    <span className="text-warning-800 dark:text-warning-100">
-                        Add a profile photo.
-                    </span>
-                    <span className="ml-1 text-text-muted">(Click on the avatar to upload.)</span>
-                </p>
+            {/* Hints notification box */}
+            {(!value.image_url || !isPhoneVerified) && (
+                <div className="mt-2 flex flex-col gap-1.5 px-3 py-2.5 rounded-lg border border-warning-200 bg-warning-50 dark:border-warning-500/20 dark:bg-warning-500/5">
+                    {!value.image_url && (
+                        <div className="flex items-start gap-2 text-sm">
+                            <Icon name="image" className="w-4 h-4 mt-0.5 shrink-0 text-warning-600 dark:text-warning-200" />
+                            <span>
+                                <span className="font-medium text-warning-800 dark:text-warning-100">Add a profile photo.</span>
+                                <span className="ml-1 text-text-muted">Click on the avatar to upload.</span>
+                            </span>
+                        </div>
+                    )}
+                    {!isPhoneVerified && (
+                        <div className="flex items-start gap-2 text-sm">
+                            <Icon name="shield" className="w-4 h-4 mt-0.5 shrink-0 text-warning-600 dark:text-warning-200" />
+                            <span>
+                                <span className="font-medium text-warning-800 dark:text-warning-100">Verify your phone number.</span>
+                                <span className="ml-1 text-text-muted">Click Verify inside the phone field above.</span>
+                            </span>
+                        </div>
+                    )}
+                </div>
             )}
 
             {/* Phone OTP Verification Modal */}
@@ -174,6 +211,7 @@ export function PersonalDetailsSection({
                 onClose={() => setShowVerifyModal(false)}
                 onVerified={(verifiedAt) => {
                     setShowVerifyModal(false);
+                    setVerifiedPhone(value.phone); // lock the badge to this number
                     onPhoneVerified?.(verifiedAt);
                 }}
             />

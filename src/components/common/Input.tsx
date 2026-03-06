@@ -45,9 +45,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             "bg-card border border-border text-foreground placeholder:text-text-subtle outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed";
 
         const sizeClasses: Record<InputSize, string> = {
-            sm: "px-3 py-2.5 text-sm",
-            md: "px-4 py-2.5 text-base",
-            lg: "px-5 py-3.5 text-lg",
+            sm: "px-3 py-2.5 text-sm min-h-[36px]",
+            md: "px-4 py-2.5 text-base min-h-[44px]",
+            lg: "px-5 py-3.5 text-lg min-h-[48px]",
         };
 
         const radiusClass = "rounded-lg";
@@ -100,7 +100,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                             fullWidth && "w-full",
                             leftIcon && "pl-10",
                             prefix && "pl-8",
-                            rightIcon && "pr-10",
+                            rightIcon && "pr-20",
                             // Date/time inputs have an internal picker icon/button (esp. iOS Safari).
                             // Reserve space for it and prevent the control from expanding.
                             isDateLike &&

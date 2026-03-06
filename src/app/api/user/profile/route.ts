@@ -87,6 +87,23 @@ export async function PATCH(req: NextRequest) {
         }
 
         if (Object.keys(usersUpdateData).length > 0) {
+            // If the phone number is being changed, clear the verification timestamp
+            // so the new number is not falsely shown as verified.
+            if ("phone" in usersUpdateData) {
+                const { data: currentUser } = await supabase
+                    .from("users")
+                    .select("phone, phone_verified_at")
+                    .eq("id", authUser.id)
+                    .single();
+
+                if (
+                    currentUser?.phone_verified_at &&
+                    usersUpdateData.phone !== currentUser.phone
+                ) {
+                    (usersUpdateData as Record<string, unknown>).phone_verified_at = null;
+                }
+            }
+
             const { error: updateError } = await supabase
                 .from("users")
                 .update(usersUpdateData)
