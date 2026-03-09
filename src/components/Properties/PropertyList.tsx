@@ -150,15 +150,10 @@ export function PropertyList({
 
             {/* Scroll to top button */}
             {!hasNextPage && allProperties.length > 0 && (
-                <div className="text-center py-6 sm:py-8">
+                <div className="text-center">
                     <button
                         onClick={() => {
-                            const mainContent = document.getElementById('main-content');
-                            if (mainContent) {
-                                mainContent.scrollTo({ top: 0, behavior: "smooth" });
-                            } else {
-                                window.scrollTo({ top: 0, behavior: "smooth" });
-                            }
+                            window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
                         className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-primary-600 bg-primary-500/10 hover:bg-primary-500/15 active:bg-primary-500/20 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                     >

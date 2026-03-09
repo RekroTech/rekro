@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 
 // Components
-import { Header } from "@/components/layout/Header";
+import { Header, Footer } from "@/components/layout";
 import { Loader } from "@/components/common";
 
 // Hooks & Context
@@ -47,7 +47,7 @@ export default function AppShell({ children }: AppShellProps) {
     const { isAuthModalOpen, closeAuthModal, redirectTo, authModalError } = useAuthModal();
 
     // Check session on initial load
-    const { isLoading: isSessionLoading } = useSessionUser();
+    const { isLoading: isSessionLoading, data: user } = useSessionUser();
 
     // Ensure we react to Supabase auth state changes (OAuth callback, sign out, token refresh)
     // This hook keeps our session-dependent React Query caches in sync.
@@ -74,9 +74,12 @@ export default function AppShell({ children }: AppShellProps) {
                 onClick={(e) => {
                     e.preventDefault();
                     const mainContent = document.getElementById('main-content');
-                    mainContent?.focus();
+                    if (mainContent) {
+                        mainContent.focus();
+                        mainContent.scrollTop = 0;
+                    }
                 }}
-                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-primary-500 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] focus:bg-primary-500 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:outline-none"
             >
                 Skip to main content
             </a>
@@ -86,10 +89,11 @@ export default function AppShell({ children }: AppShellProps) {
                 id="main-content"
                 role="main"
                 tabIndex={-1}
-                className="absolute top-14 sm:top-16 left-0 right-0 h-[calc(100vh-56px)] sm:h-[calc(100vh-64px)] overflow-y-auto"
+                className="mt-14 sm:mt-16 outline-none"
             >
                 {children}
             </main>
+            {!user && <Footer />}
 
             {/* Add Property Modal - only for admin */}
             {canManageProperties && (
