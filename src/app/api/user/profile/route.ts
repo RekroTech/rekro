@@ -9,25 +9,18 @@ import type {
     UserApplicationProfileUpdate,
 } from "@/types/db";
 import { ApplicationProfileUpdateSchema, ProfileUpdateSchema } from "@/lib/validators";
+import { toE164AndAuthDigits } from "@/lib/utils/phone";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
     try {
-        // Get authenticated user with role (no extra DB query needed!)
         const authUser = await requireAuthForApi();
         const supabase = await createClient();
 
         const { data: profileData, error: profileError } = await supabase
             .from("users")
-            .select(
-                `
-                *,
-                user_application_profile (
-                    *
-                )
-            `
-            )
+            .select(`*, user_application_profile (*)`)
             .eq("id", authUser.id)
             .single<Profile & { user_application_profile: UserApplicationProfile | null }>();
 
@@ -38,8 +31,6 @@ export async function GET() {
         return successResponse(profileData);
     } catch (error) {
         console.error("Profile fetch error:", error);
-
-        // Handle authentication errors from requireAuthForApi
         if (error instanceof Error && error.message === "Unauthorized") {
             return errorResponse("Unauthorized", 401);
         }
@@ -87,20 +78,25 @@ export async function PATCH(req: NextRequest) {
         }
 
         if (Object.keys(usersUpdateData).length > 0) {
-            // If the phone number is being changed, clear the verification timestamp
-            // so the new number is not falsely shown as verified.
+            // When the phone number is being updated, set phone_verified_at correctly:
+            //   - If the new phone matches auth.users.phone, restore phone_verified_at
+            //     from auth.phone_confirmed_at → shows as verified.
+            //   - Otherwise clear it → new unverified number.
             if ("phone" in usersUpdateData) {
-                const { data: currentUser } = await supabase
-                    .from("users")
-                    .select("phone, phone_verified_at")
-                    .eq("id", authUser.id)
-                    .single();
+                const {
+                    data: { user: authUserData },
+                } = await supabase.auth.getUser();
+                const authPhone = (authUserData as any)?.phone ?? null;
+                const authPhoneConfirmedAt = (authUserData as any)?.phone_confirmed_at ?? null;
 
-                if (
-                    currentUser?.phone_verified_at &&
-                    usersUpdateData.phone !== currentUser.phone
-                ) {
-                    (usersUpdateData as Record<string, unknown>).phone_verified_at = null;
+                // Normalise to E.164 for storage and get digits-only form for auth comparison.
+                const { e164, authDigits } = toE164AndAuthDigits(usersUpdateData.phone!);
+                usersUpdateData.phone = e164;
+
+                if (authDigits === authPhone && authPhoneConfirmedAt) {
+                    usersUpdateData.phone_verified_at = authPhoneConfirmedAt;
+                } else {
+                    usersUpdateData.phone_verified_at = null;
                 }
             }
 
@@ -133,14 +129,7 @@ export async function PATCH(req: NextRequest) {
 
         const { data: updatedProfile, error: fetchError } = await supabase
             .from("users")
-            .select(
-                `
-                *,
-                user_application_profile (
-                    *
-                )
-            `
-            )
+            .select(`*, user_application_profile (*)`)
             .eq("id", authUser.id)
             .single<Profile & { user_application_profile: UserApplicationProfile | null }>();
 

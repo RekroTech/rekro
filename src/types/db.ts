@@ -129,6 +129,7 @@ export interface Database {
                     notification_preferences?: Record<string, unknown> | null;
                     discoverable?: boolean | null;
                     share_contact?: boolean | null;
+                    phone_verified_at?: string | null;
                 };
             };
             user_application_profile: {

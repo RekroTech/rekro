@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         const { error: verifyError } = await supabase.auth.verifyOtp({
             phone,
             token,
-            type: "sms",
+            type: "phone_change",
         });
 
         if (verifyError) {

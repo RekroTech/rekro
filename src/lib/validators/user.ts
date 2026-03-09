@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { toE164 } from "@/lib/utils/phone";
 
 /**
  * User and profile validation schemas
@@ -73,15 +74,21 @@ export type ApplicationProfileUpdate = z.infer<typeof ApplicationProfileUpdateSc
 export type CompleteProfile = z.infer<typeof CompleteProfileSchema>;
 
 // Phone verification schemas
+
 const phoneField = z
     .string()
     .trim()
     .refine(
         (v) => {
             const digits = v.replace(/\D/g, "");
-            return digits.length >= 10 && digits.length <= 13;
+            return digits.length >= 7 && digits.length <= 15;
         },
-        { message: "Phone number must contain 10–13 digits." }
+        { message: "Phone number must be between 7 and 15 digits." }
+    )
+    .transform(toE164)
+    .refine(
+        (v) => /^\+[1-9]\d{6,14}$/.test(v),
+        { message: "Phone number must be in E.164 format (e.g. +61412345678)." }
     );
 
 export const PhoneSendOtpSchema = z.object({

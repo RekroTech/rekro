@@ -38,14 +38,11 @@ export async function POST(request: NextRequest) {
 
         const { phone } = body;
 
-        // Supabase signInWithOtp for phone sends an SMS OTP
-        const { error: otpError } = await supabase.auth.signInWithOtp({
-            phone,
-            options: {
-                // We only want to send the OTP – do not create a new auth user
-                shouldCreateUser: false,
-            },
-        });
+        // Use updateUser to attach the phone number to the existing authenticated
+        // user. Supabase sends an SMS OTP to confirm the change. This avoids the
+        // "Signups not allowed for otp" error that occurs when using signInWithOtp
+        // with shouldCreateUser: false for a phone not yet in auth.users.
+        const { error: otpError } = await supabase.auth.updateUser({ phone });
 
         if (otpError) {
             const isRateLimit =

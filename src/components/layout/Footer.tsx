@@ -37,7 +37,7 @@ export function Footer() {
                             <LogoText className="h-5 w-auto mb-0.5" />
                         </Link>
                         <p className="text-sm text-text-muted leading-relaxed text-center sm:text-left">
-                            Connect, make friends, and find your next home.
+                            Apply once, live anywhere.
                         </p>
                     </div>
 
