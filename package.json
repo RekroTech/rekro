@@ -17,7 +17,7 @@
         "test:mobile": "playwright test --project='Mobile Chrome' --project='Mobile Safari'",
         "test:debug": "playwright test --debug",
         "test:report": "playwright show-report",
-        "email:preview": "email dev --dir src/lib/email"
+        "email:preview": "email dev --dir src/lib/email --port 3001"
     },
     "dependencies": {
         "@react-email/components": "^1.0.8",

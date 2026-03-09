@@ -70,7 +70,7 @@ State:         TanStack Query v5 (server state) · nuqs (URL state)
 Auth:          Supabase Auth (magic link / OTP) · @supabase/ssr
 Database:      Supabase PostgreSQL · Row Level Security · JSONB
 Storage:       Supabase Storage (images, documents)
-Email:         Resend
+Email:         Resend (transactional sending) · React Email (JSX templates, preview server on :3001)
 Maps:          @react-google-maps/api
 Monitoring:    Sentry (errors + tracing)
 Testing:       Playwright (E2E smoke tests)

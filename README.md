@@ -13,6 +13,7 @@ reKro lets renters browse listings, submit applications, and connect with potent
 - [Installation](#-installation)
 - [Environment Variables](#-environment-variables)
 - [Running the App](#-running-the-app)
+- [Email Template Preview](#️-email-template-preview)
 - [Project Structure](#-project-structure)
 - [Route Map](#️-route-map)
 - [Key Concepts](#-key-concepts)
@@ -34,6 +35,7 @@ reKro lets renters browse listings, submit applications, and connect with potent
 | Client data | [TanStack Query v5](https://tanstack.com/query) — caching, infinite scroll, mutations |
 | URL state | [nuqs v2](https://nuqs.47ng.com) — type-safe URL search params |
 | Email | [Resend](https://resend.com) — transactional email (enquiries, confirmations) |
+| Email templates | [React Email](https://react.dev/email) — JSX-based email templates with live preview server |
 | Maps | [Google Maps / Places API](https://developers.google.com/maps) — geocoding + map display |
 | Chatbot | [Voiceflow](https://www.voiceflow.com) — property search via `/api/voiceflow/properties/search` |
 | PDF export | [jsPDF](https://github.com/parallax/jsPDF) — application PDF generation |
@@ -133,6 +135,45 @@ npm run lint       # ESLint
 
 ---
 
+## ✉️ Email Template Preview
+
+Email templates are built with [React Email](https://react.email) and live in `src/lib/email/`.
+You can preview and iterate on them locally without sending real emails:
+
+```bash
+npm run email:preview
+```
+
+Opens the React Email preview server at **[http://localhost:3001](http://localhost:3001)**.
+
+> **Important:** keep this server on port `3001` — the Next.js dev server runs on `3000`.
+> Mixing the two ports causes spurious `socket.io` 404s in the Next.js console.
+
+### Templates
+
+| File | Recipient | Trigger |
+|---|---|---|
+| `EnquiryNotificationEmail.tsx` | `admin@rekro.com.au` | New enquiry submitted |
+| `EnquiryConfirmationEmail.tsx` | Enquiry sender | New enquiry submitted |
+
+Both templates accept `PreviewProps` so the preview server renders them with realistic sample data automatically.
+
+### How enquiry emails work
+
+```
+POST /api/enquiries
+  └─ sendEnquiryNotification()  → admin@rekro.com.au   (new enquiry alert)
+  └─ sendEnquiryConfirmation()  → sender's email       (receipt confirmation)
+```
+
+Both are sent via **Resend** from `admin@rekro.com.au`. The unit name is omitted from
+the email when `listingType` is `"entire_property"`.
+
+> Set `RESEND_API_KEY` in `.env.local` to enable real sending. Without it, the functions
+> log a warning and return `null` — the API route continues without failing.
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -199,7 +240,13 @@ rekro/
 │   ├── lib/
 │   │   ├── config/
 │   │   │   └── cache_config.ts       # CACHE_STRATEGIES constants for TanStack Query
-│   │   ├── email/                    # Resend client, templates, schemas
+│   │   ├── email/                    # Email module (Resend + React Email)
+│   │   │   ├── EnquiryNotificationEmail.tsx  # Admin notification template
+│   │   │   ├── EnquiryConfirmationEmail.tsx  # Sender confirmation template
+│   │   │   ├── enquiries.tsx         #   sendEnquiryNotification / sendEnquiryConfirmation
+│   │   │   ├── resend.ts             #   Resend client, FROM_EMAIL, ADMIN_EMAIL
+│   │   │   ├── schemas.ts            #   Zod schemas + TS types for email payloads
+│   │   │   └── index.ts              #   Re-exports
 │   │   ├── hooks/                    # All TanStack Query hooks — CLIENT only
 │   │   │   ├── auth.ts               #   useSessionUser, useLogout, useSignInWithOtp…
 │   │   │   ├── roles.ts              #   useRoles() — RBAC helper
@@ -387,11 +434,12 @@ search → detail navigation, unauthenticated enquiry prompt, and protected rout
 
 | Script | Description |
 |---|---|
-| `npm run dev` | Dev server (Turbopack, hot-reload) |
+| `npm run dev` | Dev server (Turbopack, hot-reload) on port 3000 |
 | `npm run build` | Production build |
 | `npm start` | Serve production build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript check (no emit) |
+| `npm run email:preview` | React Email preview server on port 3001 |
 | `npm test` | Playwright E2E tests |
 | `npm run test:ui` | Playwright interactive UI |
 | `npm run test:report` | Open last test HTML report |

@@ -3,7 +3,7 @@
  */
 
 import { render } from "@react-email/render";
-import { resend, FROM_EMAIL } from "./resend";
+import { resend_config, FROM_EMAIL } from "../config/resend_config";
 import EnquiryNotificationEmail from "./EnquiryNotificationEmail";
 import EnquiryConfirmationEmail from "./EnquiryConfirmationEmail";
 import {
@@ -29,7 +29,7 @@ export async function sendEnquiryNotification(data: EnquiryNotification) {
     const html = await render(EnquiryNotificationEmail(validatedData));
     const text = await render(EnquiryNotificationEmail(validatedData), { plainText: true });
 
-    return await resend.emails.send({
+    return await resend_config.emails.send({
         from: FROM_EMAIL,
         to: validatedData.recipientEmail,
         subject,
@@ -55,7 +55,7 @@ export async function sendEnquiryConfirmation(data: EnquiryConfirmation) {
     const html = await render(EnquiryConfirmationEmail(validatedData));
     const text = await render(EnquiryConfirmationEmail(validatedData), { plainText: true });
 
-    return await resend.emails.send({
+    return await resend_config.emails.send({
         from: FROM_EMAIL,
         to: validatedData.recipientEmail,
         subject,
