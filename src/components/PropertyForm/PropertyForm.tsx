@@ -6,12 +6,12 @@ import type { AddPropertyModalProps } from "../Property/types";
 import { Button, Modal } from "@/components/common";
 import { useCreateProperty, useUpdateProperty } from "@/lib/hooks/property";
 import { deletePropertyFiles } from "@/lib/services/storage.service";
+import { calculateRoomRents, calculateEntireHomeRent } from "@/lib/utils/pricing";
 import { usePropertyForm, useMediaFiles } from "./hooks";
 import { BasicInformationSection } from "./sections/BasicInformationSection";
 import { PropertyDetailsSection } from "./sections/PropertyDetailsSection";
 import { ListingDetailsSection } from "./sections/ListingDetailsSection";
 import { MediaSection } from "./sections/MediaSection";
-import { calculateRoomRents, calculateEntireHomeRent } from "../Property/utils/pricing";
 
 export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddPropertyModalProps) {
     const [error, setError] = useState<string | null>(null);

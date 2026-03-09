@@ -10,6 +10,9 @@ if (!process.env.RESEND_API_KEY) {
 
 export const resend = new Resend(process.env.RESEND_API_KEY ?? "");
 
-// Default sender email - update this to your verified domain
-export const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+// Default sender email - verified domain
+export const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "admin@rekro.com.au";
+
+// Admin notification recipient
+export const ADMIN_EMAIL = "admin@rekro.com.au";
 

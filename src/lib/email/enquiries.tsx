@@ -2,8 +2,10 @@
  * Email sending functions for enquiries
  */
 
+import { render } from "@react-email/render";
 import { resend, FROM_EMAIL } from "./resend";
-import { getEnquiryNotificationTemplate, getEnquiryConfirmationTemplate } from "./templates";
+import EnquiryNotificationEmail from "./EnquiryNotificationEmail";
+import EnquiryConfirmationEmail from "./EnquiryConfirmationEmail";
 import {
     enquiryNotificationSchema,
     enquiryConfirmationSchema,
@@ -12,7 +14,7 @@ import {
 } from "./schemas";
 
 /**
- * Send enquiry notification email to property owner/landlord
+ * Send enquiry notification email to admin
  */
 export async function sendEnquiryNotification(data: EnquiryNotification) {
     if (!process.env.RESEND_API_KEY) {
@@ -20,10 +22,12 @@ export async function sendEnquiryNotification(data: EnquiryNotification) {
         return null;
     }
 
-    // Validate input
     const validatedData = enquiryNotificationSchema.parse(data);
+    const { propertyTitle, unitName } = validatedData;
 
-    const { subject, html, text } = getEnquiryNotificationTemplate(validatedData);
+    const subject = `New Enquiry: ${propertyTitle}${unitName ? ` - ${unitName}` : ""}`;
+    const html = await render(EnquiryNotificationEmail(validatedData));
+    const text = await render(EnquiryNotificationEmail(validatedData), { plainText: true });
 
     return await resend.emails.send({
         from: FROM_EMAIL,
@@ -44,10 +48,12 @@ export async function sendEnquiryConfirmation(data: EnquiryConfirmation) {
         return null;
     }
 
-    // Validate input
     const validatedData = enquiryConfirmationSchema.parse(data);
+    const { propertyTitle, unitName } = validatedData;
 
-    const { subject, html, text } = getEnquiryConfirmationTemplate(validatedData);
+    const subject = `Your Enquiry for ${propertyTitle}${unitName ? ` - ${unitName}` : ""}`;
+    const html = await render(EnquiryConfirmationEmail(validatedData));
+    const text = await render(EnquiryConfirmationEmail(validatedData), { plainText: true });
 
     return await resend.emails.send({
         from: FROM_EMAIL,
@@ -57,4 +63,3 @@ export async function sendEnquiryConfirmation(data: EnquiryConfirmation) {
         text,
     });
 }
-

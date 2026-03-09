@@ -2,12 +2,14 @@
  * Enquiries API Route Handler
  *
  * POST /api/enquiries - Submit an enquiry (authenticated users or guests)
+ *                       Sends a notification email to admin@rekro.com.au
+ *                       and a confirmation email to the enquirer.
  */
 
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { errorResponse, successResponse } from "@/app/api/utils";
-import { sendEnquiryNotification, sendEnquiryConfirmation } from "@/lib/email";
+import { sendEnquiryConfirmation, sendEnquiryNotification, ADMIN_EMAIL } from "@/lib/email";
 import type { EnquiryInsert } from "@/types/db";
 import { EnquiryRequestSchema } from "@/lib/validators";
 
@@ -125,27 +127,15 @@ export async function POST(request: NextRequest) {
             return errorResponse("Failed to submit enquiry", 500);
         }
 
-        // Send notification emails
-        // 1. Email to property creator/agent
-        // 2. Optional confirmation email to user/guest
-
+        // Send confirmation email to enquirer
         try {
-            // Get property details and creator information for email notification
             const { data: property } = await supabase
                 .from("properties")
-                .select(`
-                    title,
-                    created_by,
-                    users!properties_created_by_fkey (
-                        email,
-                        full_name
-                    )
-                `)
+                .select("title")
                 .eq("id", unit.property_id)
                 .single();
 
             if (property) {
-                // Get unit details for email
                 const { data: unitDetails } = await supabase
                     .from("units")
                     .select("unit_number, floor_level")
@@ -155,75 +145,55 @@ export async function POST(request: NextRequest) {
                 const unitName = unitDetails?.unit_number ||
                     (unitDetails?.floor_level ? `Floor ${unitDetails.floor_level}` : undefined);
 
-                // Get property creator's information
-                const creatorData = Array.isArray(property.users)
-                    ? property.users[0]
-                    : property.users;
+                const enquirerEmail = isAuthenticated
+                    ? enquiryData.contact_email!
+                    : enquiryData.guest_email!;
+                const enquirerName = isAuthenticated
+                    ? enquiryData.contact_name || undefined
+                    : enquiryData.guest_name || undefined;
 
-                const recipientEmail = creatorData?.email;
-                const recipientName = creatorData?.full_name;
+                const shouldSendEmails = process.env.SEND_ENQUIRY_CONFIRMATION !== "false";
 
-                if (recipientEmail) {
-                    // 1. Send notification to property creator
+                if (shouldSendEmails) {
+                    // Send admin notification to admin@rekro.com.au
                     try {
                         await sendEnquiryNotification({
                             enquiryId,
                             propertyTitle: property.title,
                             unitName,
                             message,
-                            senderName: isAuthenticated
-                                ? enquiryData.contact_name || undefined
-                                : enquiryData.guest_name || undefined,
-                            senderEmail: isAuthenticated
-                                ? enquiryData.contact_email!
-                                : enquiryData.guest_email!,
+                            senderName: enquirerName,
+                            senderEmail: enquirerEmail,
                             senderPhone: isAuthenticated
-                                ? enquiryData.contact_phone || undefined
-                                : enquiryData.guest_phone || undefined,
-                            recipientEmail,
-                            recipientName: recipientName || undefined,
+                                ? enquiryData.contact_phone ?? undefined
+                                : enquiryData.guest_phone ?? undefined,
+                            recipientEmail: ADMIN_EMAIL,
                             isAuthenticated,
                         });
-
-                        console.log("Enquiry notification sent to:", recipientEmail);
+                        console.log("Enquiry notification sent to admin:", ADMIN_EMAIL);
                     } catch (notificationError) {
-                        console.error("Error sending enquiry notification:", notificationError);
-                        // Don't fail the request if notification fails
+                        console.error("Error sending enquiry notification to admin:", notificationError);
                     }
 
-                    // 2. Send confirmation to enquirer (optional, configurable)
-                    const shouldSendConfirmation = process.env.SEND_ENQUIRY_CONFIRMATION !== "false";
-
-                    if (shouldSendConfirmation) {
-                        try {
-                            await sendEnquiryConfirmation({
-                                enquiryId,
-                                propertyTitle: property.title,
-                                unitName,
-                                message,
-                                recipientEmail: isAuthenticated
-                                    ? enquiryData.contact_email!
-                                    : enquiryData.guest_email!,
-                                recipientName: isAuthenticated
-                                    ? enquiryData.contact_name || undefined
-                                    : enquiryData.guest_name || undefined,
-                            });
-
-                            console.log("Enquiry confirmation sent to:",
-                                isAuthenticated ? enquiryData.contact_email : enquiryData.guest_email
-                            );
-                        } catch (confirmationError) {
-                            console.error("Error sending enquiry confirmation:", confirmationError);
-                            // Don't fail the request if confirmation fails
-                        }
+                    // Send confirmation email to the enquirer
+                    try {
+                        await sendEnquiryConfirmation({
+                            enquiryId,
+                            propertyTitle: property.title,
+                            unitName,
+                            message,
+                            recipientEmail: enquirerEmail,
+                            recipientName: enquirerName,
+                        });
+                        console.log("Enquiry confirmation sent to:", enquirerEmail);
+                    } catch (confirmationError) {
+                        console.error("Error sending enquiry confirmation:", confirmationError);
                     }
-                } else {
-                    console.warn("No recipient email found for property:", property.title);
                 }
             }
         } catch (emailError) {
             // Log email error but don't fail the request
-            console.error("Error in email notification process:", emailError);
+            console.error("Error in email confirmation process:", emailError);
         }
 
         return successResponse(

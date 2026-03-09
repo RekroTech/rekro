@@ -7,6 +7,7 @@ import { Textarea } from "@/components/common/Textarea";
 import { Button } from "@/components/common/Button";
 import { Icon } from "@/components/common";
 import { useProfile } from "@/lib/hooks/user";
+import { normalisePhone, validateAUPhone } from "@/lib/utils";
 
 interface EnquiryModalProps {
     isOpen: boolean;
@@ -80,13 +81,10 @@ export function EnquiryForm({
         // Validate phone only if not already available from user data
         if (!isLoggedIn || !user?.phone) {
             const phone = formData.phone.trim();
-            // Accept: 10 digits (local AU), or +61 followed by 9 digits (international AU)
-            const localFormat = /^\d{10}$/;
-            const intlFormat = /^\+61\d{9}$/;
             if (!phone) {
                 newErrors.phone = "Phone number is required";
-            } else if (!localFormat.test(phone) && !intlFormat.test(phone)) {
-                newErrors.phone = "Enter a valid 10-digit number (e.g. 0412 345 678) or with country code (e.g. +61412345678)";
+            } else if (!validateAUPhone(phone)) {
+                newErrors.phone = "Enter a valid Australian number (e.g. 0412 345 678 or +61 412 345 678)";
             }
         }
 
@@ -128,7 +126,7 @@ export function EnquiryForm({
                       message: formData.message,
                       guest_name: formData.name,
                       guest_email: formData.email,
-                      guest_phone: formData.phone || undefined,
+                      guest_phone: formData.phone ? formData.phone.replace(/\s/g, "") : undefined,
                       website: formData.website, // Honeypot
                   };
 
@@ -171,9 +169,29 @@ export function EnquiryForm({
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        const sanitizedValue = name === "phone"
-            ? value.replace(/[^\d+]/g, "").replace(/(?!^\+)\+/g, "").slice(0, 13)
-            : value;
+        let sanitizedValue = value;
+        if (name === "phone") {
+            // Allow digits, +, and spaces; remove invalid chars
+            let cleaned = normalisePhone(value);
+            // Enforce length cap based on stripped version
+            const stripped = cleaned.replace(/\s/g, "");
+            if (stripped.startsWith("0") && stripped.length > 10) {
+                // Trim to 10 digits preserving spaces
+                let digits = 0;
+                cleaned = cleaned.split("").filter((ch) => {
+                    if (ch === " ") return true;
+                    if (/\d/.test(ch) && digits < 10) { digits++; return true; }
+                    return false;
+                }).join("");
+            } else if (stripped.startsWith("+") && stripped.length > 12) {
+                // Trim to +61 + 9 digits = 12 chars (no spaces in intl format)
+                cleaned = cleaned.slice(0, 12);
+            } else if (!stripped.startsWith("0") && !stripped.startsWith("+") && stripped.length > 0) {
+                // Reject first char if not 0 or +
+                cleaned = "";
+            }
+            sanitizedValue = cleaned;
+        }
         setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
 
         // Clear error when user starts typing
@@ -265,12 +283,11 @@ export function EnquiryForm({
                             name="phone"
                             type="tel"
                             inputMode="numeric"
-                            pattern="(\+61\d{9}|\d{10})"
-                            maxLength={13}
+                            maxLength={15}
                             value={formData.phone}
                             onChange={handleChange}
                             error={errors.phone}
-                            placeholder="Starting with 0 or country code"
+                            placeholder="0412 345 678 or +61 412 345 678"
                             disabled={isSubmitting}
                             required
                         />

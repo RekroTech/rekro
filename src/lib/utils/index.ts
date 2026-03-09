@@ -141,3 +141,7 @@ export {
 // ============================================================================
 export { generateApplicationPDF } from './pdfGenerator';
 
+// ============================================================================
+// Phone Utilities (Client & Server Safe)
+// ============================================================================
+export { normalisePhone, validateAUPhone } from './phone';

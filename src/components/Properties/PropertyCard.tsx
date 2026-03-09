@@ -13,9 +13,11 @@ import { PropertyForm } from "../PropertyForm";
 interface PropertyCardProps {
     property: Property & { units?: Unit[] };
     showEditButton?: boolean; // Optional prop to show edit button
+    /** Pass true for the first card above the fold so the LCP image is eagerly loaded. */
+    priority?: boolean;
 }
 
-export function PropertyCard({ property, showEditButton = false }: PropertyCardProps) {
+export function PropertyCard({ property, showEditButton = false, priority = false }: PropertyCardProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const prefetchProperty = usePrefetchProperty();
 
@@ -69,6 +71,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                             images={imageUrls}
                             title={title}
                             hideIndicators
+                            priority={priority}
                         />
                     </div>
 
@@ -79,7 +82,7 @@ export function PropertyCard({ property, showEditButton = false }: PropertyCardP
                             alt={title}
                             fill
                             className="group-hover:scale-105 transition-transform duration-300"
-                            priority
+                            priority={priority}
                         />
                     </div>
 

@@ -18,7 +18,7 @@ import {
     DiscoverabilityPrompt,
     PropertyErrorBoundary,
 } from "@/components/Property";
-import { updateRoomRentsOnOccupancySelection } from "@/components/Property/utils/pricing";
+import { updateRoomRentsOnOccupancySelection } from "@/lib/utils/pricing";
 
 export default function PropertyDetailPage() {
     const params = useParams();

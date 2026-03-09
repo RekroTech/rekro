@@ -128,11 +128,12 @@ export function PropertyList({
 
             {/* Simple responsive grid - works perfectly on all screen sizes */}
             <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {allProperties.map((property: Property) => (
+                {allProperties.map((property: Property, index: number) => (
                     <PropertyCard
                         key={property.id}
                         property={property}
                         showEditButton={showEditButton}
+                        priority={index === 0}
                     />
                 ))}
             </div>

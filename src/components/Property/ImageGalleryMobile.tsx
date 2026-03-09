@@ -6,12 +6,15 @@ interface ImageGalleryProps {
     images: string[];
     title: string;
     hideIndicators?: boolean;
+    /** Eagerly load the first image when it is the LCP element. */
+    priority?: boolean;
 }
 
 export function ImageGallery({
     images,
     title,
     hideIndicators = false,
+    priority = false,
 }: ImageGalleryProps) {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -72,7 +75,7 @@ export function ImageGallery({
                                         fill
                                         sizes="100vw"
                                         className="object-contain"
-                                        priority={index === 0}
+                                        priority={index === 0 && priority}
                                     />
                                 </div>
                             </div>

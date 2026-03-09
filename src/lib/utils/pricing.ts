@@ -16,8 +16,8 @@ import {
     PRICING_CONFIG,
     STORAGE_CAGE_COST_PER_WEEK,
 } from "@/lib/config/pricing_config";
-import { RentalFormData } from "../types";
-import { isInclusionSelected } from "../utils/inclusions";
+import { RentalFormData } from "@/components/Property";
+import { isInclusionSelected } from "@/lib/utils/inclusions";
 
 type PricingInputs = {
     leaseWeekly: number; // X - base weekly rent

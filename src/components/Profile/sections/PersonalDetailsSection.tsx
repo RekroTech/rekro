@@ -7,6 +7,7 @@ import type { Gender } from "@/types/db";
 import type { PersonalDetailsFormState } from "../types";
 import { NATIVE_LANGUAGE_OPTIONS } from "../constants";
 import { PhoneVerificationModal } from "@/components/Profile";
+import { normalisePhone, validateAUPhone } from "@/lib/utils";
 
 interface PersonalDetailsSectionProps {
     userEmail: string;
@@ -14,24 +15,6 @@ interface PersonalDetailsSectionProps {
     onChange: (next: PersonalDetailsFormState) => void;
     phoneVerifiedAt?: string | null;
     onPhoneVerified?: (verifiedAt: string) => void;
-}
-
-/** Strip everything except digits and leading + */
-function normalisePhone(raw: string): string {
-    return raw.replace(/[^\d+]/g, "");
-}
-
-/**
- * Validate a phone number:
- * - Optional leading +
- * - 10–13 digits total (digits only, ignoring the +)
- */
-function validatePhone(phone: string): string | null {
-    if (!phone.trim()) return null; // empty is fine – field is not required to save
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length < 10) return "Phone number is too short (minimum 10 digits).";
-    if (digits.length > 13) return "Phone number is too long (maximum 13 digits).";
-    return null;
 }
 
 export function PersonalDetailsSection({
@@ -55,12 +38,15 @@ export function PersonalDetailsSection({
     // number that was actually verified — editing away invalidates the badge.
     const isPhoneVerified = Boolean(phoneVerifiedAt) && value.phone === verifiedPhone;
     const hasPhone = value.phone.trim().length > 0;
-    const isPhoneValid = hasPhone && !validatePhone(value.phone);
+    const isPhoneValid = hasPhone && validateAUPhone(value.phone);
 
     function handlePhoneChange(raw: string) {
         const next = normalisePhone(raw);
         onChange({ ...value, phone: next });
-        setPhoneError(validatePhone(next));
+        setPhoneError(next.trim() && !validateAUPhone(next)
+            ? "Enter a valid Australian number (e.g. 0412 345 678 or +61 412 345 678)"
+            : null
+        );
     }
 
     return (
@@ -86,7 +72,7 @@ export function PersonalDetailsSection({
                     type="tel"
                     value={value.phone}
                     onChange={(e) => handlePhoneChange(e.target.value)}
-                    placeholder="+61 4XX XXX XXX"
+                    placeholder="0412 345 678 or +61 412 345 678"
                     error={phoneError ?? undefined}
                     rightIcon={
                         isPhoneVerified ? (

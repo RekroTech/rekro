@@ -18,7 +18,7 @@ export function getEnquiryNotificationTemplate(data: EnquiryNotification): {
 
     const html = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -172,7 +172,7 @@ export function getEnquiryConfirmationTemplate(data: EnquiryConfirmation): {
 
     const html = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -191,7 +191,7 @@ export function getEnquiryConfirmationTemplate(data: EnquiryConfirmation): {
                             </h1>
                             <p style="margin: 12px 0 0 0; font-size: 14px; color: #666;">
                                 ${recipientName ? `Hi ${recipientName},` : "Thank you for your enquiry!"}<br>
-                                We've received your message and the property owner will be in touch soon.
+                                We've received your message and we will be in touch soon.
                             </p>
                         </td>
                     </tr>
@@ -247,8 +247,8 @@ export function getEnquiryConfirmationTemplate(data: EnquiryConfirmation): {
                                 What happens next?
                             </h3>
                             <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #666; line-height: 1.8;">
-                                <li>The property owner/agent will review your enquiry</li>
-                                <li>They will contact you directly via email or phone</li>
+                                <li>We will review your enquiry</li>
+                                <li>We will contact you directly via email or phone</li>
                                 <li>Response time is typically within 24-48 hours</li>
                             </ul>
                         </td>
@@ -276,7 +276,7 @@ ENQUIRY RECEIVED!
 
 ${recipientName ? `Hi ${recipientName},` : "Thank you for your enquiry!"}
 
-We've received your message and the property owner will be in touch soon.
+We've received your message and we will be in touch soon.
 
 Enquiry Summary:
 - Property: ${propertyTitle}
@@ -286,8 +286,8 @@ Your Message:
 ${message}
 
 What happens next?
-- The property owner/agent will review your enquiry
-- They will contact you directly via email or phone
+- We will review your enquiry
+- We will contact you directly via email or phone
 - Response time is typically within 24-48 hours
 
 ---

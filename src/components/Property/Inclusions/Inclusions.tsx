@@ -12,9 +12,9 @@ import {
     getBillsCostPerWeek,
     getEntireHomeCleaningCosts,
     getRoomFurnitureCost,
-} from "@/components/Property/utils/pricing";
-import { toggleInclusionWithPrice } from "@/components/Property/utils/inclusions";
+} from "@/lib/utils/pricing";
 import { InclusionCard } from "./InclusionCard";
+import { toggleInclusionWithPrice } from "@/lib/utils/inclusions";
 
 interface InclusionsProps {
     property: Property;
