@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
-import { Modal, Icon } from "@/components/common";
+import { Modal, Icon, Loader } from "@/components/common";
 
 interface DocumentPreviewModalProps {
     isOpen: boolean;
@@ -134,10 +134,7 @@ export function DocumentPreviewModal({
         if (isLoading && previewType !== "unsupported") {
             return (
                 <div className="flex items-center justify-center h-[500px]">
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-                        <p className="text-sm text-text-muted">Loading document...</p>
-                    </div>
+                    <Loader size="lg" text="Loading document..." />
                 </div>
             );
         }

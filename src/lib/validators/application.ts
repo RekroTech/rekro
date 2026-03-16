@@ -6,10 +6,10 @@ import { z } from "zod";
  */
 
 // Occupancy type
-export const OccupancyTypeSchema = z.enum(["individual", "couple", "family", "group"]);
+export const OccupancyTypeSchema = z.enum(["single", "dual"]);
 
 // Application type
-export const ApplicationTypeSchema = z.enum(["entire_property", "unit"]);
+export const ApplicationTypeSchema = z.enum(["individual", "group"]);
 
 // Application status
 export const ApplicationStatusSchema = z.enum([

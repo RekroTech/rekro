@@ -13,17 +13,14 @@ export function usePricingSync(
     currentTotalRent: number,
     onSync: (totalRent: number) => void
 ): void {
-    const lastSyncedRef = useRef<number>(currentTotalRent);
+    // Use -1 as sentinel so the first calculated value always triggers a sync
+    const lastSyncedRef = useRef<number>(-1);
 
     useEffect(() => {
-        // Only sync if the calculated value differs from both current and last synced
-        if (
-            totalWeeklyRent !== currentTotalRent &&
-            totalWeeklyRent !== lastSyncedRef.current
-        ) {
+        // Always sync if the calculated rent differs from what the form currently holds
+        if (totalWeeklyRent !== currentTotalRent) {
             lastSyncedRef.current = totalWeeklyRent;
             onSync(totalWeeklyRent);
         }
     }, [totalWeeklyRent, currentTotalRent, onSync]);
 }
-

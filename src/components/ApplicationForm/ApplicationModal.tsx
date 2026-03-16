@@ -32,10 +32,16 @@ export function ApplicationModal({
 }: ApplicationModalProps) {
     // Modal step state (managed locally)
     const [step, setStep] = React.useState<ModalStep>("application");
-    const { data: existingApplication } = useApplication({
+    const { data: queriedApplication } = useApplication({
         propertyId: property.id,
         unitId: selectedUnit.id,
     });
+
+    // Track the saved application locally so it's immediately available
+    // after creation (before the query cache re-renders)
+    const [savedApplication, setSavedApplication] = React.useState<typeof queriedApplication>(null);
+
+    const existingApplication = savedApplication ?? queriedApplication;
 
     // Use the unified hook to manage actions based on step
     const { modalActionState } = useApplicationModalActions({
@@ -46,6 +52,7 @@ export function ApplicationModal({
         step,
         setStep,
         existingApplication,
+        onApplicationSaved: setSavedApplication,
     });
 
     // Get modal title based on current step
@@ -61,6 +68,7 @@ export function ApplicationModal({
     // Reset step when modal closes
     const handleClose = useCallback(() => {
         setStep("application");
+        setSavedApplication(null);
         onClose();
     }, [onClose]);
 

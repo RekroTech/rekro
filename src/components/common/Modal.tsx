@@ -252,12 +252,9 @@ function ModalButton({ button, className }: ModalButtonProps) {
     };
 
     const renderIcon = () => {
-        if (!icon) return null;
-
-        const iconName = isLoading ? "spinner" : icon;
-        const iconClass = `w-4 h-4 ${isLoading ? "animate-spin" : ""}`;
-
-        return <Icon name={iconName} className={iconClass} />;
+        if (!icon && !isLoading) return null;
+        const iconName = isLoading ? "spinner" : icon!;
+        return <Icon name={iconName} className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />;
     };
 
     return (
@@ -268,12 +265,12 @@ function ModalButton({ button, className }: ModalButtonProps) {
             disabled={disabled || isLoading}
             className={className}
         >
-            {icon && iconPosition === "left" ? (
+            {(icon || isLoading) && iconPosition === "left" ? (
                 <>
                     {renderIcon()}
                     <span className="ml-2">{label}</span>
                 </>
-            ) : icon && iconPosition === "right" ? (
+            ) : (icon || isLoading) && iconPosition === "right" ? (
                 <>
                     <span>{label}</span>
                     <span className="ml-2">{renderIcon()}</span>

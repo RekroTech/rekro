@@ -62,11 +62,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Check if application is already submitted
+        // Check if application is already submitted — return success (idempotent)
         if (existingApp.status === "submitted") {
+            const { data: alreadySubmitted } = await supabase
+                .from("applications")
+                .select("*")
+                .eq("id", applicationId)
+                .single();
+
             return NextResponse.json(
-                { error: "Application has already been submitted" },
-                { status: 400, headers: { "Cache-Control": "no-store" } }
+                { success: true, data: alreadySubmitted ?? null },
+                { status: 200, headers: { "Cache-Control": "no-store" } }
             );
         }
 

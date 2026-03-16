@@ -172,7 +172,7 @@ export function ProfileCard({
                                         <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             {isUploadingImage ? (
                                                 <Icon
-                                                    name="loader"
+                                                    name="spinner"
                                                     className="w-6 h-6 text-white animate-spin"
                                                 />
                                             ) : (
@@ -188,7 +188,7 @@ export function ProfileCard({
                                         <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             {isUploadingImage ? (
                                                 <Icon
-                                                    name="loader"
+                                                    name="spinner"
                                                     className="w-6 h-6 text-white animate-spin"
                                                 />
                                             ) : (

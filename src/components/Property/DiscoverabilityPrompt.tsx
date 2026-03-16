@@ -113,7 +113,7 @@ export const DiscoverabilityPrompt: React.FC<DiscoverabilityPromptProps> = ({
                         >
                             {isUpdating ? (
                                 <>
-                                    <Icon name="loader" className="w-5 h-5 mr-2 animate-spin" />
+                                    <Icon name="spinner" className="w-5 h-5 mr-2 animate-spin" />
                                     Loading...
                                 </>
                             ) : (

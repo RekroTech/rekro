@@ -19,6 +19,7 @@ interface UseApplicationModalActionsParams {
     step: ModalStep;
     setStep: (step: ModalStep) => void;
     existingApplication?: Application | null;
+    onApplicationSaved?: (application: Application) => void;
 }
 
 export function useApplicationModalActions({
@@ -29,6 +30,7 @@ export function useApplicationModalActions({
     step,
     setStep,
     existingApplication,
+    onApplicationSaved,
 }: UseApplicationModalActionsParams) {
     const { showToast } = useToast();
     const router = useRouter();
@@ -62,7 +64,10 @@ export function useApplicationModalActions({
                     message: rentalForm.message,
                 };
 
-                await upsertApplicationMutation.mutateAsync(payload);
+                const savedApp = await upsertApplicationMutation.mutateAsync(payload);
+                if (savedApp) {
+                    onApplicationSaved?.(savedApp);
+                }
                 setStep("review");
             } catch (error) {
                 console.error("Failed to save application:", error);
@@ -94,12 +99,12 @@ export function useApplicationModalActions({
             }
 
             try {
-                await submitApplicationMutation.mutateAsync(existingApplication.id);
-
                 await createSnapshotMutation.mutateAsync({
                     applicationId: existingApplication.id,
                     note: "Application submitted",
                 });
+
+                await submitApplicationMutation.mutateAsync(existingApplication.id);
                 setStep("confirm");
             } catch (error) {
                 console.error("Application submission failed:", error);

@@ -22,9 +22,9 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
     try {
-        // Get authenticated user with role (no extra DB query needed!)
-        const user = await requireAuthForApi();
+        // Create a single client instance reused for all DB operations (ensures session is consistent for RLS)
         const supabase = await createClient();
+        const user = await requireAuthForApi();
 
         // Parse request body
         const body = await request.json();
@@ -89,21 +89,20 @@ export async function POST(request: NextRequest) {
                 applicationType: application.application_type,
                 propertyId: application.property_id,
                 unitId: application.unit_id,
-                proposedRent: application.proposed_rent || undefined,
-                totalRent: application.total_rent || undefined,
+                proposedRent: application.proposed_rent ?? undefined,
+                totalRent: application.total_rent ?? undefined,
                 inclusions: application.inclusions || {},
                 occupancyType: application.occupancy_type,
                 message: application.message || undefined,
             }
         );
 
-        // Insert the snapshot
+        // Insert the snapshot — created_by is set by DB DEFAULT auth.uid()
         const { data: snapshot, error: snapshotError } = await supabase
             .from("application_snapshot")
             .insert({
                 application_id: applicationId,
                 snapshot: snapshotData as unknown as Record<string, unknown>,
-                created_by: user.id,
                 note: note || null,
             })
             .select()

@@ -58,10 +58,7 @@ export default function AppShell({ children }: AppShellProps) {
     if (isSessionLoading) {
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-background">
-                <div className="text-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent mx-auto"></div>
-                    <p className="mt-4 text-sm text-text-muted">Loading...</p>
-                </div>
+                <Loader size="md" text="Loading..." />
             </div>
         );
     }
