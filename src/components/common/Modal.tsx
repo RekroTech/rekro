@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { clsx } from "clsx";
 import { Icon } from "@/components/common/Icon";
 import { Button } from "@/components/common/Button";
 
@@ -172,7 +173,10 @@ export function Modal({
                         aria-modal="true"
                         aria-labelledby={title ? "modal-title" : undefined}
                         onClick={(e) => e.stopPropagation()}
-                        className={`relative w-full ${sizeClasses[size]} transform rounded-lg bg-card shadow-xl transition-all my-4 sm:my-8 flex flex-col max-h-[90vh] sm:max-h-[85vh]`}
+                        className={clsx(
+                            "relative w-full transform rounded-lg bg-card shadow-xl transition-all my-4 sm:my-8 flex flex-col max-h-[90vh] sm:max-h-[85vh]",
+                            sizeClasses[size]
+                        )}
                     >
                         {/* Header */}
                         {title && (
@@ -254,7 +258,7 @@ function ModalButton({ button, className }: ModalButtonProps) {
     const renderIcon = () => {
         if (!icon && !isLoading) return null;
         const iconName = isLoading ? "spinner" : icon!;
-        return <Icon name={iconName} className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />;
+        return <Icon name={iconName} className={clsx("w-4 h-4", isLoading && "animate-spin")} />;
     };
 
     return (

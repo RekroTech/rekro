@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { clsx } from "clsx";
 import { Icon, Visual } from "@/components/common";
 
 interface ImageGalleryProps {
@@ -99,12 +100,12 @@ export function ImageGallery({
                     )}
 
                     <div
-                        className={
-                            "flex-1 " +
-                            "flex flex-nowrap gap-1.5 overflow-x-auto whitespace-nowrap py-0.5 " +
-                            "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
+                        className={clsx(
+                            "flex-1",
+                            "flex flex-nowrap gap-1.5 overflow-x-auto whitespace-nowrap py-0.5",
+                            "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
                             "sm:grid sm:grid-cols-6 md:grid-cols-8 sm:gap-2 sm:overflow-x-visible sm:whitespace-normal sm:py-0"
-                        }
+                        )}
                     >
                         {images
                             .slice(thumbnailStartIndex, thumbnailStartIndex + thumbnailsPerPage)
@@ -117,11 +118,12 @@ export function ImageGallery({
                                         key={`${img}-${index}`}
                                         type="button"
                                         onClick={() => setSelectedIndex(index)}
-                                        className={`relative block h-14 sm:h-16 md:h-20 w-20 sm:w-full rounded-lg overflow-hidden border-2 transition-all touch-manipulation active:scale-95 flex-shrink-0 sm:flex-shrink ${
+                                        className={clsx(
+                                            "relative block h-14 sm:h-16 md:h-20 w-20 sm:w-full rounded-lg overflow-hidden border-2 transition-all touch-manipulation active:scale-95 flex-shrink-0 sm:flex-shrink",
                                             isSelected
                                                 ? "border-primary-500"
                                                 : "border-border hover:border-text-muted"
-                                        }`}
+                                        )}
                                         aria-label={`Select image ${index + 1}`}
                                         aria-current={isSelected ? "true" : "false"}
                                     >

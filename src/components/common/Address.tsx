@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
+import { clsx } from "clsx";
 import { loadGoogleMapsScript } from "@/lib/utils/googleMaps";
 
 interface AddressComponents {
@@ -144,19 +145,13 @@ export function Address({
                     </label>
                 )}
                 <div
-                    className={`
-                        relative w-full
-                        bg-card border border-border
-                        rounded-lg
-                        transition-all
-                        overflow-hidden
-                        ${
-                            error
-                                ? "border-danger-500 focus-within:border-danger-600 hover:border-danger-400 focus-within:ring-2 focus-within:ring-danger-500"
-                                : "focus-within:border-transparent hover:border-text-muted focus-within:ring-2 focus-within:ring-primary-500"
-                        }
-                        ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-                    `}
+                    className={clsx(
+                        "relative w-full bg-card border border-border rounded-lg transition-all overflow-hidden",
+                        error
+                            ? "border-danger-500 focus-within:border-danger-600 hover:border-danger-400 focus-within:ring-2 focus-within:ring-danger-500"
+                            : "focus-within:border-transparent hover:border-text-muted focus-within:ring-2 focus-within:ring-primary-500",
+                        disabled && "opacity-50 cursor-not-allowed"
+                    )}
                 >
                     {leftIcon && (
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted z-10 pointer-events-none">
@@ -168,15 +163,12 @@ export function Address({
                         ref={inputRef}
                         type="text"
                         value={value || ""}
-                        className={`
-                            w-full bg-transparent
-                            text-foreground placeholder:text-text-subtle
-                            outline-none
-                            py-2.5
-                            ${leftIcon ? "pl-10" : "pl-4"}
-                            ${rightIcon ? "pr-10" : "pr-4"}
-                            ${disabled ? "pointer-events-none" : ""}
-                        `}
+                        className={clsx(
+                            "w-full bg-transparent text-foreground placeholder:text-text-subtle outline-none py-2.5",
+                            leftIcon ? "pl-10" : "pl-4",
+                            rightIcon ? "pr-10" : "pr-4",
+                            disabled && "pointer-events-none"
+                        )}
                         placeholder={placeholder}
                         disabled={disabled}
                         autoComplete="off"

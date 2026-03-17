@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { clsx } from "clsx";
 import { Icon, Dropdown } from "@/components/common";
 import type { DropdownItem } from "@/components/common/Dropdown";
 import { formatDateShort, formatDistanceToNow, formatRentalDuration } from "@/lib/utils";
@@ -73,7 +74,10 @@ export function ApplicationCard({
                             {unit.name}
                         </h4>
                         <div
-                            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full border text-xs font-medium ${getStatusColor(application.status)} whitespace-nowrap`}
+                            className={clsx(
+                                "flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full border text-xs font-medium whitespace-nowrap",
+                                getStatusColor(application.status)
+                            )}
                         >
                             <Icon name={getStatusIcon(application.status)} className="w-3.5 h-3.5" />
                             <span className="capitalize">{application.status.replace("_", " ")}</span>

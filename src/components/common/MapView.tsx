@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { clsx } from "clsx";
 import { loadGoogleMapsScript } from "@/lib/utils/googleMaps";
 
 interface MapViewProps {
@@ -131,7 +132,7 @@ export function MapView({
 
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
         return (
-            <div className={`${className} flex items-center justify-center bg-surface-muted`}>
+            <div className={clsx(className, "flex items-center justify-center bg-surface-muted")}>
                 <p className="text-text-muted">Google Maps API key not configured</p>
             </div>
         );

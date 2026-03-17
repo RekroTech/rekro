@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import Image from "next/image";
+import { clsx } from "clsx";
 import { Icon } from "@/components/common";
 import type { ShareableProfile } from "@/types/user.types";
 import { useProfileCompletion } from "@/contexts/ProfileCompletionContext";
@@ -134,7 +135,7 @@ export function ProfileCard({
 
                         <div
                             onClick={handleImageClick}
-                            className={`relative z-10 ${editable ? "cursor-pointer group" : ""}`}
+                            className={clsx("relative z-10", editable && "cursor-pointer group")}
                             role={editable ? "button" : undefined}
                             aria-label={editable ? "Click to update profile image" : undefined}
                             tabIndex={editable ? 0 : undefined}
@@ -151,7 +152,7 @@ export function ProfileCard({
                         >
                             {hasValidImage ? (
                                 <>
-                                    <div className={`w-20 h-20 rounded-full overflow-hidden bg-surface-muted border-2 ${badgeBorderColor}`}>
+                                    <div className={clsx("w-20 h-20 rounded-full overflow-hidden bg-surface-muted border-2", badgeBorderColor)}>
                                         <Image
                                             src={currentImageUrl!}
                                             alt={profile.fullName}
@@ -182,7 +183,7 @@ export function ProfileCard({
                                     )}
                                 </>
                             ) : (
-                                <div className={`w-20 h-20 rounded-full bg-surface-muted flex items-center justify-center border-2 ${badgeBorderColor} relative`}>
+                                <div className={clsx("w-20 h-20 rounded-full bg-surface-muted flex items-center justify-center border-2 relative", badgeBorderColor)}>
                                     <Icon name="profile" className="w-10 h-10 text-text-muted" />
                                     {editable && (
                                         <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -287,7 +288,7 @@ export function ProfileCard({
                             </svg>
                             {/* Percentage in center */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <span className={`text-xl font-bold ${completionColor}`}>
+                                <span className={clsx("text-xl font-bold", completionColor)}>
                                     {profile.completionPercentage}%
                                 </span>
                             </div>

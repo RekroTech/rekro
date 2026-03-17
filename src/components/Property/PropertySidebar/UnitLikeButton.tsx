@@ -1,6 +1,7 @@
 "use client";
 
 import { useOptimistic } from "react";
+import { clsx } from "clsx";
 import { Icon } from "@/components/common";
 import { useAuthModal } from "@/contexts";
 import { useSessionUser, useToggleUnitLike, useUnitLike, useUnitLikesCount } from "@/lib/hooks";
@@ -60,15 +61,13 @@ export function UnitLikeButton({ unitId, propertyId, isEntireHome = false }: Uni
         <button
             onClick={handleToggleLike}
             disabled={!unitId || isLikeLoading}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-full transition-all touch-manipulation active:scale-95 ${
+            className={clsx(
+                "flex items-center gap-1.5 px-3 py-2 rounded-full transition-all touch-manipulation active:scale-95",
                 optimisticLiked
                     ? "bg-danger-500/10 text-danger-500 hover:bg-danger-500/20"
-                    : "bg-surface-muted text-text-muted hover:bg-surface-subtle hover:text-danger-500"
-            } ${
-                !unitId || isLikeLoading
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-            }`}
+                    : "bg-surface-muted text-text-muted hover:bg-surface-subtle hover:text-danger-500",
+                (!unitId || isLikeLoading) && "opacity-50 cursor-not-allowed"
+            )}
             aria-label={
                 !unitId
                     ? `Select a ${isEntireHome ? "property" : "room"} to save`

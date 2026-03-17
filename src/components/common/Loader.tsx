@@ -1,3 +1,4 @@
+import { clsx } from "clsx";
 import { Icon } from "./Icon";
 
 export type LoaderSize = "sm" | "md" | "lg";
@@ -17,7 +18,7 @@ const sizeClasses: Record<LoaderSize, string> = {
 export function Loader({ size = "md", fullScreen = false, text }: LoaderProps) {
     const spinner = (
         <div className="flex flex-col items-center justify-center gap-3">
-            <Icon name="spinner" className={`${sizeClasses[size]} animate-spin text-primary-600`} />
+            <Icon name="spinner" className={clsx(sizeClasses[size], "animate-spin text-primary-600")} />
             {text && <p className="text-sm text-text-muted">{text}</p>}
         </div>
     );

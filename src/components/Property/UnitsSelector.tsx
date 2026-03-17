@@ -1,4 +1,5 @@
 import { Unit } from "@/types/db";
+import { clsx } from "clsx";
 import { Icon } from "@/components/common";
 
 interface UnitsSelectorProps {
@@ -45,11 +46,12 @@ export function UnitsSelector({
                         <button
                             key={unit.id}
                             onClick={() => onUnitSelect(unit.id)}
-                            className={`relative text-left p-3 sm:p-4 rounded-lg border-2 transition-all ${
+                            className={clsx(
+                                "relative text-left p-3 sm:p-4 rounded-lg border-2 transition-all",
                                 isSelected
                                     ? "border-primary-500 bg-primary-500/10 shadow-md"
                                     : "border-border bg-card hover:border-text-muted hover:shadow-sm"
-                            }`}
+                            )}
                         >
                             {/* Availability Badge - Top Right */}
                             <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
@@ -59,11 +61,12 @@ export function UnitsSelector({
                                     </div>
                                 ) : (
                                     <span
-                                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                                        className={clsx(
+                                            "text-xs px-2.5 py-1 rounded-full font-medium",
                                             unit.is_available
                                                 ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                                                 : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                                        }`}
+                                        )}
                                     >
                                         {unit.is_available ? "Available" : "Unavailable"}
                                     </span>

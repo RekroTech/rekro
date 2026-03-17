@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { clsx } from "clsx";
 import useEmblaCarousel from "embla-carousel-react";
 import { Visual } from "@/components/common";
 
@@ -96,11 +97,10 @@ export function ImageGallery({
                         <button
                             key={index}
                             onClick={() => handleIndicatorClick(index)}
-                            className={`h-2 rounded-full transition-all ${
-                                index === selectedIndex
-                                    ? "w-8 bg-primary-500"
-                                    : "w-2 bg-border"
-                            }`}
+                            className={clsx(
+                                "h-2 rounded-full transition-all",
+                                index === selectedIndex ? "w-8 bg-primary-500" : "w-2 bg-border"
+                            )}
                             aria-label={`Go to image ${index + 1}`}
                         />
                     ))}

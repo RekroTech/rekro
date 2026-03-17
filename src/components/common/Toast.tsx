@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { clsx } from "clsx";
 import { Icon, type IconName } from "./Icon";
 
 export type ToastType = "success" | "error" | "info" | "warning";
@@ -58,13 +59,15 @@ export function Toast({ message, type = "success", duration = 3000, onClose }: T
 
     return (
         <div
-            className={`flex items-start gap-3 px-4 py-3 bg-card border shadow-[var(--shadow-lift)] w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[24rem] max-w-2xl ${
-                isExiting ? "animate-toast-out" : "animate-toast-in"
-            } ${config.borderColor}`}
+            className={clsx(
+                "flex items-start gap-3 px-4 py-3 bg-card border shadow-[var(--shadow-lift)] w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[24rem] max-w-2xl",
+                isExiting ? "animate-toast-out" : "animate-toast-in",
+                config.borderColor
+            )}
             style={{ borderRadius: "var(--radius-input)" }}
             role="alert"
         >
-            <Icon name={config.icon} className={`w-5 h-5 flex-shrink-0 ${config.iconColor}`} />
+            <Icon name={config.icon} className={clsx("w-5 h-5 flex-shrink-0", config.iconColor)} />
             <p className="text-sm font-medium text-foreground min-w-0 flex-1 whitespace-normal break-words">
                 {message}
             </p>

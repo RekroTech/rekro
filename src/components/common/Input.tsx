@@ -53,12 +53,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         const radiusClass = "rounded-lg";
 
         const errorClass = error
-            ? "border-danger-500 focus:border-danger-600 hover:border-danger-400"
-            : "focus:border-transparent hover:border-text-muted";
+            ? "border-danger-500 not-disabled:focus:border-danger-600 not-disabled:hover:border-danger-400"
+            : "not-disabled:focus:border-transparent not-disabled:hover:border-text-muted";
 
         const focusClass = error
-            ? "focus:ring-2 focus:ring-danger-500"
-            : "focus:ring-2 focus:ring-primary-500";
+            ? "not-disabled:focus:ring-2 not-disabled:focus:ring-danger-500"
+            : "not-disabled:focus:ring-2 not-disabled:focus:ring-primary-500";
 
         const isDateLike =
             props.type === "date" || props.type === "time" || props.type === "datetime-local";

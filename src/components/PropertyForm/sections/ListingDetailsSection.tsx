@@ -1,4 +1,5 @@
 import { Select, Input } from "@/components/common";
+import { clsx } from "clsx";
 import { UnitFormData } from "../types";
 import { UnitForm } from "./UnitForm";
 import { LISTING_TYPES } from "../constants";
@@ -87,11 +88,12 @@ export function ListingDetailsSection({
                                             key={index}
                                             type="button"
                                             onClick={() => onActiveRoomTabChange(index)}
-                                            className={`whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+                                            className={clsx(
+                                                "whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
                                                 activeRoomTab === index
                                                     ? "border-primary-500 text-primary-600"
                                                     : "border-transparent text-text-muted hover:border-border hover:text-foreground"
-                                            }`}
+                                            )}
                                         >
                                             {label}
                                         </button>

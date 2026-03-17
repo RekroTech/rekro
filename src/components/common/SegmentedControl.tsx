@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { clsx } from "clsx";
 import { Icon } from "./Icon";
 import type { IconName } from "./Icon";
 
@@ -56,11 +57,14 @@ export function SegmentedControl<T extends string | number | boolean>({
                             aria-pressed={pressed}
                             aria-label={opt.ariaLabel}
                             disabled={isDisabled}
-                            className={`flex-1 rounded-md border transition-all ${basePadding} ${
-                                pressed
-                                    ? "bg-primary-600 text-white border-primary-600 font-medium"
-                                    : "bg-card text-text border-border hover:border-primary-400"
-                            } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={clsx(
+                                "flex-1 rounded-md border transition-all",
+                                basePadding,
+                                pressed && !isDisabled && "bg-primary-600 text-white border-primary-600 font-medium",
+                                pressed && isDisabled && "bg-primary-600 text-white border-primary-600 font-medium cursor-not-allowed focus:outline-none focus:ring-0",
+                                !pressed && !isDisabled && "bg-muted text-text border-border hover:border-primary-400",
+                                !pressed && isDisabled && "bg-surface-muted text-text-muted border-border cursor-not-allowed",
+                            )}
                         >
                             <span className="inline-flex items-center justify-center gap-2">
                                 {opt.iconName ? (

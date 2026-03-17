@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { clsx } from "clsx";
 import Image from "next/image";
 import { Icon, Button } from "@/components/common";
 import { formatDateShort, formatDistanceToNow, formatRentalDuration } from "@/lib/utils";
@@ -201,32 +202,35 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                         </div>
                     ) : (
                         <div
-                            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${
+                            className={clsx(
+                                "flex items-center justify-center gap-2 px-4 py-2 rounded-lg",
                                 application.status === "approved"
                                     ? "bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700"
                                     : application.status === "rejected"
                                       ? "bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700"
                                       : "bg-gray-100 dark:bg-gray-900/30 border border-gray-300 dark:border-gray-700"
-                            }`}
+                            )}
                         >
                             <Icon
                                 name={application.status === "approved" ? "check-circle" : "x"}
-                                className={`w-4 h-4 ${
+                                className={clsx(
+                                    "w-4 h-4",
                                     application.status === "approved"
                                         ? "text-green-600 dark:text-green-400"
                                         : application.status === "rejected"
                                           ? "text-red-600 dark:text-red-400"
                                           : "text-gray-600 dark:text-gray-400"
-                                }`}
+                                )}
                             />
                             <span
-                                className={`text-sm font-medium capitalize ${
+                                className={clsx(
+                                    "text-sm font-medium capitalize",
                                     application.status === "approved"
                                         ? "text-green-700 dark:text-green-300"
                                         : application.status === "rejected"
                                           ? "text-red-700 dark:text-red-300"
                                           : "text-gray-700 dark:text-gray-300"
-                                }`}
+                                )}
                             >
                                 {application.status}
                             </span>
@@ -390,34 +394,37 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                 </div>
                             ) : (
                                 <div
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-md ${
+                                    className={clsx(
+                                        "flex items-center gap-2 px-4 py-2 rounded-md",
                                         application.status === "approved"
                                             ? "bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700"
                                             : application.status === "rejected"
                                               ? "bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700"
                                               : "bg-gray-100 dark:bg-gray-900/30 border border-gray-300 dark:border-gray-700"
-                                    }`}
+                                    )}
                                 >
                                     <Icon
                                         name={
                                             application.status === "approved" ? "check-circle" : "x"
                                         }
-                                        className={`w-5 h-5 ${
+                                        className={clsx(
+                                            "w-5 h-5",
                                             application.status === "approved"
                                                 ? "text-green-600 dark:text-green-400"
                                                 : application.status === "rejected"
                                                   ? "text-red-600 dark:text-red-400"
                                                   : "text-gray-600 dark:text-gray-400"
-                                        }`}
+                                        )}
                                     />
                                     <span
-                                        className={`font-medium capitalize ${
+                                        className={clsx(
+                                            "font-medium capitalize",
                                             application.status === "approved"
                                                 ? "text-green-700 dark:text-green-300"
                                                 : application.status === "rejected"
                                                   ? "text-red-700 dark:text-red-300"
                                                   : "text-gray-700 dark:text-gray-300"
-                                        }`}
+                                        )}
                                     >
                                         {application.status}
                                     </span>

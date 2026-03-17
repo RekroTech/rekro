@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { getMediaType } from "@/lib/utils/fileUtils";
 import { Icon } from "./Icon";
 

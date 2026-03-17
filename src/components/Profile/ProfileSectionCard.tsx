@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { clsx } from "clsx";
 import { Icon } from "@/components/common";
 import type { IconName } from "@/components/common";
 
@@ -40,7 +41,7 @@ export function ProfileSectionCard({
 
     return (
         <div
-            className={`rounded-xl border-2 overflow-hidden transition-all bg-surface-subtle dark:bg-surface border-border`}
+            className="rounded-xl border-2 overflow-hidden transition-all bg-surface-subtle dark:bg-surface border-border"
         >
             {/* Section Header */}
             <button
@@ -50,7 +51,7 @@ export function ProfileSectionCard({
             >
                 <div className="flex items-center gap-4">
                     <div className={"p-2 rounded-lg bg-card dark:bg-surface-muted"}>
-                        <Icon name={icon} className={`w-5 h-5 text-text-muted`} />
+                        <Icon name={icon} className="w-5 h-5 text-text-muted" />
                     </div>
 
                     <div className="text-left">
@@ -78,7 +79,7 @@ export function ProfileSectionCard({
                                     <span className="text-sm font-medium">Complete</span>
                                 </div>
                             ) : (
-                                <div className={`flex items-center gap-1 ${statusColor}`}>
+                                <div className={clsx("flex items-center gap-1", statusColor)}>
                                     <span className="text-sm font-medium">{completionPercentage}%</span>
                                 </div>
                             )}

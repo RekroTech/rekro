@@ -25,6 +25,8 @@ interface InclusionsProps {
     effectiveOccupancyType: OccupancyType;
     /** Rental period in months */
     rentalDuration: number;
+    /** Disable all inclusion toggles (e.g. application already submitted) */
+    disabled?: boolean;
 }
 
 export function Inclusions({
@@ -34,6 +36,7 @@ export function Inclusions({
     isEntireHome,
     effectiveOccupancyType,
     rentalDuration,
+    disabled = false,
 }: InclusionsProps) {
     const furnitureTotal = isEntireHome
         ? FURNITURE_COST
@@ -58,6 +61,7 @@ export function Inclusions({
                     description="Add furniture to your lease."
                     price={<span>+${furnitureWeekly.toFixed(2)}/week</span>}
                     selected={inclusions.furniture?.selected || false}
+                    disabled={disabled}
                     onToggle={() => {
                         onChange(
                             toggleInclusionWithPrice({
@@ -88,6 +92,7 @@ export function Inclusions({
                     description="Electricity, gas, water, and internet bundled into your rent."
                     price={<span>+${getBillsCostPerWeek(property.bedrooms)}/week</span>}
                     selected={inclusions.bills?.selected || false}
+                    disabled={disabled}
                     onToggle={() =>
                         onChange(
                             toggleInclusionWithPrice({
@@ -133,6 +138,7 @@ export function Inclusions({
                     )
                 }
                 selected={inclusions.cleaning?.selected || false}
+                disabled={disabled}
                 onToggle={() =>
                     onChange(
                         toggleInclusionWithPrice({
@@ -153,6 +159,7 @@ export function Inclusions({
                     description="Reserved car space (subject to availability)."
                     price={<span>+${CARPARK_COST_PER_WEEK}/week</span>}
                     selected={inclusions.carpark?.selected || false}
+                    disabled={disabled}
                     onToggle={() =>
                         onChange(
                             toggleInclusionWithPrice({
@@ -174,6 +181,7 @@ export function Inclusions({
                     description="Extra secure storage space for boxes and belongings."
                     price={<span>+${STORAGE_CAGE_COST_PER_WEEK}/week</span>}
                     selected={inclusions.storage?.selected || false}
+                    disabled={disabled}
                     onToggle={() =>
                         onChange(
                             toggleInclusionWithPrice({

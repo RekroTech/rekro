@@ -6,6 +6,7 @@ import type { Property } from "@/types/property.types";
 import { useAuthModal, useProfileCompletion } from "@/contexts";
 import { useApplication, useSessionUser } from "@/lib/hooks";
 import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
+import { clsx } from "clsx";
 import {
     getAvailabilityInfo,
     Inclusions,
@@ -155,7 +156,10 @@ export function PropertySidebar({
                             <div className="flex justify-between items-center">
                                 <span className="text-text-muted">Status:</span>
                                 <span
-                                    className={`font-medium ${availability.statusColor} inline-flex items-center gap-1.5`}
+                                    className={clsx(
+                                        "font-medium inline-flex items-center gap-1.5",
+                                        availability.statusColor
+                                    )}
                                 >
                                     <Icon name="dot" className="w-3 h-3" />
                                     {availability.statusText}
@@ -195,6 +199,7 @@ export function PropertySidebar({
                                 )}
                                 size="sm"
                                 fullWidth
+                                disabled={hasSubmittedApplication}
                             />
 
                             <Select
@@ -207,6 +212,7 @@ export function PropertySidebar({
                                 options={LEASE_MONTH_OPTIONS}
                                 size="sm"
                                 fullWidth
+                                disabled={hasSubmittedApplication}
                             />
                         </div>
 
@@ -220,6 +226,7 @@ export function PropertySidebar({
                                     ariaLabel="Occupancy type"
                                     value={rentalForm.occupancyType}
                                     onChange={handleOccupancyChange}
+                                    disabled={hasSubmittedApplication}
                                     options={[
                                         { value: "single", label: "Single" },
                                         { value: "dual", label: "Dual Occupancy" },
@@ -280,6 +287,7 @@ export function PropertySidebar({
                     onChange={(newInclusions) => updateRentalForm({ inclusions: newInclusions })}
                     isEntireHome={isEntireHome}
                     effectiveOccupancyType={pricing.occupancyType}
+                    disabled={hasSubmittedApplication}
                 />
             </div>
 
