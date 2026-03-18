@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, Suspense } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useMemo, useEffect, Suspense, useCallback } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ProfileCompletionProvider } from "@/contexts";
 import { getPropertyFileUrls } from "@/lib/services";
 import { useProperty, useProfile } from "@/lib/hooks";
@@ -23,22 +23,36 @@ import { updateRoomRentsOnOccupancySelection } from "@/lib/utils/pricing";
 export default function PropertyDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const propertyId = params.id as string;
     const isDesktop = useMediaQuery("(min-width: 1024px)");
     const { data: userProfile } = useProfile();
 
     const { data: property, isLoading, error } = useProperty(propertyId);
 
-    const [selectedUnitId, setSelectedUnitId] = useState<string>("");
+    const [selectedUnitId, setSelectedUnitId] = useState<string>(() => searchParams.get("unit") ?? "");
     const [unitOccupancies, setUnitOccupancies] = useState<Record<string, number>>({});
 
     // Initialize selectedUnitId when units are available (must be before early returns)
     useEffect(() => {
         if (property?.units && property.units.length > 0 && !selectedUnitId) {
-            setSelectedUnitId(property.units[0]!.id);
+            const unitFromQuery = searchParams.get("unit");
+            const unitExists = unitFromQuery && property.units.some((u) => u.id === unitFromQuery);
+            const defaultUnit = unitExists ? unitFromQuery : property.units[0]!.id;
+            setSelectedUnitId(defaultUnit);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [property?.units, propertyId]); // selectedUnitId intentionally excluded to prevent infinite loop
+
+    const handleUnitSelect = useCallback(
+        (unitId: string) => {
+            setSelectedUnitId(unitId);
+            const current = new URLSearchParams(Array.from(searchParams.entries()));
+            current.set("unit", unitId);
+            router.replace(`?${current.toString()}`, { scroll: false });
+        },
+        [router, searchParams]
+    );
 
     // Calculate dynamic pricing for all rooms based on current occupancy selections
     // Only apply dynamic pricing when dual occupancy is actually selected
@@ -128,9 +142,6 @@ export default function PropertyDetailPage() {
             ? getPropertyFileUrls(property.images, propertyId)
             : ["/window.svg"];
 
-    const handleUnitSelect = (unitId: string) => {
-        setSelectedUnitId(unitId);
-    };
 
     return (
         <PropertyErrorBoundary>

@@ -7,6 +7,7 @@ import { z } from "zod";
 export const enquiryNotificationSchema = z.object({
     enquiryId: z.string().uuid(),
     propertyTitle: z.string(),
+    propertyAddress: z.string().optional(),
     propertyUrl: z.string().url().optional(),
     unitName: z.string().optional(),
     listingType: z.string().optional(),
@@ -22,6 +23,7 @@ export const enquiryNotificationSchema = z.object({
 export const enquiryConfirmationSchema = z.object({
     enquiryId: z.string().uuid(),
     propertyTitle: z.string(),
+    propertyAddress: z.string().optional(),
     propertyUrl: z.string().url().optional(),
     unitName: z.string().optional(),
     listingType: z.string().optional(),

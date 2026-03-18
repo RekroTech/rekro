@@ -13,7 +13,7 @@ export function useShareProperty({ propertyId, unitId, propertyTitle }: UseShare
     const { data: sessionUser } = useSessionUser();
     const createShare = useCreateUnitShare();
 
-    const propertyUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/property/${propertyId}`;
+    const propertyUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/property/${propertyId}?unit=${unitId}`;
 
     const handleCopyLink = async () => {
         try {

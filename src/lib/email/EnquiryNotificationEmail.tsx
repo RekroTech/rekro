@@ -19,7 +19,18 @@ import * as React from "react";
 import type { EnquiryNotification } from "./schemas";
 
 export default function EnquiryNotificationEmail(data: EnquiryNotification) {
-    const { propertyTitle, propertyUrl, unitName, listingType, message, senderName, senderEmail, senderPhone, isAuthenticated } = data;
+    const {
+        propertyTitle,
+        propertyAddress,
+        propertyUrl,
+        unitName,
+        listingType,
+        message,
+        senderName,
+        senderEmail,
+        senderPhone,
+        isAuthenticated,
+    } = data;
 
     const preview = `New enquiry for ${propertyTitle}${unitName && listingType !== "entire_property" ? ` - ${unitName}` : ""} from ${senderName ?? senderEmail}`;
 
@@ -29,7 +40,6 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
             <Preview>{preview}</Preview>
             <Body style={body}>
                 <Container style={container}>
-
                     {/* Header */}
                     <Section style={header}>
                         <Heading style={h1}>New Property Enquiry</Heading>
@@ -41,31 +51,25 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
 
                     {/* Property Details */}
                     <Section style={section}>
-                        <Heading as="h2" style={h2}>Property Details</Heading>
+                        <Heading as="h2" style={h2}>
+                            Property Details
+                        </Heading>
                         <table style={detailTable}>
                             <tbody>
                                 <tr>
                                     <td style={labelCell}>Property:</td>
-                                    <td style={valueCell}>
-                                        {propertyUrl ? (
-                                            <Link href={propertyUrl} style={link}>{propertyTitle}</Link>
-                                        ) : (
-                                            propertyTitle
-                                        )}
-                                    </td>
+                                    <td style={valueCell}>{propertyTitle}</td>
                                 </tr>
+                                {propertyAddress && (
+                                    <tr>
+                                        <td style={labelCell}>Address:</td>
+                                        <td style={valueCell}>{propertyAddress}</td>
+                                    </tr>
+                                )}
                                 {unitName && listingType !== "entire_property" && (
                                     <tr>
                                         <td style={labelCell}>Unit:</td>
                                         <td style={valueCell}>{unitName}</td>
-                                    </tr>
-                                )}
-                                {propertyUrl && (
-                                    <tr>
-                                        <td style={labelCell}>Listing:</td>
-                                        <td style={valueCell}>
-                                            <Link href={propertyUrl} style={link}>View property listing</Link>
-                                        </td>
                                     </tr>
                                 )}
                             </tbody>
@@ -74,7 +78,9 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
 
                     {/* Contact Information */}
                     <Section style={section}>
-                        <Heading as="h2" style={h2}>Contact Information</Heading>
+                        <Heading as="h2" style={h2}>
+                            Contact Information
+                        </Heading>
                         <table style={detailTable}>
                             <tbody>
                                 {senderName && (
@@ -86,14 +92,18 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
                                 <tr>
                                     <td style={labelCell}>Email:</td>
                                     <td style={valueCell}>
-                                        <Link href={`mailto:${senderEmail}`} style={link}>{senderEmail}</Link>
+                                        <Link href={`mailto:${senderEmail}`} style={link}>
+                                            {senderEmail}
+                                        </Link>
                                     </td>
                                 </tr>
                                 {senderPhone && (
                                     <tr>
                                         <td style={labelCell}>Phone:</td>
                                         <td style={valueCell}>
-                                            <Link href={`tel:${senderPhone}`} style={link}>{senderPhone}</Link>
+                                            <Link href={`tel:${senderPhone}`} style={link}>
+                                                {senderPhone}
+                                            </Link>
                                         </td>
                                     </tr>
                                 )}
@@ -103,7 +113,9 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
 
                     {/* Message */}
                     <Section style={section}>
-                        <Heading as="h2" style={h2}>Message</Heading>
+                        <Heading as="h2" style={h2}>
+                            Message
+                        </Heading>
                         <Section style={messageBox}>
                             <Text style={messageText}>{message}</Text>
                         </Section>
@@ -116,7 +128,10 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
                                 View Property
                             </Button>
                         )}
-                        <Button href={`mailto:${senderEmail}`} style={propertyUrl ? { ...button, marginLeft: "12px" } : button}>
+                        <Button
+                            href={`mailto:${senderEmail}`}
+                            style={propertyUrl ? { ...button, marginLeft: "12px" } : button}
+                        >
                             Reply to Enquiry
                         </Button>
                     </Section>
@@ -126,10 +141,10 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
                     {/* Footer */}
                     <Section style={footer}>
                         <Text style={footerText}>
-                            This is an automated notification from reKro. Please do not reply to this email.
+                            This is an automated notification from reKro. Please do not reply to
+                            this email.
                         </Text>
                     </Section>
-
                 </Container>
             </Body>
         </Html>
@@ -139,9 +154,11 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
 EnquiryNotificationEmail.PreviewProps = {
     enquiryId: "00000000-0000-0000-0000-000000000001",
     propertyTitle: "The Grand Apartments",
-    propertyUrl: "https://rekro.com.au/property/00000000-0000-0000-0000-000000000010",
+    propertyAddress: "123 Elizabeth Street, Melbourne VIC 3000",
+    propertyUrl: "https://rekro.com.au/property/00000000-0000-0000-0000-000000000010?unit=00000000-0000-0000-0000-000000000020",
     unitName: "Unit 4B",
-    message: "Hi, I'm interested in this property. Could you please provide more details about the lease terms and available move-in dates?",
+    message:
+        "Hi, I'm interested in this property. Could you please provide more details about the lease terms and available move-in dates?",
     senderName: "Jane Smith",
     senderEmail: "jane.smith@example.com",
     senderPhone: "+61 400 000 000",
@@ -153,7 +170,8 @@ EnquiryNotificationEmail.PreviewProps = {
 
 const body: React.CSSProperties = {
     backgroundColor: "#f5f5f5",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    fontFamily:
+        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
     margin: 0,
     padding: 0,
 };

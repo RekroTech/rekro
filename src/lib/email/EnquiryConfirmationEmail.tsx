@@ -10,7 +10,6 @@ import {
     Heading,
     Hr,
     Html,
-    Link,
     Preview,
     Section,
     Text,
@@ -19,7 +18,15 @@ import * as React from "react";
 import type { EnquiryConfirmation } from "./schemas";
 
 export default function EnquiryConfirmationEmail(data: EnquiryConfirmation) {
-    const { propertyTitle, propertyUrl, unitName, listingType, message, recipientName } = data;
+    const {
+        propertyTitle,
+        propertyAddress,
+        propertyUrl,
+        unitName,
+        listingType,
+        message,
+        recipientName,
+    } = data;
 
     const preview = `We've received your enquiry for ${propertyTitle}${unitName && listingType !== "entire_property" ? ` - ${unitName}` : ""}`;
 
@@ -29,7 +36,6 @@ export default function EnquiryConfirmationEmail(data: EnquiryConfirmation) {
             <Preview>{preview}</Preview>
             <Body style={body}>
                 <Container style={container}>
-
                     {/* Header */}
                     <Section style={header}>
                         <Heading style={h1}>Enquiry Received!</Heading>
@@ -47,32 +53,26 @@ export default function EnquiryConfirmationEmail(data: EnquiryConfirmation) {
 
                     {/* Enquiry Summary */}
                     <Section style={section}>
-                        <Heading as="h2" style={{ ...h2, textAlign: "center" }}>Enquiry Summary</Heading>
+                        <Heading as="h2" style={{ ...h2, textAlign: "center" }}>
+                            Enquiry Summary
+                        </Heading>
                         <Section style={summaryBox}>
                             <table style={detailTable}>
                                 <tbody>
                                     <tr>
                                         <td style={labelCell}>Property:</td>
-                                        <td style={valueCell}>
-                                            {propertyUrl ? (
-                                                <Link href={propertyUrl} style={link}>{propertyTitle}</Link>
-                                            ) : (
-                                                propertyTitle
-                                            )}
-                                        </td>
+                                        <td style={valueCell}>{propertyTitle}</td>
                                     </tr>
+                                    {propertyAddress && (
+                                        <tr>
+                                            <td style={labelCell}>Address:</td>
+                                            <td style={valueCell}>{propertyAddress}</td>
+                                        </tr>
+                                    )}
                                     {unitName && listingType !== "entire_property" && (
                                         <tr>
                                             <td style={labelCell}>Unit:</td>
                                             <td style={valueCell}>{unitName}</td>
-                                        </tr>
-                                    )}
-                                    {propertyUrl && (
-                                        <tr>
-                                            <td style={labelCell}>Listing:</td>
-                                            <td style={valueCell}>
-                                                <Link href={propertyUrl} style={link}>View property listing</Link>
-                                            </td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -84,10 +84,16 @@ export default function EnquiryConfirmationEmail(data: EnquiryConfirmation) {
 
                     {/* What's Next */}
                     <Section style={section}>
-                        <Heading as="h3" style={h3}>What happens next?</Heading>
+                        <Heading as="h3" style={h3}>
+                            What happens next?
+                        </Heading>
                         <Text style={listItem}>• We will review your enquiry</Text>
-                        <Text style={listItem}>• We will contact you directly via email or phone</Text>
-                        <Text style={listItem}>• Response time is typically within 24–48 hours</Text>
+                        <Text style={listItem}>
+                            • We will contact you directly via email or phone
+                        </Text>
+                        <Text style={listItem}>
+                            • Response time is typically within 24–48 hours
+                        </Text>
                     </Section>
 
                     {propertyUrl && (
@@ -107,7 +113,6 @@ export default function EnquiryConfirmationEmail(data: EnquiryConfirmation) {
                             Please do not reply to this email.
                         </Text>
                     </Section>
-
                 </Container>
             </Body>
         </Html>
@@ -117,9 +122,11 @@ export default function EnquiryConfirmationEmail(data: EnquiryConfirmation) {
 EnquiryConfirmationEmail.PreviewProps = {
     enquiryId: "00000000-0000-0000-0000-000000000002",
     propertyTitle: "The Grand Apartments",
-    propertyUrl: "https://rekro.com.au/property/00000000-0000-0000-0000-000000000010",
+    propertyAddress: "123 Elizabeth Street, Melbourne VIC 3000",
+    propertyUrl: "https://rekro.com.au/property/00000000-0000-0000-0000-000000000010?unit=00000000-0000-0000-0000-000000000020",
     unitName: "Unit 4B",
-    message: "Hi, I'm interested in this property. Could you please provide more details about the lease terms and available move-in dates?",
+    message:
+        "Hi, I'm interested in this property. Could you please provide more details about the lease terms and available move-in dates?",
     recipientEmail: "jane.smith@example.com",
     recipientName: "Jane",
 } satisfies EnquiryConfirmation;
@@ -128,7 +135,8 @@ EnquiryConfirmationEmail.PreviewProps = {
 
 const body: React.CSSProperties = {
     backgroundColor: "#f5f5f5",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    fontFamily:
+        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
     margin: 0,
     padding: 0,
 };
@@ -224,11 +232,6 @@ const valueCell: React.CSSProperties = {
     verticalAlign: "top",
 };
 
-const link: React.CSSProperties = {
-    color: "#0066cc",
-    textDecoration: "none",
-};
-
 const yourMessageLabel: React.CSSProperties = {
     color: "#666666",
     fontSize: "14px",
@@ -286,4 +289,3 @@ const footerText: React.CSSProperties = {
     margin: "0",
     whiteSpace: "pre-line",
 };
-

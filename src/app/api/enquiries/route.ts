@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
         try {
             const { data: property } = await supabase
                 .from("properties")
-                .select("title")
+                .select("title, address")
                 .eq("id", unit.property_id)
                 .single();
 
@@ -146,6 +146,14 @@ export async function POST(request: NextRequest) {
                 const unitName = unitDetails?.unit_number ||
                     (unitDetails?.floor_level ? `Floor ${unitDetails.floor_level}` : undefined);
 
+                // Build a human-readable address string from the JSONB address field
+                const addr = property.address as { street?: string; suburb?: string; city?: string; state?: string; postcode?: string } | null;
+                const propertyAddress = addr
+                    ? [addr.street, addr.suburb ?? addr.city, addr.state, addr.postcode]
+                        .filter(Boolean)
+                        .join(", ")
+                    : undefined;
+
                 const enquirerEmail = isAuthenticated
                     ? enquiryData.contact_email!
                     : enquiryData.guest_email!;
@@ -154,7 +162,7 @@ export async function POST(request: NextRequest) {
                     : enquiryData.guest_name || undefined;
 
                 const shouldSendEmails = process.env.SEND_ENQUIRY_CONFIRMATION !== "false";
-                const propertyUrl = new URL(`/property/${unit.property_id}`, baseUrl).toString();
+                const propertyUrl = new URL(`/property/${unit.property_id}?unit=${unit_id}`, baseUrl).toString();
 
                 if (shouldSendEmails) {
                     // Send admin notification to admin@rekro.com.au
@@ -162,6 +170,7 @@ export async function POST(request: NextRequest) {
                         await sendEnquiryNotification({
                             enquiryId,
                             propertyTitle: property.title,
+                            propertyAddress,
                             propertyUrl,
                             unitName,
                             message,
@@ -183,6 +192,7 @@ export async function POST(request: NextRequest) {
                         await sendEnquiryConfirmation({
                             enquiryId,
                             propertyTitle: property.title,
+                            propertyAddress,
                             propertyUrl,
                             unitName,
                             message,
