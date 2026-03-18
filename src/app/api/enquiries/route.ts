@@ -28,6 +28,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createClient();
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin || "http://localhost:3000";
 
         // Parse and validate request body
         const rawBody = await request.json();
@@ -153,6 +154,7 @@ export async function POST(request: NextRequest) {
                     : enquiryData.guest_name || undefined;
 
                 const shouldSendEmails = process.env.SEND_ENQUIRY_CONFIRMATION !== "false";
+                const propertyUrl = new URL(`/property/${unit.property_id}`, baseUrl).toString();
 
                 if (shouldSendEmails) {
                     // Send admin notification to admin@rekro.com.au
@@ -160,6 +162,7 @@ export async function POST(request: NextRequest) {
                         await sendEnquiryNotification({
                             enquiryId,
                             propertyTitle: property.title,
+                            propertyUrl,
                             unitName,
                             message,
                             senderName: enquirerName,
@@ -180,6 +183,7 @@ export async function POST(request: NextRequest) {
                         await sendEnquiryConfirmation({
                             enquiryId,
                             propertyTitle: property.title,
+                            propertyUrl,
                             unitName,
                             message,
                             recipientEmail: enquirerEmail,
@@ -213,4 +217,3 @@ export async function POST(request: NextRequest) {
         return errorResponse("Internal server error", 500);
     }
 }
-

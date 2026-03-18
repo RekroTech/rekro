@@ -19,7 +19,7 @@ import * as React from "react";
 import type { EnquiryNotification } from "./schemas";
 
 export default function EnquiryNotificationEmail(data: EnquiryNotification) {
-    const { propertyTitle, unitName, listingType, message, senderName, senderEmail, senderPhone, isAuthenticated } = data;
+    const { propertyTitle, propertyUrl, unitName, listingType, message, senderName, senderEmail, senderPhone, isAuthenticated } = data;
 
     const preview = `New enquiry for ${propertyTitle}${unitName && listingType !== "entire_property" ? ` - ${unitName}` : ""} from ${senderName ?? senderEmail}`;
 
@@ -46,12 +46,26 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
                             <tbody>
                                 <tr>
                                     <td style={labelCell}>Property:</td>
-                                    <td style={valueCell}>{propertyTitle}</td>
+                                    <td style={valueCell}>
+                                        {propertyUrl ? (
+                                            <Link href={propertyUrl} style={link}>{propertyTitle}</Link>
+                                        ) : (
+                                            propertyTitle
+                                        )}
+                                    </td>
                                 </tr>
                                 {unitName && listingType !== "entire_property" && (
                                     <tr>
                                         <td style={labelCell}>Unit:</td>
                                         <td style={valueCell}>{unitName}</td>
+                                    </tr>
+                                )}
+                                {propertyUrl && (
+                                    <tr>
+                                        <td style={labelCell}>Listing:</td>
+                                        <td style={valueCell}>
+                                            <Link href={propertyUrl} style={link}>View property listing</Link>
+                                        </td>
                                     </tr>
                                 )}
                             </tbody>
@@ -96,8 +110,13 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
                     </Section>
 
                     {/* CTA */}
-                    <Section style={{ ...section, textAlign: "center" }}>
-                        <Button href={`mailto:${senderEmail}`} style={button}>
+                    <Section style={ctaSection}>
+                        {propertyUrl && (
+                            <Button href={propertyUrl} style={{ ...button, ...secondaryButton }}>
+                                View Property
+                            </Button>
+                        )}
+                        <Button href={`mailto:${senderEmail}`} style={propertyUrl ? { ...button, marginLeft: "12px" } : button}>
                             Reply to Enquiry
                         </Button>
                     </Section>
@@ -120,6 +139,7 @@ export default function EnquiryNotificationEmail(data: EnquiryNotification) {
 EnquiryNotificationEmail.PreviewProps = {
     enquiryId: "00000000-0000-0000-0000-000000000001",
     propertyTitle: "The Grand Apartments",
+    propertyUrl: "https://rekro.com.au/property/00000000-0000-0000-0000-000000000010",
     unitName: "Unit 4B",
     message: "Hi, I'm interested in this property. Could you please provide more details about the lease terms and available move-in dates?",
     senderName: "Jane Smith",
@@ -227,6 +247,11 @@ const button: React.CSSProperties = {
     textDecoration: "none",
 };
 
+const ctaSection: React.CSSProperties = {
+    ...section,
+    textAlign: "center",
+};
+
 const hr: React.CSSProperties = {
     borderColor: "#e5e5e5",
     margin: "0 32px",
@@ -245,3 +270,7 @@ const footerText: React.CSSProperties = {
     margin: "0",
 };
 
+const secondaryButton: React.CSSProperties = {
+    backgroundColor: "#f3f4f6",
+    color: "#1a1a1a",
+};

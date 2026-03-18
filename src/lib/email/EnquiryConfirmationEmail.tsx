@@ -4,11 +4,13 @@
 
 import {
     Body,
+    Button,
     Container,
     Head,
     Heading,
     Hr,
     Html,
+    Link,
     Preview,
     Section,
     Text,
@@ -17,7 +19,7 @@ import * as React from "react";
 import type { EnquiryConfirmation } from "./schemas";
 
 export default function EnquiryConfirmationEmail(data: EnquiryConfirmation) {
-    const { propertyTitle, unitName, listingType, message, recipientName } = data;
+    const { propertyTitle, propertyUrl, unitName, listingType, message, recipientName } = data;
 
     const preview = `We've received your enquiry for ${propertyTitle}${unitName && listingType !== "entire_property" ? ` - ${unitName}` : ""}`;
 
@@ -51,12 +53,26 @@ export default function EnquiryConfirmationEmail(data: EnquiryConfirmation) {
                                 <tbody>
                                     <tr>
                                         <td style={labelCell}>Property:</td>
-                                        <td style={valueCell}>{propertyTitle}</td>
+                                        <td style={valueCell}>
+                                            {propertyUrl ? (
+                                                <Link href={propertyUrl} style={link}>{propertyTitle}</Link>
+                                            ) : (
+                                                propertyTitle
+                                            )}
+                                        </td>
                                     </tr>
                                     {unitName && listingType !== "entire_property" && (
                                         <tr>
                                             <td style={labelCell}>Unit:</td>
                                             <td style={valueCell}>{unitName}</td>
+                                        </tr>
+                                    )}
+                                    {propertyUrl && (
+                                        <tr>
+                                            <td style={labelCell}>Listing:</td>
+                                            <td style={valueCell}>
+                                                <Link href={propertyUrl} style={link}>View property listing</Link>
+                                            </td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -73,6 +89,14 @@ export default function EnquiryConfirmationEmail(data: EnquiryConfirmation) {
                         <Text style={listItem}>• We will contact you directly via email or phone</Text>
                         <Text style={listItem}>• Response time is typically within 24–48 hours</Text>
                     </Section>
+
+                    {propertyUrl && (
+                        <Section style={ctaSection}>
+                            <Button href={propertyUrl} style={button}>
+                                View Property
+                            </Button>
+                        </Section>
+                    )}
 
                     <Hr style={hr} />
 
@@ -93,6 +117,7 @@ export default function EnquiryConfirmationEmail(data: EnquiryConfirmation) {
 EnquiryConfirmationEmail.PreviewProps = {
     enquiryId: "00000000-0000-0000-0000-000000000002",
     propertyTitle: "The Grand Apartments",
+    propertyUrl: "https://rekro.com.au/property/00000000-0000-0000-0000-000000000010",
     unitName: "Unit 4B",
     message: "Hi, I'm interested in this property. Could you please provide more details about the lease terms and available move-in dates?",
     recipientEmail: "jane.smith@example.com",
@@ -199,6 +224,11 @@ const valueCell: React.CSSProperties = {
     verticalAlign: "top",
 };
 
+const link: React.CSSProperties = {
+    color: "#0066cc",
+    textDecoration: "none",
+};
+
 const yourMessageLabel: React.CSSProperties = {
     color: "#666666",
     fontSize: "14px",
@@ -219,6 +249,23 @@ const listItem: React.CSSProperties = {
     fontSize: "14px",
     lineHeight: "1.8",
     margin: "0",
+};
+
+const ctaSection: React.CSSProperties = {
+    ...section,
+    paddingTop: "0",
+    textAlign: "center",
+};
+
+const button: React.CSSProperties = {
+    backgroundColor: "#0066cc",
+    borderRadius: "6px",
+    color: "#ffffff",
+    display: "inline-block",
+    fontSize: "14px",
+    fontWeight: "600",
+    padding: "12px 32px",
+    textDecoration: "none",
 };
 
 const hr: React.CSSProperties = {
