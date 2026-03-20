@@ -115,7 +115,7 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                                 className={authButtonClassName}
                                 onClick={() => openAuthModal()}
                             >
-                                Sign In
+                                Continue with Email
                             </Button>
                         )}
                     </div>

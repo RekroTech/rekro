@@ -8,6 +8,9 @@ export interface PropertyFilters {
     bedrooms: string;
     bathrooms: string;
     listingType: string;
+    minPrice: string;
+    maxPrice: string;
+    furnishedFilter: string;
 }
 
 /**
@@ -37,6 +40,18 @@ export function usePropertyFilters() {
         "listingType",
         parseAsString.withDefault("all")
     );
+    const [minPrice, setMinPrice] = useQueryState(
+        "minPrice",
+        parseAsString.withDefault("")
+    );
+    const [maxPrice, setMaxPrice] = useQueryState(
+        "maxPrice",
+        parseAsString.withDefault("")
+    );
+    const [furnishedFilter, setFurnishedFilter] = useQueryState(
+        "furnished",
+        parseAsString.withDefault("")
+    );
 
     // Local state for debounced search (don't want to update URL on every keystroke)
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
@@ -56,6 +71,9 @@ export function usePropertyFilters() {
         setBedrooms("");
         setBathrooms("");
         setListingType("all");
+        setMinPrice("");
+        setMaxPrice("");
+        setFurnishedFilter("");
     };
 
     const hasActiveFilters = !!(
@@ -63,6 +81,9 @@ export function usePropertyFilters() {
         propertyType ||
         bedrooms ||
         bathrooms ||
+        minPrice ||
+        maxPrice ||
+        furnishedFilter ||
         (listingType && listingType !== "all")
     );
 
@@ -74,6 +95,9 @@ export function usePropertyFilters() {
             bedrooms,
             bathrooms,
             listingType,
+            minPrice,
+            maxPrice,
+            furnishedFilter,
         },
         setters: {
             setSearchQuery,
@@ -81,6 +105,9 @@ export function usePropertyFilters() {
             setBedrooms,
             setBathrooms,
             setListingType,
+            setMinPrice,
+            setMaxPrice,
+            setFurnishedFilter,
         },
         clearFilters,
         hasActiveFilters,

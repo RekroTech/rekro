@@ -186,7 +186,7 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/", initialError }: A
                                 loading={isPending}
                                 disabled={isPending || isGooglePending}
                             >
-                                Continue with email
+                                Send Magic Link
                             </Button>
 
                             <div className="relative my-6">

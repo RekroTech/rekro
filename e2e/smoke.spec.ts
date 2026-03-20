@@ -119,7 +119,7 @@ test('enquiry form: unauthenticated user sees login prompt when attempting to bo
   await page.waitForTimeout(400);
 
   // The CTA for a guest should read "Login to Book".
-  const bookBtn = page.getByRole('button', { name: /login to book/i }).first();
+  const bookBtn = page.getByRole('button', { name: /book now/i }).first();
   await expect(bookBtn).toBeVisible({ timeout: 10_000 });
 
   await bookBtn.click();

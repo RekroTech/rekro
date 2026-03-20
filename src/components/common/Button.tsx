@@ -31,7 +31,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref
     ) => {
         const baseClasses =
-            "inline-flex items-center justify-center font-semibold transition-all duration-200 outline-none disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation";
+            "inline-flex items-center justify-center font-semibold transition-all duration-200 outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation";
 
         const variantClasses: Record<ButtonVariant, string> = {
             primary:

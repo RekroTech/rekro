@@ -21,6 +21,7 @@ import { EnquiryForm } from "./EnquiryForm";
 import { ShareDropdown } from "./ShareDropdown";
 import { UnitLikeButton } from "./UnitLikeButton";
 import { ProfileCompletionModal } from "./ProfileCompletionModal";
+import { Tooltip } from "@/components/common/Tooltip";
 
 interface PropertySidebarProps {
     selectedUnit: Unit;
@@ -132,8 +133,23 @@ export function PropertySidebar({
                                 ${pricing.totalWeeklyRent.toFixed(2)}
                                 <span className="text-base font-normal text-text-muted">/week</span>
                             </p>
-                            <p className="text-sm text-text-muted mt-1">
+                            <p className="text-sm text-text-muted mt-1 flex items-center gap-1">
                                 Bond: ${pricing.bond.toFixed(2)}
+                                <Tooltip
+                                    content={
+                                        <span>
+                                            A bond (security deposit) equal to 4 weeks of rent, is held by reKro and returned at the end of your tenancy,
+                                            provided there is no damage or outstanding rent.
+                                        </span>
+                                    }
+                                    position="top"
+                                    maxWidth="max-w-64"
+                                >
+                                    <Icon
+                                        name="info-circle"
+                                        className="w-3.5 h-3.5 text-text-muted/70 cursor-help hover:text-primary-500 transition-colors"
+                                    />
+                                </Tooltip>
                             </p>
                         </div>
 
@@ -262,9 +278,7 @@ export function PropertySidebar({
                         <Icon name="document" className="w-5 h-5 mr-2" />
                         {hasSubmittedApplication
                             ? "View Application"
-                            : user
-                              ? "Book Now"
-                              : "Login to Book"}
+                            : "Book Now"}
                     </Button>
                 </div>
 

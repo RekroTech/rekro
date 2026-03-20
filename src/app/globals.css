@@ -256,6 +256,16 @@
 }
 
 /* ---------------------------
+   Base resets
+---------------------------- */
+@layer base {
+    button,
+    [role="button"] {
+        cursor: pointer;
+    }
+}
+
+/* ---------------------------
    Component helpers (optional but very useful)
 ---------------------------- */
 @layer components {

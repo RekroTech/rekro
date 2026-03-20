@@ -32,6 +32,8 @@ export interface GetPropertiesParams {
     propertyType?: string;
     minBedrooms?: number;
     minBathrooms?: number;
+    minPrice?: number;
+    maxPrice?: number;
     furnished?: boolean;
     listingType?: string;
     status?: "active" | "leased" | "inactive"; // Admin-only filter

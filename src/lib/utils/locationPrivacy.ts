@@ -29,9 +29,9 @@ export function getApproximateLocation(
 }
 
 /**
- * Format address to show only locality (suburb/city and state)
+ * Format address to show the full address including street, suburb/city, state and postcode
  * @param address Full address object
- * @returns Locality string (e.g., "Bondi Beach, NSW" or "Sydney, NSW")
+ * @returns Full address string (e.g., "12 Main St, Bondi Beach, NSW 2026")
  */
 export function getLocalityString(address?: {
     street?: string;
@@ -44,6 +44,10 @@ export function getLocalityString(address?: {
 
     const parts: string[] = [];
 
+    if (address.street) {
+        parts.push(address.street);
+    }
+
     // Prefer suburb over city for more specific locality
     if (address.suburb) {
         parts.push(address.suburb);
@@ -51,8 +55,9 @@ export function getLocalityString(address?: {
         parts.push(address.city);
     }
 
-    if (address.state) {
-        parts.push(address.state);
+    const statePostcode = [address.state, address.postcode].filter(Boolean).join(" ");
+    if (statePostcode) {
+        parts.push(statePostcode);
     }
 
     return parts.join(", ");

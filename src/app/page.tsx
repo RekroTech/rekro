@@ -26,8 +26,11 @@ function HomePageContent() {
             bedrooms,
             bathrooms,
             listingType,
+            minPrice,
+            maxPrice,
+            furnishedFilter,
         },
-        setters: { setSearchQuery, setPropertyType, setBedrooms, setBathrooms, setListingType },
+        setters: { setSearchQuery, setPropertyType, setBedrooms, setBathrooms, setListingType, setMinPrice, setMaxPrice, setFurnishedFilter },
     } = usePropertyFilters();
 
     // Email verification handling
@@ -113,7 +116,7 @@ function HomePageContent() {
 
                     {/* Filters - Toggleable on mobile, always visible inline on desktop */}
                     <div
-                        className={`mt-2 sm:mt-0 grid grid-cols-3 gap-2 sm:flex sm:flex-row sm:items-center sm:gap-2 ${showFilters ? "grid" : "hidden sm:flex"}`}
+                        className={`mt-2 sm:mt-0 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:flex sm:flex-row sm:items-center sm:gap-2 ${showFilters ? "grid" : "hidden sm:flex"}`}
                     >
                         {/* Property Type */}
                         <Select
@@ -161,6 +164,69 @@ function HomePageContent() {
                             fullWidth={false}
                             className="w-full sm:flex-none sm:w-[110px]"
                         />
+
+                        {/* Min Price */}
+                        <Select
+                            id="min-price-filter"
+                            value={minPrice}
+                            onChange={(e) => setMinPrice(e.target.value)}
+                            size="sm"
+                            label="Min Rent"
+                            options={[
+                                { value: "", label: "Any" },
+                                { value: "100", label: "$100/wk" },
+                                { value: "200", label: "$200/wk" },
+                                { value: "300", label: "$300/wk" },
+                                { value: "400", label: "$400/wk" },
+                                { value: "500", label: "$500/wk" },
+                                { value: "600", label: "$600/wk" },
+                                { value: "800", label: "$800/wk" },
+                                { value: "1000", label: "$1,000/wk" },
+                            ]}
+                            fullWidth={false}
+                            className="w-full sm:flex-none sm:w-[120px]"
+                        />
+
+                        {/* Max Rent */}
+                        <Select
+                            id="max-price-filter"
+                            value={maxPrice}
+                            onChange={(e) => setMaxPrice(e.target.value)}
+                            size="sm"
+                            label="Max Rent"
+                            options={[
+                                { value: "", label: "Any" },
+                                { value: "200", label: "$200/wk" },
+                                { value: "300", label: "$300/wk" },
+                                { value: "400", label: "$400/wk" },
+                                { value: "500", label: "$500/wk" },
+                                { value: "600", label: "$600/wk" },
+                                { value: "800", label: "$800/wk" },
+                                { value: "1000", label: "$1,000/wk" },
+                                { value: "1500", label: "$1,500/wk" },
+                                { value: "2000", label: "$2,000/wk" },
+                            ]}
+                            fullWidth={false}
+                            className="w-full sm:flex-none sm:w-[120px]"
+                        />
+
+                        {/* Furnished */}
+                        <div className="col-span-2 sm:col-span-1 sm:flex-none">
+                            <Select
+                                id="furnished-filter"
+                                value={furnishedFilter}
+                                onChange={(e) => setFurnishedFilter(e.target.value)}
+                                size="sm"
+                                label="Furnished"
+                                options={[
+                                    { value: "", label: "Any" },
+                                    { value: "furnished", label: "Furnished" },
+                                    { value: "unfurnished", label: "Unfurnished" },
+                                ]}
+                                fullWidth={false}
+                                className="w-full sm:flex-none sm:w-[130px]"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -227,6 +293,9 @@ function HomePageContent() {
                     propertyType={propertyType}
                     minBedrooms={bedrooms ? parseInt(bedrooms) : undefined}
                     minBathrooms={bathrooms ? parseInt(bathrooms) : undefined}
+                    minPrice={minPrice ? parseInt(minPrice) : undefined}
+                    maxPrice={maxPrice ? parseInt(maxPrice) : undefined}
+                    furnished={furnishedFilter === "furnished" ? true : furnishedFilter === "unfurnished" ? false : undefined}
                     listingType={canManageUsers ? undefined : listingType}
                     status={canManageUsers ? status ?? undefined : undefined}
                     showEditButton={canManageProperties}

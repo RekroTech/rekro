@@ -62,6 +62,7 @@ export type { AlertProps, AlertVariant } from "./Alert";
 export type { ToastProps, ToastType } from "./Toast";
 export type { LoaderProps, LoaderSize } from "./Loader";
 export type { IconProps, IconName } from "./Icon";
+export type { TooltipProps, TooltipPosition } from "./Tooltip";
 export type { PropertyMediaProps } from "./Visual";
 export type { BackButtonProps } from "./BackButton";
 export type { SkeletonProps } from "./Skeleton";

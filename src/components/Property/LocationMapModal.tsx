@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import dynamic from "next/dynamic";
 import { Icon, Modal, Loader } from "@/components/common";
-import { getApproximateLocation, getLocalityString } from "@/lib/utils/locationPrivacy";
+import { getLocalityString } from "@/lib/utils/locationPrivacy";
 import type { Property } from "@/types/db";
 
 // Lazy load MapView to defer Google Maps API loading (~500KB)
@@ -33,8 +33,8 @@ export function LocationMapModal({
     title,
     address,
 }: LocationMapModalProps) {
-    const approximateLocation = useMemo(
-        () => getApproximateLocation(latitude, longitude, 0.5),
+    const exactLocation = useMemo(
+        () => ({ lat: latitude, lng: longitude }),
         [latitude, longitude]
     );
 
@@ -51,28 +51,19 @@ export function LocationMapModal({
                                 <p className="text-sm font-medium text-text break-words">
                                     {localityString}
                                 </p>
-                                <p className="mt-0.5 text-xs text-text-muted">
-                                    <Icon name="info-circle" className="mr-1 inline h-3 w-3" />
-                                    Approximate location. Exact address provided after enquiry
-                                </p>
                             </div>
                         </div>
                     </div>
                 )}
 
                 <MapView
-                    center={approximateLocation}
-                    zoom={14}
-                    circles={[
+                    center={exactLocation}
+                    zoom={16}
+                    markers={[
                         {
-                            lat: approximateLocation.lat,
-                            lng: approximateLocation.lng,
-                            radiusMeters: 500,
-                            fillColor: "#6366F1",
-                            strokeColor: "#4F46E5",
-                            fillOpacity: 0.2,
-                            strokeOpacity: 0.4,
-                            strokeWeight: 2,
+                            lat: exactLocation.lat,
+                            lng: exactLocation.lng,
+                            title: title,
                         },
                     ]}
                     className="h-96 w-full rounded-lg"

@@ -12,6 +12,8 @@ export interface PropertyListProps {
     propertyType?: string;
     minBedrooms?: number;
     minBathrooms?: number;
+    minPrice?: number;
+    maxPrice?: number;
     furnished?: boolean;
     listingType?: string;
     status?: "active" | "leased" | "inactive";
@@ -27,6 +29,8 @@ export function PropertyList({
     propertyType,
     minBedrooms,
     minBathrooms,
+    minPrice,
+    maxPrice,
     furnished,
     listingType,
     status,
@@ -52,6 +56,8 @@ export function PropertyList({
                 propertyType,
                 minBedrooms,
                 minBathrooms,
+                minPrice,
+                maxPrice,
                 furnished,
                 listingType: normalizedListingType,
                 status,

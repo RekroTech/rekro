@@ -51,6 +51,8 @@ export async function getProperties(
         propertyType,
         minBedrooms,
         minBathrooms,
+        minPrice,
+        maxPrice,
         furnished,
         listingType,
         status,
@@ -60,9 +62,9 @@ export async function getProperties(
     const unitColumns =
         "id, listing_type, name, description, price, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
 
-    // Use inner join for filtering by liked properties, listing type, or status
-    const selectQuery =
-        listingType || likedOnly || status ? `*, units!inner(${unitColumns})` : `*, units(${unitColumns})`;
+    // Use inner join for filtering by liked properties, listing type, status, or price
+    const needsInnerJoin = !!(listingType || likedOnly || status || minPrice !== undefined || maxPrice !== undefined);
+    const selectQuery = needsInnerJoin ? `*, units!inner(${unitColumns})` : `*, units(${unitColumns})`;
 
     let query = supabase
         .from("properties")
@@ -119,10 +121,20 @@ export async function getProperties(
 
     if (furnished === true) {
         query = query.eq("furnished", true);
+    } else if (furnished === false) {
+        query = query.eq("furnished", false);
     }
 
     if (listingType) {
         query = query.eq("units.listing_type", listingType);
+    }
+
+    if (typeof minPrice === "number" && !isNaN(minPrice)) {
+        query = query.gte("units.price", minPrice);
+    }
+
+    if (typeof maxPrice === "number" && !isNaN(maxPrice)) {
+        query = query.lte("units.price", maxPrice);
     }
 
     if (search && search.trim() !== "") {
@@ -143,7 +155,7 @@ export async function getProperties(
     let properties: Property[] = data ?? [];
 
     // Handle duplicate properties when using inner join
-    if ((listingType || status) && properties.length > 0) {
+    if ((needsInnerJoin) && properties.length > 0) {
         const propertyMap = new Map<string, Property>();
 
         properties.forEach((prop: Property) => {

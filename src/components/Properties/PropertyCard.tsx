@@ -9,6 +9,8 @@ import { getLocalityString } from "@/lib/utils";
 import { usePrefetchProperty } from "@/lib/hooks/property";
 import { ImageGallery } from "../Property/ImageGalleryMobile";
 import { PropertyForm } from "../PropertyForm";
+import { UnitLikeButton } from "../Property/PropertySidebar/UnitLikeButton";
+import { ShareDropdown } from "@/components/Property";
 
 interface PropertyCardProps {
     property: Property & { units?: Unit[] };
@@ -87,9 +89,14 @@ export function PropertyCard({ property, showEditButton = false, priority = fals
                     </div>
 
                     {/* Overlays on top of gallery */}
-                    {furnished && (
-                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-primary-500 text-white text-xs font-semibold px-2 py-1 rounded-[var(--radius-md)] z-20 pointer-events-none">
-                            Furnished
+                    {/* Like + Share buttons – top right */}
+                    {firstUnit && (
+                        <div
+                            className="absolute top-2 right-2 sm:top-3 sm:right-3 flex items-center gap-1 z-20"
+                            onClick={(e) => e.preventDefault()}
+                        >
+                            <UnitLikeButton unitId={firstUnit.id} propertyId={id} />
+                            <ShareDropdown propertyTitle={title} unitId={firstUnit.id} propertyId={id} />
                         </div>
                     )}
                     {pricePerWeek && (
@@ -115,10 +122,19 @@ export function PropertyCard({ property, showEditButton = false, priority = fals
 
                 {/* Property Details */}
                 <div className="p-3.5 sm:p-4">
-                    {/* Property Type */}
-                    {property_type && (
-                        <div className="text-xs font-semibold text-primary-600 uppercase mb-1">
-                            {property_type}
+                    {/* Property Type + Furnished badge */}
+                    {(property_type || furnished) && (
+                        <div className="flex items-center justify-between mb-1">
+                            {property_type && (
+                                <span className="text-xs font-semibold text-primary-600 uppercase">
+                                    {property_type}
+                                </span>
+                            )}
+                            {furnished && (
+                                <span className="ml-auto bg-primary-500 text-white text-xs font-semibold px-2 py-0.5 rounded-[var(--radius-md)]">
+                                    Furnished
+                                </span>
+                            )}
                         </div>
                     )}
 

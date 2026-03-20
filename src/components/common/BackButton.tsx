@@ -29,7 +29,7 @@ export const BackButton = React.forwardRef<HTMLButtonElement, BackButtonProps>(
                     "text-primary-600 hover:text-primary-700 active:text-primary-800",
                     "hover:bg-primary-500/10 active:bg-primary-500/15",
                     "focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
-                    "touch-manipulation select-none",
+                    "touch-manipulation select-none cursor-pointer",
                     className
                 )}
                 {...props}
