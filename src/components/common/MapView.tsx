@@ -41,6 +41,8 @@ function computePixelPos(
     };
 }
 
+
+
 /**
  * Generates a data-URL SVG icon for a map pin marker.
  * Normal state: 32×44 px indigo pin.
@@ -187,13 +189,16 @@ export function MapView({
             return;
         }
 
-        // Create map
+        // Create map — colorScheme FOLLOW_SYSTEM makes Google Maps natively
+        // darken / lighten all tiles to match the OS preference automatically.
         googleMapRef.current = new google.maps.Map(mapRef.current, {
             center,
             zoom,
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: true,
+            // @ts-expect-error – ColorScheme is available at runtime (Maps JS API ≥ v3.56)
+            colorScheme: google.maps.ColorScheme?.FOLLOW_SYSTEM ?? "FOLLOW_SYSTEM",
         });
 
         // Add click listener if callback provided
