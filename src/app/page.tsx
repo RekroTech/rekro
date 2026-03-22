@@ -135,7 +135,7 @@ function HomePageContent() {
 
                     {/* Filters - Toggleable on mobile, always visible inline on desktop */}
                     <div
-                        className={`mt-2 sm:mt-0 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:flex sm:flex-row sm:items-center sm:gap-2 ${showFilters ? "grid" : "hidden sm:flex"}`}
+                        className={`mt-2 sm:mt-0 grid grid-cols-2 gap-4 sm:flex sm:flex-row sm:items-center sm:gap-2 ${showFilters ? "grid" : "hidden sm:flex"}`}
                     >
                         {/* Property Type */}
                         <Select
@@ -147,6 +147,22 @@ function HomePageContent() {
                             options={PROPERTY_TYPES}
                             fullWidth={false}
                             className="w-full sm:flex-none sm:w-[140px]"
+                        />
+
+                        {/* Furnished */}
+                        <Select
+                            id="furnished-filter"
+                            value={furnishedFilter}
+                            onChange={(e) => setFurnishedFilter(e.target.value)}
+                            size="sm"
+                            label="Furnished"
+                            options={[
+                                { value: "", label: "Any" },
+                                { value: "furnished", label: "Furnished" },
+                                { value: "unfurnished", label: "Unfurnished" },
+                            ]}
+                            fullWidth={false}
+                            className="w-full sm:flex-none sm:w-[130px]"
                         />
 
                         {/* Bedrooms */}
@@ -184,7 +200,7 @@ function HomePageContent() {
                             className="w-full sm:flex-none sm:w-[110px]"
                         />
 
-                        {/* Min Price */}
+                        {/* Min Rent */}
                         <Select
                             id="min-price-filter"
                             value={minPrice}
@@ -228,25 +244,6 @@ function HomePageContent() {
                             fullWidth={false}
                             className="w-full sm:flex-none sm:w-[120px]"
                         />
-
-                        {/* Furnished */}
-                        <div className="col-span-2 sm:col-span-1 sm:flex-none">
-                            <Select
-                                id="furnished-filter"
-                                value={furnishedFilter}
-                                onChange={(e) => setFurnishedFilter(e.target.value)}
-                                size="sm"
-                                label="Furnished"
-                                options={[
-                                    { value: "", label: "Any" },
-                                    { value: "furnished", label: "Furnished" },
-                                    { value: "unfurnished", label: "Unfurnished" },
-                                ]}
-                                fullWidth={false}
-                                className="w-full sm:flex-none sm:w-[130px]"
-                            />
-                        </div>
-
 
                     </div>
                 </div>
