@@ -21,16 +21,15 @@ export function loadGoogleMapsScript(apiKey: string): Promise<void> {
 
         // Define the callback function
         window[callbackName] = () => {
-            // Wait for Places library to be available
-            const checkPlaces = setInterval(() => {
+            // Wait for core Maps API to be available
+            const checkMaps = setInterval(() => {
                 if (
                     typeof window !== "undefined" &&
                     window.google &&
                     window.google.maps &&
-                    window.google.maps.places &&
-                    window.google.maps.places.Autocomplete
+                    window.google.maps.Map
                 ) {
-                    clearInterval(checkPlaces);
+                    clearInterval(checkMaps);
                     isLoaded = true;
                     isLoading = false;
                     delete window[callbackName];
@@ -40,11 +39,11 @@ export function loadGoogleMapsScript(apiKey: string): Promise<void> {
 
             // Timeout after 10 seconds
             setTimeout(() => {
-                clearInterval(checkPlaces);
+                clearInterval(checkMaps);
                 if (!isLoaded) {
                     isLoading = false;
                     delete window[callbackName];
-                    reject(new Error("Google Maps Places API failed to load"));
+                    reject(new Error("Google Maps failed to load"));
                 }
             }, 10000);
         };
@@ -74,7 +73,6 @@ export function isGoogleMapsLoaded(): boolean {
         typeof window !== "undefined" &&
         !!window.google &&
         !!window.google.maps &&
-        !!window.google.maps.places &&
-        !!window.google.maps.places.Autocomplete
+        !!window.google.maps.Map
     );
 }

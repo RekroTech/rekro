@@ -6,6 +6,7 @@ import { Icon, Input, Select, Banner, PropertyListSkeleton, Loader } from "@/com
 import { useRoles } from "@/lib/hooks";
 import { useEmailVerification, VerificationErrorModal } from "@/components/Auth";
 import { usePropertyFilters } from "@/components/Properties";
+import { PropertyMapView } from "@/components/Properties/PropertyMapView";
 import { LISTING_TYPES, PROPERTY_TYPES, STATUS_TABS } from "@/components/PropertyForm";
 import { UnitStatus } from "@/types/property.types";
 
@@ -16,6 +17,7 @@ function HomePageContent() {
     const { canManageProperties, canManageUsers } = useRoles();
     const [showFilters, setShowFilters] = useState(false);
     const [status, setStatus] = useState<"active" | "leased" | "inactive">("active");
+    const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
     const [isPending, startTransition] = useTransition();
 
     const {
@@ -73,7 +75,7 @@ function HomePageContent() {
             <div className="mb-6 sm:mb-8">
                 {/* Search and Filters */}
                 <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
-                    {/* Search Bar with Filter Button (Mobile) */}
+                    {/* Search Bar with Filter + View Toggle Buttons (Mobile) */}
                     <div className="flex items-center gap-2 sm:flex-1">
                         <div className="relative flex-1">
                             <Input
@@ -111,6 +113,15 @@ function HomePageContent() {
                             aria-expanded={showFilters}
                         >
                             <Icon name="filter" className="h-5 w-5" />
+                        </button>
+                        {/* View Mode Icon Button - Mobile Only */}
+                        <button
+                            type="button"
+                            onClick={() => setViewMode(viewMode === "grid" ? "map" : "grid")}
+                            aria-label={viewMode === "grid" ? "Switch to map view" : "Switch to grid view"}
+                            className="sm:hidden flex items-center justify-center h-10 w-10 rounded-lg border border-border bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted transition-colors touch-manipulation"
+                        >
+                            <Icon name={viewMode === "grid" ? "map" : "grid"} className="h-5 w-5" />
                         </button>
                     </div>
 
@@ -227,11 +238,15 @@ function HomePageContent() {
                                 className="w-full sm:flex-none sm:w-[130px]"
                             />
                         </div>
+
+
                     </div>
                 </div>
 
                 {/* Listing type tabs - Show admin tabs if user can manage users (admin) */}
-                <div className="mb-4 sm:mb-6 flex justify-center px-1">
+                <div className="mb-4 sm:mb-6 flex items-center px-1">
+                    {/* Spacer to keep tabs centered on desktop */}
+                    <div className="hidden sm:flex flex-1" />
                     <div
                         role="tablist"
                         aria-label={canManageUsers ? "Property status" : "Listing type"}
@@ -285,21 +300,73 @@ function HomePageContent() {
                             })
                         )}
                     </div>
+
+                    {/* Grid/Map toggle - right side, desktop only */}
+                    <div className="hidden sm:flex flex-1 justify-end">
+                        <div
+                            role="group"
+                            aria-label="View mode"
+                            className="flex items-center rounded-full border border-border bg-card p-1 shrink-0"
+                        >
+                            <button
+                                type="button"
+                                aria-pressed={viewMode === "grid"}
+                                onClick={() => setViewMode("grid")}
+                                className={
+                                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all focus:outline-none" +
+                                    (viewMode === "grid"
+                                        ? "bg-white shadow-sm text-foreground dark:bg-surface-muted"
+                                        : "text-text-muted hover:text-foreground")
+                                }
+                            >
+                                <Icon name="grid" className="h-3.5 w-3.5" />
+                                Grid
+                            </button>
+                            <button
+                                type="button"
+                                aria-pressed={viewMode === "map"}
+                                onClick={() => setViewMode("map")}
+                                className={
+                                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all focus:outline-none" +
+                                    (viewMode === "map"
+                                        ? "bg-white shadow-sm text-foreground dark:bg-surface-muted"
+                                        : "text-text-muted hover:text-foreground")
+                                }
+                            >
+                                <Icon name="map" className="h-3.5 w-3.5" />
+                                Map
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Property List - Role-based edit buttons */}
-                <PropertyList
-                    search={debouncedSearchQuery}
-                    propertyType={propertyType}
-                    minBedrooms={bedrooms ? parseInt(bedrooms) : undefined}
-                    minBathrooms={bathrooms ? parseInt(bathrooms) : undefined}
-                    minPrice={minPrice ? parseInt(minPrice) : undefined}
-                    maxPrice={maxPrice ? parseInt(maxPrice) : undefined}
-                    furnished={furnishedFilter === "furnished" ? true : furnishedFilter === "unfurnished" ? false : undefined}
-                    listingType={canManageUsers ? undefined : listingType}
-                    status={canManageUsers ? status ?? undefined : undefined}
-                    showEditButton={canManageProperties}
-                />
+                {/* Property List or Map - Role-based edit buttons */}
+                {viewMode === "grid" ? (
+                    <PropertyList
+                        search={debouncedSearchQuery}
+                        propertyType={propertyType}
+                        minBedrooms={bedrooms ? parseInt(bedrooms) : undefined}
+                        minBathrooms={bathrooms ? parseInt(bathrooms) : undefined}
+                        minPrice={minPrice ? parseInt(minPrice) : undefined}
+                        maxPrice={maxPrice ? parseInt(maxPrice) : undefined}
+                        furnished={furnishedFilter === "furnished" ? true : furnishedFilter === "unfurnished" ? false : undefined}
+                        listingType={canManageUsers ? undefined : listingType}
+                        status={canManageUsers ? status ?? undefined : undefined}
+                        showEditButton={canManageProperties}
+                    />
+                ) : (
+                    <PropertyMapView
+                        search={debouncedSearchQuery}
+                        propertyType={propertyType}
+                        minBedrooms={bedrooms ? parseInt(bedrooms) : undefined}
+                        minBathrooms={bathrooms ? parseInt(bathrooms) : undefined}
+                        minPrice={minPrice ? parseInt(minPrice) : undefined}
+                        maxPrice={maxPrice ? parseInt(maxPrice) : undefined}
+                        furnished={furnishedFilter === "furnished" ? true : furnishedFilter === "unfurnished" ? false : undefined}
+                        listingType={canManageUsers ? undefined : listingType}
+                        status={canManageUsers ? status ?? undefined : undefined}
+                    />
+                )}
             </div>
 
             {/* Email Verification Error Modal */}

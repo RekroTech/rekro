@@ -4,10 +4,52 @@ import { useEffect, useRef, useState } from "react";
 import { clsx } from "clsx";
 import { loadGoogleMapsScript } from "@/lib/utils/googleMaps";
 
+/** Returns null if pos is outside the map div's visible area, otherwise returns pos unchanged. */
+function clampToMapBounds(
+    pos: { x: number; y: number } | null,
+    mapDiv: HTMLDivElement | null,
+): { x: number; y: number } | null {
+    if (!pos || !mapDiv) return null;
+    const { offsetWidth: w, offsetHeight: h } = mapDiv;
+    if (pos.x < 0 || pos.x > w || pos.y < 0 || pos.y > h) return null;
+    return pos;
+}
+
+/** Converts a lat/lng to pixel coordinates relative to the map div. */
+function computePixelPos(
+    map: google.maps.Map,
+    lat: number,
+    lng: number,
+): { x: number; y: number } | null {
+    const projection = map.getProjection();
+    const bounds = map.getBounds();
+    const zoom = map.getZoom();
+    if (!projection || !bounds || zoom == null) return null;
+
+    const scale = Math.pow(2, zoom);
+    const nw = new google.maps.LatLng(
+        bounds.getNorthEast().lat(),
+        bounds.getSouthWest().lng(),
+    );
+    const worldNW = projection.fromLatLngToPoint(nw);
+    const worldPoint = projection.fromLatLngToPoint(new google.maps.LatLng(lat, lng));
+    if (!worldNW || !worldPoint) return null;
+
+    return {
+        x: Math.round((worldPoint.x - worldNW.x) * scale),
+        y: Math.round((worldPoint.y - worldNW.y) * scale),
+    };
+}
+
 interface MapViewProps {
     center?: { lat: number; lng: number };
     zoom?: number;
-    markers?: Array<{ lat: number; lng: number; title?: string }>;
+    markers?: Array<{ lat: number; lng: number; title?: string; id?: string }>;
+    onMarkerClick?: (id: string) => void;
+    /** Lat/lng of the marker whose pixel position should be tracked and emitted. */
+    trackedLatLng?: { lat: number; lng: number } | null;
+    /** Fires with updated pixel coords (relative to map div) whenever the map moves or trackedLatLng changes. */
+    onTrackedPosition?: (pos: { x: number; y: number } | null) => void;
     circles?: Array<{
         lat: number;
         lng: number;
@@ -28,6 +70,9 @@ export function MapView({
     markers = [],
     circles = [],
     onMapClick,
+    onMarkerClick,
+    trackedLatLng,
+    onTrackedPosition,
     className = "h-96 w-full rounded-lg",
 }: MapViewProps) {
     const mapRef = useRef<HTMLDivElement>(null);
@@ -35,6 +80,12 @@ export function MapView({
     const markersRef = useRef<google.maps.Marker[]>([]);
     const circlesRef = useRef<google.maps.Circle[]>([]);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+
+    // Keep refs fresh to avoid stale closures inside map event listeners
+    const trackedLatLngRef = useRef<{ lat: number; lng: number } | null>(null);
+    const onTrackedPositionRef = useRef(onTrackedPosition);
+    useEffect(() => { onTrackedPositionRef.current = onTrackedPosition; }, [onTrackedPosition]);
+    useEffect(() => { trackedLatLngRef.current = trackedLatLng ?? null; }, [trackedLatLng]);
 
     // Load Google Maps script
     useEffect(() => {
@@ -50,9 +101,14 @@ export function MapView({
             .catch((error) => console.error("Failed to load Google Maps:", error));
     }, []);
 
-    // Initialize map
+    // Initialize map ONCE when script is ready
     useEffect(() => {
         if (!mapRef.current || !isScriptLoaded || typeof window === "undefined" || !window.google) {
+            return;
+        }
+
+        // Only create the map if it hasn't been created yet
+        if (googleMapRef.current) {
             return;
         }
 
@@ -73,7 +129,16 @@ export function MapView({
                 }
             });
         }
-    }, [isScriptLoaded, center, zoom, onMapClick]);
+
+        // Re-emit tracked marker pixel position on every pan / zoom
+        googleMapRef.current.addListener("bounds_changed", () => {
+            const latlng = trackedLatLngRef.current;
+            if (!latlng || !googleMapRef.current) return;
+            const pos = computePixelPos(googleMapRef.current, latlng.lat, latlng.lng);
+            onTrackedPositionRef.current?.(clampToMapBounds(pos, mapRef.current));
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isScriptLoaded]);
 
     // Update markers
     useEffect(() => {
@@ -92,9 +157,23 @@ export function MapView({
                 map: googleMapRef.current!,
                 title: markerData.title,
             });
+            if (onMarkerClick && markerData.id) {
+                marker.addListener("click", () => onMarkerClick(markerData.id!));
+            }
             markersRef.current.push(marker);
         });
-    }, [markers, isScriptLoaded]);
+    }, [markers, isScriptLoaded, onMarkerClick]);
+
+    // Emit pixel position immediately whenever trackedLatLng changes
+    useEffect(() => {
+        if (!googleMapRef.current || !isScriptLoaded) return;
+        if (!trackedLatLng) {
+            onTrackedPositionRef.current?.(null);
+            return;
+        }
+        const pos = computePixelPos(googleMapRef.current, trackedLatLng.lat, trackedLatLng.lng);
+        onTrackedPositionRef.current?.(clampToMapBounds(pos, mapRef.current));
+    }, [trackedLatLng, isScriptLoaded]);
 
     // Update circles
     useEffect(() => {
@@ -129,6 +208,13 @@ export function MapView({
             googleMapRef.current.setCenter(center);
         }
     }, [center]);
+
+    // Update zoom
+    useEffect(() => {
+        if (googleMapRef.current) {
+            googleMapRef.current.setZoom(zoom);
+        }
+    }, [zoom]);
 
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
         return (
