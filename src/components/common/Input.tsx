@@ -105,6 +105,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                             // Reserve space for it and prevent the control from expanding.
                             isDateLike &&
                                 "min-w-0 max-w-full box-border pr-10 [&::-webkit-date-and-time-value]:overflow-hidden [&::-webkit-date-and-time-value]:text-ellipsis",
+                            // Hide the native browser clear button on search inputs (we render our own)
+                            props.type === "search" &&
+                                "[&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
                             className
                         )}
                         {...props}

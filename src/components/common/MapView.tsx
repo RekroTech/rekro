@@ -41,11 +41,78 @@ function computePixelPos(
     };
 }
 
+/**
+ * Generates a data-URL SVG icon for a map pin marker.
+ * Normal state: 32×44 px indigo pin.
+ * Selected state: 40×55 px violet pin (scaled ×1.25, brighter gradient).
+ */
+function createPinIcon(selected: boolean): google.maps.Icon {
+    const w = selected ? 40 : 32;
+    const h = selected ? 55 : 44;
+    const anchorX = selected ? 20 : 16;
+    const anchorY = selected ? 54 : 43;
+
+    // Rekro brand palette
+    // Normal  → primary teal:   #86b6b0 (primary-300) → #2f6a65 (primary-600)
+    // Selected → secondary navy: #6b7a9a              → #3a4a6b (secondary-500)
+    const primaryColor = selected ? "#3a4a6b" : "#2f6a65";
+    const lightColor   = selected ? "#6b7a9a" : "#86b6b0";
+    const shadowBlur   = selected ? 3.5 : 2.5;
+    const shadowDy     = selected ? 5   : 3;
+
+    // Pin path — circle r=14 centred at (16,16), tip at (16,43).
+    // Selected version is the same path scaled ×1.25.
+    const pinPath = selected
+        ? "M20 2.5C10.335 2.5 2.5 10.335 2.5 20c0 6.764 3.618 12.7 9.043 16.006L20 53.75l8.458-16.494C33.883 32.7 37.5 26.764 37.5 20 37.5 10.335 29.665 2.5 20 2.5z"
+        : "M16 2C8.268 2 2 8.268 2 16c0 5.411 2.894 10.16 7.234 12.805L16 43l6.766-13.195C27.106 26.16 30 21.411 30 16 30 8.268 23.732 2 16 2z";
+
+    // Gloss highlight ellipse (top-left of circle)
+    const gx = selected ? 13   : 10.5;
+    const gy = selected ? 12   :  9.5;
+    const grx = selected ? 6   :  4.8;
+    const gry = selected ? 3.8 :  3.0;
+
+    // Ring for selected state
+    const ring = selected
+        ? `<circle cx="20" cy="20" r="14" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>`
+        : "";
+
+    const svg = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="ds" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="${shadowBlur}"/>
+      <feOffset dx="0" dy="${shadowDy}" result="blur"/>
+      <feFlood flood-color="rgba(0,0,0,0.28)" result="col"/>
+      <feComposite in="col" in2="blur" operator="in" result="shadow"/>
+      <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="rg" cx="38%" cy="32%" r="68%" fx="35%" fy="28%">
+      <stop offset="0%" stop-color="${lightColor}"/>
+      <stop offset="100%" stop-color="${primaryColor}"/>
+    </radialGradient>
+  </defs>
+  <path d="${pinPath}" fill="url(#rg)" filter="url(#ds)"/>
+  ${ring}
+  <ellipse cx="${gx}" cy="${gy}" rx="${grx}" ry="${gry}"
+           fill="rgba(255,255,255,0.52)" transform="rotate(-25 ${gx} ${gy})"/>
+</svg>`;
+
+    return {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+        scaledSize: new google.maps.Size(w, h),
+        anchor: new google.maps.Point(anchorX, anchorY),
+    };
+}
+
 interface MapViewProps {
     center?: { lat: number; lng: number };
     zoom?: number;
+    /** When set, smoothly pans (and optionally zooms) the map to this position. */
+    flyTo?: { lat: number; lng: number; zoom?: number } | null;
     markers?: Array<{ lat: number; lng: number; title?: string; id?: string }>;
     onMarkerClick?: (id: string) => void;
+    /** ID of the currently selected marker — rendered larger with a different colour. */
+    selectedId?: string | null;
     /** Lat/lng of the marker whose pixel position should be tracked and emitted. */
     trackedLatLng?: { lat: number; lng: number } | null;
     /** Fires with updated pixel coords (relative to map div) whenever the map moves or trackedLatLng changes. */
@@ -67,10 +134,12 @@ interface MapViewProps {
 export function MapView({
     center = { lat: -33.8688, lng: 151.2093 }, // Default to Sydney
     zoom = 12,
+    flyTo,
     markers = [],
     circles = [],
     onMapClick,
     onMarkerClick,
+    selectedId,
     trackedLatLng,
     onTrackedPosition,
     className = "h-96 w-full rounded-lg",
@@ -78,7 +147,13 @@ export function MapView({
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
     const markersRef = useRef<google.maps.Marker[]>([]);
+    const markerIdMapRef = useRef<Map<string, google.maps.Marker>>(new Map());
     const circlesRef = useRef<google.maps.Circle[]>([]);
+
+    // Keep a ref so the marker-creation effect can read the current selectedId
+    // without needing it as a dependency (avoids full marker recreation on click).
+    const selectedIdRef = useRef<string | null | undefined>(selectedId);
+    useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
     // Keep refs fresh to avoid stale closures inside map event listeners
@@ -149,20 +224,46 @@ export function MapView({
         // Clear existing markers
         markersRef.current.forEach((marker) => marker.setMap(null));
         markersRef.current = [];
+        markerIdMapRef.current.clear();
 
-        // Add new markers
+        // Add new markers with custom SVG pin icons
         markers.forEach((markerData) => {
+            const isSelected = markerData.id != null && markerData.id === selectedIdRef.current;
             const marker = new google.maps.Marker({
                 position: { lat: markerData.lat, lng: markerData.lng },
                 map: googleMapRef.current!,
                 title: markerData.title,
+                icon: createPinIcon(isSelected),
+                zIndex: isSelected ? 9999 : undefined,
+                optimized: false,
             });
             if (onMarkerClick && markerData.id) {
                 marker.addListener("click", () => onMarkerClick(markerData.id!));
             }
+            if (markerData.id) {
+                markerIdMapRef.current.set(markerData.id, marker);
+            }
             markersRef.current.push(marker);
         });
     }, [markers, isScriptLoaded, onMarkerClick]);
+
+    // Efficiently swap only the affected markers' icons when selection changes
+    // (avoids full marker recreation on every click)
+    const prevSelectedIdRef = useRef<string | null | undefined>(undefined);
+    useEffect(() => {
+        if (!isScriptLoaded) return;
+        const prevId = prevSelectedIdRef.current;
+        prevSelectedIdRef.current = selectedId;
+
+        if (prevId) {
+            const m = markerIdMapRef.current.get(prevId);
+            if (m) { m.setIcon(createPinIcon(false)); m.setZIndex(0); }
+        }
+        if (selectedId) {
+            const m = markerIdMapRef.current.get(selectedId);
+            if (m) { m.setIcon(createPinIcon(true)); m.setZIndex(9999); }
+        }
+    }, [selectedId, isScriptLoaded]);
 
     // Emit pixel position immediately whenever trackedLatLng changes
     useEffect(() => {
@@ -191,9 +292,9 @@ export function MapView({
                 center: { lat: circleData.lat, lng: circleData.lng },
                 radius: circleData.radiusMeters,
                 map: googleMapRef.current!,
-                fillColor: circleData.fillColor || "#4F46E5",
+                fillColor: circleData.fillColor || "#3a7f79",
                 fillOpacity: circleData.fillOpacity ?? 0.25,
-                strokeColor: circleData.strokeColor || "#4F46E5",
+                strokeColor: circleData.strokeColor || "#3a7f79",
                 strokeOpacity: circleData.strokeOpacity ?? 0.5,
                 strokeWeight: circleData.strokeWeight ?? 2,
                 clickable: false,
@@ -215,6 +316,13 @@ export function MapView({
             googleMapRef.current.setZoom(zoom);
         }
     }, [zoom]);
+
+    // Fly to a specific location (smooth pan + optional zoom override)
+    useEffect(() => {
+        if (!googleMapRef.current || !flyTo) return;
+        googleMapRef.current.panTo({ lat: flyTo.lat, lng: flyTo.lng });
+        if (flyTo.zoom != null) googleMapRef.current.setZoom(flyTo.zoom);
+    }, [flyTo]);
 
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
         return (

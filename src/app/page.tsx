@@ -81,8 +81,16 @@ function HomePageContent() {
                             <Input
                                 id="search-input"
                                 type="search"
-                                aria-label="Search properties by location or name"
-                                placeholder="Search location or property..."
+                                aria-label={
+                                    viewMode === "map"
+                                        ? "Navigate map by suburb, postcode or address"
+                                        : "Search properties by location or name"
+                                }
+                                placeholder={
+                                    viewMode === "map"
+                                        ? "Suburb, postcode or address…"
+                                        : "Search location or property..."
+                                }
                                 value={searchQuery}
                                 onChange={(e) => handleSearchChange(e.target.value)}
                                 size="sm"
@@ -303,40 +311,15 @@ function HomePageContent() {
 
                     {/* Grid/Map toggle - right side, desktop only */}
                     <div className="hidden sm:flex flex-1 justify-end">
-                        <div
-                            role="group"
-                            aria-label="View mode"
-                            className="flex items-center rounded-full border border-border bg-card p-1 shrink-0"
+                        <button
+                            type="button"
+                            onClick={() => setViewMode(viewMode === "grid" ? "map" : "grid")}
+                            aria-label={viewMode === "grid" ? "Switch to map view" : "Switch to grid view"}
+                            className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs sm:text-sm font-medium text-foreground hover:bg-surface-muted active:bg-surface-muted transition-colors"
                         >
-                            <button
-                                type="button"
-                                aria-pressed={viewMode === "grid"}
-                                onClick={() => setViewMode("grid")}
-                                className={
-                                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all focus:outline-none" +
-                                    (viewMode === "grid"
-                                        ? "bg-white shadow-sm text-foreground dark:bg-surface-muted"
-                                        : "text-text-muted hover:text-foreground")
-                                }
-                            >
-                                <Icon name="grid" className="h-3.5 w-3.5" />
-                                Grid
-                            </button>
-                            <button
-                                type="button"
-                                aria-pressed={viewMode === "map"}
-                                onClick={() => setViewMode("map")}
-                                className={
-                                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all focus:outline-none" +
-                                    (viewMode === "map"
-                                        ? "bg-white shadow-sm text-foreground dark:bg-surface-muted"
-                                        : "text-text-muted hover:text-foreground")
-                                }
-                            >
-                                <Icon name="map" className="h-3.5 w-3.5" />
-                                Map
-                            </button>
-                        </div>
+                            <Icon name={viewMode === "grid" ? "map" : "grid"} className="h-4 w-4" />
+                            {viewMode === "grid" ? "Map" : "Grid"}
+                        </button>
                     </div>
                 </div>
 
