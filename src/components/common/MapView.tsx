@@ -44,65 +44,68 @@ function computePixelPos(
 
 
 /**
- * Generates a data-URL SVG icon for a map pin marker.
- * Normal state: 32×44 px indigo pin.
- * Selected state: 40×55 px violet pin (scaled ×1.25, brighter gradient).
+ * Generates a data-URL SVG circle marker.
+ *
+ * Normal   : 28 × 28 px — primary teal gradient, white centre dot.
+ * Selected : 36 × 36 px — secondary navy gradient, pulsing outer ring, brighter dot.
+ *
+ * Anchor is the circle centre so the dot sits exactly on the coordinate.
  */
 function createPinIcon(selected: boolean): google.maps.Icon {
-    const w = selected ? 40 : 32;
-    const h = selected ? 55 : 44;
-    const anchorX = selected ? 20 : 16;
-    const anchorY = selected ? 54 : 43;
+    let svg: string;
 
-    // Rekro brand palette
-    // Normal  → primary teal:   #86b6b0 (primary-300) → #2f6a65 (primary-600)
-    // Selected → secondary navy: #6b7a9a              → #3a4a6b (secondary-500)
-    const primaryColor = selected ? "#3a4a6b" : "#2f6a65";
-    const lightColor   = selected ? "#6b7a9a" : "#86b6b0";
-    const shadowBlur   = selected ? 3.5 : 2.5;
-    const shadowDy     = selected ? 5   : 3;
-
-    // Pin path — circle r=14 centred at (16,16), tip at (16,43).
-    // Selected version is the same path scaled ×1.25.
-    const pinPath = selected
-        ? "M20 2.5C10.335 2.5 2.5 10.335 2.5 20c0 6.764 3.618 12.7 9.043 16.006L20 53.75l8.458-16.494C33.883 32.7 37.5 26.764 37.5 20 37.5 10.335 29.665 2.5 20 2.5z"
-        : "M16 2C8.268 2 2 8.268 2 16c0 5.411 2.894 10.16 7.234 12.805L16 43l6.766-13.195C27.106 26.16 30 21.411 30 16 30 8.268 23.732 2 16 2z";
-
-    // Gloss highlight ellipse (top-left of circle)
-    const gx = selected ? 13   : 10.5;
-    const gy = selected ? 12   :  9.5;
-    const grx = selected ? 6   :  4.8;
-    const gry = selected ? 3.8 :  3.0;
-
-    // Ring for selected state
-    const ring = selected
-        ? `<circle cx="20" cy="20" r="14" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>`
-        : "";
-
-    const svg = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    if (selected) {
+        svg = `<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <filter id="ds" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="${shadowBlur}"/>
-      <feOffset dx="0" dy="${shadowDy}" result="blur"/>
-      <feFlood flood-color="rgba(0,0,0,0.28)" result="col"/>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="ds" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="0" result="blur"/>
+      <feFlood flood-color="rgba(255,255,255,0.35)" result="col"/>
       <feComposite in="col" in2="blur" operator="in" result="shadow"/>
       <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <radialGradient id="rg" cx="38%" cy="32%" r="68%" fx="35%" fy="28%">
-      <stop offset="0%" stop-color="${lightColor}"/>
-      <stop offset="100%" stop-color="${primaryColor}"/>
+    <radialGradient id="rg" cx="38%" cy="32%" r="68%">
+      <stop offset="0%" stop-color="#e07878"/>
+      <stop offset="100%" stop-color="#8b1a1a"/>
     </radialGradient>
   </defs>
-  <path d="${pinPath}" fill="url(#rg)" filter="url(#ds)"/>
-  ${ring}
-  <ellipse cx="${gx}" cy="${gy}" rx="${grx}" ry="${gry}"
-           fill="rgba(255,255,255,0.52)" transform="rotate(-25 ${gx} ${gy})"/>
+  <!-- Soft outer glow ring -->
+  <circle cx="18" cy="18" r="17" fill="rgba(200,80,80,0.18)" filter="url(#glow)"/>
+  <!-- Main circle with white glow shadow -->
+  <circle cx="18" cy="18" r="13" fill="url(#rg)" filter="url(#ds)"/>
 </svg>`;
+        return {
+            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+            scaledSize: new google.maps.Size(36, 36),
+            anchor: new google.maps.Point(18, 18),
+        };
+    }
 
+    svg = `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="ds" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.5"/>
+      <feOffset dx="0" dy="0" result="blur"/>
+      <feFlood flood-color="rgba(255,255,255,0.28)" result="col"/>
+      <feComposite in="col" in2="blur" operator="in" result="shadow"/>
+      <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="rg" cx="38%" cy="32%" r="68%">
+      <stop offset="0%" stop-color="#e87878"/>
+      <stop offset="100%" stop-color="#c23232"/>
+    </radialGradient>
+  </defs>
+  <!-- Main circle with white glow shadow -->
+  <circle cx="14" cy="14" r="12" fill="url(#rg)" filter="url(#ds)"/>
+</svg>`;
     return {
         url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-        scaledSize: new google.maps.Size(w, h),
-        anchor: new google.maps.Point(anchorX, anchorY),
+        scaledSize: new google.maps.Size(28, 28),
+        anchor: new google.maps.Point(14, 14),
     };
 }
 
@@ -158,11 +161,13 @@ export function MapView({
     useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
+
     // Keep refs fresh to avoid stale closures inside map event listeners
     const trackedLatLngRef = useRef<{ lat: number; lng: number } | null>(null);
     const onTrackedPositionRef = useRef(onTrackedPosition);
     useEffect(() => { onTrackedPositionRef.current = onTrackedPosition; }, [onTrackedPosition]);
     useEffect(() => { trackedLatLngRef.current = trackedLatLng ?? null; }, [trackedLatLng]);
+
 
     // Load Google Maps script
     useEffect(() => {
@@ -189,16 +194,14 @@ export function MapView({
             return;
         }
 
-        // Create map — colorScheme FOLLOW_SYSTEM makes Google Maps natively
-        // darken / lighten all tiles to match the OS preference automatically.
+        // Map is always dark — matches the app's dark UI on all platforms.
         googleMapRef.current = new google.maps.Map(mapRef.current, {
             center,
             zoom,
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: true,
-            // @ts-expect-error – ColorScheme is available at runtime (Maps JS API ≥ v3.56)
-            colorScheme: google.maps.ColorScheme?.FOLLOW_SYSTEM ?? "FOLLOW_SYSTEM",
+            colorScheme: google.maps.ColorScheme.DARK,
         });
 
         // Add click listener if callback provided

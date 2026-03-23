@@ -74,9 +74,9 @@ function HomePageContent() {
             {/* Property Listings Section */}
             <div className="mb-6 sm:mb-8">
                 {/* Search and Filters */}
-                <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <div className="mb-3 sm:mb-4 flex flex-col lg:flex-row gap-2 lg:gap-3">
                     {/* Search Bar with Filter + View Toggle Buttons (Mobile) */}
-                    <div className="flex items-center gap-2 sm:flex-1">
+                    <div className="flex items-center gap-2 lg:flex-1">
                         <div className="relative flex-1">
                             <Input
                                 id="search-input"
@@ -116,7 +116,7 @@ function HomePageContent() {
                         <button
                             type="button"
                             onClick={() => setShowFilters(!showFilters)}
-                            className="sm:hidden flex items-center justify-center h-10 w-10 rounded-lg border border-border bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted touch-manipulation transition-colors"
+                            className="lg:hidden flex items-center justify-center h-10 w-10 rounded-lg border border-border bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted touch-manipulation transition-colors"
                             aria-label="Toggle filters"
                             aria-expanded={showFilters}
                         >
@@ -127,7 +127,7 @@ function HomePageContent() {
                             type="button"
                             onClick={() => setViewMode(viewMode === "grid" ? "map" : "grid")}
                             aria-label={viewMode === "grid" ? "Switch to map view" : "Switch to grid view"}
-                            className="sm:hidden flex items-center justify-center h-10 w-10 rounded-lg border border-border bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted transition-colors touch-manipulation"
+                            className="lg:hidden flex items-center justify-center h-10 w-10 rounded-lg border border-border bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted transition-colors touch-manipulation"
                         >
                             <Icon name={viewMode === "grid" ? "map" : "grid"} className="h-5 w-5" />
                         </button>
@@ -135,7 +135,7 @@ function HomePageContent() {
 
                     {/* Filters - Toggleable on mobile, always visible inline on desktop */}
                     <div
-                        className={`mt-2 sm:mt-0 grid grid-cols-2 gap-4 sm:flex sm:flex-row sm:items-center sm:gap-2 ${showFilters ? "grid" : "hidden sm:flex"}`}
+                        className={`mt-2 lg:mt-0 ${showFilters ? "grid grid-cols-2 gap-4 sm:flex sm:flex-row sm:flex-wrap sm:items-center sm:gap-2" : "hidden lg:flex lg:flex-row lg:items-center lg:gap-2"}`}
                     >
                         {/* Property Type */}
                         <Select
@@ -249,9 +249,9 @@ function HomePageContent() {
                 </div>
 
                 {/* Listing type tabs - Show admin tabs if user can manage users (admin) */}
-                <div className="mb-4 sm:mb-6 flex items-center px-1">
+                <div className="mb-4 sm:mb-6 flex items-center justify-center px-1">
                     {/* Spacer to keep tabs centered on desktop */}
-                    <div className="hidden sm:flex flex-1" />
+                    <div className="hidden lg:flex flex-1" />
                     <div
                         role="tablist"
                         aria-label={canManageUsers ? "Property status" : "Listing type"}
@@ -307,7 +307,7 @@ function HomePageContent() {
                     </div>
 
                     {/* Grid/Map toggle - right side, desktop only */}
-                    <div className="hidden sm:flex flex-1 justify-end">
+                    <div className="hidden lg:flex flex-1 justify-end">
                         <button
                             type="button"
                             onClick={() => setViewMode(viewMode === "grid" ? "map" : "grid")}
