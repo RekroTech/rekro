@@ -145,27 +145,12 @@ export function PropertyList({
             </div>
 
             {/* Infinite scroll trigger */}
-            <div ref={observerTarget} className="mt-6 sm:mt-8 h-12" />
+            <div ref={observerTarget} className="mt-6 sm:mt-8" />
 
             {/* Loading indicator */}
             {isFetchingNextPage && (
                 <div className="flex justify-center items-center py-4">
                     <Loader size="md" />
-                </div>
-            )}
-
-            {/* Scroll to top button */}
-            {!hasNextPage && allProperties.length > 0 && (
-                <div className="text-center">
-                    <button
-                        onClick={() => {
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-primary-600 bg-primary-500/10 hover:bg-primary-500/15 active:bg-primary-500/20 rounded-lg transition-colors touch-manipulation min-h-[44px]"
-                    >
-                        <Icon name="arrow-up" className="h-5 w-5" />
-                        Back to Top
-                    </button>
                 </div>
             )}
         </div>

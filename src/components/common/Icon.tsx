@@ -1,4 +1,5 @@
 import React from "react";
+import clsx from "clsx";
 
 export type IconName =
     | "plus"
@@ -813,7 +814,7 @@ export function Icon({ name, size = 24, className = "", ...props }: IconProps) {
     if (name === "spinner" || name === "loader") {
         return (
             <div
-                className={`animate-spin rounded-full border-b-2 border-primary-600 ${className}`}
+                className={clsx("animate-spin rounded-full border-b-2 border-primary-600", className)}
                 style={{ width: typeof size === "number" ? `${size}px` : size, height: typeof size === "number" ? `${size}px` : size }}
             />
         );
