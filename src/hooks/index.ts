@@ -10,3 +10,5 @@ export { useDebounce } from "./useDebounce";
 export { useRequireAuth } from "./useRequireAuth";
 export { useToast } from "./useToast";
 export { useMediaQuery } from "./useMediaQuery";
+export { usePlacesAutocomplete } from "./usePlacesAutocomplete";
+export type { PlaceSelection, UsePlacesAutocompleteOptions } from "./usePlacesAutocomplete";

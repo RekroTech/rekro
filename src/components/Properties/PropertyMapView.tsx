@@ -10,6 +10,8 @@ import { loadGoogleMapsScript } from "@/lib/utils/googleMaps";
 
 export interface PropertyMapViewProps {
     search?: string;
+    /** When set, the map immediately flies to these coordinates (bypasses geocoding). */
+    directFlyTo?: { lat: number; lng: number; zoom?: number } | null;
     propertyType?: string;
     minBedrooms?: number;
     minBathrooms?: number;
@@ -22,6 +24,7 @@ export interface PropertyMapViewProps {
 
 export function PropertyMapView({
     search,
+    directFlyTo,
     propertyType,
     minBedrooms,
     minBathrooms,
@@ -51,6 +54,12 @@ export function PropertyMapView({
     const [cardPos, setCardPos] = useState<{ left: number; top: number } | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [flyTo, setFlyTo] = useState<{ lat: number; lng: number; zoom?: number } | null>(null);
+
+    // Immediately fly to coords provided by the autocomplete selection
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (directFlyTo) setFlyTo({ zoom: 14, ...directFlyTo });
+    }, [directFlyTo]);
 
     const allProperties = useMemo(
         () => data?.pages.flatMap((page: { data: Property[] }) => page.data) ?? [],

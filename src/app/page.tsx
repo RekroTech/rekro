@@ -5,6 +5,8 @@ import clsx from "clsx";
 import { PropertyList } from "@/components/Properties/PropertyList";
 import { Icon, Input, Banner, PropertyListSkeleton, Loader } from "@/components/common";
 import { useRoles } from "@/lib/hooks";
+import { usePlacesAutocomplete } from "@/hooks";
+import type { PlaceSelection } from "@/hooks";
 import { useEmailVerification, VerificationErrorModal } from "@/components/Auth";
 import { usePropertyFilters } from "@/components/Properties";
 import { FilterDropdown } from "@/components/Properties/FilterDropdown";
@@ -22,7 +24,20 @@ function HomePageContent() {
     const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
     const [isPending, startTransition] = useTransition();
     const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+    const [mapDirectFlyTo, setMapDirectFlyTo] = useState<{ lat: number; lng: number } | null>(null);
     const filterAnchorRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // Attach Google Places Autocomplete to the search input when in map view
+    usePlacesAutocomplete({
+        inputRef: searchInputRef,
+        enabled: viewMode === "map",
+        onValueChange: (val) => handleSearchChange(val),
+        onPlaceSelect: (place: PlaceSelection) => {
+            handleSearchChange(place.description);
+            setMapDirectFlyTo({ lat: place.lat, lng: place.lng });
+        },
+    });
 
     const {
         filters: {
@@ -103,6 +118,7 @@ function HomePageContent() {
                     {/* Search Input */}
                     <div className="relative flex-1">
                         <Input
+                            ref={searchInputRef}
                             id="search-input"
                             type="search"
                             aria-label={
@@ -112,11 +128,15 @@ function HomePageContent() {
                             }
                             placeholder={
                                 viewMode === "map"
-                                    ? "Suburb, postcode or address…"
+                                    ? "Suburb, city, street or postcode…"
                                     : "Search location or property..."
                             }
                             value={searchQuery}
-                            onChange={(e) => handleSearchChange(e.target.value)}
+                            onChange={(e) => {
+                                handleSearchChange(e.target.value);
+                                // Clear stored coords when user types freely
+                                if (mapDirectFlyTo) setMapDirectFlyTo(null);
+                            }}
                             size="sm"
                             leftIcon={<Icon name="search" className="h-4 w-4" />}
                             rightIcon={
@@ -263,6 +283,7 @@ function HomePageContent() {
                 ) : (
                     <PropertyMapView
                         search={debouncedSearchQuery}
+                        directFlyTo={mapDirectFlyTo}
                         propertyType={propertyType}
                         minBedrooms={bedrooms ? parseInt(bedrooms) : undefined}
                         minBathrooms={bathrooms ? parseInt(bathrooms) : undefined}
