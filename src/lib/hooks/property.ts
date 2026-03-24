@@ -91,7 +91,7 @@ export function useCreateProperty() {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || "Failed to create property");
+                throw new Error(error.error || error.message || "Failed to create property");
             }
 
             return response.json();

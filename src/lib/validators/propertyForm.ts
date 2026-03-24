@@ -89,21 +89,36 @@ export const PropertyAPIRequestSchema = z.object({
 });
 
 // Property insert/update data schema (database layer)
+// Matches the DB PropertyInsert shape and what PropertyForm.tsx sends
 export const PropertyDataSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().nullable().optional(),
-    property_type: z.string(),
-    bedrooms: z.number().int().min(0).max(20),
-    bathrooms: z.number().int().min(0).max(10),
+    property_type: z.string().nullable().optional(),
+    bedrooms: z.number().int().min(0).max(20).nullable().optional(),
+    bathrooms: z.number().int().min(0).max(10).nullable().optional(),
     car_spaces: z.number().int().min(0).max(10).nullable().optional(),
-    furnished: z.boolean(),
-    amenities: z.array(z.string()).default([]),
-    address_full: z.string(),
-    address_street: z.string(),
-    address_city: z.string(),
-    address_state: z.string(),
-    address_postcode: z.string(),
-    address_country: z.string().default("Australia"),
+    furnished: z.boolean().default(false),
+    amenities: z.array(z.string()).nullable().optional(),
+    price: z.number().min(0).default(0),
+    address: z
+        .object({
+            street: z.string(),
+            city: z.string().optional(),
+            suburb: z.string().optional(),
+            state: z.string(),
+            postcode: z.string(),
+            country: z.string().optional(),
+        })
+        .nullable()
+        .optional(),
+    location: z
+        .object({
+            city: z.string(),
+            state: z.string(),
+            country: z.string(),
+        })
+        .nullable()
+        .optional(),
     latitude: z.number().nullable().optional(),
     longitude: z.number().nullable().optional(),
     images: z.array(z.string()).nullable().optional(),
