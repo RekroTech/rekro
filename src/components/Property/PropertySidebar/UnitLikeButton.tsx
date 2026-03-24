@@ -62,7 +62,7 @@ export function UnitLikeButton({ unitId, propertyId, isEntireHome = false }: Uni
             onClick={handleToggleLike}
             disabled={!unitId || isLikeLoading}
             className={clsx(
-                "flex items-center gap-1.5 px-3 py-2 rounded-full transition-all touch-manipulation active:scale-95",
+                "flex items-center gap-1.5 px-2 py-2 rounded-full transition-all touch-manipulation active:scale-95",
                 optimisticLiked
                     ? "bg-danger-500/10 text-danger-500 hover:bg-danger-500/20"
                     : "bg-surface-muted text-text-muted hover:bg-surface-subtle hover:text-danger-500",
