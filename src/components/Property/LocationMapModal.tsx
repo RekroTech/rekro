@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import dynamic from "next/dynamic";
 import { Icon, Modal, Loader } from "@/components/common";
 import { getLocalityString } from "@/lib/utils/locationPrivacy";
+import { TravelTimeSummary } from "@/components/Property/TravelTimeSummary";
 import type { Property } from "@/types/db";
 
 // Lazy load MapView to defer Google Maps API loading (~500KB)
@@ -23,6 +24,8 @@ export interface LocationMapModalProps {
     longitude: number;
     title: string;
     address?: Property["address"] | null;
+    /** Show nearby POIs (train, shopping, school, hospital). Defaults to true. */
+    showNearbyPOIs?: boolean;
 }
 
 export function LocationMapModal({
@@ -32,6 +35,7 @@ export function LocationMapModal({
     longitude,
     title,
     address,
+    showNearbyPOIs = true,
 }: LocationMapModalProps) {
     const exactLocation = useMemo(
         () => ({ lat: latitude, lng: longitude }),
@@ -66,8 +70,12 @@ export function LocationMapModal({
                             title: title,
                         },
                     ]}
+                    showNearbyPOIs={showNearbyPOIs}
+                    poiCenter={exactLocation}
                     className="h-96 w-full rounded-lg"
                 />
+
+                <TravelTimeSummary latitude={latitude} longitude={longitude} />
             </div>
         </Modal>
     );

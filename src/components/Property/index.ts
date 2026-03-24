@@ -17,6 +17,7 @@ export { PropertyAmenities } from "./PropertyAmenities";
 export { LikedUsersCarousal } from "./LikedUsersCarousal";
 export { DiscoverabilityPrompt } from "./DiscoverabilityPrompt";
 export { PropertyErrorBoundary } from "./PropertyErrorBoundary";
+export { TravelTimeSummary } from "./TravelTimeSummary";
 
 // ============================================================================
 // Property Sidebar Components (Client-only)

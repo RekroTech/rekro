@@ -78,7 +78,8 @@ export type IconName =
     | "eye"
     | "eye-off"
     | "grid"
-    | "list";
+    | "list"
+    | "walking";
 
 export interface IconProps extends React.SVGProps<SVGSVGElement> {
     name: IconName;
@@ -777,6 +778,33 @@ const iconPaths: Record<IconName, React.ReactNode> = {
             strokeWidth={2}
             d="M4 6h16M4 10h16M4 14h16M4 18h16"
         />
+    ),
+    walking: (
+        <>
+            {/* head */}
+            <circle cx="13" cy="4" r="1" stroke="currentColor" strokeWidth={2} fill="none" />
+            {/* front leg (knee + foot) */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 19l4-4 .5-3.5 2.5 2.5 1 3.5"
+            />
+            {/* back leg */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19l-1-4 2-4"
+            />
+            {/* torso + arm */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 11l-1-4 5 1 2 2h3"
+            />
+        </>
     ),
 };
 

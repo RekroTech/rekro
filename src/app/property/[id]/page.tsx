@@ -17,6 +17,7 @@ import {
     LikedUsersCarousal,
     DiscoverabilityPrompt,
     PropertyErrorBoundary,
+    TravelTimeSummary,
 } from "@/components/Property";
 import { updateRoomRentsOnOccupancySelection } from "@/lib/utils/pricing";
 
@@ -206,6 +207,14 @@ export default function PropertyDetailPage() {
                                 <p className="text-sm sm:text-base text-text-muted leading-relaxed whitespace-pre-line">
                                     {property.description || "No description available."}
                                 </p>
+                                {property.latitude != null && property.longitude != null && (
+                                    <div className="mt-4">
+                                        <TravelTimeSummary
+                                            latitude={Number(property.latitude)}
+                                            longitude={Number(property.longitude)}
+                                        />
+                                    </div>
+                                )}
                             </div>
                             <PropertyAmenities amenities={property.amenities} />
                         </div>
