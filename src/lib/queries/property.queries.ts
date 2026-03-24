@@ -1,3 +1,7 @@
+import { createClient } from "@/lib/supabase/client";
+import type { Property, GetPropertiesParams, GetPropertiesResponse } from "@/types/property.types";
+import type { Unit } from "@/types/db";
+
 /**
  * Direct Supabase queries for properties
  * Following Next.js 15 + Supabase best practices:
@@ -5,9 +9,49 @@
  * - Complex mutations: Use API routes
  */
 
-import { createClient } from "@/lib/supabase/client";
-import type { Property, GetPropertiesParams, GetPropertiesResponse } from "@/types/property.types";
-import type { Unit } from "@/types/db";
+/** Full-name ↔ abbreviation map for Australian states/territories. */
+const AU_STATE_ALIASES: Record<string, string> = {
+    victoria: "VIC",           vic: "Victoria",
+    "new south wales": "NSW",  nsw: "New South Wales",
+    queensland: "QLD",         qld: "Queensland",
+    "south australia": "SA",   sa: "South Australia",
+    "western australia": "WA", wa: "Western Australia",
+    tasmania: "TAS",           tas: "Tasmania",
+    "northern territory": "NT", nt: "Northern Territory",
+    "australian capital territory": "ACT", act: "Australian Capital Territory",
+};
+
+/**
+ * Tokenise a search string and expand Australian state names / abbreviations
+ * so "Victoria" also matches rows where state = "VIC" (and vice-versa).
+ */
+function buildSearchTokens(search: string): string[] {
+    const tokens = new Set<string>();
+
+    // Word-level tokens (handles most cases)
+    search.trim()
+        .split(/[\s,]+/)
+        .map(t => t.replace(/"/g, "").trim())
+        .filter(t => t.length >= 3)
+        .forEach(t => tokens.add(t));
+
+    // Comma-phrase tokens — catches multi-word states like "New South Wales"
+    search.trim().split(/,\s*/).forEach(part => {
+        const p = part.trim().replace(/"/g, "");
+        if (p.length >= 3) {
+            const alias = AU_STATE_ALIASES[p.toLowerCase()];
+            if (alias) tokens.add(alias);
+        }
+    });
+
+    // Single-token state expansion (e.g. "Victoria" → "VIC", "NSW" → "New South Wales")
+    [...tokens].forEach(t => {
+        const alias = AU_STATE_ALIASES[t.toLowerCase()];
+        if (alias) tokens.add(alias);
+    });
+
+    return [...tokens].slice(0, 15);
+}
 
 /**
  * Bulk fetch likes for multiple units efficiently
@@ -138,10 +182,25 @@ export async function getProperties(
     }
 
     if (search && search.trim() !== "") {
-        const term = `%${search.trim()}%`;
-        query = query.or(
-            `title.ilike.${term},description.ilike.${term},address->>street.ilike.${term},address->>city.ilike.${term},address->>state.ilike.${term},address->>suburb.ilike.${term}`
+        // Tokenise + expand state names/abbreviations so "Victoria" matches "VIC" etc.
+        const tokens = buildSearchTokens(search);
+
+        const fields = [
+            "title",
+            "description",
+            "address->>street",
+            "address->>city",
+            "address->>state",
+            "address->>suburb",
+        ];
+
+        const conditions = tokens.flatMap(token =>
+            fields.map(f => `${f}.ilike."%${token}%"`)
         );
+
+        if (conditions.length > 0) {
+            query = query.or(conditions.join(","));
+        }
     }
 
     const { data, error, count } = await query.range(offset, offset + limit - 1);

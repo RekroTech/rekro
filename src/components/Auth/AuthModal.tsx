@@ -174,7 +174,6 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/", initialError }: A
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Enter your email"
-                                autoFocus
                                 fullWidth
                             />
 

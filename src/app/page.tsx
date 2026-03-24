@@ -28,14 +28,17 @@ function HomePageContent() {
     const filterAnchorRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
-    // Attach Google Places Autocomplete to the search input when in map view
+    // Attach Google Places Autocomplete to the search input in both grid and map views
     usePlacesAutocomplete({
         inputRef: searchInputRef,
-        enabled: viewMode === "map",
+        enabled: true,
         onValueChange: (val) => handleSearchChange(val),
         onPlaceSelect: (place: PlaceSelection) => {
             handleSearchChange(place.description);
-            setMapDirectFlyTo({ lat: place.lat, lng: place.lng });
+            // Only fly to location when in map view
+            if (viewMode === "map") {
+                setMapDirectFlyTo({ lat: place.lat, lng: place.lng });
+            }
         },
     });
 

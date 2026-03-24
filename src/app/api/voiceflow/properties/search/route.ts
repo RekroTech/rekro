@@ -54,17 +54,46 @@ export async function GET(request: NextRequest) {
 
         // Apply filters only if parameters are provided
         if (search && search.trim() !== "") {
-            const term = `%${search.trim()}%`;
-            query = query.or(
-                `title.ilike.${term},description.ilike.${term},address->>street.ilike.${term}`
+            // Tokenise so a full Places address ("100 Castlereagh St, Liverpool NSW 2170, Australia")
+            // matches individual fields like suburb="Liverpool" or state="NSW".
+            const tokens = [
+                ...new Set(
+                    search.trim()
+                        .split(/[\s,]+/)
+                        .map(t => t.replace(/"/g, "").trim())
+                        .filter(t => t.length >= 3)
+                ),
+            ].slice(0, 12);
+
+            const searchFields = [
+                "title", "description",
+                "address->>street", "address->>city",
+                "address->>state", "address->>suburb",
+            ];
+            const conditions = tokens.flatMap(token =>
+                searchFields.map(f => `${f}.ilike."%${token}%"`)
             );
+            if (conditions.length > 0) query = query.or(conditions.join(","));
         }
 
         if (location && location.trim() !== "") {
-            const term = `%${location.trim()}%`;
-            query = query.or(
-                `address->>city.ilike.${term},address->>suburb.ilike.${term},address->>state.ilike.${term},location->>city.ilike.${term},location->>state.ilike.${term}`
+            const tokens = [
+                ...new Set(
+                    location.trim()
+                        .split(/[\s,]+/)
+                        .map(t => t.replace(/"/g, "").trim())
+                        .filter(t => t.length >= 3)
+                ),
+            ].slice(0, 8);
+
+            const locationFields = [
+                "address->>city", "address->>suburb", "address->>state",
+                "location->>city", "location->>state",
+            ];
+            const conditions = tokens.flatMap(token =>
+                locationFields.map(f => `${f}.ilike."%${token}%"`)
             );
+            if (conditions.length > 0) query = query.or(conditions.join(","));
         }
 
         if (propertyType) {
