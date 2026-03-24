@@ -25,45 +25,43 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
 
     return (
         <div className="px-2 sm:px-0 mb-2 sm:mb-4">
-            {property_type && (
-                <div className="text-xs font-semibold uppercase tracking-wide text-primary-600 sm:text-sm">
-                    {property_type}
-                </div>
-            )}
+            <div className="flex items-center justify-between">
+                {property_type && (
+                    <div className="text-xs font-semibold uppercase tracking-wide text-primary-600 sm:text-sm">
+                        {property_type}
+                    </div>
+                )}
+
+                {/* Furnishing badge */}
+                {isFurnished && (
+                    <div className="inline-flex items-center gap-1.5 rounded-full border border-primary-500/20 bg-success-bg px-2 py-1 text-primary-700 sm:px-2.5">
+                        <Icon name="check" className="h-4 w-4" />
+                        <span className="text-xs font-semibold">Furnished</span>
+                    </div>
+                )}
+            </div>
 
             <div className="">
                 <h1 className="min-w-0 flex-1 text-2xl font-bold leading-tight text-text sm:text-3xl sm:leading-tight md:text-4xl">
                     {title}
                 </h1>
             </div>
-            <div className="flex justify-between sm:justify-normal gap-6 mt-2">
-                <p className="mb-2 flex min-w-0 gap-2 text-sm text-text-muted sm:mb-4 sm:text-base items-center">
+            <div className="flex items-start justify-between gap-4 mt-2 mb-2 sm:mb-4">
+                <p className="flex min-w-0 gap-2 text-sm text-text-muted sm:text-base items-center">
                     <Icon name="location" className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />
                     <span className="min-w-0 break-words">{addressText}</span>
-
-                    {hasCoordinates && (
-                        <button
-                            type="button"
-                            onClick={() => setIsMapOpen(true)}
-                            className="ml-1 inline-flex flex-shrink-0 items-center rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-text-muted hover:text-text hover:bg-surface-muted transition-colors"
-                            aria-label="Open map"
-                            title="View on map"
-                        >
-                            View Map
-                        </button>
-                    )}
                 </p>
 
-                {selectedUnit?.size_sqm && (
-                    <div className="flex sm:hidden items-center gap-1 sm:gap-2 bg-surface-muted rounded-md px-2 py-1 self-start">
-                        <Icon
-                            name="home"
-                            className="h-3.5 w-3.5 flex-shrink-0 sm:h-4.5 sm:w-4.5 mb-0.5"
-                        />
-                        <span className="text-sm font-semibold sm:text-base leading-tight">
-                            {selectedUnit.size_sqm} sqm
-                        </span>
-                    </div>
+                {hasCoordinates && (
+                    <button
+                        type="button"
+                        onClick={() => setIsMapOpen(true)}
+                        className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-full border border-primary-500/30 bg-primary-50 dark:bg-primary-900/20 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40 hover:border-primary-500/60 transition-colors"
+                        aria-label="View on map"
+                    >
+                        <Icon name="map" className="h-3.5 w-3.5 flex-shrink-0" />
+                        View on map
+                    </button>
                 )}
             </div>
             {hasCoordinates && (
@@ -77,8 +75,8 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
                 />
             )}
 
-            {/* Property Features with Furnished Badge */}
-            <div className="flex items-center justify-between gap-4">
+            {/* Property Features */}
+            <div className="flex items-center gap-4">
                 <div className="flex flex-wrap items-center gap-x-3 text-text-muted sm:gap-x-6">
                     {bedrooms !== null && bedrooms !== undefined && (
                         <div className="flex items-center gap-1 sm:gap-2">
@@ -117,7 +115,7 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
                     )}
 
                     {selectedUnit?.size_sqm && (
-                        <div className="hidden sm:flex items-center gap-1 sm:gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
                             <Icon
                                 name="home"
                                 className="h-3.5 w-3.5 flex-shrink-0 sm:h-4.5 sm:w-4.5 mb-0.5"
@@ -128,23 +126,6 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
                         </div>
                     )}
                 </div>
-
-                {/* Furnishing badge */}
-                {(isFurnished || furnished !== null) && (
-                    <div className="flex-shrink-0 self-end">
-                        {isFurnished ? (
-                            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary-500/20 bg-success-bg px-2 py-1 text-primary-700 sm:px-2.5">
-                                <Icon name="check" className="h-4 w-4" />
-                                <span className="text-xs font-semibold">Furnished</span>
-                            </div>
-                        ) : (
-                            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-muted px-2 py-1 text-text-muted sm:px-2.5">
-                                <Icon name="x" className="h-4 w-4" />
-                                <span className="text-xs font-semibold">Unfurnished</span>
-                            </div>
-                        )}
-                    </div>
-                )}
             </div>
         </div>
     );

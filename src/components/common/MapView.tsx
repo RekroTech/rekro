@@ -119,33 +119,37 @@ function computePixelPos(
 
 
 /**
- * Teardrop property pin.
+ * Teardrop property pin — adapts fill colour to the app's light / dark theme.
  *
- * Key visibility fixes for dark map tiles:
- *  • White 2.5 px stroke around the entire pin → guaranteed separation from
- *    any tile colour (same technique used by Google/Apple Maps).
- *  • Brighter teal fill (#3db8b0) instead of the near-black #3a7f79.
- *  • Heavy black drop-shadow so the pin lifts off the map surface.
- *  • Large white centre dot — distinguishes pins from flat POI circles at a glance.
+ *  • White 2.5 px stroke around the entire pin → separation from any tile colour.
+ *  • Dark theme  : bright teal (#3db8b0) for normal, deep teal (#2a6b66) for selected.
+ *  • Light theme : brand teal (#3a7f79 = --primary-500) for normal, deep (#255553) for selected.
+ *  • Heavy drop-shadow so the pin lifts off the map surface.
+ *  • Large white centre dot — distinguishes pins from flat POI circles.
  *
- * Normal   : 30 × 40 px — bright teal, anchored at tip.
- * Selected : 36 × 48 px — deep teal + teal outer glow, anchored at tip.
+ * Normal   : 30 × 40 px — anchored at tip.
+ * Selected : 36 × 48 px — outer glow, anchored at tip.
  */
-function createPinIcon(selected: boolean): google.maps.Icon {
+function createPinIcon(selected: boolean, isDark = true): google.maps.Icon {
+    // Use the app's primary-500 token (#3a7f79) in light mode for brand consistency;
+    // brighter variants in dark mode so the pin stays visible on dark map tiles.
+    const normalFill   = isDark ? "#3db8b0" : "#3a7f79";
+    const selectedFill = isDark ? "#2a6b66" : "#255553";
+    const glowColor    = isDark ? "#3db8b0" : "#3a7f79";
+
     if (selected) {
         const svg = `<svg width="36" height="48" viewBox="0 0 36 48" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- teal outer glow — signals selection clearly -->
     <filter id="glow" x="-60%" y="-40%" width="220%" height="200%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"/>
-      <feFlood flood-color="#3db8b0" flood-opacity="0.85" result="col"/>
+      <feFlood flood-color="${glowColor}" flood-opacity="0.85" result="col"/>
       <feComposite in="col" in2="blur" operator="in" result="shadow"/>
       <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
   <g filter="url(#glow)">
     <path d="M18,2 C10,2 3,9 3,17 C3,26 10,37 18,46 C26,37 33,26 33,17 C33,9 26,2 18,2 Z"
-          fill="#2a6b66" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
+          fill="${selectedFill}" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
     <circle cx="18" cy="17" r="6.5" fill="white" opacity="0.95"/>
   </g>
 </svg>`;
@@ -158,14 +162,13 @@ function createPinIcon(selected: boolean): google.maps.Icon {
 
     const svg = `<svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- black drop-shadow lifts the pin off the dark tiles -->
     <filter id="sh" x="-50%" y="-30%" width="200%" height="180%">
       <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.7"/>
     </filter>
   </defs>
   <g filter="url(#sh)">
     <path d="M15,2 C8,2 2,8 2,14.5 C2,22 8,31 15,38.5 C22,31 28,22 28,14.5 C28,8 22,2 15,2 Z"
-          fill="#3db8b0" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
+          fill="${normalFill}" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
     <circle cx="15" cy="14.5" r="5.5" fill="white" opacity="0.95"/>
   </g>
 </svg>`;
@@ -230,9 +233,7 @@ export function MapView({
     // POI refs
     const poiMarkersRef = useRef<google.maps.Marker[]>([]);
     const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
-
-    // Keep a ref so the marker-creation effect can read the current selectedId
-    // without needing it as a dependency (avoids full marker recreation on click).
+    
     const selectedIdRef = useRef<string | null | undefined>(selectedId);
     useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
@@ -270,7 +271,7 @@ export function MapView({
             return;
         }
 
-        // Map is always dark — matches the app's dark UI on all platforms.
+        // Map colour scheme follows the system dark/light preference
         googleMapRef.current = new google.maps.Map(mapRef.current, {
             center,
             zoom,
@@ -317,7 +318,7 @@ export function MapView({
                 position: { lat: markerData.lat, lng: markerData.lng },
                 map: googleMapRef.current!,
                 title: markerData.title,
-                icon: createPinIcon(isSelected),
+                icon: createPinIcon(isSelected, true), // map is always dark
                 zIndex: isSelected ? 9999 : undefined,
                 optimized: false,
             });
@@ -341,11 +342,11 @@ export function MapView({
 
         if (prevId) {
             const m = markerIdMapRef.current.get(prevId);
-            if (m) { m.setIcon(createPinIcon(false)); m.setZIndex(0); }
+            if (m) { m.setIcon(createPinIcon(false, true)); m.setZIndex(0); }
         }
         if (selectedId) {
             const m = markerIdMapRef.current.get(selectedId);
-            if (m) { m.setIcon(createPinIcon(true)); m.setZIndex(9999); }
+            if (m) { m.setIcon(createPinIcon(true, true)); m.setZIndex(9999); }
         }
     }, [selectedId, isScriptLoaded]);
 
@@ -453,16 +454,6 @@ export function MapView({
                                 optimized: false,
                             });
 
-                            // Propagate click to Google Maps' native place info panel
-                            marker.addListener("click", () => {
-                                const pos = marker.getPosition();
-                                if (pos && place.place_id) {
-                                    google.maps.event.trigger(map, "click", {
-                                        latLng: pos,
-                                        placeId: place.place_id,
-                                    });
-                                }
-                            });
 
                             poiMarkersRef.current.push(marker);
                         });
@@ -476,9 +467,7 @@ export function MapView({
             poiMarkersRef.current.forEach((m) => m.setMap(null));
             poiMarkersRef.current = [];
         };
-    // poiCenter is split into primitives so a new object reference from the parent
-    // doesn't re-fire the effect when the actual coordinates haven't changed.
-    // poiRadius is intentionally omitted — each POI_CATEGORY carries its own radius.
+
     // POI_CATEGORIES / createPOIIcon are module-level constants (stable references).
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showNearbyPOIs, poiCenter?.lat, poiCenter?.lng, isScriptLoaded]);
