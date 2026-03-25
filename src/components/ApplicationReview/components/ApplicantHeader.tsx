@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { User, Mail, Phone } from "lucide-react";
 import { Icon } from "@/components/common";
 import type { UserProfile } from "@/types/user.types";
 
@@ -27,7 +28,7 @@ export const ApplicantHeader = React.memo(({ user, propertyTypeDisplay }: Applic
                             </div>
                         ) : (
                             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[var(--radius-card)] bg-surface-muted border-4 border-primary-500/20 flex items-center justify-center shadow-lg ring-2 ring-primary-500/10">
-                                <Icon name="user" className="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" />
+                                <Icon icon={User} size={{ base: 40, sm: 48 }} className="text-text-muted" />
                             </div>
                         )}
                     </div>
@@ -75,9 +76,14 @@ interface ContactBadgeProps {
 }
 
 const ContactBadge = React.memo(({ icon, value }: ContactBadgeProps) => {
+    const IconComponent = icon === "mail" ? Mail : Phone;
     return (
         <div className="flex items-center gap-1.5 text-xs bg-card border border-border px-2.5 sm:px-3 py-1.5 rounded-[var(--radius-pill)] shadow-sm">
-            <Icon name={icon} className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400 flex-shrink-0" />
+            <Icon
+                icon={IconComponent}
+                size={14}
+                className="text-primary-600 dark:text-primary-400 flex-shrink-0"
+            />
             <span className="text-text truncate max-w-[200px] sm:max-w-none">{value}</span>
         </div>
     );

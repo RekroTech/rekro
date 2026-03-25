@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Phone, ChevronLeft, Check } from "lucide-react";
 import { Modal } from "@/components/common/Modal";
 import { Icon } from "@/components/common/Icon";
 import { Button } from "@/components/common/Button";
@@ -214,7 +215,7 @@ export function PhoneVerificationModal({
                 {/* Phone display */}
                 <div className="flex flex-col items-center gap-1 text-center">
                     <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center mb-1">
-                        <Icon name="phone" className="w-5 h-5 text-primary-500" />
+                        <Icon icon={Phone} size={20} className="text-primary-500" />
                     </div>
                     <p className="text-xs text-text-muted uppercase tracking-widest font-medium">
                         {step === "send" ? "Send code to" : "Code sent to"}
@@ -307,7 +308,7 @@ export function PhoneVerificationModal({
                                 fullWidth
                                 onClick={handleBack}
                             >
-                                <Icon name="chevron-left" className="w-4 h-4 mr-1" />
+                                <Icon icon={ChevronLeft} size={16} className="mr-1" />
                                 Back
                             </Button>
                             <Button
@@ -317,7 +318,7 @@ export function PhoneVerificationModal({
                                 disabled={isVerifying || !otpComplete}
                                 onClick={handleVerifyOtp}
                             >
-                                <Icon name="check" className="w-4 h-4 mr-1" />
+                                <Icon icon={Check} size={16} className="mr-1" />
                                 {isVerifying ? "Verifying…" : "Submit"}
                             </Button>
                         </div>

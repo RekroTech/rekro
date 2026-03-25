@@ -7,6 +7,14 @@ export type InclusionType = "furniture" | "bills" | "cleaning" | "carpark" | "st
 
 export type UnitStatus = "active" | "leased" | "inactive";
 
+/**
+ * Mirrors the LISTING_TYPES values — controls which price badges appear on a property card:
+ * - "all"          → entire-home price + all room prices
+ * - "entire_home"  → entire-home price only
+ * - "room"         → room prices only
+ */
+export type ListingTab = "all" | "entire_home" | "room";
+
 export interface Inclusion {
     selected: boolean;
     price: number;

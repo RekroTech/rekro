@@ -1,6 +1,7 @@
 import React from "react";
 import { Icon } from "./Icon";
 import { clsx } from "clsx";
+import { ChevronLeft } from "lucide-react";
 
 export type BackButtonProps = Omit<
     React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -34,7 +35,7 @@ export const BackButton = React.forwardRef<HTMLButtonElement, BackButtonProps>(
                 )}
                 {...props}
             >
-                <Icon name="chevron-left" className="shrink-0 h-4 sm:h-5 w-4 sm:w-5" />
+                <Icon icon={ChevronLeft} size={20} className="shrink-0" />
                 <span>Back</span>
             </button>
         );

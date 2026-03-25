@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Eye, FileText, House, MapPin, Search } from "lucide-react";
 import Image from "next/image";
 import { Button, Icon, BackButton } from "@/components/common";
 import {
@@ -90,7 +91,7 @@ export default function ApplicationsPage() {
                     >
                         <div className="max-w-md mx-auto">
                             <div className="bg-surface-muted rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                                <Icon name="document" className="w-10 h-10 text-text-subtle" />
+                                <Icon icon={FileText} size={40} className="text-text-subtle" />
                             </div>
                             <h3 className="text-xl font-semibold text-text mb-2">
                                 No Applications Yet
@@ -104,7 +105,7 @@ export default function ApplicationsPage() {
                                 size="md"
                                 onClick={() => (window.location.href = "/")}
                             >
-                                <Icon name="search" className="w-4 h-4 mr-2" />
+                                <Icon icon={Search} size={16} className="mr-2" />
                                 Browse Properties
                             </Button>
                         </div>
@@ -133,8 +134,9 @@ export default function ApplicationsPage() {
                                             ) : (
                                                 <div className="w-full h-full bg-surface-muted flex items-center justify-center">
                                                     <Icon
-                                                        name="home"
-                                                        className="w-12 h-12 text-text-subtle"
+                                                        icon={House}
+                                                        size={48}
+                                                        className="text-text-subtle"
                                                     />
                                                 </div>
                                             )}
@@ -150,8 +152,9 @@ export default function ApplicationsPage() {
                                                     </h3>
                                                     <div className="flex items-center gap-2 text-xs sm:text-sm text-text-muted">
                                                         <Icon
-                                                            name="location"
-                                                            className="w-4 h-4 flex-shrink-0"
+                                                            icon={MapPin}
+                                                            size={16}
+                                                            className="flex-shrink-0"
                                                         />
                                                         <span className="truncate">
                                                             {property.location.city},{" "}
@@ -167,7 +170,7 @@ export default function ApplicationsPage() {
                                                     }
                                                     className="border border-border flex-shrink-0 w-full sm:w-auto justify-center"
                                                 >
-                                                    <Icon name="eye" className="w-4 h-4 mr-2" />
+                                                    <Icon icon={Eye} size={16} className="mr-2" />
                                                     View Property
                                                 </Button>
                                             </div>

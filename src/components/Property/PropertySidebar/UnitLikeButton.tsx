@@ -6,6 +6,7 @@ import { Icon } from "@/components/common";
 import { useAuthModal } from "@/contexts";
 import { useSessionUser, useToggleUnitLike, useUnitLike, useUnitLikesCount } from "@/lib/hooks";
 import { useToast } from "@/hooks";
+import { Heart } from "lucide-react";
 
 interface UnitLikeButtonProps {
     unitId: string;
@@ -77,8 +78,8 @@ export function UnitLikeButton({ unitId, propertyId, isEntireHome = false }: Uni
             }
         >
             <Icon
-                name="heart"
-                className="w-5 h-5"
+                icon={Heart}
+                size={20}
                 fill={optimisticLiked ? "currentColor" : "none"}
                 stroke="currentColor"
                 strokeWidth={optimisticLiked ? 0 : 2}

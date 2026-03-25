@@ -55,14 +55,29 @@ export const AMENITIES = [
     "Elevator",
 ] as const;
 
+export const ROOM_UNIT_FEATURES = [
+    "Single Bed",
+    "Double Bed",
+    "Queen Bed",
+    "Bed Side Table",
+    "Lamp",
+    "Chair",
+    "Desk",
+    "Wardrobe",
+    "Drawers",
+    "Kitchenette",
+    "Ensuite",
+    "Balcony",
+] as const;
+
 export const DEFAULT_FORM_DATA = {
-    title: "",
     description: "",
     property_type: "",
     bedrooms: "1",
     bathrooms: "1",
     car_spaces: "",
     furnished: false,
+    bills_included: false,
     amenities: [],
     address_full: "",
     address_street: "",
@@ -81,7 +96,6 @@ export const DEFAULT_UNIT_DATA = {
     unit_description: "",
     price: "",
     bond_amount: "",
-    bills_included: false,
     min_lease: "6",
     max_lease: "12",
     max_occupants: "",
@@ -91,5 +105,6 @@ export const DEFAULT_UNIT_DATA = {
     status: "active" as const,
     is_active: true,
     is_available: true,
+    features: [] as string[],
     availability_notes: "",
 };

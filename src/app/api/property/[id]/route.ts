@@ -155,7 +155,7 @@ export async function PUT(
 
         if (imageFiles.length > 0) {
             try {
-                const uploadResults = await uploadPropertyFiles(imageFiles, propertyId);
+                const uploadResults = await uploadPropertyFiles(imageFiles, propertyId, supabase);
                 const newImagePaths = uploadResults.map((result) => result.path);
                 imagePaths = [...imagePaths, ...newImagePaths];
             } catch (uploadError) {

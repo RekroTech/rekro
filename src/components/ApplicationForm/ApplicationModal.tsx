@@ -6,6 +6,7 @@ import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
 import type { ModalButton } from "@/components/common/Modal";
 import type { RentalFormData } from "@/components/Property/types";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useApplication } from "@/lib/hooks";
 import type { ModalStep } from "./types";
 import { ApplicationReview } from "../ApplicationReview";
@@ -84,7 +85,7 @@ export function ApplicationModal({
             variant: "primary",
             disabled: !modalActionState.canSubmit || modalActionState.isSubmitting,
             isLoading: modalActionState.isSubmitting,
-            icon: step === "application" ? "chevron-right" : "check",
+            icon: step === "application" ? ChevronRight : Check,
             iconPosition: "right",
         };
 
@@ -94,7 +95,7 @@ export function ApplicationModal({
                   onClick: modalActionState.onBack,
                   variant: "secondary",
                   disabled: modalActionState.isSubmitting,
-                  icon: "chevron-left",
+                  icon: ChevronLeft,
                   iconPosition: "left",
               }
             : {

@@ -3,14 +3,14 @@
 import React from "react";
 import { clsx } from "clsx";
 import { Icon } from "./Icon";
-import type { IconName } from "./Icon";
+import type { LucideIcon } from "lucide-react";
 
 export type SegmentedControlSize = "sm" | "md";
 
 export interface SegmentedControlOption<T extends string | number | boolean> {
     value: T;
     label: React.ReactNode;
-    iconName?: IconName;
+    icon?: LucideIcon;
     disabled?: boolean;
     ariaLabel?: string;
 }
@@ -67,8 +67,8 @@ export function SegmentedControl<T extends string | number | boolean>({
                             )}
                         >
                             <span className="inline-flex items-center justify-center gap-2">
-                                {opt.iconName ? (
-                                    <Icon name={opt.iconName} className="w-4 h-4" />
+                                {opt.icon ? (
+                                    <Icon icon={opt.icon} size={16} />
                                 ) : null}
                                 {opt.label}
                             </span>

@@ -29,9 +29,10 @@ export function getApproximateLocation(
 }
 
 /**
- * Format address to show the full address including street, suburb/city, state and postcode
+ * Format address to show suburb/city, state and postcode (optionally including street).
  * @param address Full address object
- * @returns Full address string (e.g., "12 Main St, Bondi Beach, NSW 2026")
+ * @param includeStreet Whether to include the street component (default: true)
+ * @returns Address string (e.g., "Bondi Beach, NSW 2026" or "12 Main St, Bondi Beach, NSW 2026")
  */
 export function getLocalityString(address?: {
     street?: string;
@@ -39,12 +40,12 @@ export function getLocalityString(address?: {
     city?: string;
     state?: string;
     postcode?: string;
-}): string {
+}, includeStreet: boolean = true): string {
     if (!address) return "";
 
     const parts: string[] = [];
 
-    if (address.street) {
+    if (includeStreet && address.street) {
         parts.push(address.street);
     }
 

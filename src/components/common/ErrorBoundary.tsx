@@ -4,6 +4,7 @@ import { ErrorBoundary as ReactErrorBoundary, FallbackProps } from "react-error-
 import * as Sentry from "@sentry/nextjs";
 import { Button } from "./Button";
 import { Icon } from "./Icon";
+import { AlertCircle } from "lucide-react";
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
     return (
@@ -11,7 +12,7 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
             <div className="max-w-md w-full bg-card border border-border rounded-lg p-6 shadow-lg">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
-                        <Icon name="alert-circle" className="h-6 w-6 text-red-600 dark:text-red-400" />
+                        <Icon icon={AlertCircle} size={24} className="text-red-600 dark:text-red-400" />
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-foreground">

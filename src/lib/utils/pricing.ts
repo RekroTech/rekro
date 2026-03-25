@@ -9,7 +9,7 @@
  * - No NaN/Infinity paths - all public functions return finite numbers
  */
 import type { Unit } from "@/types/db";
-import type { Property } from "@/types/property.types";
+import { ListingTab, Property } from "@/types/property.types";
 import {
     CARPARK_COST_PER_WEEK,
     FURNITURE_COST,
@@ -610,3 +610,31 @@ export function updateRoomRentsOnOccupancySelection(
 
     return { targetRent, occupants, roomRentsById };
 }
+
+// ============================================================================
+// Price Badge Helpers (used by PropertyCard)
+// ============================================================================
+
+/**
+ * Returns the ordered list of units whose price badges should be shown on a property card,
+ * based on the active listing-type tab / user role.
+ */
+export function getPriceBadges(units: Unit[] | undefined, mode: ListingTab): Unit[] {
+    if (!units?.length) return [];
+
+    const entireHome = units.find((u) => u.listing_type === "entire_home") ?? null;
+    const rooms = [...units.filter((u) => u.listing_type !== "entire_home")].sort(
+        (a, b) => (a.name ?? "").localeCompare(b.name ?? "")
+    );
+
+    switch (mode) {
+        case "entire_home":
+            return entireHome ? [entireHome] : [];
+        case "room":
+            return rooms;
+        case "all":
+        default:
+            return [...(entireHome ? [entireHome] : []), ...rooms];
+    }
+}
+

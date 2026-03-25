@@ -1,5 +1,24 @@
 ﻿import { Icon } from "@/components/common";
-import type { IconName } from "@/components/common";
+import type { SvgIcon } from "@/components/common";
+import { FlameKindling, LucideIcon } from "lucide-react";
+import {
+    Archive,
+    ArrowUpDown,
+    Building2,
+    Car,
+    Check,
+    Dumbbell,
+    Flame,
+    BookOpen,
+    Shield,
+    Trees,
+    Utensils,
+    WashingMachine,
+    Waves,
+    Wifi,
+    Wind,
+    PawPrint,
+} from "lucide-react";
 import { PARKING_OPTIONS } from "@/components/PropertyForm";
 
 interface PropertyAmenitiesProps {
@@ -7,32 +26,32 @@ interface PropertyAmenitiesProps {
 }
 
 // Direct mapping of predefined amenities to their icons
-const AMENITY_ICON_MAP: Record<string, IconName> = {
-    "Air Conditioning": "aircon",
-    Heating: "heating",
-    "Wi-Fi": "wifi",
-    Pool: "pool",
-    Gym: "gym",
-    Laundry: "laundry",
-    Dishwasher: "dishwasher",
-    Balcony: "balcony",
-    Garden: "garden",
-    "Pet Friendly": "check",
-    "Security System": "check",
-    "BBQ Area": "check",
-    "Study Room": "check",
-    Storage: "check",
-    Elevator: "check",
+const AMENITY_ICON_MAP: Record<string, LucideIcon | SvgIcon> = {
+    "Air Conditioning": Wind,
+    Heating: Flame,
+    "Wi-Fi": Wifi,
+    Pool: Waves,
+    Gym: Dumbbell,
+    Laundry: WashingMachine,
+    Dishwasher: Utensils,
+    Balcony: Building2,
+    Garden: Trees,
+    "Pet Friendly": PawPrint,
+    "Security System": Shield,
+    "BBQ Area": FlameKindling,
+    "Study Room": BookOpen,
+    Storage: Archive,
+    Elevator: ArrowUpDown,
 } as const;
 
-function getAmenityIcon(amenity: string): IconName {
+function getAmenityIcon(amenity: string): LucideIcon | SvgIcon {
     // Check if it's a parking option
     if (PARKING_OPTIONS.some((parking) => amenity.toLowerCase().includes(parking.toLowerCase()))) {
-        return "parking";
+        return Car;
     }
 
     // Return the mapped icon or default
-    return AMENITY_ICON_MAP[amenity] || "check";
+    return AMENITY_ICON_MAP[amenity] || Check;
 }
 
 function isParkingAmenity(amenity: string): boolean {
@@ -73,12 +92,8 @@ export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {
                             >
                                 <div className="text-primary-600 group-hover:text-primary-700 transition-colors flex-shrink-0">
                                     <Icon
-                                        name={
-                                            index === 0 && parkingDescription
-                                                ? "parking"
-                                                : getAmenityIcon(amenity)
-                                        }
-                                        className="w-4 h-4 sm:w-5 sm:h-5"
+                                        icon={index === 0 && parkingDescription ? Car : getAmenityIcon(amenity)}
+                                        size={16}
                                     />
                                 </div>
                                 <span className="text-xs sm:text-sm md:text-base leading-snug">

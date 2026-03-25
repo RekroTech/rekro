@@ -6,6 +6,7 @@ import type { Property } from "@/types/property.types";
 import { useAuthModal, useProfileCompletion } from "@/contexts";
 import { useApplication, useSessionUser } from "@/lib/hooks";
 import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
+import { Info, Circle, Mail, FileText } from "lucide-react";
 import { clsx } from "clsx";
 import {
     getAvailabilityInfo,
@@ -16,7 +17,7 @@ import {
 } from "@/components/Property";
 import { LEASE_MONTH_OPTIONS } from "@/components/PropertyForm";
 import { ApplicationModal } from "@/components/ApplicationForm";
-import { getMaxStartDate, getMinStartDate } from "@/lib/utils";
+import { getLocalityString, getMaxStartDate, getMinStartDate } from "@/lib/utils";
 import { EnquiryForm } from "./EnquiryForm";
 import { ShareDropdown } from "./ShareDropdown";
 import { UnitLikeButton } from "./UnitLikeButton";
@@ -40,6 +41,7 @@ export function PropertySidebar({
     const { data: user } = useSessionUser();
     const { openAuthModal } = useAuthModal();
     const isAuthenticated = !!user;
+    const streetAddress = property.address?.street || getLocalityString(property.address);
 
     // Unit type flags
     const isEntireHome = selectedUnit.listing_type === "entire_home";
@@ -146,8 +148,9 @@ export function PropertySidebar({
                                     maxWidth="max-w-64"
                                 >
                                     <Icon
-                                        name="info-circle"
-                                        className="w-3.5 h-3.5 text-text-muted/70 cursor-help hover:text-primary-500 transition-colors"
+                                        icon={Info}
+                                        size={14}
+                                        className="text-text-muted/70 cursor-help hover:text-primary-500 transition-colors"
                                     />
                                 </Tooltip>
                             </p>
@@ -155,7 +158,7 @@ export function PropertySidebar({
 
                         <div className="flex gap-2">
                             <ShareDropdown
-                                propertyTitle={property.title}
+                                propertyAddress={streetAddress}
                                 propertyId={property.id}
                                 unitId={selectedUnit.id}
                             />
@@ -177,7 +180,7 @@ export function PropertySidebar({
                                         availability.statusColor
                                     )}
                                 >
-                                    <Icon name="dot" className="w-3 h-3" />
+                                    <Icon icon={Circle} size={12} />
                                     {availability.statusText}
                                 </span>
                             </div>
@@ -265,7 +268,7 @@ export function PropertySidebar({
                         className="w-full"
                         onClick={() => setIsEnquiryModalOpen(true)}
                     >
-                        <Icon name="mail" className="w-5 h-5 mr-2" />
+                        <Icon icon={Mail} size={20} className="mr-2" />
                         Enquire Now
                     </Button>
 
@@ -275,7 +278,7 @@ export function PropertySidebar({
                         disabled={isProfileLoading}
                         onClick={handleBookNow}
                     >
-                        <Icon name="document" className="w-5 h-5 mr-2" />
+                        <Icon icon={FileText} size={20} className="mr-2" />
                         {hasSubmittedApplication
                             ? "View Application"
                             : "Book Now"}
@@ -285,7 +288,7 @@ export function PropertySidebar({
                 {!user && (
                     <div className="mt-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
                         <p className="text-xs text-text">
-                            <Icon name="info" className="w-4 h-4 inline mr-1" />
+                            <Icon icon={Info} size={16} className="inline mr-1" />
                             Create an account to save properties and apply
                         </p>
                     </div>

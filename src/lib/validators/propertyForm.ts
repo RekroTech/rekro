@@ -13,13 +13,13 @@ export const UnitStatusSchema = z.enum(["active", "leased", "inactive"]);
 
 // Property form data schema
 export const PropertyFormDataSchema = z.object({
-    title: z.string().min(1, "Title is required").max(200, "Title is too long"),
     description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description is too long"),
     property_type: z.string().min(1, "Property type is required"),
     bedrooms: z.string().regex(/^\d+$/, "Must be a number").refine((val) => parseInt(val) >= 0 && parseInt(val) <= 20, "Bedrooms must be between 0 and 20"),
     bathrooms: z.string().regex(/^\d+$/, "Must be a number").refine((val) => parseInt(val) >= 0 && parseInt(val) <= 10, "Bathrooms must be between 0 and 10"),
     car_spaces: z.string().regex(/^\d+$/, "Must be a number").refine((val) => parseInt(val) >= 0 && parseInt(val) <= 10, "Car spaces must be between 0 and 10"),
     furnished: z.boolean(),
+    bills_included: z.boolean(),
     amenities: z.array(z.string()),
     price: z.string(), // Base rent for the property
     address_full: z.string().min(1, "Full address is required"), // Complete formatted address for display
@@ -40,7 +40,6 @@ export const UnitFormDataSchema = z.object({
     unit_description: z.string().max(1000),
     price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Price must be a valid number"),
     bond_amount: z.string().regex(/^\d+(\.\d{1,2})?$/, "Bond must be a valid number"),
-    bills_included: z.boolean(),
     min_lease: z.string().regex(/^\d+$/, "Must be a number"),
     max_lease: z.string().regex(/^\d+$/, "Must be a number"),
     max_occupants: z.string().regex(/^\d+$/, "Must be a number"),
@@ -91,26 +90,23 @@ export const PropertyAPIRequestSchema = z.object({
 // Property insert/update data schema (database layer)
 // Matches the DB PropertyInsert shape and what PropertyForm.tsx sends
 export const PropertyDataSchema = z.object({
-    title: z.string().min(1).max(200),
     description: z.string().nullable().optional(),
     property_type: z.string().nullable().optional(),
     bedrooms: z.number().int().min(0).max(20).nullable().optional(),
     bathrooms: z.number().int().min(0).max(10).nullable().optional(),
     car_spaces: z.number().int().min(0).max(10).nullable().optional(),
     furnished: z.boolean().default(false),
+    bills_included: z.boolean().default(false),
     amenities: z.array(z.string()).nullable().optional(),
     price: z.number().min(0).default(0),
-    address: z
-        .object({
-            street: z.string(),
-            city: z.string().optional(),
-            suburb: z.string().optional(),
-            state: z.string(),
-            postcode: z.string(),
-            country: z.string().optional(),
-        })
-        .nullable()
-        .optional(),
+    address: z.object({
+        street: z.string(),
+        city: z.string().optional(),
+        suburb: z.string().optional(),
+        state: z.string(),
+        postcode: z.string(),
+        country: z.string().optional(),
+    }),
     location: z
         .object({
             city: z.string(),
@@ -123,7 +119,6 @@ export const PropertyDataSchema = z.object({
     longitude: z.number().nullable().optional(),
     images: z.array(z.string()).nullable().optional(),
     video_url: z.string().url().nullable().optional(),
-    is_published: z.boolean().default(false),
 });
 
 // Unit insert/update data schema (database layer)
@@ -135,7 +130,6 @@ export const UnitDataSchema = z.object({
     description: z.string().nullable().optional(),
     price: z.number().positive(),
     bond_amount: z.number().min(0),
-    bills_included: z.boolean().default(false),
     min_lease: z.number().int().positive().nullable().optional(),
     max_lease: z.number().int().positive().nullable().optional(),
     max_occupants: z.number().int().positive().nullable().optional(),
@@ -144,6 +138,7 @@ export const UnitDataSchema = z.object({
     available_to: z.string().nullable().optional(),
     is_active: z.boolean().default(true),
     is_available: z.boolean().default(true),
+    features: z.array(z.string()).nullable().optional(),
 });
 
 // Type exports

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { clsx } from "clsx";
+import { Eye, Download, X, Settings } from "lucide-react";
 import { Icon, Dropdown } from "@/components/common";
 import type { DropdownItem } from "@/components/common/Dropdown";
 import { formatDateShort, formatDistanceToNow, formatRentalDuration } from "@/lib/utils";
@@ -40,19 +41,19 @@ export function ApplicationCard({
     const dropdownItems: DropdownItem[] = [
         {
             label: "View Application",
-            icon: <Icon name="eye" className="w-4 h-4" />,
+            icon: <Icon icon={Eye} size={16} />,
             onClick: () => setIsDetailsModalOpen(true),
         },
         {
             label: "Download PDF",
-            icon: <Icon name="download" className="w-4 h-4" />,
+            icon: <Icon icon={Download} size={16} />,
             onClick: () => downloadApplication(application),
         },
         ...(canWithdraw(application.status)
             ? [
                   {
                       label: isWithdrawingThis ? "Withdrawing..." : "Withdraw Application",
-                      icon: <Icon name="x" className="w-4 h-4" />,
+                      icon: <Icon icon={X} size={16} />,
                       onClick: () => handleWithdraw(application.id),
                       variant: "danger" as const,
                       disabled: isWithdrawingThis,
@@ -79,7 +80,7 @@ export function ApplicationCard({
                                 getStatusColor(application.status)
                             )}
                         >
-                            <Icon name={getStatusIcon(application.status)} className="w-3.5 h-3.5" />
+                            <Icon icon={getStatusIcon(application.status)} size={14} />
                             <span className="capitalize">{application.status.replace("_", " ")}</span>
                         </div>
                     </div>
@@ -93,7 +94,7 @@ export function ApplicationCard({
                 <Dropdown
                     trigger={
                         <div className="hover:bg-surface-muted rounded-md transition-colors">
-                            <Icon name="settings" className="w-5 h-5 text-text-subtle" />
+                            <Icon icon={Settings} size={20} className="text-text-subtle" />
                         </div>
                     }
                     items={dropdownItems}

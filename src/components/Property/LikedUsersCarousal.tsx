@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import Image from "next/image";
 import { clsx } from "clsx";
+import { ChevronLeft, ChevronRight, Languages, UserRound, X } from "lucide-react";
 import { Icon } from "@/components/common/Icon";
 import { Loader } from "@/components/common";
 import { useUserLikes } from "@/lib/hooks/user";
@@ -85,7 +86,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
                         className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-20 bg-white shadow-xl rounded-full p-3 opacity-0 group-hover/carousel:opacity-100 transition-all duration-300 hover:scale-110 hover:bg-surface"
                         aria-label="Scroll left"
                     >
-                        <Icon name="chevron-left" className="text-text w-5 h-5" />
+                        <Icon icon={ChevronLeft} size={20} className="text-text" />
                     </button>
                 )}
 
@@ -132,7 +133,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
                                             </div>
                                         ) : (
                                             <div className="w-32 h-32 rounded-full bg-surface-muted flex items-center justify-center border-2 border-border mx-auto">
-                                                <Icon name="profile" className="w-14 h-14 text-text-muted" />
+                                                <Icon icon={UserRound} size={56} className="text-text-muted" />
                                             </div>
                                         )}
                                     </div>
@@ -159,7 +160,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
                         className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-20 bg-white shadow-xl rounded-full p-3 opacity-0 group-hover/carousel:opacity-100 transition-all duration-300 hover:scale-110 hover:bg-surface"
                         aria-label="Scroll right"
                     >
-                        <Icon name="chevron-right" className="text-text w-5 h-5" />
+                        <Icon icon={ChevronRight} size={20} className="text-text" />
                     </button>
                 )}
             </div>
@@ -189,7 +190,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
                                     className="p-2 hover:bg-surface rounded-full transition-colors"
                                     aria-label="Close modal"
                                 >
-                                    <Icon name="close" className="w-6 h-6 text-text" />
+                                    <Icon icon={X} size={24} className="text-text" />
                                 </button>
                             </div>
 
@@ -211,7 +212,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
                                             </div>
                                         ) : (
                                             <div className="w-40 h-40 rounded-full bg-surface-muted flex items-center justify-center border-2 border-border">
-                                                <Icon name="profile" className="w-20 h-20 text-text-muted" />
+                                                <Icon icon={UserRound} size={80} className="text-text-muted" />
                                             </div>
                                         )}
                                     </div>
@@ -250,7 +251,7 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
                                     <div className="mb-6">
                                         <h4 className="text-sm font-semibold text-text mb-3">Details</h4>
                                         <div className="flex items-center gap-3">
-                                            <Icon name="map" className="w-5 h-5 text-text-muted flex-shrink-0" />
+                                            <Icon icon={Languages} size={20} className="text-text-muted flex-shrink-0" />
                                             <span className="text-base text-text">{user.native_language}</span>
                                         </div>
                                     </div>

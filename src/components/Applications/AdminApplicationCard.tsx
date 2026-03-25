@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { clsx } from "clsx";
+import { User, CheckCircle, X, Mail } from "lucide-react";
 import Image from "next/image";
 import { Icon, Button } from "@/components/common";
 import { formatDateShort, formatDistanceToNow, formatRentalDuration } from "@/lib/utils";
@@ -83,8 +84,9 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                             ) : (
                                 <div className="w-24 h-24 rounded-lg bg-primary-100 dark:bg-primary-900/30 border-2 border-primary-500/20 flex items-center justify-center">
                                     <Icon
-                                        name="user"
-                                        className="w-12 h-12 text-primary-600 dark:text-primary-400"
+                                        icon={User}
+                                        size={48}
+                                        className="text-primary-600 dark:text-primary-400"
                                     />
                                 </div>
                             )}
@@ -183,7 +185,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                 size="sm"
                                 className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 w-full"
                             >
-                                <Icon name="check-circle" className="w-4 h-4 mr-1" />
+                                <Icon icon={CheckCircle} size={16} className="mr-1" />
                                 <span className="text-sm">Approve</span>
                             </Button>
                             <Button
@@ -196,7 +198,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                 size="sm"
                                 className="w-full"
                             >
-                                <Icon name="x" className="w-4 h-4 mr-1" />
+                                <Icon icon={X} size={16} className="mr-1" />
                                 <span className="text-sm">Reject</span>
                             </Button>
                         </div>
@@ -212,9 +214,9 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                             )}
                         >
                             <Icon
-                                name={application.status === "approved" ? "check-circle" : "x"}
+                                icon={application.status === "approved" ? CheckCircle : X}
+                                size={16}
                                 className={clsx(
-                                    "w-4 h-4",
                                     application.status === "approved"
                                         ? "text-green-600 dark:text-green-400"
                                         : application.status === "rejected"
@@ -255,8 +257,9 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                         ) : (
                             <div className="w-32 h-32 md:w-48 md:h-48 bg-primary-100 dark:bg-primary-900/30 border-2 border-primary-500/20 flex items-center justify-center">
                                 <Icon
-                                    name="user"
-                                    className="w-12 h-12 md:w-16 md:h-16 text-primary-600 dark:text-primary-400"
+                                    icon={User}
+                                    size={48}
+                                    className="md:w-16 md:h-16 text-primary-600 dark:text-primary-400"
                                 />
                             </div>
                         )}
@@ -289,7 +292,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                                 className="text-primary-600 hover:text-primary-700 transition-colors flex items-center gap-1 truncate"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
-                                                <Icon name="mail" className="w-4 h-4 flex-shrink-0" />
+                                                <Icon icon={Mail} size={16} className="flex-shrink-0" />
                                                 <span className="truncate">
                                                     {application.applicant.email}
                                                 </span>
@@ -376,7 +379,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                         size="sm"
                                         className="bg-green-600 hover:bg-green-700 disabled:bg-green-400"
                                     >
-                                        <Icon name="check-circle" className="w-4 h-4 mr-1.5" />
+                                        <Icon icon={CheckCircle} size={16} className="mr-1.5" />
                                         <span>Approve</span>
                                     </Button>
                                     <Button
@@ -388,7 +391,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                         variant="danger"
                                         size="sm"
                                     >
-                                        <Icon name="x" className="w-4 h-4 mr-1.5" />
+                                        <Icon icon={X} size={16} className="mr-1.5" />
                                         <span>Reject</span>
                                     </Button>
                                 </div>
@@ -404,11 +407,11 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                     )}
                                 >
                                     <Icon
-                                        name={
-                                            application.status === "approved" ? "check-circle" : "x"
+                                        icon={
+                                            application.status === "approved" ? CheckCircle : X
                                         }
+                                        size={20}
                                         className={clsx(
-                                            "w-5 h-5",
                                             application.status === "approved"
                                                 ? "text-green-600 dark:text-green-400"
                                                 : application.status === "rejected"

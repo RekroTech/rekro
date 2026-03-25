@@ -1,7 +1,7 @@
-import { Input, Checkbox, Select, Textarea } from "@/components/common";
+import { Checkbox, Input, Select, Textarea } from "@/components/common";
 import { UnitFormData } from "../types";
 import { ListingType } from "@/types/db";
-import { LEASE_MONTH_OPTIONS, STATUS_TABS } from "../constants";
+import { LEASE_MONTH_OPTIONS, ROOM_UNIT_FEATURES, STATUS_TABS } from "../constants";
 import { UnitStatus } from "@/types/property.types";
 
 interface UnitFormProps {
@@ -49,6 +49,15 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
         const isActive = status !== "inactive";
         const isAvailable = status === "active";
         onUpdate(index, { status, is_active: isActive, is_available: isAvailable });
+    };
+
+    const handleFeatureToggle = (feature: string) => {
+        const currentFeatures = unit.features || [];
+        const nextFeatures = currentFeatures.includes(feature)
+            ? currentFeatures.filter((item) => item !== feature)
+            : [...currentFeatures, feature];
+
+        onUpdate(index, { features: nextFeatures });
     };
 
     return (
@@ -132,15 +141,8 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                 </div>
             </div>
 
-            {/* Row 3: Bills Included, Status */}
+            {/* Row 3: Status */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="flex items-end pb-2">
-                    <Checkbox
-                        label="Bills Included"
-                        checked={unit.bills_included}
-                        onChange={(e) => onUpdate(index, { bills_included: e.target.checked })}
-                    />
-                </div>
                 <div>
                     <Select
                         label="Status"
@@ -151,6 +153,23 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
                     />
                 </div>
             </div>
+
+            {/* Row 5: Room Features (room listings only) */}
+            {listingType === "room" && (
+                <div className="p-2">
+                    <h4 className="text-sm text-text-muted mb-3">Unit Features</h4>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {ROOM_UNIT_FEATURES.map((feature) => (
+                            <Checkbox
+                                key={feature}
+                                label={feature}
+                                checked={unit.features?.includes(feature) || false}
+                                onChange={() => handleFeatureToggle(feature)}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Row 4: Unit Description */}
             <div>

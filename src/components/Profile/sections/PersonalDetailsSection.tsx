@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Image as ImageIcon, Shield } from "lucide-react";
 import { Input, Select, Textarea } from "@/components/common";
 import { Icon } from "@/components/common/Icon";
 import type { Gender } from "@/types/db";
@@ -81,7 +82,7 @@ export function PersonalDetailsSection({
                                 style={{ color: "var(--primary-600)" }}
                                 title={`Verified on ${new Date(phoneVerifiedAt!).toLocaleDateString()}`}
                             >
-                                <Icon name="shield" className="w-3.5 h-3.5" />
+                                <Icon icon={Shield} size={14} />
                                 Verified
                             </div>
                         ) : (
@@ -171,7 +172,7 @@ export function PersonalDetailsSection({
                 <div className="mt-2 flex flex-col gap-1.5 px-3 py-2.5 rounded-lg border border-warning-200 bg-warning-50 dark:border-warning-500/20 dark:bg-warning-500/5">
                     {!value.image_url && (
                         <div className="flex items-start gap-2 text-sm">
-                            <Icon name="image" className="w-4 h-4 mt-0.5 shrink-0 text-warning-600 dark:text-warning-200" />
+                            <Icon icon={ImageIcon} size={16} className="mt-0.5 shrink-0 text-warning-600 dark:text-warning-200" />
                             <span>
                                 <span className="font-medium text-warning-800 dark:text-warning-100">Add a profile photo.</span>
                                 <span className="ml-1 text-text-muted">Click on the avatar to upload.</span>
@@ -180,7 +181,7 @@ export function PersonalDetailsSection({
                     )}
                     {!isPhoneVerified && (
                         <div className="flex items-start gap-2 text-sm">
-                            <Icon name="shield" className="w-4 h-4 mt-0.5 shrink-0 text-warning-600 dark:text-warning-200" />
+                            <Icon icon={Shield} size={16} className="mt-0.5 shrink-0 text-warning-600 dark:text-warning-200" />
                             <span>
                                 <span className="font-medium text-warning-800 dark:text-warning-100">Verify your phone number.</span>
                                 <span className="ml-1 text-text-muted">Click Verify inside the phone field above.</span>

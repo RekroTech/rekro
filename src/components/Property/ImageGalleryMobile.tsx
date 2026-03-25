@@ -5,7 +5,7 @@ import { Visual } from "@/components/common";
 
 interface ImageGalleryProps {
     images: string[];
-    title: string;
+    title?: string;
     hideIndicators?: boolean;
     /** Eagerly load the first image when it is the LCP element. */
     priority?: boolean;
@@ -13,7 +13,7 @@ interface ImageGalleryProps {
 
 export function ImageGallery({
     images,
-    title,
+    title = "Property",
     hideIndicators = false,
     priority = false,
 }: ImageGalleryProps) {

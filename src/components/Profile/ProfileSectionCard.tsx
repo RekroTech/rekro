@@ -2,13 +2,24 @@
 
 import { ReactNode } from "react";
 import { clsx } from "clsx";
+import { ChevronDown, ChevronUp, CheckCircle2, DollarSign, FileText, Map, MapPin, Upload, User } from "lucide-react";
 import { Icon } from "@/components/common";
-import type { IconName } from "@/components/common";
+
+const SECTION_ICON_MAP = {
+    document: FileText,
+    profile: User,
+    "map-pin": MapPin,
+    dollar: DollarSign,
+    upload: Upload,
+    map: Map,
+} as const;
+
+type ProfileSectionIconName = keyof typeof SECTION_ICON_MAP;
 
 interface ProfileSectionCardProps {
     title: string;
     description?: string;
-    icon?: IconName;
+    icon?: ProfileSectionIconName;
     completed: boolean;
     completionPercentage: number;
     required?: boolean;
@@ -39,6 +50,8 @@ export function ProfileSectionCard({
           ? "text-yellow-600 dark:text-yellow-400"
           : "text-gray-400 dark:text-gray-500";
 
+    const SectionIcon = SECTION_ICON_MAP[icon] ?? FileText;
+
     return (
         <div
             className="rounded-xl border-2 overflow-hidden transition-all bg-surface-subtle dark:bg-surface border-border"
@@ -51,7 +64,7 @@ export function ProfileSectionCard({
             >
                 <div className="flex items-center gap-4">
                     <div className={"p-2 rounded-lg bg-card dark:bg-surface-muted"}>
-                        <Icon name={icon} className="w-5 h-5 text-text-muted" />
+                        <Icon icon={SectionIcon} size={20} className="text-text-muted" />
                     </div>
 
                     <div className="text-left">
@@ -75,7 +88,7 @@ export function ProfileSectionCard({
                         <div className="flex items-center gap-2">
                             {completed ? (
                                 <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                    <Icon name="check-circle" className="w-5 h-5" />
+                                    <Icon icon={CheckCircle2} size={20} />
                                     <span className="text-sm font-medium">Complete</span>
                                 </div>
                             ) : (
@@ -88,8 +101,9 @@ export function ProfileSectionCard({
 
                     {/* Expand/Collapse Icon */}
                     <Icon
-                        name={isExpanded ? "chevron-up" : "chevron-down"}
-                        className="w-5 h-5 text-text-muted"
+                        icon={isExpanded ? ChevronUp : ChevronDown}
+                        size={20}
+                        className="text-text-muted"
                     />
                 </div>
             </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AlertCircle } from "lucide-react";
 import type { Property } from "@/types/property.types";
 import { useProperties } from "@/lib/hooks";
 import { MapView, Icon } from "@/components/common";
@@ -74,7 +75,6 @@ export function PropertyMapView({
                     id: p.id,
                     lat: p.latitude as number,
                     lng: p.longitude as number,
-                    title: p.title,
                 })),
         [allProperties]
     );
@@ -111,7 +111,6 @@ export function PropertyMapView({
         // 1. Check if any loaded property matches by title, suburb, city, street, postcode or state
         const match = allProperties.find((p) => {
             if (p.latitude == null || p.longitude == null) return false;
-            if (p.title?.toLowerCase().includes(q)) return true;
             const addr = p.address;
             if (!addr) return false;
             return (
@@ -170,7 +169,7 @@ export function PropertyMapView({
     if (isError) {
         return (
             <div className="rounded-[var(--radius-lg)] border border-danger-500 bg-danger-50 p-6 text-center">
-                <Icon name="alert-circle" className="mx-auto h-12 w-12 text-danger-500" />
+                <Icon icon={AlertCircle} size={48} className="mx-auto text-danger-500" />
                 <h3 className="mt-4 text-lg font-semibold text-danger-700">Error loading map</h3>
                 <p className="mt-2 text-sm text-danger-600">
                     {error?.message || "An unexpected error occurred"}

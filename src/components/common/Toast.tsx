@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { clsx } from "clsx";
-import { Icon, type IconName } from "./Icon";
+import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
+import { Icon } from "./Icon";
+import type { LucideIcon } from "lucide-react";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 
@@ -15,25 +17,25 @@ export interface ToastProps {
 
 const toastConfig: Record<
     ToastType,
-    { icon: IconName; iconColor: string; borderColor: string }
+    { icon: LucideIcon; iconColor: string; borderColor: string }
 > = {
     success: {
-        icon: "check-circle",
+        icon: CheckCircle2,
         iconColor: "text-primary-500",
         borderColor: "border-primary-200",
     },
     error: {
-        icon: "alert-circle",
+        icon: AlertCircle,
         iconColor: "text-[var(--danger-500)]",
         borderColor: "border-[var(--danger-500)]/20",
     },
     info: {
-        icon: "info-circle",
+        icon: Info,
         iconColor: "text-secondary-500",
         borderColor: "border-secondary-200",
     },
     warning: {
-        icon: "alert-circle",
+        icon: AlertCircle,
         iconColor: "text-[var(--warning-500)]",
         borderColor: "border-[var(--warning-500)]/20",
     },
@@ -67,7 +69,7 @@ export function Toast({ message, type = "success", duration = 3000, onClose }: T
             style={{ borderRadius: "var(--radius-input)" }}
             role="alert"
         >
-            <Icon name={config.icon} className={clsx("w-5 h-5 flex-shrink-0", config.iconColor)} />
+            <Icon icon={config.icon} size={20} className={clsx("flex-shrink-0", config.iconColor)} />
             <p className="text-sm font-medium text-foreground min-w-0 flex-1 whitespace-normal break-words">
                 {message}
             </p>
@@ -76,7 +78,7 @@ export function Toast({ message, type = "success", duration = 3000, onClose }: T
                 className="text-text-muted hover:text-foreground transition-colors flex-shrink-0"
                 aria-label="Close notification"
             >
-                <Icon name="x" className="w-4 h-4" />
+                <Icon icon={X} size={16} />
             </button>
         </div>
     );

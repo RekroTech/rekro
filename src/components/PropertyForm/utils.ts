@@ -9,13 +9,13 @@ export function getInitialFormData(property?: Property): PropertyFormData {
     }
 
     return {
-        title: property.title || "",
         description: property.description || "",
         property_type: property.property_type || "",
         bedrooms: property.bedrooms?.toString() || "1",
         bathrooms: property.bathrooms?.toString() || "1",
         car_spaces: property.car_spaces?.toString() || "",
         furnished: property.furnished || false,
+        bills_included: property.bills_included || false,
         amenities: property.amenities || [],
         ...parseAddress(property.address),
         price: property.price?.toString() || "",

@@ -14,6 +14,7 @@ export { UnitsSelector } from "./UnitsSelector";
 export { ImageGallery } from "./ImageGallery";
 export { ImageGallery as ImageGalleryMobile } from "./ImageGalleryMobile";
 export { PropertyAmenities } from "./PropertyAmenities";
+export { UnitFeatures } from "./UnitFeatures";
 export { LikedUsersCarousal } from "./LikedUsersCarousal";
 export { DiscoverabilityPrompt } from "./DiscoverabilityPrompt";
 export { PropertyErrorBoundary } from "./PropertyErrorBoundary";

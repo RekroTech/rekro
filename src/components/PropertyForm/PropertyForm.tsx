@@ -178,13 +178,13 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                         "id" | "created_at" | "updated_at" | "images" | "video_url" | "created_by"
                     >
                 > = {
-                    title: formData.title,
                     description: formData.description || null,
                     property_type: formData.property_type || null,
                     bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
                     bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
                     car_spaces: formData.car_spaces ? parseInt(formData.car_spaces) : null,
                     furnished: formData.furnished,
+                    bills_included: formData.bills_included,
                     amenities: formData.amenities.length > 0 ? formData.amenities : null,
                     price: formData.price ? parseInt(formData.price) : 0,
                     address: {
@@ -214,14 +214,18 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                         description: unit.unit_description || null,
                         price: unit.price ? parseInt(unit.price) : 0,
                         bond_amount: unit.bond_amount ? parseInt(unit.bond_amount) : null,
-                        bills_included: unit.bills_included,
                         min_lease: unit.min_lease ? parseInt(unit.min_lease) : null,
                         max_lease: unit.max_lease ? parseInt(unit.max_lease) : null,
                         max_occupants: unit.max_occupants ? parseInt(unit.max_occupants) : null,
                         size_sqm: unit.size_sqm ? parseFloat(unit.size_sqm) : null,
                         available_from: unit.available_from || null,
                         available_to: unit.available_to || null,
+                        is_active: unit.is_active ?? true,
                         is_available: unit.is_available ?? true,
+                        features:
+                            unit.listing_type === "room" && unit.features.length > 0
+                                ? unit.features
+                                : null,
                     };
 
                     // Only include id if it exists (for UPDATE), otherwise omit it (for CREATE)
@@ -246,13 +250,13 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                     PropertyInsert,
                     "id" | "created_at" | "updated_at" | "images"
                 > = {
-                    title: formData.title,
                     description: formData.description || null,
                     property_type: formData.property_type || null,
                     bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
                     bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
                     car_spaces: formData.car_spaces ? parseInt(formData.car_spaces) : null,
                     furnished: formData.furnished,
+                    bills_included: formData.bills_included,
                     amenities: formData.amenities.length > 0 ? formData.amenities : null,
                     price: formData.price ? parseInt(formData.price) : 0,
                     address: {
@@ -272,7 +276,6 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                             : null,
                     latitude: formData.latitude ?? null,
                     longitude: formData.longitude ?? null,
-                    is_published: false,
                 };
 
                 // Prepare units data array
@@ -282,14 +285,18 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                     description: unit.unit_description || null,
                     price: unit.price ? parseInt(unit.price) : 0,
                     bond_amount: unit.bond_amount ? parseInt(unit.bond_amount) : null,
-                    bills_included: unit.bills_included,
                     min_lease: unit.min_lease ? parseInt(unit.min_lease) : null,
                     max_lease: unit.max_lease ? parseInt(unit.max_lease) : null,
                     max_occupants: unit.max_occupants ? parseInt(unit.max_occupants) : null,
                     size_sqm: unit.size_sqm ? parseFloat(unit.size_sqm) : null,
                     available_from: unit.available_from || null,
                     available_to: unit.available_to || null,
+                    is_active: unit.is_active ?? true,
                     is_available: unit.is_available ?? true,
+                    features:
+                        unit.listing_type === "room" && unit.features.length > 0
+                            ? unit.features
+                            : null,
                 }));
 
                 await createProperty.mutateAsync({

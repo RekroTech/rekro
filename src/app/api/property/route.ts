@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         // Step 3: Upload images if provided
         if (imageFiles.length > 0) {
             try {
-                const uploadResults = await uploadPropertyFiles(imageFiles, property.id);
+                const uploadResults = await uploadPropertyFiles(imageFiles, property.id, supabase);
                 const imagePaths = uploadResults.map((result) => result.path);
 
                 // Update property with image paths

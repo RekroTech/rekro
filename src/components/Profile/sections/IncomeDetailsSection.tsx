@@ -1,5 +1,6 @@
 "use client";
 
+import { Building2, User, BookOpen } from "lucide-react";
 import type { EmploymentStatus } from "@/types/db";
 import { Input, Select, SegmentedControl, Upload, UploadPresets } from "@/components/common";
 import { useDocumentManager } from "../hooks";
@@ -45,8 +46,8 @@ export function IncomeDetailsSection({ userId, data, onChange }: IncomeDetailsSe
                         })
                     }
                     options={[
-                        { value: "working", label: "Working", iconName: "building" },
-                        { value: "not_working", label: "Not working", iconName: "user" },
+                        { value: "working", label: "Working", icon: Building2 },
+                        { value: "not_working", label: "Not working", icon: User },
                     ]}
                 />
             </div>
@@ -125,8 +126,8 @@ export function IncomeDetailsSection({ userId, data, onChange }: IncomeDetailsSe
                             value={data.studentStatus ?? "not_student"}
                             onChange={(studentStatus) => onChange({ studentStatus })}
                             options={[
-                                { value: "student", label: "Student", iconName: "book" },
-                                { value: "not_student", label: "Not a student", iconName: "user" },
+                                { value: "student", label: "Student", icon: BookOpen },
+                                { value: "not_student", label: "Not a student", icon: User },
                             ]}
                         />
                     </div>

@@ -1,6 +1,8 @@
+import type { LucideIcon } from "lucide-react";
+
 export interface EmailVerificationError {
     title: string;
     message: string;
-    icon: "info" | "x";
+    icon: LucideIcon;
     canResend: boolean;
 }

@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import Image from "next/image";
 import { clsx } from "clsx";
+import { Share2, Loader2, Image as ImageIcon, User, Mail, Info, CheckCircle2 } from "lucide-react";
 import { Icon } from "@/components/common";
 import type { ShareableProfile } from "@/types/user.types";
 import { useProfileCompletion } from "@/contexts/ProfileCompletionContext";
@@ -116,7 +117,7 @@ export function ProfileCard({
                     className="absolute top-4 right-4 p-2 hover:bg-surface-muted rounded-lg transition-colors focus-visible:outline-none focus-visible:shadow-[0_0_0_4px_var(--focus-ring)]"
                     aria-label="Share profile"
                 >
-                    <Icon name="share" className="w-5 h-5 text-text-muted" />
+                    <Icon icon={Share2} size={20} className="text-text-muted" />
                 </button>
             )}
 
@@ -173,27 +174,29 @@ export function ProfileCard({
                                         <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             {isUploadingImage ? (
                                                 <Icon
-                                                    name="spinner"
-                                                    className="w-6 h-6 text-white animate-spin"
+                                                    icon={Loader2}
+                                                    size={24}
+                                                    className="text-white animate-spin"
                                                 />
                                             ) : (
-                                                <Icon name="image" className="w-6 h-6 text-white" />
+                                                <Icon icon={ImageIcon} size={24} className="text-white" />
                                             )}
                                         </div>
                                     )}
                                 </>
                             ) : (
                                 <div className={clsx("w-20 h-20 rounded-full bg-surface-muted flex items-center justify-center border-2 relative", badgeBorderColor)}>
-                                    <Icon name="profile" className="w-10 h-10 text-text-muted" />
+                                    <Icon icon={User} size={40} className="text-text-muted" />
                                     {editable && (
                                         <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             {isUploadingImage ? (
                                                 <Icon
-                                                    name="spinner"
-                                                    className="w-6 h-6 text-white animate-spin"
+                                                    icon={Loader2}
+                                                    size={24}
+                                                    className="text-white animate-spin"
                                                 />
                                             ) : (
-                                                <Icon name="image" className="w-6 h-6 text-white" />
+                                                <Icon icon={ImageIcon} size={24} className="text-white" />
                                             )}
                                         </div>
                                     )}
@@ -225,12 +228,12 @@ export function ProfileCard({
                 {/* Contact Information */}
                 <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                        <Icon name="mail" className="w-4 h-4 text-text-muted" />
+                        <Icon icon={Mail} size={16} className="text-text-muted" />
                         <p className="text-sm text-text">{profile.email}</p>
                     </div>
                     {profile.phone && (
                         <div className="flex items-center gap-2">
-                            <Icon name="info" className="w-4 h-4 text-text-muted" />
+                            <Icon icon={Info} size={16} className="text-text-muted" />
                             <p className="text-sm text-text">{profile.phone}</p>
                         </div>
                     )}
@@ -300,8 +303,9 @@ export function ProfileCard({
                                 <h3 className="text-base font-bold text-primary-600 dark:text-primary-400">RENT PASS</h3>
                                 {profile.completionPercentage === 100 && (
                                     <Icon
-                                        name="check-circle"
-                                        className="w-4 h-4 text-primary-600 dark:text-primary-400"
+                                        icon={CheckCircle2}
+                                        size={16}
+                                        className="text-primary-600 dark:text-primary-400"
                                     />
                                 )}
                             </div>

@@ -3,7 +3,8 @@
  * Shared utilities for application status handling and styling
  */
 
-import type { IconName } from "@/components/common";
+import type { LucideIcon } from "lucide-react";
+import { FileText, Info, CheckCircle, AlertCircle, X } from "lucide-react";
 import { ApplicationWithDetails } from "@/components/Applications/types";
 import { generateApplicationPDF } from "@/lib/utils";
 
@@ -30,24 +31,24 @@ export function getStatusColor(status: string): string {
 }
 
 /**
- * Get icon name for application status
+ * Get icon component for application status
  * @param status - Application status
- * @returns Icon name for the status
+ * @returns Lucide icon component for the status
  */
-export function getStatusIcon(status: string): IconName {
+export function getStatusIcon(status: string): LucideIcon {
     switch (status) {
         case "submitted":
-            return "document";
+            return FileText;
         case "under_review":
-            return "info-circle";
+            return Info;
         case "approved":
-            return "check-circle";
+            return CheckCircle;
         case "rejected":
-            return "alert-circle";
+            return AlertCircle;
         case "withdrawn":
-            return "x";
+            return X;
         default:
-            return "document";
+            return FileText;
     }
 }
 

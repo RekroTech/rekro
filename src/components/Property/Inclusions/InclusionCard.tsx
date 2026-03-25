@@ -2,6 +2,7 @@
 
 import React from "react";
 import { clsx } from "clsx";
+import { Check } from "lucide-react";
 import { Icon } from "@/components/common";
 
 interface InclusionCardProps {
@@ -54,7 +55,7 @@ export function InclusionCard({
                             : "bg-card border-border text-transparent"
                     )}
                 >
-                    <Icon name="check" className="h-4 w-4" />
+                    <Icon icon={Check} size={16} />
                 </span>
 
                 <div className="min-w-0 flex-1">

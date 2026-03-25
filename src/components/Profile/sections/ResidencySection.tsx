@@ -1,5 +1,6 @@
 "use client";
 
+import { User, Users } from "lucide-react";
 import { Upload, UploadPresets, SegmentedControl, Select } from "@/components/common";
 import { VISA_TYPE_OPTIONS } from "@/components/Profile";
 import type { ResidencyFormState } from "../types";
@@ -39,8 +40,8 @@ export function ResidencySection({ userId, data, onChange }: ResidencySectionPro
                     });
                 }}
                 options={[
-                    { value: true, label: "Citizen", iconName: "user" },
-                    { value: false, label: "Resident", iconName: "users" },
+                    { value: true, label: "Citizen", icon: User },
+                    { value: false, label: "Resident", icon: Users },
                 ]}
             />
 

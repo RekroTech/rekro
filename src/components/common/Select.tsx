@@ -1,6 +1,7 @@
 ﻿import React, { forwardRef, useId } from "react";
 import { clsx } from "clsx";
 import { Icon } from "./Icon";
+import { ChevronDown } from "lucide-react";
 
 export type SelectSize = "sm" | "md" | "lg";
 
@@ -97,7 +98,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         ))}
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
-                        <Icon name="chevron-down" className="w-5 h-5" />
+                        <Icon icon={ChevronDown} size={20} />
                     </div>
                 </div>
                 {error && (

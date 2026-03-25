@@ -1,4 +1,4 @@
-import { Address, Input, Select, Textarea } from "@/components/common";
+import { Address, Select, Textarea } from "@/components/common";
 import { PropertyFormData } from "../types";
 import { PROPERTY_TYPES } from "../constants";
 
@@ -58,33 +58,25 @@ export function BasicInformationSection({
             </div>
 
             <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Input
-                        label="Title"
-                        type="text"
-                        value={formData.title}
-                        onChange={(e) => updateFormData({ title: e.target.value })}
-                        placeholder="e.g., Modern 3-Bedroom House in Suburb"
-                        required
-                    />
-
-                    <Select
-                        label="Property Type"
-                        value={formData.property_type}
-                        onChange={(e) => updateFormData({ property_type: e.target.value })}
-                        options={PROPERTY_TYPES}
-                        required
-                    />
-                </div>
-
-                <div className="space-y-4">
-                    <Address
-                        label="Address"
-                        value={formData.address_full}
-                        onChange={(value) => updateFormData({ address_full: value })}
-                        onAddressSelect={handleAddressSelect}
-                        placeholder="Start typing to search for an address..."
-                    />
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                    <div className="flex-1">
+                        <Address
+                            label="Address"
+                            value={formData.address_full}
+                            onChange={(value) => updateFormData({ address_full: value })}
+                            onAddressSelect={handleAddressSelect}
+                            placeholder="Start typing to search for an address..."
+                        />
+                    </div>
+                    <div className="shrink-0">
+                        <Select
+                            label="Property Type"
+                            value={formData.property_type}
+                            onChange={(e) => updateFormData({ property_type: e.target.value })}
+                            options={PROPERTY_TYPES}
+                            required
+                        />
+                    </div>
                 </div>
                 <Textarea
                     label="Description"

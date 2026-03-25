@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef } from "react";
-import type { Property } from "@/types/property.types";
+import { AlertCircle, Home } from "lucide-react";
+import type { ListingTab, Property } from "@/types/property.types";
 import { useProperties, useSessionUser } from "@/lib/hooks";
 import { Icon, Loader } from "@/components/common";
 import { PropertyCard } from "./PropertyCard";
@@ -18,6 +19,7 @@ export interface PropertyListProps {
     listingType?: string;
     status?: "active" | "leased" | "inactive";
     showEditButton?: boolean;
+    priceDisplayMode?: ListingTab;
     likedOnly?: boolean;
     emptyMessage?: string;
     emptyStateAction?: React.ReactNode;
@@ -35,6 +37,7 @@ export function PropertyList({
     listingType,
     status,
     showEditButton = false,
+    priceDisplayMode,
     likedOnly = false,
     emptyMessage,
     emptyStateAction,
@@ -100,7 +103,7 @@ export function PropertyList({
     if (isError) {
         return (
             <div className="rounded-[var(--radius-lg)] border border-danger-500 bg-danger-50 p-6 text-center">
-                <Icon name="alert-circle" className="mx-auto h-12 w-12 text-danger-500" />
+                <Icon icon={AlertCircle} size={48} className="mx-auto text-danger-500" />
                 <h3 className="mt-4 text-lg font-semibold text-danger-700">
                     Error loading properties
                 </h3>
@@ -115,7 +118,7 @@ export function PropertyList({
     if (allProperties.length === 0) {
         return (
             <div className="text-center py-12">
-                <Icon name="home" className="mx-auto h-12 w-12 text-text-muted" />
+                <Icon icon={Home} size={48} className="mx-auto text-text-muted" />
                 <h3 className="mt-4 text-lg font-semibold text-text">No properties found</h3>
                 <p className="mt-2 text-sm text-text-muted">
                     {emptyMessage || "Try adjusting your search or filters."}
@@ -139,6 +142,7 @@ export function PropertyList({
                         key={property.id}
                         property={property}
                         showEditButton={showEditButton}
+                        priceDisplayMode={priceDisplayMode}
                         priority={index === 0}
                     />
                 ))}

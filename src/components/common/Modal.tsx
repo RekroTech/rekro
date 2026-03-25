@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { clsx } from "clsx";
 import { Icon } from "@/components/common/Icon";
 import { Button } from "@/components/common/Button";
+import { Loader2, LucideIcon, X } from "lucide-react";
 
 export interface ModalButton {
     /** Button label */
@@ -17,7 +18,7 @@ export interface ModalButton {
     /** Whether button is in loading state */
     isLoading?: boolean;
     /** Icon to show on button */
-    icon?: "chevron-left" | "chevron-right" | "check" | "close" | "spinner";
+    icon?: LucideIcon;
     /** Icon position */
     iconPosition?: "left" | "right";
 }
@@ -189,7 +190,7 @@ export function Modal({
                                     aria-label="Close dialog"
                                     className="text-text-muted hover:text-foreground transition-colors"
                                 >
-                                    <Icon name="close" className="h-5 w-5 sm:h-6 sm:w-6" />
+                                    <Icon icon={X} size={24} />
                                 </button>
                             </div>
                         )}
@@ -257,8 +258,10 @@ function ModalButton({ button, className }: ModalButtonProps) {
 
     const renderIcon = () => {
         if (!icon && !isLoading) return null;
-        const iconName = isLoading ? "spinner" : icon!;
-        return <Icon name={iconName} className={clsx("w-4 h-4", isLoading && "animate-spin")} />;
+
+        const IconComponent = isLoading ? Loader2 : icon!;
+
+        return <Icon icon={IconComponent} size={16} className={clsx(isLoading && "animate-spin")} />;
     };
 
     return (

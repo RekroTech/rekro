@@ -18,6 +18,19 @@ export const getPropertyTypeDisplay = (property: Property, selectedUnit: Unit): 
 
 
 /**
+ * Format an Address object into a human-readable string
+ */
+export const formatAddress = (address: Property['address']): string => {
+    const parts = [
+        address.street,
+        address.suburb || address.city,
+        address.state,
+        address.postcode,
+    ].filter(Boolean);
+    return parts.join(", ");
+};
+
+/**
  * Format currency amount
  */
 export const formatCurrency = (amount: number | null | undefined, frequency?: string): string | undefined => {

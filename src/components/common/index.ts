@@ -33,7 +33,17 @@ export { ErrorBoundary } from "./ErrorBoundary";
 export { Alert } from "./Alert";
 export { Toast } from "./Toast";
 export { Loader } from "./Loader";
-export { Icon } from "./Icon";
+export {
+	Icon,
+	WhatsAppIcon,
+	FacebookIcon,
+	XIcon,
+	BedsideTableIcon,
+	ChairIcon,
+	DeskIcon,
+	WardrobeIcon,
+	DrawersIcon,
+} from "./Icon";
 export { Visual } from "./Visual";
 export { BackButton } from "./BackButton";
 export { Skeleton, PropertyCardSkeleton, PropertyListSkeleton, ApplicationCardSkeleton, PropertyDetailSkeleton } from "./Skeleton";
@@ -61,7 +71,7 @@ export type { BannerProps, BannerVariant } from "./Banner";
 export type { AlertProps, AlertVariant } from "./Alert";
 export type { ToastProps, ToastType } from "./Toast";
 export type { LoaderProps, LoaderSize } from "./Loader";
-export type { IconProps, IconName } from "./Icon";
+export type { IconProps, SvgIcon } from "./Icon";
 export type { TooltipProps, TooltipPosition } from "./Tooltip";
 export type { PropertyMediaProps } from "./Visual";
 export type { BackButtonProps } from "./BackButton";

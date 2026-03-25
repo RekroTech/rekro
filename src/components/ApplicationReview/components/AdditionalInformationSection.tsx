@@ -1,5 +1,6 @@
 import React from "react";
 import { clsx } from "clsx";
+import { Info, Check, X, Phone } from "lucide-react";
 import { Icon } from "@/components/common";
 import { DocumentList } from "./DocumentList";
 import type { UserProfile } from "@/types/user.types";
@@ -31,7 +32,7 @@ export const AdditionalInformationSection = React.memo(({ user }: AdditionalInfo
         <div className="bg-card rounded-[var(--radius-card)] border border-border overflow-hidden">
             <div className="px-4 py-3 bg-surface-subtle border-b border-border">
                 <h4 className="font-semibold text-text text-sm flex items-center">
-                    <Icon name="info" className="w-4 h-4 mr-2 text-primary-600 dark:text-primary-400" />
+                    <Icon icon={Info} size={16} className="mr-2 text-primary-600 dark:text-primary-400" />
                     Additional Information
                 </h4>
             </div>
@@ -47,7 +48,6 @@ export const AdditionalInformationSection = React.memo(({ user }: AdditionalInfo
                                 <PreferenceBadge
                                     label={profile.has_pets ? "Has Pets" : "No Pets"}
                                     isActive={profile.has_pets}
-                                    icon={profile.has_pets ? "check" : "x"}
                                     variant="primary"
                                 />
                             )}
@@ -55,7 +55,6 @@ export const AdditionalInformationSection = React.memo(({ user }: AdditionalInfo
                                 <PreferenceBadge
                                     label={profile.smoker ? "Smoker" : "Non-Smoker"}
                                     isActive={profile.smoker}
-                                    icon={profile.smoker ? "check" : "x"}
                                     variant="warning"
                                 />
                             )}
@@ -73,7 +72,7 @@ export const AdditionalInformationSection = React.memo(({ user }: AdditionalInfo
                             </p>
                             {profile.emergency_contact_phone && (
                                 <p className="text-text-muted text-xs flex items-center gap-1.5">
-                                    <Icon name="phone" className="w-3 h-3" />
+                                    <Icon icon={Phone} size={12} />
                                     {profile.emergency_contact_phone}
                                 </p>
                             )}
@@ -100,11 +99,10 @@ AdditionalInformationSection.displayName = "AdditionalInformationSection";
 interface PreferenceBadgeProps {
     label: string;
     isActive: boolean;
-    icon: "check" | "x";
     variant: "primary" | "warning";
 }
 
-const PreferenceBadge = React.memo(({ label, isActive, icon, variant }: PreferenceBadgeProps) => {
+const PreferenceBadge = React.memo(({ label, isActive, variant }: PreferenceBadgeProps) => {
     return (
         <span
             className={clsx(
@@ -114,7 +112,7 @@ const PreferenceBadge = React.memo(({ label, isActive, icon, variant }: Preferen
                 !isActive && "bg-surface-muted text-text-muted border border-border"
             )}
         >
-            <Icon name={icon} className="w-3.5 h-3.5" />
+            <Icon icon={isActive ? Check : X} size={14} />
             {label}
         </span>
     );

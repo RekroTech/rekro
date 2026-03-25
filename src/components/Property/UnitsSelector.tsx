@@ -1,5 +1,6 @@
 import { Unit } from "@/types/db";
 import { clsx } from "clsx";
+import { Check, FileText, House, Users } from "lucide-react";
 import { Icon } from "@/components/common";
 
 interface UnitsSelectorProps {
@@ -57,7 +58,7 @@ export function UnitsSelector({
                             <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
                                 {isSelected ? (
                                     <div className="bg-primary-600 text-white rounded-full p-0.5">
-                                        <Icon name="check" className="w-3.5 h-3.5" />
+                                        <Icon icon={Check} size={14} />
                                     </div>
                                 ) : (
                                     <span
@@ -97,20 +98,20 @@ export function UnitsSelector({
                             <div className="text-xs text-text-muted flex flex-col gap-2">
                                 {unit.bond_amount && (
                                     <div className="flex items-center gap-1">
-                                        <Icon name="document" className="w-3.5 h-3.5" />$
+                                        <Icon icon={FileText} size={14} />$
                                         {unit.bond_amount} bond
                                     </div>
                                 )}
                                 <div className="flex flex-wrap gap-x-3 gap-y-1">
                                     {unit.size_sqm && (
                                         <div className="flex items-center gap-1">
-                                            <Icon name="home" className="w-3.5 h-3.5 mb-0.5" />
+                                            <Icon icon={House} size={14} className="mb-0.5" />
                                             {unit.size_sqm} sqm
                                         </div>
                                     )}
                                     {unit.max_occupants && (
                                         <div className="flex items-center gap-1.5">
-                                            <Icon name="users" className="w-3.5 h-3.5 mb-0.25" />
+                                            <Icon icon={Users} size={14} className="mb-0.25" />
                                             {unit.max_occupants}{" "}
                                             {unit.max_occupants === 1 ? "person" : "people"}
                                         </div>

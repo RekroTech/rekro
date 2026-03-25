@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { sanitizeFilename } from "@/lib/utils/fileUtils";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface UploadFileResult {
     url: string;
@@ -57,9 +58,10 @@ export async function uploadFiles(
  */
 export async function uploadPropertyFile(
     file: File,
-    propertyId: string
+    propertyId: string,
+    client?: SupabaseClient
 ): Promise<UploadFileResult> {
-    const supabase = createClient();
+    const supabase = client ?? createClient();
 
     // Generate unique filename with UUID and sanitize original filename
     const uuid = crypto.randomUUID();
@@ -85,25 +87,12 @@ export async function uploadPropertyFile(
  */
 export async function uploadPropertyFiles(
     files: File[],
-    propertyId: string
+    propertyId: string,
+    client?: SupabaseClient
 ): Promise<UploadFileResult[]> {
-    return Promise.all(files.map((file) => uploadPropertyFile(file, propertyId)));
+    return Promise.all(files.map((file) => uploadPropertyFile(file, propertyId, client)));
 }
 
-/**
- * Upload property images using new unified bucket
- * Returns only the filename parts (without property/{id}/ prefix)
- */
-export async function uploadPropertyImages(files: File[], propertyId: string): Promise<string[]> {
-    const results = await uploadPropertyFiles(files, propertyId);
-    // Extract only the filename part from the full path: property/{id}/{filename}
-    return results
-        .map((r) => {
-            const parts = r.path.split("/");
-            return parts[parts.length - 1] || "";
-        })
-        .filter((filename): filename is string => filename !== "");
-}
 
 /**
  * Get public URL for a file in the rekro-s3 bucket

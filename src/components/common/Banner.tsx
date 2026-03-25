@@ -1,4 +1,5 @@
 import { clsx } from "clsx";
+import { Check, Info, X } from "lucide-react";
 import { Icon } from "./Icon";
 
 export type BannerVariant = "success" | "error" | "warning" | "info";
@@ -59,8 +60,9 @@ export function Banner({ variant, title, message, onDismiss, className }: Banner
                     )}
                 >
                     <Icon
-                        name={variant === "success" ? "check" : "info"}
-                        className={clsx("h-5 w-5", config.textColor)}
+                        icon={variant === "success" ? Check : Info}
+                        className={config.textColor}
+                        size={20}
                     />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -77,7 +79,7 @@ export function Banner({ variant, title, message, onDismiss, className }: Banner
                         )}
                         aria-label="Dismiss"
                     >
-                        <Icon name="close" className="h-5 w-5" />
+                        <Icon icon={X} size={20} />
                     </button>
                 )}
             </div>

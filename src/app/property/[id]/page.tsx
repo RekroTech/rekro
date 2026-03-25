@@ -13,6 +13,7 @@ import {
     ImageGallery,
     ImageGalleryMobile,
     PropertyAmenities,
+    UnitFeatures,
     PropertySidebar,
     LikedUsersCarousal,
     DiscoverabilityPrompt,
@@ -31,7 +32,9 @@ export default function PropertyDetailPage() {
 
     const { data: property, isLoading, error } = useProperty(propertyId);
 
-    const [selectedUnitId, setSelectedUnitId] = useState<string>(() => searchParams.get("unit") ?? "");
+    const [selectedUnitId, setSelectedUnitId] = useState<string>(
+        () => searchParams.get("unit") ?? ""
+    );
     const [unitOccupancies, setUnitOccupancies] = useState<Record<string, number>>({});
 
     // Initialize selectedUnitId when units are available (must be before early returns)
@@ -119,9 +122,7 @@ export default function PropertyDetailPage() {
         return (
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold text-red-600 mb-4">
-                        No units available
-                    </h1>
+                    <h1 className="text-2xl font-bold text-red-600 mb-4">No units available</h1>
                     <p className="text-text-muted mb-6">
                         This property doesn&apos;t have any rentable units configured.
                     </p>
@@ -143,7 +144,6 @@ export default function PropertyDetailPage() {
             ? getPropertyFileUrls(property.images, propertyId)
             : ["/window.svg"];
 
-
     return (
         <PropertyErrorBoundary>
             <ProfileCompletionProvider>
@@ -154,101 +154,105 @@ export default function PropertyDetailPage() {
                     {/* Property Header */}
                     <PropertyHeader property={property} selectedUnit={selectedUnit} />
 
-                {/* Main Grid: Image Gallery + Content (stacked on mobile, 2/3 on desktop) + Sidebar (1/3 on desktop) */}
-                <div className="grid gap-4 sm:gap-6 mb-8 lg:grid-cols-3">
-                    {/* Image Gallery & Content - Full width on mobile, 2/3 on desktop */}
-                    <div className="lg:col-span-2 min-w-0">
-                        {/* Mobile Image Gallery - Embla Carousel */}
-                        <div className="md:hidden aspect-video rounded-lg overflow-hidden mb-2 sm:mb-4">
-                            <ImageGalleryMobile
-                                images={propertyMedia}
-                                title={property.title}
-                            />
+                    {/* Main Grid: Image Gallery + Content (stacked on mobile, 2/3 on desktop) + Sidebar (1/3 on desktop) */}
+                    <div className="grid gap-4 sm:gap-6 mb-8 lg:grid-cols-3">
+                        {/* Image Gallery & Content - Full width on mobile, 2/3 on desktop */}
+                        <div className="lg:col-span-2 min-w-0">
+                            {/* Mobile Image Gallery - Embla Carousel */}
+                            <div className="md:hidden aspect-video rounded-lg overflow-hidden mb-2 sm:mb-4">
+                                <ImageGalleryMobile images={propertyMedia} />
+                            </div>
+
+                            {/* Desktop Image Gallery */}
+                            <div className="hidden md:block">
+                                <ImageGallery images={propertyMedia} />
+                            </div>
+
+                            {/* Units Section */}
+                            {units.length > 1 && (
+                                <UnitsSelector
+                                    units={units}
+                                    selectedUnitId={selectedUnitId}
+                                    onUnitSelect={handleUnitSelect}
+                                    dynamicPricing={dynamicPricing}
+                                />
+                            )}
+
+                            {/* Sidebar on mobile - Show after units, before description */}
+                            {!isDesktop && (
+                                <div className="mt-4">
+                                    <PropertySidebar
+                                        selectedUnit={selectedUnit}
+                                        property={property}
+                                        dynamicPricing={dynamicPricing}
+                                        onUnitOccupancyChange={(unitId, occupancy) =>
+                                            setUnitOccupancies((prev) => ({
+                                                ...prev,
+                                                [unitId]: occupancy,
+                                            }))
+                                        }
+                                    />
+                                </div>
+                            )}
+
+                            {/* Content */}
+                            <div className="px-2 sm:px-0 space-y-6 sm:space-y-8 mt-6 sm:mt-8">
+                                <div>
+                                    <h2 className="text-xl sm:text-2xl font-bold text-text mb-3 sm:mb-4">
+                                        About the property
+                                    </h2>
+                                    <p className="text-sm sm:text-base text-text-muted leading-relaxed whitespace-pre-line">
+                                        {property.description || "No description available."}
+                                    </p>
+                                    {property.latitude != null && property.longitude != null && (
+                                        <div className="mt-4">
+                                            <TravelTimeSummary
+                                                latitude={Number(property.latitude)}
+                                                longitude={Number(property.longitude)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                                <PropertyAmenities amenities={property.amenities} />
+                                <UnitFeatures features={selectedUnit.features} />
+                            </div>
                         </div>
 
-                        {/* Desktop Image Gallery */}
-                        <div className="hidden md:block">
-                            <ImageGallery
-                                images={propertyMedia}
-                                title={property.title}
-                            />
-                        </div>
-
-                        {/* Units Section */}
-                        {units.length > 1 && (
-                            <UnitsSelector
-                                units={units}
-                                selectedUnitId={selectedUnitId}
-                                onUnitSelect={handleUnitSelect}
-                                dynamicPricing={dynamicPricing}
-                            />
-                        )}
-
-                        {/* Sidebar on mobile - Show after units, before description */}
-                        {!isDesktop && (
-                            <div className="mt-4">
+                        {/* Sidebar - Desktop only */}
+                        {isDesktop && (
+                            <div className="col-span-1 min-w-0">
                                 <PropertySidebar
                                     selectedUnit={selectedUnit}
                                     property={property}
                                     dynamicPricing={dynamicPricing}
                                     onUnitOccupancyChange={(unitId, occupancy) =>
-                                        setUnitOccupancies((prev) => ({ ...prev, [unitId]: occupancy }))
+                                        setUnitOccupancies((prev) => ({
+                                            ...prev,
+                                            [unitId]: occupancy,
+                                        }))
                                     }
                                 />
                             </div>
                         )}
-
-                        {/* Content */}
-                        <div className="px-2 sm:px-0 space-y-6 sm:space-y-8 mt-6 sm:mt-8">
-                            <div>
-                                <h2 className="text-xl sm:text-2xl font-bold text-text mb-3 sm:mb-4">
-                                    About the property
-                                </h2>
-                                <p className="text-sm sm:text-base text-text-muted leading-relaxed whitespace-pre-line">
-                                    {property.description || "No description available."}
-                                </p>
-                                {property.latitude != null && property.longitude != null && (
-                                    <div className="mt-4">
-                                        <TravelTimeSummary
-                                            latitude={Number(property.latitude)}
-                                            longitude={Number(property.longitude)}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                            <PropertyAmenities amenities={property.amenities} />
-                        </div>
                     </div>
 
-                    {/* Sidebar - Desktop only */}
-                    {isDesktop && (
-                        <div className="col-span-1 min-w-0">
-                            <PropertySidebar
-                                selectedUnit={selectedUnit}
-                                property={property}
-                                dynamicPricing={dynamicPricing}
-                                onUnitOccupancyChange={(unitId, occupancy) =>
-                                    setUnitOccupancies((prev) => ({ ...prev, [unitId]: occupancy }))
+                    {/* Users Who Liked Carousel - Only visible for authenticated users */}
+                    {userProfile &&
+                        (userProfile.discoverable ? (
+                            <Suspense
+                                fallback={
+                                    <div className="h-32 animate-pulse bg-surface-subtle rounded-lg" />
                                 }
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* Users Who Liked Carousel - Only visible for authenticated users */}
-                {userProfile && (
-                    userProfile.discoverable ? (
-                        <Suspense fallback={<div className="h-32 animate-pulse bg-surface-subtle rounded-lg" />}>
-                            <div className="my-4 sm:my-12">
-                                <LikedUsersCarousal propertyId={propertyId} />
-                            </div>
-                        </Suspense>
-                    ) : (
-                        <DiscoverabilityPrompt />
-                    )
-                )}
-            </main>
-        </ProfileCompletionProvider>
-    </PropertyErrorBoundary>
+                            >
+                                <div className="my-4 sm:my-12">
+                                    <LikedUsersCarousal propertyId={propertyId} />
+                                </div>
+                            </Suspense>
+                        ) : (
+                            <DiscoverabilityPrompt />
+                        ))}
+                </main>
+            </ProfileCompletionProvider>
+        </PropertyErrorBoundary>
     );
 }

@@ -2,13 +2,13 @@ import { ListingType } from "@/types/db";
 import { UnitStatus } from "@/types/property.types";
 
 export interface PropertyFormData {
-    title: string;
     description: string;
     property_type: string;
     bedrooms: string;
     bathrooms: string;
     car_spaces: string;
     furnished: boolean;
+    bills_included: boolean;
     amenities: string[];
     price: string; // Base rent for the property
     address_full: string; // Complete formatted address for display
@@ -28,7 +28,6 @@ export interface UnitFormData {
     unit_description: string;
     price: string;
     bond_amount: string;
-    bills_included: boolean;
     min_lease: string;
     max_lease: string;
     max_occupants: string;
@@ -38,5 +37,6 @@ export interface UnitFormData {
     status: UnitStatus; // UI field: active, leased, or inactive
     is_active: boolean; // DB field: derived from status
     is_available: boolean; // DB field: derived from status
+    features: string[];
     availability_notes: string;
 }

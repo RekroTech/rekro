@@ -38,6 +38,8 @@ export type {
     Inclusions,
     InclusionType,
     Inclusion,
+    UnitStatus,
+    ListingTab,
 } from "./property.types";
 
 // ============================================================================

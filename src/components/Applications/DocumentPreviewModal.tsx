@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import { Modal, Icon, Loader } from "@/components/common";
+import { AlertCircle, Download, FileText } from "lucide-react";
 
 interface DocumentPreviewModalProps {
     isOpen: boolean;
@@ -143,7 +144,7 @@ export function DocumentPreviewModal({
             return (
                 <div className="flex items-center justify-center h-[500px]">
                     <div className="flex flex-col items-center gap-3">
-                        <Icon name="alert-circle" className="w-12 h-12 text-red-500" />
+                        <Icon icon={AlertCircle} size={48} className="text-red-500" />
                         <p className="text-sm text-text text-center max-w-md">{error}</p>
                         <button
                             onClick={handleDownload}
@@ -197,7 +198,9 @@ export function DocumentPreviewModal({
                             onError={() => {
                                 clearLoadTimeout();
                                 setIsLoading(false);
-                                setError("This PDF couldn't be previewed here. Please open it in a new tab.");
+                                setError(
+                                    "This PDF couldn't be previewed here. Please open it in a new tab."
+                                );
                             }}
                         />
                     </div>
@@ -207,7 +210,7 @@ export function DocumentPreviewModal({
                 return (
                     <div className="flex items-center justify-center h-[500px]">
                         <div className="flex flex-col items-center gap-3 text-center">
-                            <Icon name="file" className="w-12 h-12 text-text-muted" />
+                            <Icon icon={FileText} size={48} className="text-text-muted" />
                             <p className="text-sm text-text font-medium">Preview not available</p>
                             <p className="text-xs text-text-muted max-w-md">
                                 This file type cannot be previewed in the browser. Click the button
@@ -217,7 +220,7 @@ export function DocumentPreviewModal({
                                 onClick={handleDownload}
                                 className="mt-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2"
                             >
-                                <Icon name="download" className="w-4 h-4" />
+                                <Icon icon={Download} size={16} />
                                 Open Document
                             </button>
                         </div>
@@ -251,8 +254,9 @@ export function DocumentPreviewModal({
                 <div className="flex items-center gap-3 p-3 bg-surface-subtle rounded-lg border border-border">
                     <div className="flex-shrink-0 w-10 h-10 rounded-md bg-primary-50 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/50 flex items-center justify-center">
                         <Icon
-                            name="file"
-                            className="w-5 h-5 text-primary-600 dark:text-primary-400"
+                            icon={FileText}
+                            size={20}
+                            className="text-primary-600 dark:text-primary-400"
                         />
                     </div>
                     <div className="flex-1 min-w-0">

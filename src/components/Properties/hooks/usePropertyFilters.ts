@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQueryState, parseAsString } from "nuqs";
+import { useQueryState, parseAsString, parseAsStringLiteral } from "nuqs";
 
 export interface PropertyFilters {
     search: string;
@@ -7,7 +7,7 @@ export interface PropertyFilters {
     propertyType: string;
     bedrooms: string;
     bathrooms: string;
-    listingType: string;
+    listingType: "all" | "entire_home" | "room";
     minPrice: string;
     maxPrice: string;
     furnishedFilter: string;
@@ -38,7 +38,7 @@ export function usePropertyFilters() {
     );
     const [listingType, setListingType] = useQueryState(
         "listingType",
-        parseAsString.withDefault("all")
+        parseAsStringLiteral(["all", "entire_home", "room"] as const).withDefault("all")
     );
     const [minPrice, setMinPrice] = useQueryState(
         "minPrice",

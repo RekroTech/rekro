@@ -5,10 +5,10 @@ import { useSessionUser } from "@/lib/hooks/auth";
 interface UseSharePropertyProps {
     propertyId: string;
     unitId: string;
-    propertyTitle: string;
+    propertyAddress: string;
 }
 
-export function useShareProperty({ propertyId, unitId, propertyTitle }: UseSharePropertyProps) {
+export function useShareProperty({ propertyId, unitId, propertyAddress }: UseSharePropertyProps) {
     const [copied, setCopied] = useState(false);
     const { data: sessionUser } = useSessionUser();
     const createShare = useCreateUnitShare();
@@ -46,15 +46,15 @@ export function useShareProperty({ propertyId, unitId, propertyTitle }: UseShare
                 shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}`;
                 break;
             case "twitter":
-                shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(propertyUrl)}&text=${encodeURIComponent(`Check out this property: ${propertyTitle}`)}`;
+                shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(propertyUrl)}&text=${encodeURIComponent(`Check out this property: ${propertyAddress}`)}`;
                 break;
             case "whatsapp":
-                shareUrl = `https://wa.me/?text=${encodeURIComponent(`Check out this property: ${propertyTitle} ${propertyUrl}`)}`;
+                shareUrl = `https://wa.me/?text=${encodeURIComponent(`Check out this property: ${propertyAddress} ${propertyUrl}`)}`;
                 break;
             case "email": {
-                const subject = encodeURIComponent(`Check out this property: ${propertyTitle}`);
+                const subject = encodeURIComponent(`Check out this property: ${propertyAddress}`);
                 const body = encodeURIComponent(
-                    `I thought you might be interested in this property:\n\n${propertyTitle}\n\n${propertyUrl}`
+                    `I thought you might be interested in this property:\n\n${propertyAddress}\n\n${propertyUrl}`
                 );
                 shareUrl = `mailto:?subject=${subject}&body=${body}`;
                 break;

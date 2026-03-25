@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Modal, Button, Icon } from "@/components/common";
+import { ChevronRight, User } from "lucide-react";
 
 interface ProfileCompletionModalProps {
     isOpen: boolean;
@@ -25,7 +26,7 @@ export function ProfileCompletionModal({
                 {/* Icon and Message */}
                 <div className="flex flex-col items-center text-center mb-6 sm:mb-8 gap-4">
                     <div className="w-16 h-16 rounded-full bg-primary-500/10 flex items-center justify-center">
-                        <Icon name="user" className="w-8 h-8 text-primary-600" />
+                        <Icon icon={User} size={32} className="text-primary-600" />
                     </div>
 
                     <div>
@@ -54,11 +55,10 @@ export function ProfileCompletionModal({
                         className="w-full sm:w-1/2"
                     >
                         Complete Profile
-                        <Icon name="chevron-right" className="w-5 h-5 ml-2" />
+                        <Icon icon={ChevronRight} size={20} className="ml-2" />
                     </Button>
                 </div>
             </div>
         </Modal>
     );
 }
-

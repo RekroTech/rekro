@@ -58,7 +58,7 @@ export type DocumentType =
 export interface Document {
     url: string;
     path: string;
-    uploadedAt: string;
+    uploaded_at: string;
     filename: string;
 }
 
@@ -200,9 +200,8 @@ export interface Database {
                     id: string;
                     landlord_id: string | null;
                     created_by: string | null;
-                    title: string;
                     description: string | null;
-                    address: Address | null;
+                    address: Address;
                     location: Location | null;
                     latitude: number | null;
                     longitude: number | null;
@@ -211,6 +210,7 @@ export interface Database {
                     bathrooms: number | null;
                     car_spaces: number | null;
                     furnished: boolean;
+                    bills_included: boolean;
                     amenities: string[] | null;
                     images: string[] | null;
                     video_url: string | null;
@@ -223,9 +223,8 @@ export interface Database {
                     id?: string;
                     landlord_id?: string | null;
                     created_by?: string | null;
-                    title: string;
                     description?: string | null;
-                    address?: Address | null;
+                    address: Address;
                     location?: Location | null;
                     latitude?: number | null;
                     longitude?: number | null;
@@ -234,6 +233,7 @@ export interface Database {
                     bathrooms?: number | null;
                     car_spaces?: number | null;
                     furnished?: boolean;
+                    bills_included?: boolean;
                     amenities?: string[] | null;
                     images?: string[] | null;
                     video_url?: string | null;
@@ -245,9 +245,8 @@ export interface Database {
                 Update: {
                     landlord_id?: string | null;
                     created_by?: string | null;
-                    title?: string;
                     description?: string | null;
-                    address?: Address | null;
+                    address?: Address;
                     location?: Location | null;
                     latitude?: number | null;
                     longitude?: number | null;
@@ -256,6 +255,7 @@ export interface Database {
                     bathrooms?: number | null;
                     car_spaces?: number | null;
                     furnished?: boolean;
+                    bills_included?: boolean;
                     amenities?: string[] | null;
                     images?: string[] | null;
                     video_url?: string | null;
@@ -273,7 +273,6 @@ export interface Database {
                     description: string | null;
                     price: number;
                     bond_amount: number | null;
-                    bills_included: boolean | null;
                     min_lease: number | null;
                     max_lease: number | null;
                     max_occupants: number | null;
@@ -283,6 +282,7 @@ export interface Database {
                     available_from: string | null;
                     available_to: string | null;
                     is_available: boolean;
+                    features: string[] | null;
                 };
                 Insert: {
                     id?: string;
@@ -292,7 +292,6 @@ export interface Database {
                     description?: string | null;
                     price: number;
                     bond_amount?: number | null;
-                    bills_included?: boolean | null;
                     min_lease?: number | null;
                     max_lease?: number | null;
                     max_occupants?: number | null;
@@ -302,6 +301,7 @@ export interface Database {
                     available_from?: string | null;
                     available_to?: string | null;
                     is_available?: boolean;
+                    features?: string[] | null;
                 };
                 Update: {
                     id?: string;
@@ -311,7 +311,6 @@ export interface Database {
                     description?: string | null;
                     price?: number;
                     bond_amount?: number | null;
-                    bills_included?: boolean | null;
                     min_lease?: number | null;
                     max_lease?: number | null;
                     max_occupants?: number | null;
@@ -320,6 +319,7 @@ export interface Database {
                     available_from?: string | null;
                     available_to?: string | null;
                     is_available?: boolean;
+                    features?: string[] | null;
                 };
             };
             unit_availability: {

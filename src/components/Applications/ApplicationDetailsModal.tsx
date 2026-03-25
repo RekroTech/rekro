@@ -7,6 +7,7 @@ import { formatDateShort, formatRentalDuration } from "@/lib/utils";
 import type { ApplicationWithDetails } from "./types";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { DefinitionItem, DefinitionList } from "@/components/ApplicationReview/components";
+import { Eye, LucideIcon, User, FileText, Calendar, Check, Mail, Phone } from "lucide-react";
 
 interface ApplicationDetailsModalProps {
     isOpen: boolean;
@@ -65,17 +66,22 @@ export function ApplicationDetailsModal({
                                     <p className="text-xl sm:text-2xl font-bold text-primary-600 dark:text-primary-400">
                                         ${application.total_rent}
                                     </p>
-                                    <span className="text-sm font-medium text-text-muted">/week</span>
+                                    <span className="text-sm font-medium text-text-muted">
+                                        /week
+                                    </span>
                                 </div>
-                                {application.proposed_rent && application.proposed_rent !== application.total_rent && (
-                                    <div className="flex items-baseline gap-2">
-                                        <p className="text-sm text-text-muted">Proposed:</p>
-                                        <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">
-                                            ${application.proposed_rent}
-                                        </p>
-                                        <span className="text-xs font-medium text-text-muted">/week</span>
-                                    </div>
-                                )}
+                                {application.proposed_rent &&
+                                    application.proposed_rent !== application.total_rent && (
+                                        <div className="flex items-baseline gap-2">
+                                            <p className="text-sm text-text-muted">Proposed:</p>
+                                            <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">
+                                                ${application.proposed_rent}
+                                            </p>
+                                            <span className="text-xs font-medium text-text-muted">
+                                                /week
+                                            </span>
+                                        </div>
+                                    )}
                             </div>
                         </div>
 
@@ -84,25 +90,25 @@ export function ApplicationDetailsModal({
                                 <InfoBadge
                                     label="Reference"
                                     value={`#${application.id.substring(0, 8).toUpperCase()}`}
-                                    icon="file"
+                                    icon={FileText}
                                     mono
                                 />
                                 <InfoBadge
                                     label="Move-in Date"
                                     value={formatDateShort(application.move_in_date)}
-                                    icon="calendar"
+                                    icon={Calendar}
                                 />
                                 <InfoBadge
                                     label="Duration"
                                     value={
                                         formatRentalDuration(application.rental_duration) || "N/A"
                                     }
-                                    icon="calendar"
+                                    icon={Calendar}
                                 />
                                 <InfoBadge
                                     label="Submitted"
                                     value={formatDateShort(application.submitted_at)}
-                                    icon="check"
+                                    icon={Check}
                                 />
                             </div>
                         </div>
@@ -125,10 +131,7 @@ export function ApplicationDetailsModal({
                                         </div>
                                     ) : (
                                         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[var(--radius-card)] bg-surface-muted border-4 border-primary-500/20 flex items-center justify-center flex-shrink-0 shadow-lg ring-2 ring-primary-500/10">
-                                            <Icon
-                                                name="user"
-                                                className="w-10 h-10 sm:w-12 sm:h-12 text-text-muted"
-                                            />
+                                            <Icon icon={User} size={{ base: 40, sm: 48 }} className="text-text-muted" />
                                         </div>
                                     )}
                                     <div className="flex-1 min-w-0">
@@ -141,14 +144,14 @@ export function ApplicationDetailsModal({
                                         <div className="flex flex-wrap gap-2">
                                             {applicant.email && (
                                                 <ContactBadge
-                                                    icon="mail"
+                                                    icon={Mail}
                                                     value={applicant.email}
                                                     href={`mailto:${applicant.email}`}
                                                 />
                                             )}
                                             {applicant.phone && (
                                                 <ContactBadge
-                                                    icon="phone"
+                                                    icon={Phone}
                                                     value={applicant.phone}
                                                     href={`tel:${applicant.phone}`}
                                                 />
@@ -302,7 +305,7 @@ export function ApplicationDetailsModal({
                                             <div className="flex items-center gap-3 min-w-0 flex-1">
                                                 <div className="flex-shrink-0 w-10 h-10 rounded-[var(--radius-input)] bg-primary-50 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/50 flex items-center justify-center">
                                                     <Icon
-                                                        name="file"
+                                                        icon={FileText}
                                                         className="w-5 h-5 text-primary-600 dark:text-primary-400"
                                                     />
                                                 </div>
@@ -325,7 +328,7 @@ export function ApplicationDetailsModal({
                                                 }
                                                 className="flex-shrink-0 ml-3 px-3 py-1.5 bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/40 dark:hover:bg-primary-900/60 text-primary-600 dark:text-primary-400 rounded-[var(--radius-input)] transition-colors text-xs font-medium flex items-center gap-1.5 border border-primary-200/50 dark:border-primary-700/50"
                                             >
-                                                <Icon name="eye" className="w-3.5 h-3.5" />
+                                                <Icon icon={Eye} size={14} />
                                                 View
                                             </button>
                                         </div>
@@ -351,12 +354,11 @@ export function ApplicationDetailsModal({
     );
 }
 
-
 // Helper component for info badges with icons
 interface InfoBadgeProps {
     label: string;
     value: string;
-    icon: "file" | "calendar" | "check" | "home" | "user" | "mail" | "phone" | "eye";
+    icon: LucideIcon;
     mono?: boolean;
 }
 
@@ -365,8 +367,9 @@ function InfoBadge({ label, value, icon, mono }: InfoBadgeProps) {
         <div className="flex flex-col gap-1.5 text-center">
             <div className="flex items-center justify-center gap-1.5">
                 <Icon
-                    name={icon}
-                    className="w-4 h-4 text-primary-600 dark:text-primary-400 flex-shrink-0"
+                    icon={icon}
+                    size={16}
+                    className="text-primary-600 dark:text-primary-400 flex-shrink-0"
                 />
                 <p className="text-xs text-text-subtle font-medium uppercase tracking-wide">
                     {label}
@@ -379,7 +382,7 @@ function InfoBadge({ label, value, icon, mono }: InfoBadgeProps) {
 
 // Helper component for contact badges
 interface ContactBadgeProps {
-    icon: "mail" | "phone";
+    icon: LucideIcon;
     value: string;
     href: string;
 }
@@ -391,8 +394,9 @@ function ContactBadge({ icon, value, href }: ContactBadgeProps) {
             className="flex items-center gap-1.5 text-xs bg-card border border-border px-2.5 sm:px-3 py-1.5 rounded-[var(--radius-pill)] shadow-sm hover:bg-surface-subtle transition-colors group"
         >
             <Icon
-                name={icon}
-                className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400 flex-shrink-0 group-hover:scale-110 transition-transform"
+                icon={icon}
+                size={14}
+                className="text-primary-600 dark:text-primary-400 flex-shrink-0 group-hover:scale-110 transition-transform"
             />
             <span className="text-text truncate max-w-[200px] sm:max-w-none">{value}</span>
         </a>

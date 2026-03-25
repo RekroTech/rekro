@@ -45,7 +45,6 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
                 unit_description: unit.description || "",
                 price: pricePerWeek,
                 bond_amount: calculatedBond,
-                bills_included: unit.bills_included || false,
                 min_lease: unit.min_lease?.toString() || "6",
                 max_lease: unit.max_lease?.toString() || "12",
                 max_occupants: unit.max_occupants?.toString() || "",
@@ -55,6 +54,7 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
                 status: (unit.is_active ? "active" : "inactive") as UnitStatus,
                 is_active: unit.is_active ?? true,
                 is_available: unit.is_available ?? true,
+                features: unit.features || [],
                 availability_notes: "",
             };
         });
@@ -102,7 +102,7 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
             if (type === "entire_home") {
                 // Keep or create 1 entire home, delete all rooms
                 if (entireHomes[0]) {
-                    newUnits.push(entireHomes[0]);
+                    newUnits.push({ ...entireHomes[0], features: [] });
                 } else if (rooms[0]) {
                     // Copy first room's details to entire_home
                     newUnits.push({
@@ -110,6 +110,7 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
                         id: undefined, // Remove ID to create new unit
                         listing_type: "entire_home",
                         name: "",
+                        features: [],
                     });
                 } else {
                     newUnits.push({ ...DEFAULT_UNIT_DATA, listing_type: "entire_home" });
@@ -152,13 +153,14 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
 
                 // Handle entire home
                 if (entireHomes[0]) {
-                    newUnits.push(entireHomes[0]);
+                    newUnits.push({ ...entireHomes[0], features: [] });
                 } else {
                     newUnits.push({
                         ...DEFAULT_UNIT_DATA,
                         listing_type: "entire_home",
                         name: "Entire Home",
                         max_occupants: "",
+                        features: [],
                     });
                 }
 

@@ -1,4 +1,5 @@
 import { Icon } from "../common/Icon";
+import { Mail, Info } from "lucide-react";
 
 interface EmailSentSuccessProps {
     email?: string;
@@ -10,7 +11,7 @@ export function EmailSentSuccess({ email, message }: EmailSentSuccessProps) {
         <div className="space-y-4 mb-4 sm:mb-6">
             <div className="flex justify-center">
                 <div className="h-16 w-16 rounded-full bg-primary-500/10 flex items-center justify-center">
-                    <Icon name="mail" className="h-8 w-8 text-primary-500" />
+                    <Icon icon={Mail} size={32} className="text-primary-500" />
                 </div>
             </div>
 
@@ -30,8 +31,9 @@ export function EmailSentSuccess({ email, message }: EmailSentSuccessProps) {
             <div className="rounded-[10px] bg-primary-500/10 border border-primary-500/30 p-4">
                 <div className="flex items-start gap-3">
                     <Icon
-                        name="info"
-                        className="h-5 w-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0"
+                        icon={Info}
+                        size={20}
+                        className="text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0"
                     />
                     <div className="text-sm text-primary-600 dark:text-primary-400">
                         <p className="font-semibold mb-1">Click the link in your email to continue</p>

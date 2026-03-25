@@ -104,7 +104,7 @@ export async function getProperties(
 
     // Always fetch units with properties to avoid N+1 query problem
     const unitColumns =
-        "id, listing_type, name, description, price, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
+        "id, listing_type, name, description, price, bond_amount, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available, features";
 
     // Use inner join for filtering by liked properties, listing type, status, or price
     const needsInnerJoin = !!(listingType || likedOnly || status || minPrice !== undefined || maxPrice !== undefined);

@@ -26,6 +26,7 @@ export {
     LEASE_MONTH_OPTIONS,
     PARKING_OPTIONS,
     AMENITIES,
+    ROOM_UNIT_FEATURES,
     DEFAULT_FORM_DATA,
     DEFAULT_UNIT_DATA,
 } from "./constants";

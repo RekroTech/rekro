@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "5");
 
         // Build the query
-        const unitColumns = "id, listing_type, name, description, price, bond_amount, bills_included, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
+        const unitColumns = "id, listing_type, name, description, price, bond_amount, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
 
         let query = supabase
             .from("properties")
@@ -185,7 +185,6 @@ export async function GET(request: NextRequest) {
 
             return {
                 id: property.id,
-                title: property.title,
                 description: property.description,
                 address: address ? {
                     street: address.street,
@@ -205,6 +204,7 @@ export async function GET(request: NextRequest) {
                 bathrooms: property.bathrooms,
                 carSpaces: property.car_spaces,
                 furnished: property.furnished,
+                billsIncluded: property.bills_included,
                 amenities: property.amenities || [],
                 images: property.images || [],
                 videoUrl: property.video_url,
@@ -222,7 +222,6 @@ export async function GET(request: NextRequest) {
                     price: unit.price,
                     priceFormatted: `$${unit.price} per week`,
                     bondAmount: unit.bond_amount,
-                    billsIncluded: unit.bills_included,
                     minLease: unit.min_lease,
                     maxLease: unit.max_lease,
                     maxOccupants: unit.max_occupants,

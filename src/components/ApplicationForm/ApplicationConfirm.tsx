@@ -1,8 +1,9 @@
 import { useMemo } from "react";
+import { Check, Info, Calendar } from "lucide-react";
 import { Icon } from "@/components/common";
 import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
-import { getPropertyTypeDisplay } from "./utils";
+import { getPropertyTypeDisplay, formatAddress } from "./utils";
 
 interface ApplicationConfirmProps {
     property: Property;
@@ -25,9 +26,9 @@ export function ApplicationConfirm({
                 <div className="flex justify-center">
                     <div className="w-8 h-8 sm:w-20 sm:h-20 bg-success-100 rounded-full flex items-center justify-center">
                         <Icon
-                            name="check" 
-                            className="w-12 h-12 text-success-600"
-                            strokeWidth={3}
+                            icon={Check}
+                            size={48}
+                            className="text-success-600"
                         />
                     </div>
                 </div>
@@ -37,7 +38,7 @@ export function ApplicationConfirm({
                         Application Submitted Successfully!
                     </h2>
                     <p className="text-text-muted text-lg">
-                        Your application for <span className="font-semibold">{property.title}</span> has been received.
+                        Your application for <span className="font-semibold">{formatAddress(property.address)}</span> has been received.
                     </p>
                 </div>
             </div>
@@ -45,7 +46,7 @@ export function ApplicationConfirm({
             {/* What Happens Next Section */}
             <div className="bg-surface-subtle border border-border rounded-lg p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-text flex items-center gap-2">
-                    <Icon name="info" className="w-5 h-5 text-primary-600" />
+                    <Icon icon={Info} size={20} className="text-primary-600" />
                     What happens next?
                 </h3>
 
@@ -95,7 +96,7 @@ export function ApplicationConfirm({
                 <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center py-2 border-b border-border">
                         <span className="text-text-muted">Property</span>
-                        <span className="font-medium text-text">{property.title}</span>
+                        <span className="font-medium text-text">{formatAddress(property.address)}</span>
                     </div>
 
                     <div className="flex justify-between items-center py-2 border-b border-border">
@@ -111,7 +112,7 @@ export function ApplicationConfirm({
                     <div className="flex justify-between items-center py-2">
                         <span className="text-text-muted">Status</span>
                         <span className="inline-flex items-center gap-1.5 font-medium text-warning-600">
-                            <Icon name="calendar" className="w-4 h-4" />
+                            <Icon icon={Calendar} size={16} className="text-warning-600" />
                             Pending Review
                         </span>
                     </div>
@@ -121,7 +122,7 @@ export function ApplicationConfirm({
             {/* Action Items */}
             <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
                 <div className="flex gap-3">
-                    <Icon name="info" className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
+                    <Icon icon={Info} size={20} className="text-primary-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 space-y-2">
                         <h4 className="font-semibold text-text">Keep an eye on your email</h4>
                         <p className="text-sm text-text-muted">

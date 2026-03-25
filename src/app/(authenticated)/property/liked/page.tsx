@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { PropertyList } from "@/components/Properties/PropertyList";
 import { Icon, BackButton } from "@/components/common";
 
@@ -18,7 +19,7 @@ export default function LikedPropertiesPage() {
                         href="/"
                         className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 active:bg-primary-800 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                     >
-                        <Icon name="search" className="h-5 w-5" />
+                        <Icon icon={Search} size={20} />
                         Browse Properties
                     </Link>
                 }

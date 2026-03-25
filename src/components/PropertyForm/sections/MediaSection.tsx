@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Property } from "@/types/db";
 import { getPropertyFileUrl } from "@/lib/services/storage.service";
+import { Plus, X } from "lucide-react";
 import { Icon } from "@/components/common";
 import { isVideoFile } from "@/lib/utils";
 
@@ -44,7 +45,7 @@ export function MediaSection({
                         }}
                     />
                     <div className="flex items-center gap-2 rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600">
-                        <Icon name="plus" className="h-5 w-5" />
+                        <Icon icon={Plus} size={20} />
                         Add Media
                     </div>
                 </label>
@@ -77,7 +78,7 @@ export function MediaSection({
                                 className="absolute right-1 top-1 z-10 rounded-full bg-red-500 p-1.5 text-white shadow-lg transition-colors hover:bg-red-600"
                                 title="Remove image"
                             >
-                                <Icon name="x" className="h-4 w-4" />
+                                <Icon icon={X} size={16} />
                             </button>
                         </div>
                     ))}
@@ -118,7 +119,7 @@ export function MediaSection({
                                 className="absolute right-1 top-1 z-10 rounded-full bg-red-500 p-1.5 text-white shadow-lg transition-colors hover:bg-red-600"
                                 title="Remove file"
                             >
-                                <Icon name="x" className="h-4 w-4" />
+                                <Icon icon={X} size={16} />
                             </button>
                         </div>
                     ))}

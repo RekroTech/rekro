@@ -2,24 +2,6 @@
  * Central export point for all validators
  */
 
-// Property validators
-export {
-    PropertySchema,
-    UnitSchema,
-    PropertyWithUnitsSchema,
-    GetPropertiesParamsSchema,
-    GetPropertiesResponseSchema,
-    PropertyFormSchema,
-} from "./property";
-
-export type {
-    Property,
-    Unit,
-    PropertyWithUnits,
-    GetPropertiesParams,
-    GetPropertiesResponse,
-} from "./property";
-
 // Property Form validators
 export {
     ListingTypeSelectionSchema,

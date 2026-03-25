@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { ChevronDown, FileText, Heart, LogOut, Plus, Settings, User } from "lucide-react";
 import { Button, Dropdown, Icon, LogoIcon, LogoText } from "@/components/common";
 import type { DropdownItem } from "@/components/common";
 import { useLogout } from "@/lib/hooks/auth";
@@ -23,29 +24,29 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
         {
             label: "Profile",
             href: "/profile",
-            icon: <Icon name="profile" className="w-4 h-4" />,
+            icon: <Icon icon={User} size={16} />,
         },
         {
             label: "Liked properties",
             href: "/property/liked",
-            icon: <Icon name="heart" className="w-4 h-4" />,
+            icon: <Icon icon={Heart} size={16} />,
         },
         {
             label: "Applications",
             href: "/applications",
-            icon: <Icon name="document" className="w-4 h-4" />,
+            icon: <Icon icon={FileText} size={16} />,
         },
         {
             label: "Settings",
             href: "/profile/settings",
-            icon: <Icon name="settings" className="w-4 h-4" />,
+            icon: <Icon icon={Settings} size={16} />,
         },
         {
             label: isPending ? "Logging out..." : "Logout",
             onClick: () => logout(),
             variant: "danger" as const,
             disabled: isPending,
-            icon: <Icon name="logout" className="w-4 h-4" />,
+            icon: <Icon icon={LogOut} size={16} />,
         },
     ];
 
@@ -69,7 +70,7 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                                 size="sm"
                                 pill
                             >
-                                <Icon name="plus" className="h-4 w-4 mr-1 sm:mr-2" />
+                                <Icon icon={Plus} size={16} className="mr-1 sm:mr-2" />
                                 <span className="hidden sm:inline font-normal">Add Property</span>
                                 <span className="inline sm:hidden font-normal">Add</span>
                             </Button>
@@ -98,9 +99,9 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                                                 )}
                                             </div>
                                             <Icon
-                                                name="chevron-down"
-                                                className="w-4 h-4 text-text-muted"
-                                                aria-hidden="true"
+                                                icon={ChevronDown}
+                                                size={16}
+                                                className="text-text-muted"
                                             />
                                         </div>
                                     }

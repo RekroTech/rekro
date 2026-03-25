@@ -6,6 +6,7 @@ import { Modal, Icon, Button, Input, Alert } from "@/components/common";
 import { useSignInWithOtp, useGoogleLogin } from "@/lib/hooks";
 import { processEmail } from "@/lib/utils";
 import { EmailSentSuccess } from "./EmailSentSuccess";
+import { Globe } from "lucide-react";
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -208,7 +209,7 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/", initialError }: A
                                 className="border-input-border bg-card text-auth-text-strong hover:bg-hover"
                             >
                                 {!isGooglePending && (
-                                    <Icon name="google" className="h-5 w-5 mr-2" />
+                                    <Icon icon={Globe} size={20} className="mr-2" />
                                 )}
                                 Continue with Google
                             </Button>

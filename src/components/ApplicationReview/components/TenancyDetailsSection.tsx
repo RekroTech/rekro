@@ -1,4 +1,5 @@
 import React from "react";
+import { Calendar, Loader2, AlertCircle, Check } from "lucide-react";
 import { Icon } from "@/components/common";
 import { DefinitionList } from "./DefinitionList";
 import { DefinitionItem } from "./DefinitionItem";
@@ -47,7 +48,7 @@ export const TenancyDetailsSection = React.memo(({
         <div className="bg-card rounded-[var(--radius-card)] border border-border overflow-hidden">
             <div className="px-4 py-3 bg-surface-subtle border-b border-border">
                 <h4 className="font-semibold text-text text-sm flex items-center">
-                    <Icon name="calendar" className="w-4 h-4 mr-2 text-primary-600 dark:text-primary-400" />
+                    <Icon icon={Calendar} size={16} className="mr-2 text-primary-600 dark:text-primary-400" />
                     Tenancy Summary
                 </h4>
             </div>
@@ -134,7 +135,7 @@ TenancyDetailsSection.displayName = "TenancyDetailsSection";
 
 const LoadingState = React.memo(() => (
     <div className="flex items-center justify-center py-8">
-        <Icon name="spinner" className="w-6 h-6 animate-spin text-primary-600" />
+        <Icon icon={Loader2} size={24} className="animate-spin text-primary-600" />
         <span className="ml-2 text-sm text-text-muted">Loading tenancy details...</span>
     </div>
 ));
@@ -145,7 +146,7 @@ const ErrorState = React.memo(() => (
     <div className="p-4">
         <div className="p-3 bg-danger-500/10 border border-danger-500/20 rounded-[var(--radius-input)]">
             <p className="text-sm text-danger-600 flex items-center gap-2">
-                <Icon name="alert-circle" className="w-4 h-4" />
+                <Icon icon={AlertCircle} size={16} />
                 Failed to load tenancy details. Please try again.
             </p>
         </div>
@@ -158,7 +159,7 @@ const NoDataState = React.memo(() => (
     <div className="p-4">
         <div className="p-3 bg-warning-500/10 border border-warning-500/20 rounded-[var(--radius-input)]">
             <p className="text-sm text-warning-600 flex items-center gap-2">
-                <Icon name="alert-circle" className="w-4 h-4" />
+                <Icon icon={AlertCircle} size={16} />
                 Tenancy details aren&#39;t available yet. Please go back and save your application first.
             </p>
         </div>
@@ -175,7 +176,7 @@ interface InclusionItemProps {
 const InclusionItem = React.memo(({ type, price }: InclusionItemProps) => (
     <div className="flex items-center justify-between bg-surface-subtle px-3 py-2 rounded-[var(--radius-input)]">
         <span className="text-text text-sm font-medium capitalize flex items-center gap-2">
-            <Icon name="check" className="w-3.5 h-3.5 text-primary-600" />
+            <Icon icon={Check} size={14} className="text-primary-600" />
             {type.replace("_", " ")}
         </span>
         <span className="text-text-muted text-xs">

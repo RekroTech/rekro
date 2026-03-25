@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import dynamic from "next/dynamic";
+import { MapPin } from "lucide-react";
 import { Icon, Modal, Loader } from "@/components/common";
 import { getLocalityString } from "@/lib/utils/locationPrivacy";
 import { TravelTimeSummary } from "@/components/Property/TravelTimeSummary";
@@ -50,7 +51,7 @@ export function LocationMapModal({
                 {localityString && (
                     <div className="rounded-lg border border-border bg-surface-subtle p-3">
                         <div className="flex items-start gap-2">
-                            <Icon name="map-pin" className="mt-0.5 h-4 w-4 text-primary-600" />
+                            <Icon icon={MapPin} size={16} className="mt-0.5 text-primary-600" />
                             <div className="min-w-0">
                                 <p className="text-sm font-medium text-text break-words">
                                     {localityString}

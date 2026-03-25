@@ -45,11 +45,16 @@ export function PropertyDetailsSection({ formData, updateFormData }: PropertyDet
                 />
             </div>
 
-            <div className="mt-4 flex items-center">
+            <div className="mt-4 flex items-center gap-6">
                 <Checkbox
                     label="Furnished"
                     checked={formData.furnished}
                     onChange={(e) => updateFormData({ furnished: e.target.checked })}
+                />
+                <Checkbox
+                    label="Bills Included"
+                    checked={formData.bills_included}
+                    onChange={(e) => updateFormData({ bills_included: e.target.checked })}
                 />
             </div>
 

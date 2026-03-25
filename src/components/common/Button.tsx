@@ -1,6 +1,7 @@
 import React, { forwardRef } from "react";
 import { clsx } from "clsx";
 import { Icon } from "./Icon";
+import { Loader2 } from "lucide-react";
 
 export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "outline";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -67,7 +68,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 )}
                 {...props}
             >
-                {loading && <Icon name="spinner" className="animate-spin -ml-1 mr-2 h-4 w-4" />}
+                {loading && <Icon icon={Loader2} size={16} className="animate-spin -ml-1 mr-2" />}
                 {children}
             </button>
         );

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { clsx } from "clsx";
+import { Play } from "lucide-react";
 import { getMediaType } from "@/lib/utils/fileUtils";
 import { Icon } from "./Icon";
 
@@ -115,7 +116,7 @@ export function Visual({
                 {showBadge && (
                     <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/25">
                         <div className="rounded-full bg-black/60 p-2 text-white">
-                            <Icon name="play" className="w-8 h-8" />
+                            <Icon icon={Play} size={32} />
                         </div>
                     </div>
                 )}

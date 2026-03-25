@@ -9,7 +9,6 @@ create table public.units (
   description text null,
   price integer not null,
   bond_amount integer null,
-  bills_included boolean null default false,
   min_lease integer null,
   max_lease integer null,
   max_occupants integer null,
@@ -19,6 +18,7 @@ create table public.units (
   available_from date null,
   available_to date null,
   is_available boolean not null default true,
+  features text[] null,
   constraint units_pkey primary key (id),
   constraint units_property_id_fkey foreign KEY (property_id) references properties (id) on delete CASCADE
 ) TABLESPACE pg_default;
@@ -28,6 +28,8 @@ create index IF not exists units_by_property on public.units using btree (proper
 create index IF not exists units_by_listing_type on public.units using btree (listing_type) TABLESPACE pg_default;
 
 create index IF not exists units_by_price on public.units using btree (price) TABLESPACE pg_default;
+
+create index IF not exists units_features_gin on public.units using gin (features) TABLESPACE pg_default;
 
 create index IF not exists units_by_availability on public.units using btree (is_available, available_from) TABLESPACE pg_default;
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { User } from "lucide-react";
 import { Icon } from "@/components/common";
 import { DefinitionList } from "./DefinitionList";
 import { DefinitionItem } from "./DefinitionItem";
@@ -37,7 +38,7 @@ export const PersonalInformationSection = React.memo(({ user }: PersonalInformat
         <div className="bg-card rounded-[var(--radius-card)] border border-border overflow-hidden">
             <div className="px-4 py-3 bg-surface-subtle border-b border-border">
                 <h4 className="font-semibold text-text text-sm flex items-center">
-                    <Icon name="user" className="w-4 h-4 mr-2 text-primary-600 dark:text-primary-400" />
+                    <Icon icon={User} size={16} className="mr-2 text-primary-600 dark:text-primary-400" />
                     Personal Profile
                 </h4>
             </div>

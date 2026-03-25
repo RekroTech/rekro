@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Car, Footprints } from "lucide-react";
 import { loadGoogleMapsScript } from "@/lib/utils/googleMaps";
 import { calculateDistance } from "@/lib/utils/geospatial";
 import { Icon, Skeleton } from "@/components/common";
@@ -335,13 +336,13 @@ export function TravelTimeSummary({ latitude, longitude }: TravelTimeSummaryProp
                                         <div className="mt-0.5 flex items-center gap-3">
                                             {row.drivingMins != null && (
                                                 <span className="flex items-center gap-1 text-xs text-text-muted">
-                                                    <Icon name="car" size={13} className="shrink-0 text-text-muted" />
+                                                    <Icon icon={Car} size={13} className="shrink-0 text-text-muted" />
                                                     {row.drivingMins} min
                                                 </span>
                                             )}
                                             {row.walkingMins != null && (
                                                 <span className="flex items-center gap-1 text-xs text-text-muted">
-                                                    <Icon name="walking" size={13} className="shrink-0 text-text-muted" />
+                                                    <Icon icon={Footprints} size={13} className="shrink-0 text-text-muted" />
                                                     {row.walkingMins} min
                                                 </span>
                                             )}

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/common";
 import { Icon } from "@/components/common/Icon";
+import { EyeOff, Loader2 } from "lucide-react";
 import { useUpdateProfile } from "@/lib/hooks/user";
 import { useToast } from "@/hooks/useToast";
 
@@ -89,7 +90,7 @@ export const DiscoverabilityPrompt: React.FC<DiscoverabilityPromptProps> = ({
                     <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
                         {/* Icon */}
                         <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                            <Icon name="eye-off" className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
+                            <Icon icon={EyeOff} size={{ base: 32, sm: 40 }} className="text-primary" />
                         </div>
 
                         {/* Heading */}
@@ -113,7 +114,7 @@ export const DiscoverabilityPrompt: React.FC<DiscoverabilityPromptProps> = ({
                         >
                             {isUpdating ? (
                                 <>
-                                    <Icon name="spinner" className="w-5 h-5 mr-2 animate-spin" />
+                                    <Icon icon={Loader2} size={20} className="mr-2 animate-spin" />
                                     Loading...
                                 </>
                             ) : (

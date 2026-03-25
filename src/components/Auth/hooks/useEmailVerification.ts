@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { Info, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { EmailVerificationError } from "@/components/Auth";
@@ -80,7 +81,7 @@ function parseVerificationError(
         return {
             title: "Link expired",
             message: "This sign-in link has expired. Links are valid for 1 hour.",
-            icon: "info",
+            icon: Info,
             canResend: true,
         };
     }
@@ -90,7 +91,7 @@ function parseVerificationError(
         return {
             title: "Invalid link",
             message: "This link is invalid or malformed. Please request a new one.",
-            icon: "info",
+            icon: Info,
             canResend: true,
         };
     }
@@ -100,7 +101,7 @@ function parseVerificationError(
         return {
             title: "Something went wrong",
             message: errorDescription || "An error occurred during sign-in. Please try again.",
-            icon: "x",
+            icon: X,
             canResend: true,
         };
     }

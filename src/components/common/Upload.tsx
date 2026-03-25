@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { clsx } from "clsx";
+import { X } from "lucide-react";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
 import type { DocumentType } from "@/types/db";
@@ -260,7 +261,7 @@ export function Upload({
                                 aria-label="Remove file"
                                 disabled={disabled || isLoading}
                             >
-                                <Icon name="x" className="h-4 w-4" />
+                                <Icon icon={X} size={16} />
                             </button>
                         </div>
                     )}

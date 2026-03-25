@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
+import { CheckCircle2, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/lib/hooks";
 import { Icon, Loader, BackButton } from "@/components/common";
@@ -132,8 +133,9 @@ function ProfilePageContent() {
                                     <div className="bg-card rounded-2xl shadow-lg border border-border p-4 sm:p-6">
                                         <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
                                             <Icon
-                                                name="star"
-                                                className="w-5 h-5 text-yellow-500 dark:text-yellow-400"
+                                                icon={Star}
+                                                size={20}
+                                                className="text-yellow-500 dark:text-yellow-400"
                                             />
                                             Your Badges
                                         </h3>
@@ -144,8 +146,9 @@ function ProfilePageContent() {
                                                     className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg"
                                                 >
                                                     <Icon
-                                                        name="check-circle"
-                                                        className="w-5 h-5 text-yellow-600 dark:text-yellow-400"
+                                                        icon={CheckCircle2}
+                                                        size={20}
+                                                        className="text-yellow-600 dark:text-yellow-400"
                                                     />
                                                     <span className="text-sm font-medium text-text">
                                                         {badge}

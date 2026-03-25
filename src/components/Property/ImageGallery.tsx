@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { clsx } from "clsx";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Icon, Visual } from "@/components/common";
 
 interface ImageGalleryProps {
     images: string[];
-    title: string;
+    title?: string;
     thumbnailsPerPage?: number;
 }
 
 export function ImageGallery({
     images,
-    title,
+    title = "Property",
     thumbnailsPerPage = 8,
 }: ImageGalleryProps) {
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -72,7 +73,7 @@ export function ImageGallery({
                             className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 sm:p-3 rounded-full shadow-lg transition-all sm:opacity-0 sm:group-hover:opacity-100 active:scale-95"
                             aria-label="Previous image"
                         >
-                            <Icon name="chevron-left" className="w-5 h-5 sm:w-6 sm:h-6" />
+                            <Icon icon={ChevronLeft} size={{ base: 20, sm: 24 }} />
                         </button>
 
                         <button
@@ -80,7 +81,7 @@ export function ImageGallery({
                             className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 sm:p-3 rounded-full shadow-lg transition-all sm:opacity-0 sm:group-hover:opacity-100 active:scale-95"
                             aria-label="Next image"
                         >
-                            <Icon name="chevron-right" className="w-5 h-5 sm:w-6 sm:h-6" />
+                            <Icon icon={ChevronRight} size={{ base: 20, sm: 24 }} />
                         </button>
                     </>
                 )}
@@ -95,7 +96,7 @@ export function ImageGallery({
                             className="hidden sm:inline-flex flex-shrink-0 bg-white hover:bg-gray-50 text-gray-800 p-1.5 sm:p-2 rounded-full shadow-lg transition-all border border-gray-200 active:scale-95"
                             aria-label="Previous thumbnails"
                         >
-                            <Icon name="chevron-left" className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <Icon icon={ChevronLeft} size={{ base: 16, sm: 20 }} />
                         </button>
                     )}
 
@@ -146,7 +147,7 @@ export function ImageGallery({
                             className="hidden sm:inline-flex flex-shrink-0 bg-card hover:bg-surface-muted text-foreground p-1.5 sm:p-2 rounded-full shadow-lg transition-all border border-border active:scale-95"
                             aria-label="Next thumbnails"
                         >
-                            <Icon name="chevron-right" className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <Icon icon={ChevronRight} size={{ base: 16, sm: 20 }} />
                         </button>
                     )}
                 </div>

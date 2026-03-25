@@ -8,6 +8,7 @@ import { Button } from "@/components/common/Button";
 import { Icon } from "@/components/common";
 import { useProfile } from "@/lib/hooks/user";
 import { normalisePhone, validateAUPhone } from "@/lib/utils";
+import { Check, Info } from "lucide-react";
 
 interface EnquiryModalProps {
     isOpen: boolean;
@@ -220,7 +221,7 @@ export function EnquiryForm({
             {submitStatus === "success" ? (
                 <div className="text-center py-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
-                        <Icon name="check" className="w-8 h-8 text-green-600" />
+                        <Icon icon={Check} size={32} className="text-green-600" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
                         Enquiry Sent Successfully!
@@ -237,8 +238,9 @@ export function EnquiryForm({
                         <div className="">
                             <p className="text-xs sm:text-sm text-text-muted flex items-start gap-2">
                                 <Icon
-                                    name="info"
-                                    className="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5"
+                                    icon={Info}
+                                    size={16}
+                                    className="text-primary-500 flex-shrink-0 mt-0.5"
                                 />
                                 <span>
                                     Fill out the form below and we&apos;ll get back to you within 24

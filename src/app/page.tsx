@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect, Suspense } from "react";
+import { Filter, Grid3X3, Map, Search, X } from "lucide-react";
+import { useQueryState, parseAsStringLiteral } from "nuqs";
 import clsx from "clsx";
 import { PropertyList } from "@/components/Properties/PropertyList";
 import { Icon, Input, Banner, PropertyListSkeleton, Loader } from "@/components/common";
@@ -13,14 +15,17 @@ import { FilterDropdown } from "@/components/Properties/FilterDropdown";
 import type { FilterValues } from "@/components/Properties/FilterDropdown";
 import { PropertyMapView } from "@/components/Properties/PropertyMapView";
 import { LISTING_TYPES, STATUS_TABS } from "@/components/PropertyForm";
-import { UnitStatus } from "@/types/property.types";
+import { ListingTab, UnitStatus } from "@/types/property.types";
 
 // This page needs to be dynamic to show property listings
 export const dynamic = "force-dynamic";
 
 function HomePageContent() {
     const { canManageProperties, canManageUsers } = useRoles();
-    const [status, setStatus] = useState<"active" | "leased" | "inactive">("active");
+    const [status, setStatus] = useQueryState(
+        "status",
+        parseAsStringLiteral(["active", "leased", "inactive"] as const).withDefault("active")
+    );
     const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
     const [isPending, startTransition] = useTransition();
     const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -141,7 +146,7 @@ function HomePageContent() {
                                 if (mapDirectFlyTo) setMapDirectFlyTo(null);
                             }}
                             size="sm"
-                            leftIcon={<Icon name="search" className="h-4 w-4" />}
+                            leftIcon={<Icon icon={Search} size={16} />}
                             rightIcon={
                                 searchQuery ? (
                                     <button
@@ -150,7 +155,7 @@ function HomePageContent() {
                                         className="text-gray-400 hover:text-gray-600 active:text-gray-700 touch-manipulation"
                                         aria-label="Clear search"
                                     >
-                                        <Icon name="x" className="h-4 w-4" />
+                                        <Icon icon={X} size={16} />
                                     </button>
                                 ) : isPending ? (
                                     <Loader size="sm" />
@@ -177,7 +182,7 @@ function HomePageContent() {
                                     : "border-border bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted"
                             )}
                         >
-                            <Icon name="filter" className="h-4 w-4 flex-shrink-0" />
+                            <Icon icon={Filter} size={16} className="flex-shrink-0" />
                             <span className="hidden sm:inline">Filters</span>
                             {activeFilterCount > 0 && (
                                 <span className="flex items-center justify-center h-4.5 min-w-[1.125rem] rounded-full bg-primary-600 px-1 text-[10px] font-bold text-white leading-none">
@@ -196,7 +201,7 @@ function HomePageContent() {
                             aria-label={viewMode === "grid" ? "Switch to map view" : "Switch to grid view"}
                             className="flex items-center gap-1.5 h-10 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground hover:bg-surface-muted active:bg-surface-muted transition-colors touch-manipulation"
                         >
-                            <Icon name={viewMode === "grid" ? "map" : "grid"} className="h-4 w-4 flex-shrink-0" />
+                            <Icon icon={viewMode === "grid" ? Map : Grid3X3} size={16} className="flex-shrink-0" />
                             <span className="hidden sm:inline">{viewMode === "grid" ? "Map" : "Grid"}</span>
                         </button>
 
@@ -251,7 +256,7 @@ function HomePageContent() {
                                         role="tab"
                                         aria-selected={isActive}
                                         tabIndex={isActive ? 0 : -1}
-                                        onClick={() => setListingType(tab.value)}
+                                        onClick={() => setListingType(tab.value as ListingTab)}
                                         className={clsx(
                                             "flex-1 rounded-4xl px-3 py-2 text-xs sm:text-sm font-medium text-center",
                                             "transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500",
@@ -282,6 +287,8 @@ function HomePageContent() {
                         listingType={canManageUsers ? undefined : listingType}
                         status={canManageUsers ? status ?? undefined : undefined}
                         showEditButton={canManageProperties}
+                        // Admin sees every unit price; regular users mirror their active listing-type tab
+                        priceDisplayMode={canManageProperties ? "all" : (listingType as ListingTab)}
                     />
                 ) : (
                     <PropertyMapView
