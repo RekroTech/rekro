@@ -49,9 +49,6 @@ export function UnitFeatures({ features }: UnitFeaturesProps) {
 	return (
 		<div className="space-y-6 sm:space-y-8">
 			<div>
-				<h3 className="text-base sm:text-lg font-semibold text-text mb-3 sm:mb-4">
-					Unit features
-				</h3>
 				<div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
 					{features.map((feature: string, index: number) => (
 						<div key={index} className="flex items-center gap-2 sm:gap-3 text-text group">

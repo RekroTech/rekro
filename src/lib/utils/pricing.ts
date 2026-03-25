@@ -618,12 +618,18 @@ export function updateRoomRentsOnOccupancySelection(
 /**
  * Returns the ordered list of units whose price badges should be shown on a property card,
  * based on the active listing-type tab / user role.
+ * Only includes available units for display on property cards.
  */
 export function getPriceBadges(units: Unit[] | undefined, mode: ListingTab): Unit[] {
     if (!units?.length) return [];
 
-    const entireHome = units.find((u) => u.listing_type === "entire_home") ?? null;
-    const rooms = [...units.filter((u) => u.listing_type !== "entire_home")].sort(
+    // Filter to only show available units on property cards
+    const availableUnits = units.filter((u) => u.is_available);
+    
+    if (!availableUnits.length) return [];
+
+    const entireHome = availableUnits.find((u) => u.listing_type === "entire_home") ?? null;
+    const rooms = [...availableUnits.filter((u) => u.listing_type !== "entire_home")].sort(
         (a, b) => (a.name ?? "").localeCompare(b.name ?? "")
     );
 

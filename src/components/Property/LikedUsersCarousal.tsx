@@ -64,8 +64,34 @@ export const LikedUsersCarousal: React.FC<UsersWhoLikedCarouselProps> = ({
         );
     }
 
-    if (!users || users.length === 0) {
+    if (!users) {
         return null;
+    }
+
+    if (users.length === 0) {
+        return (
+            <div className={clsx("relative w-full", className)}>
+                <div className="mb-4 sm:mb-6 px-2 sm:px-0">
+                    <h6 className="text-xl sm:text-2xl font-bold text-text">
+                        People Interested
+                    </h6>
+                </div>
+
+                <div className="card border border-border p-6 sm:p-8 text-center">
+                    <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-surface-muted border border-border flex items-center justify-center">
+                        <Icon icon={UserRound} size={28} className="text-text-muted" />
+                    </div>
+
+                    <h3 className="text-lg sm:text-xl font-semibold text-text mb-2">
+                        No interest yet
+                    </h3>
+                    <p className="text-sm sm:text-base text-text-muted max-w-xl mx-auto">
+                        Be the first to like a unit in this property. Interested users will appear
+                        here once they like any unit.
+                    </p>
+                </div>
+            </div>
+        );
     }
 
     return (

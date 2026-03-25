@@ -47,7 +47,7 @@ export function PropertyHeader({ property, selectedUnit }: PropertyHeaderProps) 
                     {streetAddress}
                 </h1>
             </div>
-            <div className="flex items-start justify-between gap-4 mt-2 mb-2 sm:mb-4">
+            <div className="flex items-start justify-between gap-4 mb-2 sm:mb-4">
                 <p className="flex min-w-0 gap-2 text-sm text-text-muted sm:text-base items-center">
                     <Icon icon={MapPin} size={16} className="flex-shrink-0" />
                     <span className="min-w-0 break-words">{addressText}</span>

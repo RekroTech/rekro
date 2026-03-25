@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Property, GetPropertiesParams, GetPropertiesResponse } from "@/types/property.types";
+import type { GetPropertiesParams, GetPropertiesResponse, Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
 
 /**
@@ -11,14 +11,22 @@ import type { Unit } from "@/types/db";
 
 /** Full-name ↔ abbreviation map for Australian states/territories. */
 const AU_STATE_ALIASES: Record<string, string> = {
-    victoria: "VIC",           vic: "Victoria",
-    "new south wales": "NSW",  nsw: "New South Wales",
-    queensland: "QLD",         qld: "Queensland",
-    "south australia": "SA",   sa: "South Australia",
-    "western australia": "WA", wa: "Western Australia",
-    tasmania: "TAS",           tas: "Tasmania",
-    "northern territory": "NT", nt: "Northern Territory",
-    "australian capital territory": "ACT", act: "Australian Capital Territory",
+    victoria: "VIC",
+    vic: "Victoria",
+    "new south wales": "NSW",
+    nsw: "New South Wales",
+    queensland: "QLD",
+    qld: "Queensland",
+    "south australia": "SA",
+    sa: "South Australia",
+    "western australia": "WA",
+    wa: "Western Australia",
+    tasmania: "TAS",
+    tas: "Tasmania",
+    "northern territory": "NT",
+    nt: "Northern Territory",
+    "australian capital territory": "ACT",
+    act: "Australian Capital Territory",
 };
 
 /**
@@ -29,23 +37,27 @@ function buildSearchTokens(search: string): string[] {
     const tokens = new Set<string>();
 
     // Word-level tokens (handles most cases)
-    search.trim()
+    search
+        .trim()
         .split(/[\s,]+/)
-        .map(t => t.replace(/"/g, "").trim())
-        .filter(t => t.length >= 3)
-        .forEach(t => tokens.add(t));
+        .map((t) => t.replace(/"/g, "").trim())
+        .filter((t) => t.length >= 3)
+        .forEach((t) => tokens.add(t));
 
     // Comma-phrase tokens — catches multi-word states like "New South Wales"
-    search.trim().split(/,\s*/).forEach(part => {
-        const p = part.trim().replace(/"/g, "");
-        if (p.length >= 3) {
-            const alias = AU_STATE_ALIASES[p.toLowerCase()];
-            if (alias) tokens.add(alias);
-        }
-    });
+    search
+        .trim()
+        .split(/,\s*/)
+        .forEach((part) => {
+            const p = part.trim().replace(/"/g, "");
+            if (p.length >= 3) {
+                const alias = AU_STATE_ALIASES[p.toLowerCase()];
+                if (alias) tokens.add(alias);
+            }
+        });
 
     // Single-token state expansion (e.g. "Victoria" → "VIC", "NSW" → "New South Wales")
-    [...tokens].forEach(t => {
+    [...tokens].forEach((t) => {
         const alias = AU_STATE_ALIASES[t.toLowerCase()];
         if (alias) tokens.add(alias);
     });
@@ -107,8 +119,16 @@ export async function getProperties(
         "id, listing_type, name, description, price, bond_amount, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available, features";
 
     // Use inner join for filtering by liked properties, listing type, status, or price
-    const needsInnerJoin = !!(listingType || likedOnly || status || minPrice !== undefined || maxPrice !== undefined);
-    const selectQuery = needsInnerJoin ? `*, units!inner(${unitColumns})` : `*, units(${unitColumns})`;
+    const needsInnerJoin = !!(
+        listingType ||
+        likedOnly ||
+        status ||
+        minPrice !== undefined ||
+        maxPrice !== undefined
+    );
+    const selectQuery = needsInnerJoin
+        ? `*, units!inner(${unitColumns})`
+        : `*, units(${unitColumns})`;
 
     let query = supabase
         .from("properties")
@@ -194,9 +214,7 @@ export async function getProperties(
             "address->>suburb",
         ];
 
-        const conditions = tokens.flatMap(token =>
-            fields.map(f => `${f}.ilike."%${token}%"`)
-        );
+        const conditions = tokens.flatMap((token) => fields.map((f) => `${f}.ilike."%${token}%"`));
 
         if (conditions.length > 0) {
             query = query.or(conditions.join(","));
@@ -214,7 +232,7 @@ export async function getProperties(
     let properties: Property[] = data ?? [];
 
     // Handle duplicate properties when using inner join
-    if ((needsInnerJoin) && properties.length > 0) {
+    if (needsInnerJoin && properties.length > 0) {
         const propertyMap = new Map<string, Property>();
 
         properties.forEach((prop: Property) => {
@@ -237,6 +255,19 @@ export async function getProperties(
             ...prop,
             units: prop.units || [],
         }));
+    }
+
+    // For regular users (no status filter), hide properties where ALL units are unavailable
+    // This prevents showing properties that are completely leased out
+    if (!status && isPublished) {
+        properties = properties.filter((prop) => {
+            // If there are no units, hide the property
+            if (!prop.units || prop.units.length === 0) {
+                return false;
+            }
+            // Check if at least one unit is available
+            return prop.units.some((unit: Unit) => unit.is_available);
+        });
     }
 
     // Sort units: entire_home first, then rooms by name

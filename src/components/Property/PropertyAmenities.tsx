@@ -81,9 +81,6 @@ export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {
             {/* Amenities Section (including synthesized parking description) */}
             {amenitiesList.length > 0 && (
                 <div>
-                    <h3 className="text-base sm:text-lg font-semibold text-text mb-3 sm:mb-4">
-                        Amenities
-                    </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                         {amenitiesList.map((amenity: string, index: number) => (
                             <div

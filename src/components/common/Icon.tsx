@@ -26,6 +26,14 @@ export interface IconProps {
 
 const BREAKPOINT_ORDER: IconBreakpoint[] = ["sm", "md", "lg", "xl", "2xl"];
 
+const BREAKPOINT_CLASSES: Record<IconBreakpoint, { show: string; hide: string }> = {
+    sm: { show: "sm:block", hide: "sm:hidden" },
+    md: { show: "md:block", hide: "md:hidden" },
+    lg: { show: "lg:block", hide: "lg:hidden" },
+    xl: { show: "xl:block", hide: "xl:hidden" },
+    "2xl": { show: "2xl:block", hide: "2xl:hidden" },
+};
+
 const isResponsiveSize = (size: number | ResponsiveIconSize): size is ResponsiveIconSize => {
     return typeof size === "object" && size !== null;
 };
@@ -55,12 +63,16 @@ export const Icon = ({
     const renderClasses = (breakpoint: "base" | IconBreakpoint) => {
         if (breakpoint === "base") {
             const firstBreakpoint = activeBreakpoints[0];
-            return firstBreakpoint ? `${firstBreakpoint}:hidden` : undefined;
+            return firstBreakpoint ? BREAKPOINT_CLASSES[firstBreakpoint].hide : undefined;
         }
 
         const index = activeBreakpoints.indexOf(breakpoint);
         const nextBreakpoint = activeBreakpoints[index + 1];
-        return clsx(`hidden ${breakpoint}:block`, nextBreakpoint && `${nextBreakpoint}:hidden`);
+        return clsx(
+            "hidden",
+            BREAKPOINT_CLASSES[breakpoint].show,
+            nextBreakpoint && BREAKPOINT_CLASSES[nextBreakpoint].hide
+        );
     };
 
     return (

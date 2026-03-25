@@ -515,7 +515,6 @@ select option {
 * {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
-    transition: scrollbar-color 0.3s ease;
 }
 
 *:hover,

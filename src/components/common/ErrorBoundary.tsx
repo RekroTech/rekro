@@ -1,10 +1,11 @@
 "use client";
 
+import React from "react";
 import { ErrorBoundary as ReactErrorBoundary, FallbackProps } from "react-error-boundary";
+import { AlertCircle } from "lucide-react";
 import * as Sentry from "@sentry/nextjs";
 import { Button } from "./Button";
 import { Icon } from "./Icon";
-import { AlertCircle } from "lucide-react";
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
     return (
