@@ -2,11 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Modal, Icon, Button, Input, Alert } from "@/components/common";
+import { Modal, Button, Input, Alert, Icon, GoogleIcon } from "@/components/common";
 import { useSignInWithOtp, useGoogleLogin } from "@/lib/hooks";
 import { processEmail } from "@/lib/utils";
 import { EmailSentSuccess } from "./EmailSentSuccess";
-import { Globe } from "lucide-react";
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -209,7 +208,7 @@ export function AuthModal({ isOpen, onClose, redirectTo = "/", initialError }: A
                                 className="border-input-border bg-card text-auth-text-strong hover:bg-hover"
                             >
                                 {!isGooglePending && (
-                                    <Icon icon={Globe} size={20} className="mr-2" />
+                                    <Icon icon={GoogleIcon} size={20} className="mr-2 shrink-0" />
                                 )}
                                 Continue with Google
                             </Button>

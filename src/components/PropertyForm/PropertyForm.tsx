@@ -41,6 +41,8 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
         existingVideoUrl,
         removeVideo,
         addMediaFiles,
+        moveExistingImage,
+        moveUploadedFile,
         handleRemoveExistingImage,
         handleRemoveUploadedFile,
         resetMedia,
@@ -368,6 +370,8 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                     removeVideo={removeVideo}
                     property={property}
                     onAddFiles={addMediaFiles}
+                    onReorderExistingImage={moveExistingImage}
+                    onReorderUploadedFile={moveUploadedFile}
                     onRemoveExistingImage={handleRemoveExistingImage}
                     onRemoveUploadedFile={handleRemoveUploadedFile}
                 />

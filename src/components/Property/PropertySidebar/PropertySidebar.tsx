@@ -204,35 +204,39 @@ export function PropertySidebar({
                     </div>
 
                     <div className="mt-6 space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                            <Input
-                                type="date"
-                                id="startDate"
-                                label="Preferred Start Date"
-                                value={rentalForm.moveInDate}
-                                onChange={(e) => updateRentalForm({ moveInDate: e.target.value })}
-                                min={getMinStartDate(selectedUnit.available_from)}
-                                max={getMaxStartDate(
-                                    selectedUnit.available_from,
-                                    selectedUnit.available_to
-                                )}
-                                size="sm"
-                                fullWidth
-                                disabled={hasSubmittedApplication}
-                            />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="min-w-0">
+                                <Input
+                                    type="date"
+                                    id="startDate"
+                                    label="Preferred Start Date"
+                                    value={rentalForm.moveInDate}
+                                    onChange={(e) => updateRentalForm({ moveInDate: e.target.value })}
+                                    min={getMinStartDate(selectedUnit.available_from)}
+                                    max={getMaxStartDate(
+                                        selectedUnit.available_from,
+                                        selectedUnit.available_to
+                                    )}
+                                    size="sm"
+                                    fullWidth
+                                    disabled={hasSubmittedApplication}
+                                />
+                            </div>
 
-                            <Select
-                                id="leasePeriod"
-                                label="Lease Period"
-                                value={rentalForm.rentalDuration.toString()}
-                                onChange={(e) =>
-                                    updateRentalForm({ rentalDuration: Number(e.target.value) })
-                                }
-                                options={LEASE_MONTH_OPTIONS}
-                                size="sm"
-                                fullWidth
-                                disabled={hasSubmittedApplication}
-                            />
+                            <div className="min-w-0">
+                                <Select
+                                    id="leasePeriod"
+                                    label="Lease Period"
+                                    value={rentalForm.rentalDuration.toString()}
+                                    onChange={(e) =>
+                                        updateRentalForm({ rentalDuration: Number(e.target.value) })
+                                    }
+                                    options={LEASE_MONTH_OPTIONS}
+                                    size="sm"
+                                    fullWidth
+                                    disabled={hasSubmittedApplication}
+                                />
+                            </div>
                         </div>
 
                         {canShowDualOccupancy && (

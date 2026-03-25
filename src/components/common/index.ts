@@ -38,6 +38,7 @@ export {
 	WhatsAppIcon,
 	FacebookIcon,
 	XIcon,
+	GoogleIcon,
 	BedsideTableIcon,
 	ChairIcon,
 	DeskIcon,

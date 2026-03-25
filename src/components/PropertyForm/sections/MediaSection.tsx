@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Image from "next/image";
 import { Property } from "@/types/db";
 import { getPropertyFileUrl } from "@/lib/services/storage.service";
@@ -12,9 +13,15 @@ interface MediaSectionProps {
     removeVideo: boolean;
     property?: Property;
     onAddFiles: (files: File[]) => void;
+    onReorderExistingImage: (fromIndex: number, toIndex: number) => void;
+    onReorderUploadedFile: (fromIndex: number, toIndex: number) => void;
     onRemoveExistingImage: (imageUrl: string) => void;
     onRemoveUploadedFile: (index: number) => void;
 }
+
+type DragSource =
+    | { type: "existing"; index: number }
+    | { type: "uploaded"; index: number };
 
 export function MediaSection({
     mediaFiles,
@@ -23,9 +30,42 @@ export function MediaSection({
     removeVideo,
     property,
     onAddFiles,
+    onReorderExistingImage,
+    onReorderUploadedFile,
     onRemoveExistingImage,
     onRemoveUploadedFile,
 }: MediaSectionProps) {
+    const [dragSource, setDragSource] = useState<DragSource | null>(null);
+    const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+
+    const getUploadedPhotoOrder = (index: number) => {
+        const uploadedPhotosBefore = mediaFiles
+            .slice(0, index + 1)
+            .filter((file) => !isVideoFile(file)).length;
+        return existingImages.length + uploadedPhotosBefore;
+    };
+
+    const handleDrop = (target: DragSource) => {
+        if (!dragSource) {
+            return;
+        }
+
+        if (dragSource.type !== target.type || dragSource.index === target.index) {
+            setDragSource(null);
+            setDragOverKey(null);
+            return;
+        }
+
+        if (target.type === "existing") {
+            onReorderExistingImage(dragSource.index, target.index);
+        } else {
+            onReorderUploadedFile(dragSource.index, target.index);
+        }
+
+        setDragSource(null);
+        setDragOverKey(null);
+    };
+
     return (
         <section className="rounded-lg border border-border bg-card p-3 shadow-[var(--shadow-soft)] sm:p-4">
             <div className="mb-3 flex items-center justify-between">
@@ -60,7 +100,26 @@ export function MediaSection({
                     {existingImages.map((imageUrl, index) => (
                         <div
                             key={`existing-img-${index}`}
-                            className="relative aspect-square overflow-hidden rounded-lg border border-border bg-surface-muted"
+                            className={`relative aspect-square overflow-hidden rounded-lg border border-border bg-surface-muted ${
+                                dragOverKey === `existing-${index}`
+                                    ? "ring-2 ring-primary-500 ring-offset-1 ring-offset-background"
+                                    : ""
+                            }`}
+                            draggable
+                            onDragStart={() => setDragSource({ type: "existing", index })}
+                            onDragEnd={() => {
+                                setDragSource(null);
+                                setDragOverKey(null);
+                            }}
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                setDragOverKey(`existing-${index}`);
+                            }}
+                            onDragLeave={() => setDragOverKey(null)}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                handleDrop({ type: "existing", index });
+                            }}
                         >
                             <Image
                                 src={getPropertyFileUrl(imageUrl, property?.id)}
@@ -69,9 +128,6 @@ export function MediaSection({
                                 className="object-cover"
                                 sizes="(max-width: 768px) 25vw, 20vw"
                             />
-                            <div className="absolute left-2 top-2 rounded bg-blue-500 px-2 py-0.5 text-xs font-medium text-white">
-                                Current
-                            </div>
                             <button
                                 type="button"
                                 onClick={() => onRemoveExistingImage(imageUrl)}
@@ -80,6 +136,9 @@ export function MediaSection({
                             >
                                 <Icon icon={X} size={16} />
                             </button>
+                            <div className="absolute bottom-1 right-1 z-10 rounded-full border border-border bg-card/95 px-2 py-0.5 text-xs font-semibold text-text-primary shadow-sm">
+                                {index + 1}
+                            </div>
                         </div>
                     ))}
 
@@ -87,7 +146,34 @@ export function MediaSection({
                     {mediaFiles.map((file, index) => (
                         <div
                             key={`new-${index}`}
-                            className="relative aspect-square overflow-hidden rounded-lg border-2 border-dashed border-primary-300 bg-surface-subtle"
+                            className={`relative aspect-square overflow-hidden rounded-lg border-2 border-dashed border-primary-300 bg-surface-subtle ${
+                                !isVideoFile(file) && dragOverKey === `uploaded-${index}`
+                                    ? "ring-2 ring-primary-500 ring-offset-1 ring-offset-background"
+                                    : ""
+                            }`}
+                            draggable={!isVideoFile(file)}
+                            onDragStart={() => {
+                                if (!isVideoFile(file)) {
+                                    setDragSource({ type: "uploaded", index });
+                                }
+                            }}
+                            onDragEnd={() => {
+                                setDragSource(null);
+                                setDragOverKey(null);
+                            }}
+                            onDragOver={(e) => {
+                                if (!isVideoFile(file)) {
+                                    e.preventDefault();
+                                    setDragOverKey(`uploaded-${index}`);
+                                }
+                            }}
+                            onDragLeave={() => setDragOverKey(null)}
+                            onDrop={(e) => {
+                                if (!isVideoFile(file)) {
+                                    e.preventDefault();
+                                    handleDrop({ type: "uploaded", index });
+                                }
+                            }}
                         >
                             {isVideoFile(file) ? (
                                 <>
@@ -111,6 +197,9 @@ export function MediaSection({
                                     <div className="absolute left-2 top-2 rounded bg-green-500 px-2 py-0.5 text-xs font-medium text-white">
                                         New
                                     </div>
+                                    <div className="absolute bottom-1 right-1 z-10 rounded-full border border-border bg-card/95 px-2 py-0.5 text-xs font-semibold text-text-primary shadow-sm">
+                                        {getUploadedPhotoOrder(index)}
+                                    </div>
                                 </>
                             )}
                             <button
@@ -128,7 +217,8 @@ export function MediaSection({
 
             {/* Helper Text */}
             <p className="mt-3 text-xs text-text-muted">
-                Upload photos and videos. Images max 10MB each, videos max 50MB.
+                Upload photos and videos. Drag photos to reorder. Images max 10MB each, videos
+                max 50MB.
             </p>
         </section>
     );

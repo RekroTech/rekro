@@ -105,7 +105,7 @@ function HomePageContent() {
     };
 
     return (
-        <div className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 lg:px-8 lg:py-8">
             {/* Page Title - Visually hidden but accessible to screen readers */}
             <h1 className="sr-only">Property Listings</h1>
 

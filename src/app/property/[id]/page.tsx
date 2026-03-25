@@ -244,7 +244,7 @@ export default function PropertyDetailPage() {
     return (
         <PropertyErrorBoundary>
             <ProfileCompletionProvider>
-                <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:py-6 lg:px-8 lg:py-8 overflow-x-hidden">
+                <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 lg:px-8 lg:py-8 overflow-x-hidden">
                     {/* Back Button */}
                     <BackButton className="mb-4 sm:mb-6" />
 

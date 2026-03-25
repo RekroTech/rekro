@@ -1,6 +1,4 @@
 import { clsx } from "clsx";
-import { Loader2 } from "lucide-react";
-import { Icon } from "./Icon";
 
 export type LoaderSize = "sm" | "md" | "lg";
 
@@ -19,7 +17,12 @@ const sizeClasses: Record<LoaderSize, string> = {
 export function Loader({ size = "md", fullScreen = false, text }: LoaderProps) {
     const spinner = (
         <div className="flex flex-col items-center justify-center gap-3">
-            <Icon icon={Loader2} className={clsx("animate-spin", sizeClasses[size])} />
+            <div
+                className={clsx(
+                    "animate-spin rounded-full border-b-2 border-primary-600",
+                    sizeClasses[size]
+                )}
+            />
             {text && <p className="text-sm text-text-muted">{text}</p>}
         </div>
     );
