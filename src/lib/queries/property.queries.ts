@@ -4,88 +4,163 @@ import type { Unit, UnitStatus } from "@/types/db";
 
 type PropertyStatusUnit = Pick<Unit, "property_id" | "listing_type" | "status">;
 type EffectiveStatusUnit = Pick<Unit, "listing_type" | "status">;
+type PropertyListingFilter = GetPropertiesParams["listingType"];
+
+interface PropertyUnitSnapshot {
+    units: EffectiveStatusUnit[];
+    entireHomeUnit: EffectiveStatusUnit | undefined;
+    roomUnits: EffectiveStatusUnit[];
+    hasRooms: boolean;
+    hasActiveUnit: boolean;
+    hasActiveRoom: boolean;
+    hasLeasedRoom: boolean;
+    hasPublicRoomUnit: boolean;
+    unitStatuses: Set<UnitStatus>;
+}
+
+interface PropertyPublicVisibility {
+    isVisible: boolean;
+    isEntireHomeVisible: boolean;
+    isRoomVisible: boolean;
+}
+
+function createPropertyUnitSnapshot(units: EffectiveStatusUnit[] | undefined): PropertyUnitSnapshot {
+    const safeUnits = units ?? [];
+    const entireHomeUnit = safeUnits.find((unit) => unit.listing_type === "entire_home");
+    const roomUnits = safeUnits.filter((unit) => unit.listing_type === "room");
+
+    return {
+        units: safeUnits,
+        entireHomeUnit,
+        roomUnits,
+        hasRooms: roomUnits.length > 0,
+        hasActiveUnit: safeUnits.some((unit) => unit.status === "active"),
+        hasActiveRoom: roomUnits.some((unit) => unit.status === "active"),
+        hasLeasedRoom: roomUnits.some((unit) => unit.status === "leased"),
+        hasPublicRoomUnit: roomUnits.some((unit) => unit.status !== "inactive"),
+        unitStatuses: new Set<UnitStatus>(safeUnits.map((unit) => unit.status)),
+    };
+}
 
 /**
- * Derives all admin-tab statuses a property belongs to from its units.
- *
- * Rule summary:
- * - entire_home leased   -> leased only
- * - entire_home inactive -> inactive only
- * - entire_home active   -> room states can make the property appear in
- *   multiple admin tabs, following the product rules.
- *
- * Room-only properties appear in every tab represented by at least one room.
+ * Admin tabs are driven by unit statuses, with explicit exceptions for the active tab.
  */
-function getPropertyStatuses(units: EffectiveStatusUnit[] | undefined): Set<UnitStatus> {
-    if (!units || units.length === 0) return new Set();
-
-    const entireHomeUnit = units.find((u) => u.listing_type === "entire_home");
-    if (entireHomeUnit) {
-        if (entireHomeUnit.status === "leased") {
-            return new Set(["leased"]);
-        }
-
-        if (entireHomeUnit.status === "inactive") {
-            return new Set(["inactive"]);
-        }
-
-        const rooms = units.filter((u) => u.listing_type === "room");
-        const hasActiveRoom = rooms.some((u) => u.status === "active");
-        const hasLeasedRoom = rooms.some((u) => u.status === "leased");
-        const hasInactiveRoom = rooms.some((u) => u.status === "inactive");
-        const statuses = new Set<UnitStatus>();
-
-        if (rooms.length === 0 || hasActiveRoom || (hasInactiveRoom && !hasLeasedRoom)) {
-            statuses.add("active");
-        }
-
-        if (hasLeasedRoom) {
-            statuses.add("leased");
-        }
-
-        if (hasInactiveRoom) {
-            statuses.add("inactive");
-        }
-
-        return statuses;
-    }
-
+function getPropertyStatuses(snapshot: PropertyUnitSnapshot): Set<UnitStatus> {
     const statuses = new Set<UnitStatus>();
 
-    if (units.some((u) => u.status === "active")) {
-        statuses.add("active");
-    }
-
-    if (units.some((u) => u.status === "leased")) {
+    if (snapshot.unitStatuses.has("leased")) {
         statuses.add("leased");
     }
 
-    if (units.some((u) => u.status === "inactive")) {
+    if (snapshot.unitStatuses.has("inactive")) {
         statuses.add("inactive");
+    }
+
+    const canShowInActiveAdminTab =
+        snapshot.hasActiveUnit &&
+        snapshot.entireHomeUnit?.status !== "leased" &&
+        (!snapshot.hasRooms || snapshot.hasActiveRoom);
+
+    if (canShowInActiveAdminTab) {
+        statuses.add("active");
     }
 
     return statuses;
 }
 
 /**
- * A property is visible to public users only when it has an active property state.
+ * Public listing tabs share one visibility model.
+ *
+ * Rules:
+ * - inactive units are hidden from users
+ * - an entire-home unit in leased state hides the whole property
+ * - when rooms exist, at least one active room is required for the property to be visible
+ * - when any room is leased, the entire-home offering is hidden but room offerings remain visible
  */
-function shouldShowProperty(units: Unit[] | undefined): boolean {
-    return getPropertyStatuses(units).has("active");
+function getPublicVisibility(snapshot: PropertyUnitSnapshot): PropertyPublicVisibility {
+    if (snapshot.units.length === 0) {
+        return {
+            isVisible: false,
+            isEntireHomeVisible: false,
+            isRoomVisible: false,
+        };
+    }
+
+    const isBlockedByLeasedEntireHome = snapshot.entireHomeUnit?.status === "leased";
+    const isBlockedByRoomsWithoutActiveAvailability = snapshot.hasRooms && !snapshot.hasActiveRoom;
+
+    if (isBlockedByLeasedEntireHome || isBlockedByRoomsWithoutActiveAvailability) {
+        return {
+            isVisible: false,
+            isEntireHomeVisible: false,
+            isRoomVisible: false,
+        };
+    }
+
+    const isEntireHomeVisible =
+        snapshot.entireHomeUnit?.status === "active" && !snapshot.hasLeasedRoom;
+    const isRoomVisible = snapshot.hasPublicRoomUnit;
+
+    return {
+        isVisible: isEntireHomeVisible || isRoomVisible,
+        isEntireHomeVisible,
+        isRoomVisible,
+    };
+}
+
+function shouldShowPropertyForPublicListing(
+    snapshot: PropertyUnitSnapshot,
+    listingType?: PropertyListingFilter
+): boolean {
+    const visibility = getPublicVisibility(snapshot);
+
+    if (listingType === "entire_home") {
+        return visibility.isEntireHomeVisible;
+    }
+
+    if (listingType === "room") {
+        return visibility.isRoomVisible;
+    }
+
+    return visibility.isVisible;
+}
+
+function shapePublicUnits(
+    units: Unit[] | undefined,
+    snapshot: PropertyUnitSnapshot,
+    listingType?: PropertyListingFilter
+): Unit[] {
+    const visibility = getPublicVisibility(snapshot);
+
+    if (!visibility.isVisible) {
+        return [];
+    }
+
+    let visibleUnits = (units ?? []).filter((unit) => unit.status !== "inactive");
+
+    if (!visibility.isEntireHomeVisible) {
+        visibleUnits = visibleUnits.filter((unit) => unit.listing_type !== "entire_home");
+    }
+
+    if (listingType === "entire_home") {
+        visibleUnits = visibleUnits.filter((unit) => unit.listing_type === "entire_home");
+    } else if (listingType === "room") {
+        visibleUnits = visibleUnits.filter((unit) => unit.listing_type === "room");
+    }
+
+    return visibleUnits;
 }
 
 function sortUnits(units: Unit[] | undefined): Unit[] {
-    return (
-        units?.sort((a: Unit, b: Unit) => {
-            if (a.listing_type !== b.listing_type) {
-                return a.listing_type === "entire_home" ? -1 : 1;
-            }
+    return [...(units ?? [])].sort((a: Unit, b: Unit) => {
+        if (a.listing_type !== b.listing_type) {
+            return a.listing_type === "entire_home" ? -1 : 1;
+        }
 
-            const nameA = a.name || "";
-            const nameB = b.name || "";
-            return nameA.localeCompare(nameB, undefined, { numeric: true });
-        }) || []
-    );
+        const nameA = a.name || "";
+        const nameB = b.name || "";
+        return nameA.localeCompare(nameB, undefined, { numeric: true });
+    });
 }
 
 async function getPropertyUnitsByPropertyIds(
@@ -364,8 +439,14 @@ export async function getProperties(
     }
 
     const allPropertyUnits = await getPropertyUnitsByPropertyIds(properties.map((prop) => prop.id));
+    const propertySnapshotsByPropertyId = new Map(
+        properties.map((prop) => [prop.id, createPropertyUnitSnapshot(allPropertyUnits.get(prop.id))])
+    );
     const propertyStatusesByPropertyId = new Map(
-        properties.map((prop) => [prop.id, getPropertyStatuses(allPropertyUnits.get(prop.id))])
+        properties.map((prop) => [
+            prop.id,
+            getPropertyStatuses(propertySnapshotsByPropertyId.get(prop.id)!),
+        ])
     );
 
     if (isAdmin && status) {
@@ -377,17 +458,20 @@ export async function getProperties(
     // For public listings, visibility is driven by the full property unit set,
     // not the unit subset that survived join filters.
     if (!isAdmin && isPublished) {
-        properties = properties.filter(
-            (prop) => propertyStatusesByPropertyId.get(prop.id)?.has("active")
+        properties = properties.filter((prop) =>
+            shouldShowPropertyForPublicListing(propertySnapshotsByPropertyId.get(prop.id)!, listingType)
         );
     }
 
     if (!isAdmin) {
-        // Defense-in-depth: ensure inactive units are removed from the response shape.
         properties = properties
             .map((prop) => ({
                 ...prop,
-                units: (prop.units || []).filter((unit: Unit) => unit.status !== "inactive"),
+                units: shapePublicUnits(
+                    prop.units,
+                    propertySnapshotsByPropertyId.get(prop.id)!,
+                    listingType
+                ),
             }))
             .filter((prop) => prop.units.length > 0);
     }
@@ -456,14 +540,16 @@ export async function getPropertyById(id: string, isAdmin = false): Promise<Prop
         throw new Error(error.message);
     }
 
-    if (!isAdmin && !shouldShowProperty(property.units)) {
+    const propertySnapshot = createPropertyUnitSnapshot(property.units);
+
+    if (!isAdmin && !getPublicVisibility(propertySnapshot).isVisible) {
         throw new Error("Property not found");
     }
 
     if (!isAdmin) {
         return {
             ...property,
-            units: sortUnits(property.units.filter((unit: Unit) => unit.status !== "inactive")),
+            units: sortUnits(shapePublicUnits(property.units, propertySnapshot)),
         };
     }
 
