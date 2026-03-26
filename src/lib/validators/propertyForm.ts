@@ -117,6 +117,8 @@ export const PropertyDataSchema = z.object({
     longitude: z.number().nullable().optional(),
     images: z.array(z.string()).nullable().optional(),
     video_url: z.string().url().nullable().optional(),
+    // Allow API callers to explicitly control publish state when needed.
+    is_published: z.boolean().optional(),
 });
 
 // Unit insert/update data schema (database layer)

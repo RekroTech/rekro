@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
             .from("properties")
             .insert({
                 ...propertyData,
+                is_published: propertyData.is_published ?? true,
                 created_by: user.id,
                 images: null,
                 video_url: null,
