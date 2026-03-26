@@ -4,13 +4,10 @@ import { Property } from "@/types/db";
 import { getPropertyFileUrl } from "@/lib/services/storage.service";
 import { Plus, X } from "lucide-react";
 import { Icon } from "@/components/common";
-import { isVideoFile } from "@/lib/utils";
 
 interface MediaSectionProps {
     mediaFiles: File[];
     existingImages: string[];
-    existingVideoUrl: string | null;
-    removeVideo: boolean;
     property?: Property;
     onAddFiles: (files: File[]) => void;
     onReorderExistingImage: (fromIndex: number, toIndex: number) => void;
@@ -26,8 +23,6 @@ type DragSource =
 export function MediaSection({
     mediaFiles,
     existingImages,
-    existingVideoUrl,
-    removeVideo,
     property,
     onAddFiles,
     onReorderExistingImage,
@@ -39,10 +34,7 @@ export function MediaSection({
     const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
     const getUploadedPhotoOrder = (index: number) => {
-        const uploadedPhotosBefore = mediaFiles
-            .slice(0, index + 1)
-            .filter((file) => !isVideoFile(file)).length;
-        return existingImages.length + uploadedPhotosBefore;
+        return existingImages.length + index + 1;
     };
 
     const handleDrop = (target: DragSource) => {
@@ -75,7 +67,7 @@ export function MediaSection({
                 <label className="cursor-pointer">
                     <input
                         type="file"
-                        accept="image/*,video/*"
+                        accept="image/*"
                         multiple
                         className="hidden"
                         onChange={(e) => {
@@ -86,15 +78,13 @@ export function MediaSection({
                     />
                     <div className="flex items-center gap-2 rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600">
                         <Icon icon={Plus} size={20} />
-                        Add Media
+                        Add Photos
                     </div>
                 </label>
             </div>
 
             {/* Media Grid - Shows both existing and new files */}
-            {(existingImages.length > 0 ||
-                (existingVideoUrl && !removeVideo) ||
-                mediaFiles.length > 0) && (
+            {(existingImages.length > 0 || mediaFiles.length > 0) && (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                     {/* Existing Images */}
                     {existingImages.map((imageUrl, index) => (
@@ -147,61 +137,41 @@ export function MediaSection({
                         <div
                             key={`new-${index}`}
                             className={`relative aspect-square overflow-hidden rounded-lg border-2 border-dashed border-primary-300 bg-surface-subtle ${
-                                !isVideoFile(file) && dragOverKey === `uploaded-${index}`
+                                dragOverKey === `uploaded-${index}`
                                     ? "ring-2 ring-primary-500 ring-offset-1 ring-offset-background"
                                     : ""
                             }`}
-                            draggable={!isVideoFile(file)}
+                            draggable
                             onDragStart={() => {
-                                if (!isVideoFile(file)) {
-                                    setDragSource({ type: "uploaded", index });
-                                }
+                                setDragSource({ type: "uploaded", index });
                             }}
                             onDragEnd={() => {
                                 setDragSource(null);
                                 setDragOverKey(null);
                             }}
                             onDragOver={(e) => {
-                                if (!isVideoFile(file)) {
-                                    e.preventDefault();
-                                    setDragOverKey(`uploaded-${index}`);
-                                }
+                                e.preventDefault();
+                                setDragOverKey(`uploaded-${index}`);
                             }}
                             onDragLeave={() => setDragOverKey(null)}
                             onDrop={(e) => {
-                                if (!isVideoFile(file)) {
-                                    e.preventDefault();
-                                    handleDrop({ type: "uploaded", index });
-                                }
+                                e.preventDefault();
+                                handleDrop({ type: "uploaded", index });
                             }}
                         >
-                            {isVideoFile(file) ? (
-                                <>
-                                    <video
-                                        src={URL.createObjectURL(file)}
-                                        className="h-full w-full object-cover"
-                                    />
-                                    <div className="absolute left-2 top-2 rounded bg-green-500 px-2 py-0.5 text-xs font-medium text-white">
-                                        New Video
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <Image
-                                        src={URL.createObjectURL(file)}
-                                        alt={file.name}
-                                        fill
-                                        className="object-cover"
-                                        sizes="(max-width: 768px) 25vw, 20vw"
-                                    />
-                                    <div className="absolute left-2 top-2 rounded bg-green-500 px-2 py-0.5 text-xs font-medium text-white">
-                                        New
-                                    </div>
-                                    <div className="absolute bottom-1 right-1 z-10 rounded-full border border-border bg-card/95 px-2 py-0.5 text-xs font-semibold text-text-primary shadow-sm">
-                                        {getUploadedPhotoOrder(index)}
-                                    </div>
-                                </>
-                            )}
+                            <Image
+                                src={URL.createObjectURL(file)}
+                                alt={file.name}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 25vw, 20vw"
+                            />
+                            <div className="absolute left-2 top-2 rounded bg-green-500 px-2 py-0.5 text-xs font-medium text-white">
+                                New
+                            </div>
+                            <div className="absolute bottom-1 right-1 z-10 rounded-full border border-border bg-card/95 px-2 py-0.5 text-xs font-semibold text-text-primary shadow-sm">
+                                {getUploadedPhotoOrder(index)}
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => onRemoveUploadedFile(index)}
@@ -217,8 +187,7 @@ export function MediaSection({
 
             {/* Helper Text */}
             <p className="mt-3 text-xs text-text-muted">
-                Upload photos and videos. Drag photos to reorder. Images max 10MB each, videos
-                max 50MB.
+                Upload photos only. Drag photos to reorder. Images max 10MB each.
             </p>
         </section>
     );

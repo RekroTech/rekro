@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Address, Select, Textarea } from "@/components/common";
 import { PropertyFormData } from "../types";
 import { PROPERTY_TYPES } from "../constants";
@@ -11,41 +12,49 @@ export function BasicInformationSection({
     formData,
     updateFormData,
 }: BasicInformationSectionProps) {
-    const handleAddressSelect = (addressComponents: {
-        street_number?: string;
-        route?: string;
-        locality?: string;
-        administrative_area_level_1?: string;
-        postal_code?: string;
-        country?: string;
-        coordinates?: { lat: number; lng: number };
-    }) => {
-        // Construct full street address
-        const streetAddress = [addressComponents.street_number, addressComponents.route]
-            .filter(Boolean)
-            .join(" ");
+    const handleAddressSelect = useCallback(
+        (addressComponents: {
+            street_number?: string;
+            route?: string;
+            locality?: string;
+            administrative_area_level_1?: string;
+            postal_code?: string;
+            country?: string;
+            coordinates?: { lat: number; lng: number };
+        }) => {
+            // Construct full street address
+            const streetAddress = [addressComponents.street_number, addressComponents.route]
+                .filter(Boolean)
+                .join(" ");
 
-        const city = addressComponents.locality || "";
-        const state = addressComponents.administrative_area_level_1 || "";
-        const postcode = addressComponents.postal_code || "";
-        const country = addressComponents.country || "Australia";
+            const city = addressComponents.locality || "";
+            const state = addressComponents.administrative_area_level_1 || "";
+            const postcode = addressComponents.postal_code || "";
+            const country = addressComponents.country || "Australia";
 
-        // Construct full formatted address for display
-        const fullAddress = [streetAddress, city, state, postcode, country]
-            .filter(Boolean)
-            .join(", ");
+            // Construct full formatted address for display
+            const fullAddress = [streetAddress, city, state, postcode, country]
+                .filter(Boolean)
+                .join(", ");
 
-        updateFormData({
-            address_full: fullAddress,
-            address_street: streetAddress || formData.address_street,
-            address_city: city || formData.address_city,
-            address_state: state || formData.address_state,
-            address_postcode: postcode || formData.address_postcode,
-            address_country: country || formData.address_country,
-            latitude: addressComponents.coordinates?.lat,
-            longitude: addressComponents.coordinates?.lng,
-        });
-    };
+            updateFormData({
+                address_full: fullAddress,
+                address_street: streetAddress,
+                address_city: city,
+                address_state: state,
+                address_postcode: postcode,
+                address_country: country,
+                latitude: addressComponents.coordinates?.lat,
+                longitude: addressComponents.coordinates?.lng,
+            });
+        },
+        [updateFormData]
+    );
+
+    const handleAddressChange = useCallback(
+        (value: string) => updateFormData({ address_full: value }),
+        [updateFormData]
+    );
 
     return (
         <section className="rounded-lg border border-border bg-card/80 p-3 shadow-sm sm:p-4">
@@ -63,7 +72,7 @@ export function BasicInformationSection({
                         <Address
                             label="Address"
                             value={formData.address_full}
-                            onChange={(value) => updateFormData({ address_full: value })}
+                            onChange={handleAddressChange}
                             onAddressSelect={handleAddressSelect}
                             placeholder="Start typing to search for an address..."
                         />

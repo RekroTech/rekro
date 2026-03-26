@@ -41,6 +41,14 @@ export function Address({
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
+    // Store callbacks in refs so the autocomplete effect doesn't depend on them.
+    // This prevents the autocomplete from being destroyed and recreated on every render,
+    // which was the root cause of address/location/lat/lng being sent as null.
+    const onChangeRef = useRef(onChange);
+    const onAddressSelectRef = useRef(onAddressSelect);
+    useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+    useEffect(() => { onAddressSelectRef.current = onAddressSelect; }, [onAddressSelect]);
+
     const parsePlace = useCallback((place: google.maps.places.PlaceResult) => {
         const addressComponents: AddressComponents = {};
 
@@ -96,6 +104,8 @@ export function Address({
             .catch((error) => console.error("Failed to load Google Maps:", error));
     }, []);
 
+    // Initialise Google Maps Autocomplete exactly ONCE (when the script has loaded).
+    // Callbacks are read from refs so re-renders never tear down/recreate the widget.
     useEffect(() => {
         if (
             !inputRef.current ||
@@ -108,9 +118,11 @@ export function Address({
             return;
         }
 
+        // Prevent double-init if the effect somehow re-runs with the same input
+        if (autocompleteRef.current) return;
+
         const input = inputRef.current;
 
-        // Classic Autocomplete attaches to our real <input> (no Shadow DOM focus-ring overlays).
         const autocomplete = new google.maps.places.Autocomplete(input, {
             componentRestrictions: { country: ["au"] },
             fields: ["address_components", "formatted_address", "geometry"],
@@ -124,17 +136,18 @@ export function Address({
             if (!place) return;
 
             if (place.formatted_address) {
-                onChange(place.formatted_address);
+                onChangeRef.current(place.formatted_address);
             }
 
-            onAddressSelect(parsePlace(place));
+            onAddressSelectRef.current(parsePlace(place));
         });
 
         return () => {
             if (listener) listener.remove();
+            google.maps.event.clearInstanceListeners(autocomplete);
             autocompleteRef.current = null;
         };
-    }, [isScriptLoaded, onChange, onAddressSelect, parsePlace]);
+    }, [isScriptLoaded, parsePlace]);
 
     return (
         <div className="w-full">

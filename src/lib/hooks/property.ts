@@ -91,7 +91,9 @@ export function useCreateProperty() {
 
             // Append media files
             mediaFiles.forEach((file) => {
-                formData.append("images", file);
+                if (file.type.startsWith("image/")) {
+                    formData.append("images", file);
+                }
             });
 
             const response = await fetch("/api/property", {
@@ -129,6 +131,7 @@ export interface UpdatePropertyInput {
     unitsData?: (Omit<UnitInsert, "created_at" | "property_id"> & { id?: string })[];
     mediaFiles?: File[];
     existingImages?: string[];
+    removedImages?: string[];
     deletedUnitIds?: string[];
 }
 
@@ -146,20 +149,20 @@ export function useUpdateProperty() {
             unitsData = [],
             mediaFiles = [],
             existingImages = [],
+            removedImages = [],
             deletedUnitIds = [],
         }: UpdatePropertyInput) => {
             const formData = new FormData();
             formData.append("propertyData", JSON.stringify(propertyData));
             formData.append("unitsData", JSON.stringify(unitsData));
             formData.append("existingImages", JSON.stringify(existingImages));
+            formData.append("removedImages", JSON.stringify(removedImages));
             formData.append("deletedUnitIds", JSON.stringify(deletedUnitIds));
 
             // Append media files
             mediaFiles.forEach((file) => {
                 if (file.type.startsWith("image/")) {
                     formData.append("images", file);
-                } else if (file.type.startsWith("video/")) {
-                    formData.append("video", file);
                 }
             });
 

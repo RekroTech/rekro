@@ -30,10 +30,6 @@ export function useMediaFiles(property?: Property) {
         property?.images && Array.isArray(property.images) ? property.images : []
     );
     const [removedImages, setRemovedImages] = useState<string[]>([]);
-    const [existingVideoUrl, setExistingVideoUrl] = useState<string | null>(
-        () => property?.video_url || null
-    );
-    const [removeVideo, setRemoveVideo] = useState(false);
 
     useEffect(() => {
         // Check if propertyId has actually changed
@@ -47,14 +43,10 @@ export function useMediaFiles(property?: Property) {
             setExistingImages(
                 property.images && Array.isArray(property.images) ? property.images : []
             );
-            setExistingVideoUrl(property.video_url || null);
             setRemovedImages([]);
-            setRemoveVideo(false);
         } else {
             setExistingImages([]);
-            setExistingVideoUrl(null);
             setRemovedImages([]);
-            setRemoveVideo(false);
         }
         setMediaFiles([]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,7 +62,8 @@ export function useMediaFiles(property?: Property) {
     };
 
     const addMediaFiles = (files: File[]) => {
-        setMediaFiles((prev) => [...prev, ...files]);
+        const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+        setMediaFiles((prev) => [...prev, ...imageFiles]);
     };
 
     const moveExistingImage = (fromIndex: number, toIndex: number) => {
@@ -85,16 +78,12 @@ export function useMediaFiles(property?: Property) {
         setMediaFiles([]);
         setExistingImages([]);
         setRemovedImages([]);
-        setExistingVideoUrl(null);
-        setRemoveVideo(false);
     };
 
     return {
         mediaFiles,
         existingImages,
         removedImages,
-        existingVideoUrl,
-        removeVideo,
         addMediaFiles,
         moveExistingImage,
         moveUploadedFile,

@@ -7,6 +7,25 @@ import { errorResponse, successResponse } from "@/app/api/utils";
 import { PropertyDataSchema, UnitDataSchema } from "@/lib/validators";
 import { z } from "zod";
 
+const STORAGE_BUCKET = "rekro-s3";
+
+function toStoragePath(pathOrUrl: string, propertyId?: string): string | null {
+    if (pathOrUrl.includes("/storage/v1/object/public/rekro-s3/")) {
+        const match = pathOrUrl.match(/\/storage\/v1\/object\/public\/rekro-s3\/(.+)$/);
+        return match?.[1] ? decodeURIComponent(match[1]) : null;
+    }
+
+    if (pathOrUrl.startsWith("property/")) {
+        return pathOrUrl;
+    }
+
+    if (propertyId) {
+        return `property/${propertyId}/${pathOrUrl}`;
+    }
+
+    return pathOrUrl;
+}
+
 /**
  * PUT /api/property/[id]
  * Update an existing property with units and media files
@@ -43,6 +62,7 @@ export async function PUT(
         const propertyDataStr = formData.get("propertyData") as string;
         const unitsDataStr = formData.get("unitsData") as string;
         const existingImagesStr = formData.get("existingImages") as string;
+        const removedImagesStr = formData.get("removedImages") as string;
         const deletedUnitIdsStr = formData.get("deletedUnitIds") as string;
 
         // Parse and validate property data
@@ -90,6 +110,16 @@ export async function PUT(
                 deletedUnitIds = z.array(z.string().uuid()).parse(parsed);
             } catch {
                 return errorResponse("Invalid deletedUnitIds format", 400);
+            }
+        }
+
+        let removedImages: string[] = [];
+        if (removedImagesStr) {
+            try {
+                const parsed = JSON.parse(removedImagesStr);
+                removedImages = z.array(z.string()).parse(parsed);
+            } catch {
+                return errorResponse("Invalid removedImages format", 400);
             }
         }
 
@@ -150,7 +180,7 @@ export async function PUT(
             }
         }
 
-        // Step 3: Handle images
+        // Step 3: Handle media
         let imagePaths = [...existingImages];
 
         if (imageFiles.length > 0) {
@@ -172,7 +202,7 @@ export async function PUT(
         delete updateData.created_by;
 
         // Only update images if they were provided or modified
-        if (imageFiles.length > 0 || existingImages.length > 0) {
+        if (imageFiles.length > 0 || existingImages.length > 0 || removedImages.length > 0) {
             updateData.images = imagePaths.length > 0 ? imagePaths : null;
         }
 
@@ -186,6 +216,23 @@ export async function PUT(
         if (updateError) {
             console.error("Error updating property:", updateError);
             return errorResponse(updateError.message, 500);
+        }
+
+        // Best-effort storage cleanup after a successful DB update.
+        const filesToDelete = removedImages
+            .map((file) => toStoragePath(file, propertyId))
+            .filter((filePath): filePath is string => !!filePath);
+
+        if (filesToDelete.length > 0) {
+            const uniquePaths = Array.from(new Set(filesToDelete));
+            const { error: removeError } = await supabase
+                .storage
+                .from(STORAGE_BUCKET)
+                .remove(uniquePaths);
+
+            if (removeError) {
+                console.error("Error deleting removed media files:", removeError);
+            }
         }
 
         return successResponse(updatedProperty, 200);
@@ -246,4 +293,3 @@ export async function DELETE(
         return errorResponse(message, 500);
     }
 }
-

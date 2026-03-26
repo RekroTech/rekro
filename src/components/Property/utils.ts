@@ -4,15 +4,23 @@ import { parseISO } from "date-fns";
 import { PARKING_OPTIONS } from "@/components/PropertyForm";
 
 export function parseAddress(address: unknown) {
-    if (typeof address === "object" && address !== null) {
-        const addr = address as Record<string, unknown>;
-        const street = (addr.street as string) || "";
-        const city = (addr.city as string) || "";
-        const state = (addr.state as string) || "";
-        const postcode = (addr.postcode as string) || "";
-        const country = (addr.country as string) || "Australia";
+    const DEFAULT_ADDRESS = {
+        address_full: "",
+        address_street: "",
+        address_city: "",
+        address_state: "",
+        address_postcode: "",
+        address_country: "Australia",
+    };
 
-        // Construct full address for display
+    const asText = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+
+    const toParsedAddress = (addr: Record<string, unknown>) => {
+        const street = asText(addr.street);
+        const city = asText(addr.city) || asText(addr.suburb);
+        const state = asText(addr.state);
+        const postcode = asText(addr.postcode);
+        const country = asText(addr.country) || DEFAULT_ADDRESS.address_country;
         const fullAddress = [street, city, state, postcode, country].filter(Boolean).join(", ");
 
         return {
@@ -23,15 +31,38 @@ export function parseAddress(address: unknown) {
             address_postcode: postcode,
             address_country: country,
         };
-    }
-    return {
-        address_full: "",
-        address_street: "",
-        address_city: "",
-        address_state: "",
-        address_postcode: "",
-        address_country: "Australia",
     };
+
+    if (typeof address === "object" && address !== null) {
+        return toParsedAddress(address as Record<string, unknown>);
+    }
+
+    if (typeof address === "string") {
+        const trimmedAddress = address.trim();
+
+        if (!trimmedAddress) {
+            return DEFAULT_ADDRESS;
+        }
+
+        // Some rows may have address persisted as a JSON string.
+        if (trimmedAddress.startsWith("{") && trimmedAddress.endsWith("}")) {
+            try {
+                const parsed = JSON.parse(trimmedAddress);
+                if (parsed && typeof parsed === "object") {
+                    return toParsedAddress(parsed as Record<string, unknown>);
+                }
+            } catch {
+                // Fall through to plain text parsing.
+            }
+        }
+
+        return {
+            ...DEFAULT_ADDRESS,
+            address_full: trimmedAddress,
+        };
+    }
+
+    return DEFAULT_ADDRESS;
 }
 
 /**

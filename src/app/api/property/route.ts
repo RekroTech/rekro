@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
                 is_published: propertyData.is_published ?? true,
                 created_by: user.id,
                 images: null,
-                video_url: null,
             })
             .select()
             .single();
@@ -93,13 +92,16 @@ export async function POST(request: NextRequest) {
         // Step 3: Upload images if provided
         if (imageFiles.length > 0) {
             try {
-                const uploadResults = await uploadPropertyFiles(imageFiles, property.id, supabase);
-                const imagePaths = uploadResults.map((result) => result.path);
+                const imagePaths = (
+                    await uploadPropertyFiles(imageFiles, property.id, supabase)
+                ).map((result) => result.path);
 
                 // Update property with image paths
                 const { data: updatedProperty, error: updateError } = await supabase
                     .from("properties")
-                    .update({ images: imagePaths })
+                    .update({
+                        images: imagePaths.length > 0 ? imagePaths : null,
+                    })
                     .eq("id", property.id)
                     .select()
                     .single();
@@ -124,4 +126,3 @@ export async function POST(request: NextRequest) {
         return errorResponse(message, 500);
     }
 }
-

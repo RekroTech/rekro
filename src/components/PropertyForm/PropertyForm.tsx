@@ -5,7 +5,6 @@ import type { PropertyInsert, UnitInsert } from "@/types/db";
 import type { AddPropertyModalProps } from "../Property/types";
 import { Button, Modal, Loader } from "@/components/common";
 import { useCreateProperty, useUpdateProperty, useProperty } from "@/lib/hooks/property";
-import { deletePropertyFiles } from "@/lib/services/storage.service";
 import { calculateRoomRents, calculateEntireHomeRent } from "@/lib/utils/pricing";
 import { usePropertyForm, useMediaFiles } from "./hooks";
 import { BasicInformationSection } from "./sections/BasicInformationSection";
@@ -48,8 +47,6 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
         mediaFiles,
         existingImages,
         removedImages,
-        existingVideoUrl,
-        removeVideo,
         addMediaFiles,
         moveExistingImage,
         moveUploadedFile,
@@ -152,6 +149,37 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
         setFormData({ price });
     };
 
+    const buildPropertyPayload = () => {
+        const street = formData.address_street.trim() || formData.address_full.trim();
+        const city = formData.address_city.trim();
+        const state = formData.address_state.trim();
+        const postcode = formData.address_postcode.trim();
+        const country = formData.address_country.trim() || DEFAULT_COUNTRY;
+
+        const address = { street, city, state, postcode, country };
+
+        const location =
+            city || state
+                ? { city, state, country }
+                : null;
+
+        return {
+            description: formData.description || null,
+            property_type: formData.property_type || null,
+            bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
+            bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
+            car_spaces: formData.car_spaces ? parseInt(formData.car_spaces) : null,
+            furnished: formData.furnished,
+            bills_included: formData.bills_included,
+            amenities: formData.amenities.length > 0 ? formData.amenities : null,
+            price: formData.price ? parseInt(formData.price) : 0,
+            address,
+            location,
+            latitude: formData.latitude ?? null,
+            longitude: formData.longitude ?? null,
+        };
+    };
+
     const handleClose = () => {
         setError(null);
         onClose();
@@ -168,60 +196,13 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
 
         try {
             if (isEditMode && property) {
-                // Delete removed images from storage
-                if (removedImages.length > 0) {
-                    try {
-                        await deletePropertyFiles(removedImages, property.id);
-                    } catch (deleteError) {
-                        console.error("Error deleting removed images:", deleteError);
-                        // Continue with update even if deletion fails
-                    }
-                }
-
-                // Delete removed video from storage
-                if (removeVideo && property.video_url) {
-                    try {
-                        await deletePropertyFiles([property.video_url], property.id);
-                    } catch (deleteError) {
-                        console.error("Error deleting removed video:", deleteError);
-                        // Continue with update even if deletion fails
-                    }
-                }
-
                 // Update existing property
                 const propertyData: Partial<
                     Omit<
                         PropertyInsert,
                         "id" | "created_at" | "updated_at" | "images" | "video_url" | "created_by"
                     >
-                > = {
-                    description: formData.description || null,
-                    property_type: formData.property_type || null,
-                    bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-                    bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-                    car_spaces: formData.car_spaces ? parseInt(formData.car_spaces) : null,
-                    furnished: formData.furnished,
-                    bills_included: formData.bills_included,
-                    amenities: formData.amenities.length > 0 ? formData.amenities : null,
-                    price: formData.price ? parseInt(formData.price) : 0,
-                    address: {
-                        street: formData.address_street,
-                        city: formData.address_city,
-                        state: formData.address_state,
-                        postcode: formData.address_postcode,
-                        country: formData.address_country,
-                    },
-                    location:
-                        formData.address_city && formData.address_state
-                            ? {
-                                  city: formData.address_city,
-                                  state: formData.address_state,
-                                  country: formData.address_country || DEFAULT_COUNTRY,
-                              }
-                            : null,
-                    latitude: formData.latitude ?? null,
-                    longitude: formData.longitude ?? null,
-                };
+                > = buildPropertyPayload();
 
                 // Prepare units data array (all units for update)
                 const unitsData = units.map((unit) => {
@@ -257,7 +238,8 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
                     propertyData,
                     unitsData,
                     mediaFiles,
-                    existingImages: existingImages,
+                    existingImages,
+                    removedImages,
                     deletedUnitIds,
                 });
             } else {
@@ -265,34 +247,7 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
                 const propertyData: Omit<
                     PropertyInsert,
                     "id" | "created_at" | "updated_at" | "images"
-                > = {
-                    description: formData.description || null,
-                    property_type: formData.property_type || null,
-                    bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-                    bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-                    car_spaces: formData.car_spaces ? parseInt(formData.car_spaces) : null,
-                    furnished: formData.furnished,
-                    bills_included: formData.bills_included,
-                    amenities: formData.amenities.length > 0 ? formData.amenities : null,
-                    price: formData.price ? parseInt(formData.price) : 0,
-                    address: {
-                        street: formData.address_street,
-                        city: formData.address_city,
-                        state: formData.address_state,
-                        postcode: formData.address_postcode,
-                        country: formData.address_country,
-                    },
-                    location:
-                        formData.address_city && formData.address_state
-                            ? {
-                                  city: formData.address_city,
-                                  state: formData.address_state,
-                                  country: formData.address_country || DEFAULT_COUNTRY,
-                              }
-                            : null,
-                    latitude: formData.latitude ?? null,
-                    longitude: formData.longitude ?? null,
-                };
+                > = buildPropertyPayload();
 
                 // Prepare units data array
                 const unitsData: Omit<UnitInsert, "property_id">[] = units.map((unit) => ({
@@ -379,8 +334,6 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
                 <MediaSection
                     mediaFiles={mediaFiles}
                     existingImages={existingImages}
-                    existingVideoUrl={existingVideoUrl}
-                    removeVideo={removeVideo}
                     property={property}
                     onAddFiles={addMediaFiles}
                     onReorderExistingImage={moveExistingImage}
