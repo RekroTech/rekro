@@ -61,7 +61,7 @@ INSERT INTO public.properties (
   1,
   0,
   true,
-  ARRAY['WiFi', 'Shared Kitchen', 'Garden', 'Parking'],
+  ARRAY['WiFi', 'Shared Kitchen', 'Backyard', 'Parking'],
   ARRAY['/window.svg'],
   true
 ),

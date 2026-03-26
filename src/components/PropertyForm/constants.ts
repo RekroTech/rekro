@@ -46,13 +46,13 @@ export const AMENITIES = [
     "Laundry",
     "Dishwasher",
     "Balcony",
-    "Garden",
+    "Backyard",
     "Pet Friendly",
     "Security System",
     "BBQ Area",
     "Study Room",
     "Storage",
-    "Elevator",
+    "Lift",
 ] as const;
 
 export const ROOM_UNIT_FEATURES = [

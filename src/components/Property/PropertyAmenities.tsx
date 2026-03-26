@@ -25,6 +25,11 @@ interface PropertyAmenitiesProps {
     amenities: string[] | null;
 }
 
+const AMENITY_RENAMES: Record<string, string> = {
+    Garden: "Backyard",
+    Elevator: "Lift",
+};
+
 // Direct mapping of predefined amenities to their icons
 const AMENITY_ICON_MAP: Record<string, LucideIcon | SvgIcon> = {
     "Air Conditioning": Wind,
@@ -36,13 +41,19 @@ const AMENITY_ICON_MAP: Record<string, LucideIcon | SvgIcon> = {
     Dishwasher: Utensils,
     Balcony: Building2,
     Garden: Trees,
+    Backyard: Trees,
     "Pet Friendly": PawPrint,
     "Security System": Shield,
     "BBQ Area": FlameKindling,
     "Study Room": BookOpen,
     Storage: Archive,
     Elevator: ArrowUpDown,
+    Lift: ArrowUpDown,
 } as const;
+
+function getDisplayAmenity(amenity: string): string {
+    return AMENITY_RENAMES[amenity] || amenity;
+}
 
 function getAmenityIcon(amenity: string): LucideIcon | SvgIcon {
     // Check if it's a parking option
@@ -94,7 +105,7 @@ export function PropertyAmenities({ amenities }: PropertyAmenitiesProps) {
                                     />
                                 </div>
                                 <span className="text-xs sm:text-sm md:text-base leading-snug">
-                                    {amenity}
+                                    {getDisplayAmenity(amenity)}
                                 </span>
                             </div>
                         ))}
