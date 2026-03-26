@@ -1,22 +1,117 @@
 import { createClient } from "@/lib/supabase/client";
 import type { GetPropertiesParams, GetPropertiesResponse, Property } from "@/types/property.types";
-import type { Unit } from "@/types/db";
+import type { Unit, UnitStatus } from "@/types/db";
 
-function hasActiveUnit(units: Unit[], listingType: "entire_home" | "room") {
-    return units.some((unit) => unit.listing_type === listingType && unit.status === "active");
-}
+type PropertyStatusUnit = Pick<Unit, "property_id" | "listing_type" | "status">;
+type EffectiveStatusUnit = Pick<Unit, "listing_type" | "status">;
 
-function shouldShowProperty(units: Unit[] | undefined): boolean {
-    if (!units || units.length === 0) return false;
+/**
+ * Derives all admin-tab statuses a property belongs to from its units.
+ *
+ * Rule summary:
+ * - entire_home leased   -> leased only
+ * - entire_home inactive -> inactive only
+ * - entire_home active   -> room states can make the property appear in
+ *   multiple admin tabs, following the product rules.
+ *
+ * Room-only properties appear in every tab represented by at least one room.
+ */
+function getPropertyStatuses(units: EffectiveStatusUnit[] | undefined): Set<UnitStatus> {
+    if (!units || units.length === 0) return new Set();
 
-    const hasEntireHome = units.some((unit) => unit.listing_type === "entire_home");
-    if (hasEntireHome) {
-        // Entire-home listings are visible only while at least one entire-home unit is active.
-        return hasActiveUnit(units, "entire_home");
+    const entireHomeUnit = units.find((u) => u.listing_type === "entire_home");
+    if (entireHomeUnit) {
+        if (entireHomeUnit.status === "leased") {
+            return new Set(["leased"]);
+        }
+
+        if (entireHomeUnit.status === "inactive") {
+            return new Set(["inactive"]);
+        }
+
+        const rooms = units.filter((u) => u.listing_type === "room");
+        const hasActiveRoom = rooms.some((u) => u.status === "active");
+        const hasLeasedRoom = rooms.some((u) => u.status === "leased");
+        const hasInactiveRoom = rooms.some((u) => u.status === "inactive");
+        const statuses = new Set<UnitStatus>();
+
+        if (rooms.length === 0 || hasActiveRoom || (hasInactiveRoom && !hasLeasedRoom)) {
+            statuses.add("active");
+        }
+
+        if (hasLeasedRoom) {
+            statuses.add("leased");
+        }
+
+        if (hasInactiveRoom) {
+            statuses.add("inactive");
+        }
+
+        return statuses;
     }
 
-    // Room-only listings are visible when at least one room is active.
-    return hasActiveUnit(units, "room");
+    const statuses = new Set<UnitStatus>();
+
+    if (units.some((u) => u.status === "active")) {
+        statuses.add("active");
+    }
+
+    if (units.some((u) => u.status === "leased")) {
+        statuses.add("leased");
+    }
+
+    if (units.some((u) => u.status === "inactive")) {
+        statuses.add("inactive");
+    }
+
+    return statuses;
+}
+
+/**
+ * A property is visible to public users only when it has an active property state.
+ */
+function shouldShowProperty(units: Unit[] | undefined): boolean {
+    return getPropertyStatuses(units).has("active");
+}
+
+function sortUnits(units: Unit[] | undefined): Unit[] {
+    return (
+        units?.sort((a: Unit, b: Unit) => {
+            if (a.listing_type !== b.listing_type) {
+                return a.listing_type === "entire_home" ? -1 : 1;
+            }
+
+            const nameA = a.name || "";
+            const nameB = b.name || "";
+            return nameA.localeCompare(nameB, undefined, { numeric: true });
+        }) || []
+    );
+}
+
+async function getPropertyUnitsByPropertyIds(
+    propertyIds: string[]
+): Promise<Map<string, PropertyStatusUnit[]>> {
+    if (!propertyIds.length) {
+        return new Map();
+    }
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from("units")
+        .select("property_id, listing_type, status")
+        .in("property_id", propertyIds);
+
+    if (error) {
+        console.error("Error fetching property units:", error);
+        throw new Error(error.message);
+    }
+
+    return (data || []).reduce((map, unit) => {
+        const existingUnits = map.get(unit.property_id) || [];
+        existingUnits.push(unit as PropertyStatusUnit);
+        map.set(unit.property_id, existingUnits);
+        return map;
+    }, new Map<string, PropertyStatusUnit[]>());
 }
 
 /**
@@ -136,11 +231,10 @@ export async function getProperties(
     const unitColumns =
         "id, listing_type, name, description, price, bond_amount, min_lease, max_lease, max_occupants, size_sqm, status, available_from, available_to, features";
 
-    // Use inner join for filtering by liked properties, listing type, status, or price
+    // Use inner join only for filters that must constrain the joined units.
     const needsInnerJoin = !!(
         listingType ||
         likedOnly ||
-        (isAdmin && status) ||
         minPrice !== undefined ||
         maxPrice !== undefined
     );
@@ -171,11 +265,6 @@ export async function getProperties(
         }
 
         query = query.in("units.id", likedUnitIds);
-    }
-
-    // Filter by status (admin-only)
-    if (isAdmin && status) {
-        query = query.eq("units.status", status);
     }
 
     // Non-admin queries should never include inactive units.
@@ -274,6 +363,25 @@ export async function getProperties(
         }));
     }
 
+    const allPropertyUnits = await getPropertyUnitsByPropertyIds(properties.map((prop) => prop.id));
+    const propertyStatusesByPropertyId = new Map(
+        properties.map((prop) => [prop.id, getPropertyStatuses(allPropertyUnits.get(prop.id))])
+    );
+
+    if (isAdmin && status) {
+        properties = properties.filter((prop) =>
+            propertyStatusesByPropertyId.get(prop.id)?.has(status)
+        );
+    }
+
+    // For public listings, visibility is driven by the full property unit set,
+    // not the unit subset that survived join filters.
+    if (!isAdmin && isPublished) {
+        properties = properties.filter(
+            (prop) => propertyStatusesByPropertyId.get(prop.id)?.has("active")
+        );
+    }
+
     if (!isAdmin) {
         // Defense-in-depth: ensure inactive units are removed from the response shape.
         properties = properties
@@ -284,23 +392,10 @@ export async function getProperties(
             .filter((prop) => prop.units.length > 0);
     }
 
-    // For public listings, apply visibility rules after unit-level filtering.
-    if (!isAdmin && isPublished) {
-        properties = properties.filter((prop) => shouldShowProperty(prop.units));
-    }
-
     // Sort units: entire_home first, then rooms by name
     properties = properties.map((prop) => ({
         ...prop,
-        units:
-            prop.units?.sort((a: Unit, b: Unit) => {
-                if (a.listing_type !== b.listing_type) {
-                    return a.listing_type === "entire_home" ? -1 : 1;
-                }
-                const nameA = a.name || "";
-                const nameB = b.name || "";
-                return nameA.localeCompare(nameB, undefined, { numeric: true });
-            }) || [],
+        units: sortUnits(prop.units),
     }));
 
     // Bulk fetch likes if userId is provided
@@ -340,7 +435,7 @@ export async function getProperties(
 export async function getPropertyById(id: string, isAdmin = false): Promise<Property> {
     const supabase = createClient();
 
-    let query = supabase
+    const query = supabase
         .from("properties")
         .select(
             `
@@ -354,11 +449,6 @@ export async function getPropertyById(id: string, isAdmin = false): Promise<Prop
         .order("listing_type", { referencedTable: "units", ascending: true })
         .order("name", { referencedTable: "units", ascending: true });
 
-    if (!isAdmin) {
-        // Non-admin views keep leased units visible as unavailable, but hide inactive units.
-        query = query.in("units.status", ["active", "leased"]);
-    }
-
     const { data: property, error } = await query.single();
 
     if (error) {
@@ -366,5 +456,19 @@ export async function getPropertyById(id: string, isAdmin = false): Promise<Prop
         throw new Error(error.message);
     }
 
-    return property;
+    if (!isAdmin && !shouldShowProperty(property.units)) {
+        throw new Error("Property not found");
+    }
+
+    if (!isAdmin) {
+        return {
+            ...property,
+            units: sortUnits(property.units.filter((unit: Unit) => unit.status !== "inactive")),
+        };
+    }
+
+    return {
+        ...property,
+        units: sortUnits(property.units),
+    };
 }
