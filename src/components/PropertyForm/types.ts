@@ -34,9 +34,7 @@ export interface UnitFormData {
     size_sqm: string;
     available_from: string;
     available_to: string;
-    status: UnitStatus; // UI field: active, leased, or inactive
-    is_active: boolean; // DB field: derived from status
-    is_available: boolean; // DB field: derived from status
+    status: UnitStatus; // Unit status: active, leased, or inactive
     features: string[];
     availability_notes: string;
 }

@@ -12,7 +12,7 @@ import clsx from "clsx";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ProfileCompletionProvider } from "@/contexts";
 import { getPropertyFileUrls } from "@/lib/services";
-import { useProperty, useProfile } from "@/lib/hooks";
+import { useProperty, useProfile, useRoles } from "@/lib/hooks";
 import { useMediaQuery } from "@/hooks";
 import { Button, BackButton, PropertyDetailSkeleton } from "@/components/common";
 import {
@@ -37,6 +37,7 @@ export default function PropertyDetailPage() {
     const propertyId = params.id as string;
     const isDesktop = useMediaQuery("(min-width: 1024px)");
     const { data: userProfile } = useProfile();
+    const { isAdmin } = useRoles();
 
     const { data: property, isLoading, error } = useProperty(propertyId);
 
@@ -203,6 +204,31 @@ export default function PropertyDetailPage() {
                     <h1 className="text-2xl font-bold text-red-600 mb-4">Property Not Found</h1>
                     <p className="text-text-muted mb-6">
                         The property you&apos;re looking for doesn&apos;t exist or has been removed.
+                    </p>
+                    <Button variant="primary" onClick={() => router.push("/")}>
+                        Back to Properties
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    const hasEntireHome = property.units.some((unit) => unit.listing_type === "entire_home");
+    const hasActiveEntireHome = property.units.some(
+        (unit) => unit.listing_type === "entire_home" && unit.status === "active"
+    );
+    const hasActiveRoom = property.units.some(
+        (unit) => unit.listing_type === "room" && unit.status === "active"
+    );
+    const isVisibleToRegularUser = hasEntireHome ? hasActiveEntireHome : hasActiveRoom;
+
+    if (!isAdmin && !isVisibleToRegularUser) {
+        return (
+            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold text-red-600 mb-4">Property Not Found</h1>
+                    <p className="text-text-muted mb-6">
+                        The property you&apos;re looking for is no longer available.
                     </p>
                     <Button variant="primary" onClick={() => router.push("/")}>
                         Back to Properties

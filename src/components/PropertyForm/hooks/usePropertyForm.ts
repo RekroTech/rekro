@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import type { ListingType, Unit } from "@/types/db";
-import type { Property, UnitStatus } from "@/types/property.types";
+import type { Property } from "@/types/property.types";
 import { formatDateForInput } from "@/lib/utils";
 import { PropertyFormData, UnitFormData } from "../types";
 import { DEFAULT_UNIT_DATA } from "../constants";
@@ -30,7 +30,15 @@ export type ListingTypeSelection = ListingType | "all";
 export function usePropertyForm(property?: Property, existingUnits: Unit[] = []) {
     const isEditMode = !!property;
     const propertyId = property?.id;
-    const isInitialMount = useRef(true);
+
+    const getBedroomCount = (bedrooms: string) => Math.max(1, parseInt(bedrooms) || 1);
+
+    const normalizeListingType = (
+        nextListingType: ListingTypeSelection,
+        bedroomCount: number
+    ): ListingTypeSelection => {
+        return bedroomCount === 1 ? "entire_home" : nextListingType;
+    };
 
     const mapExistingUnitsToFormData = (units: Unit[]): UnitFormData[] => {
         return units.map((unit) => {
@@ -51,9 +59,7 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
                 size_sqm: unit.size_sqm?.toString() || "",
                 available_from: formatDateForInput(unit.available_from),
                 available_to: formatDateForInput(unit.available_to),
-                status: (unit.is_active ? "active" : "inactive") as UnitStatus,
-                is_active: unit.is_active ?? true,
-                is_available: unit.is_available ?? true,
+                status: unit.status || "inactive",
                 features: unit.features || [],
                 availability_notes: "",
             };
@@ -76,9 +82,10 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
             ? getInitialFormData({ ...property, units: property.units ?? existingUnits ?? [] })
             : getInitialFormData()
     );
-    const [listingType, setListingType] = useState<ListingTypeSelection>(() => {
+    const [listingType, setListingTypeState] = useState<ListingTypeSelection>(() => {
         if (property && existingUnits.length > 0) {
-            return inferListingTypeFromExistingUnits(existingUnits);
+            const inferredType = inferListingTypeFromExistingUnits(existingUnits);
+            return normalizeListingType(inferredType, property.bedrooms || 1);
         }
         return "entire_home";
     });
@@ -195,43 +202,56 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
 
     // Sync when property changes (edit mode - when switching between different properties)
     useEffect(() => {
-        if (property && existingUnits.length > 0) {
-            const newFormData = getInitialFormData(property);
-            const newListingType = inferListingTypeFromExistingUnits(existingUnits);
-            const newUnits = mapExistingUnitsToFormData(existingUnits);
+        if (property) {
+            let cancelled = false;
 
-            setFormData(newFormData);
-            setListingType(newListingType);
-            setUnits(newUnits);
-            setActiveRoomTab(0);
-            setDeletedUnitIds([]);
-            isInitialMount.current = true; // Reset flag when loading new property
+            // Schedule hydration outside the current effect turn to satisfy lint and avoid sync cascades.
+            queueMicrotask(() => {
+                if (cancelled) return;
+
+                const newFormData = getInitialFormData(property);
+                const bedroomCount = getBedroomCount(newFormData.bedrooms);
+                const inferredType = inferListingTypeFromExistingUnits(existingUnits);
+                const newListingType = normalizeListingType(inferredType, bedroomCount);
+                const newUnits =
+                    existingUnits.length > 0
+                        ? mapExistingUnitsToFormData(existingUnits)
+                        : [{ ...DEFAULT_UNIT_DATA }];
+
+                setFormData(newFormData);
+                setListingTypeState(newListingType);
+                setUnits(newUnits);
+                setActiveRoomTab(0);
+                setDeletedUnitIds([]);
+            });
+
+            return () => {
+                cancelled = true;
+            };
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [propertyId]);
-
-    // Sync units when listing type or bedrooms change
-    useEffect(() => {
-        // Skip sync on initial mount to preserve loaded data
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            return;
-        }
-
-        const bedroomCount = parseInt(formData.bedrooms) || 1;
-
-        // Force entire_home when bedrooms === 1
-        if (bedroomCount === 1 && listingType !== "entire_home") {
-            // Use a timeout to avoid setState in effect
-            setTimeout(() => setListingType("entire_home"), 0);
-            return;
-        }
-
-        syncUnits(listingType, bedroomCount);
-    }, [listingType, formData.bedrooms]);
+    }, [propertyId, property, existingUnits]);
 
     const updateFormData = (updates: Partial<PropertyFormData>) => {
+        const nextBedrooms = updates.bedrooms ?? formData.bedrooms;
+        const bedroomCount = getBedroomCount(nextBedrooms);
+
         setFormData((prev) => ({ ...prev, ...updates }));
+
+        if (updates.bedrooms !== undefined) {
+            const nextListingType = normalizeListingType(listingType, bedroomCount);
+            if (nextListingType !== listingType) {
+                setListingTypeState(nextListingType);
+            }
+            syncUnits(nextListingType, bedroomCount);
+        }
+    };
+
+    const setListingType = (nextListingType: ListingTypeSelection) => {
+        const bedroomCount = getBedroomCount(formData.bedrooms);
+        const normalizedType = normalizeListingType(nextListingType, bedroomCount);
+
+        setListingTypeState(normalizedType);
+        syncUnits(normalizedType, bedroomCount);
     };
 
     const updateUnit = (index: number, updates: Partial<UnitFormData>) => {
@@ -244,7 +264,7 @@ export function usePropertyForm(property?: Property, existingUnits: Unit[] = [])
 
     const resetForm = () => {
         setFormData(getInitialFormData());
-        setListingType("entire_home");
+        setListingTypeState("entire_home");
         setUnits([{ ...DEFAULT_UNIT_DATA }]);
         setActiveRoomTab(0);
         setDeletedUnitIds([]);

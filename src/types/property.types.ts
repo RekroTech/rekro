@@ -33,6 +33,7 @@ export interface GetPropertiesParams {
     limit?: number;
     offset?: number;
     isPublished?: boolean;
+    isAdmin?: boolean;
     userId?: string; // For fetching likes
     likedOnly?: boolean; // Filter to show only liked properties (requires userId)
     // New optional filters

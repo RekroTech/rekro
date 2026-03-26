@@ -10,9 +10,7 @@ import {
     hasRole,
     hasAnyRole,
     hasRoleLevel,
-    canManageProperties as canManagePropertiesHelper,
-    canManageUsers as canManageUsersHelper,
-    ROLE_HIERARCHY
+    ROLE_HIERARCHY, isAdmin,
 } from "@/lib/utils/authorization";
 
 export interface RolesApi {
@@ -34,11 +32,8 @@ export interface RolesApi {
     /** Check if user has role level or higher */
     hasRoleLevel: (minimumRole: AppRole) => boolean;
 
-    /** Can manage properties (landlord+) */
-    canManageProperties: boolean;
-
-    /** Can manage users (admin+) */
-    canManageUsers: boolean;
+    /** Can manage App*/
+    isAdmin: boolean;
 }
 
 /**
@@ -56,8 +51,7 @@ export function useRoles(): RolesApi {
             hasRole: (role: AppRole) => hasRole(user ?? null, role),
             hasAnyRole: (roles: AppRole[]) => hasAnyRole(user ?? null, roles),
             hasRoleLevel: (minimumRole: AppRole) => hasRoleLevel(user ?? null, minimumRole),
-            canManageProperties: canManagePropertiesHelper(user ?? null),
-            canManageUsers: canManageUsersHelper(user ?? null),
+            isAdmin: isAdmin(user ?? null),
         }),
         [user]
     );

@@ -47,8 +47,6 @@ export const UnitFormDataSchema = z.object({
     available_from: z.string(), // Date string
     available_to: z.string(), // Date string
     status: UnitStatusSchema,
-    is_active: z.boolean(),
-    is_available: z.boolean(),
     availability_notes: z.string().max(500),
 });
 
@@ -136,8 +134,7 @@ export const UnitDataSchema = z.object({
     size_sqm: z.number().positive().nullable().optional(),
     available_from: z.string().nullable().optional(),
     available_to: z.string().nullable().optional(),
-    is_active: z.boolean().default(true),
-    is_available: z.boolean().default(true),
+    status: z.enum(["active", "leased", "inactive"]).default("inactive"),
     features: z.array(z.string()).nullable().optional(),
 });
 

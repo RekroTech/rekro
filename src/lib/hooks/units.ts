@@ -108,7 +108,7 @@ export function useUnits(propertyId: string) {
                 .from("units")
                 .select("*")
                 .eq("property_id", propertyId)
-                .eq("is_active", true)
+                .eq("status", "active")
                 .order("listing_type", { ascending: true })
                 .order("name", { ascending: true });
 

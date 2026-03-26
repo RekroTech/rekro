@@ -21,7 +21,7 @@ import { ListingTab, UnitStatus } from "@/types/property.types";
 export const dynamic = "force-dynamic";
 
 function HomePageContent() {
-    const { canManageProperties, canManageUsers } = useRoles();
+    const { isAdmin } = useRoles();
     const [status, setStatus] = useQueryState(
         "status",
         parseAsStringLiteral(["active", "leased", "inactive"] as const).withDefault("active")
@@ -219,10 +219,10 @@ function HomePageContent() {
                 <div className="mb-4 sm:mb-6 flex items-center justify-center px-1">
                     <div
                         role="tablist"
-                        aria-label={canManageUsers ? "Property status" : "Listing type"}
+                        aria-label={isAdmin ? "Property status" : "Listing type"}
                         className="flex items-center gap-1 sm:gap-2 rounded-4xl border border-border bg-card p-1 w-full max-w-md"
                     >
-                        {canManageUsers ? (
+                        {isAdmin ? (
                             STATUS_TABS.map((tab) => {
                                 const isActive = status === tab.value;
                                 return (
@@ -284,11 +284,9 @@ function HomePageContent() {
                         minPrice={minPrice ? parseInt(minPrice) : undefined}
                         maxPrice={maxPrice ? parseInt(maxPrice) : undefined}
                         furnished={furnishedFilter === "furnished" ? true : furnishedFilter === "unfurnished" ? false : undefined}
-                        listingType={canManageUsers ? undefined : listingType}
-                        status={canManageUsers ? status ?? undefined : undefined}
-                        showEditButton={canManageProperties}
-                        // Admin sees every unit price; regular users mirror their active listing-type tab
-                        priceDisplayMode={canManageProperties ? "all" : (listingType as ListingTab)}
+                        listingType={isAdmin ? undefined : listingType}
+                        status={isAdmin ? status ?? undefined : undefined}
+                        showEditButton={isAdmin}
                     />
                 ) : (
                     <PropertyMapView
@@ -300,8 +298,8 @@ function HomePageContent() {
                         minPrice={minPrice ? parseInt(minPrice) : undefined}
                         maxPrice={maxPrice ? parseInt(maxPrice) : undefined}
                         furnished={furnishedFilter === "furnished" ? true : furnishedFilter === "unfurnished" ? false : undefined}
-                        listingType={canManageUsers ? undefined : listingType}
-                        status={canManageUsers ? status ?? undefined : undefined}
+                        listingType={isAdmin ? undefined : listingType}
+                        status={isAdmin ? status ?? undefined : undefined}
                     />
                 )}
             </div>

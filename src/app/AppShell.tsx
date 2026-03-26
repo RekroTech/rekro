@@ -43,7 +43,7 @@ export default function AppShell({ children }: AppShellProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const pathname = usePathname();
 
-    const { canManageProperties } = useRoles();
+    const { isAdmin } = useRoles();
     const { isAuthModalOpen, closeAuthModal, redirectTo, authModalError } = useAuthModal();
 
     // Check session on initial load
@@ -93,7 +93,7 @@ export default function AppShell({ children }: AppShellProps) {
             {!user && <Footer />}
 
             {/* Add Property Modal - only for admin */}
-            {canManageProperties && (
+            {isAdmin && (
                 <PropertyForm
                     key={pathname}
                     isOpen={isModalOpen}

@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         // Verify unit exists and is active
         const { data: unit, error: unitError } = await supabase
             .from("units")
-            .select("id, is_active, property_id")
+            .select("id, status, property_id")
             .eq("id", unit_id)
             .single();
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
             return errorResponse("Unit not found", 404);
         }
 
-        if (!unit.is_active) {
+        if (unit.status !== "active") {
             return errorResponse("This unit is no longer available for enquiries", 400);
         }
 

@@ -22,6 +22,7 @@ export interface Location {
 }
 
 export type ListingType = "entire_home" | "room";
+export type UnitStatus = "active" | "leased" | "inactive";
 
 export type Gender = "male" | "female" | "non_binary" | "prefer_not_to_say";
 export type PreferredContactMethod = "email" | "phone" | "sms";
@@ -277,12 +278,11 @@ export interface Database {
                     max_lease: number | null;
                     max_occupants: number | null;
                     size_sqm: number | null;
-                    is_active: boolean | null;
                     created_at: string;
-                    available_from: string | null;
+                    available_from: string;
                     available_to: string | null;
-                    is_available: boolean;
                     features: string[] | null;
+                    status: UnitStatus;
                 };
                 Insert: {
                     id?: string;
@@ -296,12 +296,11 @@ export interface Database {
                     max_lease?: number | null;
                     max_occupants?: number | null;
                     size_sqm?: number | null;
-                    is_active?: boolean | null;
                     created_at?: string;
                     available_from?: string | null;
                     available_to?: string | null;
-                    is_available?: boolean;
                     features?: string[] | null;
+                    status?: UnitStatus;
                 };
                 Update: {
                     id?: string;
@@ -315,11 +314,10 @@ export interface Database {
                     max_lease?: number | null;
                     max_occupants?: number | null;
                     size_sqm?: number | null;
-                    is_active?: boolean | null;
                     available_from?: string | null;
                     available_to?: string | null;
-                    is_available?: boolean;
                     features?: string[] | null;
+                    status?: UnitStatus;
                 };
             };
             unit_availability: {

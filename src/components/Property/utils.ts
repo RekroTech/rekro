@@ -53,14 +53,15 @@ export function getAvailabilityInfo(unit: Unit | null) {
     const now = new Date();
     const availableFrom = unit.available_from ? parseISO(unit.available_from) : null;
     const isAvailableLater = availableFrom && availableFrom > now;
+    const isAvailable = unit.status === "active";
 
     return {
-        statusText: !unit.is_available
+        statusText: !isAvailable
             ? "Not Available"
             : isAvailableLater
               ? "Available"
               : "Available",
-        statusColor: !unit.is_available
+        statusColor: !isAvailable
             ? "text-red-600"
             : isAvailableLater
               ? "text-yellow-600"

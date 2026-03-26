@@ -15,7 +15,7 @@ interface HeaderProps {
 
 export function Header({ onAddPropertyAction }: HeaderProps) {
     const { mutate: logout, isPending } = useLogout();
-    const { canManageProperties, user } = useRoles();
+    const { isAdmin, user } = useRoles();
     const { openAuthModal } = useAuthModal();
 
     const authButtonClassName = "h-8 sm:h-9 min-w-[76px] sm:min-w-[96px] px-3 sm:px-4";
@@ -63,7 +63,7 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                 </Link>
                 <div className="flex flex-row">
                     <div className="flex items-center gap-2 sm:gap-4">
-                        {canManageProperties && (
+                        {isAdmin && (
                             <Button
                                 variant="primary"
                                 onClick={() => onAddPropertyAction?.()}

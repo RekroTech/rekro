@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Property, Unit } from "@/types/db";
-import { ListingTab } from "@/types";
 import { Bed, Bath, Car, MapPin, Pencil } from "lucide-react";
 import { Icon, Visual } from "@/components/common";
 import { getPropertyFileUrl } from "@/lib/services";
 import { getLocalityString, getPriceBadges } from "@/lib/utils";
+import { useRoles } from "@/lib/hooks";
 import { usePrefetchProperty } from "@/lib/hooks/property";
 import { ImageGallery } from "../Property/ImageGalleryMobile";
 import { PropertyForm } from "../PropertyForm";
@@ -17,7 +17,6 @@ import { ShareDropdown } from "@/components/Property";
 interface PropertyCardProps {
     property: Property & { units?: Unit[] };
     showEditButton?: boolean;
-    priceDisplayMode?: ListingTab;
     /** Pass true for the first card above the fold so the LCP image is eagerly loaded. */
     priority?: boolean;
 }
@@ -25,11 +24,11 @@ interface PropertyCardProps {
 export function PropertyCard({
     property,
     showEditButton = false,
-    priceDisplayMode = "all" as ListingTab,
     priority = false,
 }: PropertyCardProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const prefetchProperty = usePrefetchProperty();
+    const { isAdmin } = useRoles();
 
     const {
         id,
@@ -40,14 +39,15 @@ export function PropertyCard({
         furnished,
         images,
         address,
+        price,
         units,
     } = property;
 
     const streetAddress = address?.street || getLocalityString(address);
 
-    // Units are now included in the property data from the API
-    // Get the first unit for like/share button references
-    const firstUnit = units && units.length > 0 ? units[0] : null;
+    // Prefer an active unit for like/share actions; fall back to the first unit if needed.
+    const firstUnit =
+        units?.find((unit) => unit.status === "active") ?? (units && units.length > 0 ? units[0] : null);
 
     // Process all images for gallery
     const imageUrls = images && images.length > 0
@@ -57,7 +57,8 @@ export function PropertyCard({
     // Format address to show only locality (suburb/city + state), street is shown above
     const addressText = address ? getLocalityString(address, false) : "Location not specified";
 
-    const priceBadges = getPriceBadges(units, priceDisplayMode);
+    const shouldShowBaseRent = isAdmin && Number.isFinite(price);
+    const priceBadges = shouldShowBaseRent ? [] : getPriceBadges(units, "all");
 
     return (
         <>
@@ -106,7 +107,18 @@ export function PropertyCard({
                             <ShareDropdown propertyAddress={streetAddress} unitId={firstUnit.id} propertyId={id} />
                         </div>
                     )}
-                    {priceBadges.length > 0 && (
+                    {shouldShowBaseRent ? (
+                        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-20 pointer-events-none max-w-[calc(100%-1rem)]">
+                            <div className="bg-card/90 backdrop-blur-sm px-2.5 py-1.5 rounded-[var(--radius-md)] shadow-md border border-border">
+                                <p className="text-[10px] font-normal text-text-muted leading-none mb-0.5">
+                                    Base rent
+                                </p>
+                                <p className="text-sm font-bold text-foreground leading-none">
+                                    ${price} <span className="text-xs font-normal">/wk</span>
+                                </p>
+                            </div>
+                        </div>
+                    ) : priceBadges.length > 0 && (
                         <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 flex flex-wrap gap-1.5 z-20 pointer-events-none max-w-[calc(100%-1rem)]">
                             {priceBadges.map((unit, i) => {
                                 const roomNumber = priceBadges.slice(0, i + 1).filter(u => u.listing_type !== "entire_home").length;
@@ -204,7 +216,7 @@ export function PropertyCard({
                 <PropertyForm
                     isOpen={isEditModalOpen}
                     onClose={() => setIsEditModalOpen(false)}
-                    property={{ ...property, units: property.units || [] }}
+                    propertyId={property.id}
                 />
             )}
         </>

@@ -3,6 +3,7 @@ import type { GetPropertiesParams, Property } from "@/types/property.types";
 import type { PropertyInsert, UnitInsert } from "@/types/db";
 import { getProperties, getPropertyById } from "@/lib/queries";
 import { CACHE_STRATEGIES } from "@/lib/config/cache_config";
+import { useRoles } from "@/lib/hooks/roles";
 
 // Query keys for better cache management
 export const propertyKeys = {
@@ -11,18 +12,25 @@ export const propertyKeys = {
     list: (filters: Omit<GetPropertiesParams, "offset">) =>
         [...propertyKeys.lists(), filters] as const,
     details: () => [...propertyKeys.all, "detail"] as const,
-    detail: (id: string) => [...propertyKeys.details(), id] as const,
+    detail: (id: string, isAdmin = false) =>
+        [...propertyKeys.details(), id, isAdmin ? "admin" : "public"] as const,
 };
 
 export function useProperties(
     params: Omit<GetPropertiesParams, "offset"> = {},
     options?: { enabled?: boolean }
 ) {
+    const { isAdmin } = useRoles();
+    const effectiveParams = {
+        ...params,
+        isAdmin: params.isAdmin ?? isAdmin,
+    };
+
     return useInfiniteQuery({
-        queryKey: propertyKeys.list(params),
+        queryKey: propertyKeys.list(effectiveParams),
         queryFn: ({ pageParam = 0 }) =>
             getProperties({
-                ...params,
+                ...effectiveParams,
                 offset: pageParam,
             }),
         getNextPageParam: (lastPage) => lastPage.nextOffset,
@@ -33,9 +41,11 @@ export function useProperties(
 }
 
 export function useProperty(id: string) {
+    const { isAdmin } = useRoles();
+
     return useQuery<Property>({
-        queryKey: propertyKeys.detail(id),
-        queryFn: () => getPropertyById(id),
+        queryKey: propertyKeys.detail(id, isAdmin),
+        queryFn: () => getPropertyById(id, isAdmin),
         enabled: !!id,
         ...CACHE_STRATEGIES.STATIC,
     });
@@ -50,8 +60,8 @@ export function usePrefetchProperty() {
 
     return (id: string) => {
         queryClient.prefetchQuery({
-            queryKey: propertyKeys.detail(id),
-            queryFn: () => getPropertyById(id),
+            queryKey: propertyKeys.detail(id, false),
+            queryFn: () => getPropertyById(id, false),
             ...CACHE_STRATEGIES.STATIC,
         });
     };
@@ -100,7 +110,7 @@ export function useCreateProperty() {
             // Invalidate all property list queries
             queryClient.invalidateQueries({ queryKey: propertyKeys.lists() });
             // Set the new property in cache
-            queryClient.setQueryData(propertyKeys.detail(newProperty.id), newProperty);
+            queryClient.setQueryData(propertyKeys.detail(newProperty.id, false), newProperty);
         },
         onError: (error) => {
             console.error("Failed to create property:", error);
@@ -167,9 +177,9 @@ export function useUpdateProperty() {
         },
         onSuccess: (updatedProperty, { propertyId }) => {
             // Update the specific property in cache
-            queryClient.setQueryData(propertyKeys.detail(propertyId), updatedProperty);
+            queryClient.setQueryData(propertyKeys.detail(propertyId, false), updatedProperty);
             // Invalidate the detail query to ensure fresh data on next fetch
-            queryClient.invalidateQueries({ queryKey: propertyKeys.detail(propertyId) });
+            queryClient.invalidateQueries({ queryKey: propertyKeys.details() });
             // Invalidate all property lists to refetch
             queryClient.invalidateQueries({ queryKey: propertyKeys.lists() });
         },

@@ -40,6 +40,7 @@ export function UnitsSelector({
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
                 {units.map((unit: Unit, idx: number) => {
                     const isSelected = selectedUnitId === unit.id;
+                    const isAvailable = unit.status === "active";
                     // Use dynamic pricing if available, otherwise fallback to unit.price
                     const displayPrice = dynamicPricing?.[unit.id] ?? unit.price;
 
@@ -64,12 +65,12 @@ export function UnitsSelector({
                                     <span
                                         className={clsx(
                                             "text-xs px-2.5 py-1 rounded-full font-medium",
-                                            unit.is_available
+                                            isAvailable
                                                 ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                                                 : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                                         )}
                                     >
-                                        {unit.is_available ? "Available" : "Unavailable"}
+                                        {isAvailable ? "Available" : "Unavailable"}
                                     </span>
                                 )}
                             </div>

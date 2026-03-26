@@ -1,11 +1,11 @@
-import { Property, Inclusions } from "@/types/property.types";
+import { Inclusions } from "@/types/property.types";
 import { OccupancyType } from "@/types/db";
 
 export interface AddPropertyModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
-    property?: Property;
+    propertyId?: string;
 }
 
 export interface RentalFormData {

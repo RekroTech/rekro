@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef } from "react";
 import { AlertCircle, Home } from "lucide-react";
-import type { ListingTab, Property } from "@/types/property.types";
+import type { Property } from "@/types/property.types";
 import { useProperties, useSessionUser } from "@/lib/hooks";
 import { Icon, Loader } from "@/components/common";
 import { PropertyCard } from "./PropertyCard";
@@ -19,7 +19,6 @@ export interface PropertyListProps {
     listingType?: string;
     status?: "active" | "leased" | "inactive";
     showEditButton?: boolean;
-    priceDisplayMode?: ListingTab;
     likedOnly?: boolean;
     emptyMessage?: string;
     emptyStateAction?: React.ReactNode;
@@ -37,7 +36,6 @@ export function PropertyList({
     listingType,
     status,
     showEditButton = false,
-    priceDisplayMode,
     likedOnly = false,
     emptyMessage,
     emptyStateAction,
@@ -142,7 +140,6 @@ export function PropertyList({
                         key={property.id}
                         property={property}
                         showEditButton={showEditButton}
-                        priceDisplayMode={priceDisplayMode}
                         priority={index === 0}
                     />
                 ))}

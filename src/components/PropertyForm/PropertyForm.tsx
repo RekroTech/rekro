@@ -3,25 +3,91 @@
 import React, { useState, useEffect, useRef } from "react";
 import type { PropertyInsert, UnitInsert } from "@/types/db";
 import type { AddPropertyModalProps } from "../Property/types";
-import { Button, Modal } from "@/components/common";
-import { useCreateProperty, useUpdateProperty } from "@/lib/hooks/property";
+import { Button, Modal, Loader } from "@/components/common";
+import { useCreateProperty, useUpdateProperty, useProperty } from "@/lib/hooks/property";
 import { deletePropertyFiles } from "@/lib/services/storage.service";
 import { calculateRoomRents, calculateEntireHomeRent } from "@/lib/utils/pricing";
 import { usePropertyForm, useMediaFiles } from "./hooks";
+import type { PropertyFormData, UnitFormData } from "./types";
 import { BasicInformationSection } from "./sections/BasicInformationSection";
 import { PropertyDetailsSection } from "./sections/PropertyDetailsSection";
 import { ListingDetailsSection } from "./sections/ListingDetailsSection";
 import { MediaSection } from "./sections/MediaSection";
 
-export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddPropertyModalProps) {
+const DEFAULT_COUNTRY = "Australia";
+const DEFAULT_LISTING_TYPE = "entire_home";
+const DEFAULT_UNIT_STATUS = "active";
+
+const toNullableInt = (value: string) => (value ? parseInt(value) : null);
+const toNullableFloat = (value: string) => (value ? parseFloat(value) : null);
+
+const buildPropertyPayload = (formData: PropertyFormData) => ({
+    description: formData.description || null,
+    property_type: formData.property_type || null,
+    bedrooms: toNullableInt(formData.bedrooms),
+    bathrooms: toNullableInt(formData.bathrooms),
+    car_spaces: toNullableInt(formData.car_spaces),
+    furnished: formData.furnished,
+    bills_included: formData.bills_included,
+    amenities: formData.amenities.length > 0 ? formData.amenities : null,
+    price: formData.price ? parseInt(formData.price) : 0,
+    address: {
+        street: formData.address_street,
+        city: formData.address_city,
+        state: formData.address_state,
+        postcode: formData.address_postcode,
+        country: formData.address_country,
+    },
+    location:
+        formData.address_city && formData.address_state
+            ? {
+                  city: formData.address_city,
+                  state: formData.address_state,
+                  country: formData.address_country || DEFAULT_COUNTRY,
+              }
+            : null,
+    latitude: formData.latitude ?? null,
+    longitude: formData.longitude ?? null,
+});
+
+const mapUnitToPayload = (unit: UnitFormData): Omit<UnitInsert, "property_id"> => ({
+    listing_type: unit.listing_type || DEFAULT_LISTING_TYPE,
+    name: unit.name || null,
+    description: unit.unit_description || null,
+    price: unit.price ? parseInt(unit.price) : 0,
+    bond_amount: toNullableInt(unit.bond_amount),
+    min_lease: toNullableInt(unit.min_lease),
+    max_lease: toNullableInt(unit.max_lease),
+    max_occupants: toNullableInt(unit.max_occupants),
+    size_sqm: toNullableFloat(unit.size_sqm),
+    available_from: unit.available_from || null,
+    available_to: unit.available_to || null,
+    status: unit.status || DEFAULT_UNIT_STATUS,
+    features: unit.listing_type === "room" && unit.features.length > 0 ? unit.features : null,
+});
+
+const mapUnitToUpdatePayload = (
+    unit: UnitFormData
+): Omit<UnitInsert, "property_id"> & { id?: string } => {
+    const unitData = mapUnitToPayload(unit);
+    return unit.id ? { ...unitData, id: unit.id } : unitData;
+};
+
+export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddPropertyModalProps) {
     const [error, setError] = useState<string | null>(null);
     const createProperty = useCreateProperty();
     const updateProperty = useUpdateProperty();
+    const isEditMode = !!propertyId;
+    const {
+        data: property,
+        isLoading: isPropertyLoading,
+        isError: isPropertyError,
+        error: propertyError,
+    } = useProperty(propertyId ?? "");
     const existingUnits = property?.units || [];
 
     // Custom hooks for form state management
     const {
-        isEditMode,
         formData,
         setFormData,
         listingType,
@@ -151,6 +217,11 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
         e.preventDefault();
         setError(null);
 
+        if (isEditMode && (!property || isPropertyLoading || isPropertyError)) {
+            setError("Property details are still loading. Please try again.");
+            return;
+        }
+
         try {
             if (isEditMode && property) {
                 // Delete removed images from storage
@@ -179,64 +250,10 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                         PropertyInsert,
                         "id" | "created_at" | "updated_at" | "images" | "video_url" | "created_by"
                     >
-                > = {
-                    description: formData.description || null,
-                    property_type: formData.property_type || null,
-                    bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-                    bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-                    car_spaces: formData.car_spaces ? parseInt(formData.car_spaces) : null,
-                    furnished: formData.furnished,
-                    bills_included: formData.bills_included,
-                    amenities: formData.amenities.length > 0 ? formData.amenities : null,
-                    price: formData.price ? parseInt(formData.price) : 0,
-                    address: {
-                        street: formData.address_street,
-                        city: formData.address_city,
-                        state: formData.address_state,
-                        postcode: formData.address_postcode,
-                        country: formData.address_country,
-                    },
-                    location:
-                        formData.address_city && formData.address_state
-                            ? {
-                                  city: formData.address_city,
-                                  state: formData.address_state,
-                                  country: formData.address_country || "Australia",
-                              }
-                            : null,
-                    latitude: formData.latitude ?? null,
-                    longitude: formData.longitude ?? null,
-                };
+                > = buildPropertyPayload(formData);
 
                 // Prepare units data array (all units for update)
-                const unitsData = units.map((unit) => {
-                    const unitData: Omit<UnitInsert, "property_id"> & { id?: string } = {
-                        listing_type: unit.listing_type || "entire_home",
-                        name: unit.name || null,
-                        description: unit.unit_description || null,
-                        price: unit.price ? parseInt(unit.price) : 0,
-                        bond_amount: unit.bond_amount ? parseInt(unit.bond_amount) : null,
-                        min_lease: unit.min_lease ? parseInt(unit.min_lease) : null,
-                        max_lease: unit.max_lease ? parseInt(unit.max_lease) : null,
-                        max_occupants: unit.max_occupants ? parseInt(unit.max_occupants) : null,
-                        size_sqm: unit.size_sqm ? parseFloat(unit.size_sqm) : null,
-                        available_from: unit.available_from || null,
-                        available_to: unit.available_to || null,
-                        is_active: unit.is_active ?? true,
-                        is_available: unit.is_available ?? true,
-                        features:
-                            unit.listing_type === "room" && unit.features.length > 0
-                                ? unit.features
-                                : null,
-                    };
-
-                    // Only include id if it exists (for UPDATE), otherwise omit it (for CREATE)
-                    if (unit.id) {
-                        unitData.id = unit.id;
-                    }
-
-                    return unitData;
-                });
+                const unitsData = units.map(mapUnitToUpdatePayload);
 
                 await updateProperty.mutateAsync({
                     propertyId: property.id,
@@ -251,55 +268,10 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                 const propertyData: Omit<
                     PropertyInsert,
                     "id" | "created_at" | "updated_at" | "images"
-                > = {
-                    description: formData.description || null,
-                    property_type: formData.property_type || null,
-                    bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-                    bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-                    car_spaces: formData.car_spaces ? parseInt(formData.car_spaces) : null,
-                    furnished: formData.furnished,
-                    bills_included: formData.bills_included,
-                    amenities: formData.amenities.length > 0 ? formData.amenities : null,
-                    price: formData.price ? parseInt(formData.price) : 0,
-                    address: {
-                        street: formData.address_street,
-                        city: formData.address_city,
-                        state: formData.address_state,
-                        postcode: formData.address_postcode,
-                        country: formData.address_country,
-                    },
-                    location:
-                        formData.address_city && formData.address_state
-                            ? {
-                                  city: formData.address_city,
-                                  state: formData.address_state,
-                                  country: formData.address_country || "Australia",
-                              }
-                            : null,
-                    latitude: formData.latitude ?? null,
-                    longitude: formData.longitude ?? null,
-                };
+                > = buildPropertyPayload(formData);
 
                 // Prepare units data array
-                const unitsData: Omit<UnitInsert, "property_id">[] = units.map((unit) => ({
-                    listing_type: unit.listing_type || "entire_home",
-                    name: unit.name || null,
-                    description: unit.unit_description || null,
-                    price: unit.price ? parseInt(unit.price) : 0,
-                    bond_amount: unit.bond_amount ? parseInt(unit.bond_amount) : null,
-                    min_lease: unit.min_lease ? parseInt(unit.min_lease) : null,
-                    max_lease: unit.max_lease ? parseInt(unit.max_lease) : null,
-                    max_occupants: unit.max_occupants ? parseInt(unit.max_occupants) : null,
-                    size_sqm: unit.size_sqm ? parseFloat(unit.size_sqm) : null,
-                    available_from: unit.available_from || null,
-                    available_to: unit.available_to || null,
-                    is_active: unit.is_active ?? true,
-                    is_available: unit.is_available ?? true,
-                    features:
-                        unit.listing_type === "room" && unit.features.length > 0
-                            ? unit.features
-                            : null,
-                }));
+                const unitsData: Omit<UnitInsert, "property_id">[] = units.map(mapUnitToPayload);
 
                 await createProperty.mutateAsync({
                     propertyData,
@@ -381,13 +353,33 @@ export function PropertyForm({ isOpen, onClose, onSuccess, property }: AddProper
                     <Button
                         type="submit"
                         variant="primary"
-                        disabled={createProperty.isPending || updateProperty.isPending}
+                        disabled={
+                            createProperty.isPending ||
+                            updateProperty.isPending ||
+                            (isEditMode && (isPropertyLoading || isPropertyError || !property))
+                        }
                         className="w-full sm:w-auto"
                     >
                         {updateProperty.isPending || createProperty.isPending ? "Saving" : "Save"}
                     </Button>
                 </div>
             </form>
+
+            {isEditMode && isPropertyLoading && (
+                <div className="mt-3 rounded-md border border-border bg-card p-3">
+                    <Loader size="sm" text="Loading full property details..." />
+                </div>
+            )}
+
+            {isEditMode && isPropertyError && (
+                <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2">
+                    <p className="text-sm font-medium text-red-800">
+                        {propertyError instanceof Error
+                            ? propertyError.message
+                            : "Failed to load property details for editing."}
+                    </p>
+                </div>
+            )}
         </Modal>
     );
 }

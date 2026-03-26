@@ -624,7 +624,7 @@ export function getPriceBadges(units: Unit[] | undefined, mode: ListingTab): Uni
     if (!units?.length) return [];
 
     // Filter to only show available units on property cards
-    const availableUnits = units.filter((u) => u.is_available);
+    const availableUnits = units.filter((u) => u.status === "active");
     
     if (!availableUnits.length) return [];
 

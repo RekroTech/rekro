@@ -46,9 +46,7 @@ export function UnitForm({ unit, index, listingType, onUpdate }: UnitFormProps) 
 
     const handleStatusChange = (value: string) => {
         const status = value as UnitStatus;
-        const isActive = status !== "inactive";
-        const isAvailable = status === "active";
-        onUpdate(index, { status, is_active: isActive, is_available: isAvailable });
+        onUpdate(index, { status });
     };
 
     const handleFeatureToggle = (feature: string) => {

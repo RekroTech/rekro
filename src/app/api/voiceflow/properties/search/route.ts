@@ -41,14 +41,13 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "5");
 
         // Build the query
-        const unitColumns = "id, listing_type, name, description, price, bond_amount, min_lease, max_lease, max_occupants, size_sqm, is_active, available_from, available_to, is_available";
+        const unitColumns = "id, listing_type, name, description, price, bond_amount, min_lease, max_lease, max_occupants, size_sqm, status, available_from, available_to";
 
         let query = supabase
             .from("properties")
             .select(`*, units!inner(${unitColumns})`)
             .eq("is_published", true)
-            .eq("units.is_active", true)
-            .eq("units.is_available", true)
+            .eq("units.status", "active")
             .order("created_at", { ascending: false })
             .limit(limit);
 
@@ -228,7 +227,7 @@ export async function GET(request: NextRequest) {
                     sizeSqm: unit.size_sqm,
                     availableFrom: unit.available_from,
                     availableTo: unit.available_to,
-                    isAvailable: unit.is_available,
+                    isAvailable: unit.status === "active",
                 })),
                 url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://rekro.com.au'}/property/${property.id}`,
             };

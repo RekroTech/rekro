@@ -138,10 +138,9 @@ const mockUnit = {
   max_lease: 12,
   max_occupants: 1,
   size_sqm: 14,
-  is_active: true,
+  status: 'active',
   available_from: '2026-03-01',
   available_to: null,
-  is_available: true,
 };
 
 const mockProperty = {

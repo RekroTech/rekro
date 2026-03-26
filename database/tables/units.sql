@@ -1,6 +1,8 @@
 -- Create listing type enum
 create type public.listing_type as enum ('entire_home', 'room');
 
+create type public.unit_status as enum ('active', 'leased', 'inactive');
+
 create table public.units (
   id uuid not null default gen_random_uuid (),
   property_id uuid not null,
@@ -13,12 +15,11 @@ create table public.units (
   max_lease integer null,
   max_occupants integer null,
   size_sqm numeric null,
-  is_active boolean null default true,
   created_at timestamp with time zone null default now(),
-  available_from date null,
+  available_from date null default now(),
   available_to date null,
-  is_available boolean not null default true,
   features text[] null,
+  status public.unit_status null default 'inactive'::unit_status,
   constraint units_pkey primary key (id),
   constraint units_property_id_fkey foreign KEY (property_id) references properties (id) on delete CASCADE
 ) TABLESPACE pg_default;
@@ -31,6 +32,6 @@ create index IF not exists units_by_price on public.units using btree (price) TA
 
 create index IF not exists units_features_gin on public.units using gin (features) TABLESPACE pg_default;
 
-create index IF not exists units_by_availability on public.units using btree (is_available, available_from) TABLESPACE pg_default;
+create index IF not exists units_by_status on public.units using btree (status) TABLESPACE pg_default;
 
 create index IF not exists units_by_available_from on public.units using btree (available_from) TABLESPACE pg_default;
