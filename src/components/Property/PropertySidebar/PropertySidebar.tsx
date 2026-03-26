@@ -92,9 +92,16 @@ export function PropertySidebar({
 
     // Availability information
     const availability = useMemo(() => getAvailabilityInfo(selectedUnit), [selectedUnit]);
+    const isUnitUnavailable = selectedUnit.status !== "active";
+    const areRentalFieldsDisabled = hasSubmittedApplication || isUnitUnavailable;
+    const areActionButtonsDisabled = isProfileLoading || isUnitUnavailable;
 
     // Event handlers
     const handleBookNow = useCallback(() => {
+        if (isUnitUnavailable) {
+            return;
+        }
+
         if (!isAuthenticated) {
             openAuthModal(`/property/${property.id}`);
             return;
@@ -112,14 +119,25 @@ export function PropertySidebar({
         }
 
         setIsApplicationModalOpen(true);
-    }, [isAuthenticated, hasSubmittedApplication, isProfileComplete, openAuthModal, property.id]);
+    }, [
+        isUnitUnavailable,
+        isAuthenticated,
+        hasSubmittedApplication,
+        isProfileComplete,
+        openAuthModal,
+        property.id,
+    ]);
 
     const handleOccupancyChange = useCallback(
         (occupancyType: "single" | "dual") => {
+            if (areRentalFieldsDisabled) {
+                return;
+            }
+
             updateRentalForm({ occupancyType });
             onUnitOccupancyChange?.(selectedUnit.id, occupancyType === "dual" ? 2 : 1);
         },
-        [updateRentalForm, onUnitOccupancyChange, selectedUnit.id]
+        [areRentalFieldsDisabled, updateRentalForm, onUnitOccupancyChange, selectedUnit.id]
     );
 
     return (
@@ -219,7 +237,7 @@ export function PropertySidebar({
                                     )}
                                     size="sm"
                                     fullWidth
-                                    disabled={hasSubmittedApplication}
+                                    disabled={areRentalFieldsDisabled}
                                 />
                             </div>
 
@@ -234,7 +252,7 @@ export function PropertySidebar({
                                     options={LEASE_MONTH_OPTIONS}
                                     size="sm"
                                     fullWidth
-                                    disabled={hasSubmittedApplication}
+                                    disabled={areRentalFieldsDisabled}
                                 />
                             </div>
                         </div>
@@ -249,7 +267,7 @@ export function PropertySidebar({
                                     ariaLabel="Occupancy type"
                                     value={rentalForm.occupancyType}
                                     onChange={handleOccupancyChange}
-                                    disabled={hasSubmittedApplication}
+                                    disabled={areRentalFieldsDisabled}
                                     options={[
                                         { value: "single", label: "Single" },
                                         { value: "dual", label: "Dual Occupancy" },
@@ -270,6 +288,7 @@ export function PropertySidebar({
                     <Button
                         variant="secondary"
                         className="w-full"
+                        disabled={areActionButtonsDisabled}
                         onClick={() => setIsEnquiryModalOpen(true)}
                     >
                         <Icon icon={Mail} size={20} className="mr-2" />
@@ -279,7 +298,7 @@ export function PropertySidebar({
                     <Button
                         variant="primary"
                         className="w-full"
-                        disabled={isProfileLoading}
+                        disabled={areActionButtonsDisabled}
                         onClick={handleBookNow}
                     >
                         <Icon icon={FileText} size={20} className="mr-2" />
@@ -299,27 +318,29 @@ export function PropertySidebar({
                 )}
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-lg">
-                <h3 className="text-lg font-bold text-text mb-2 sm:mb-4">Customize your stay</h3>
-                <Inclusions
-                    rentalDuration={rentalForm.rentalDuration}
-                    property={property}
-                    inclusions={rentalForm.inclusions}
-                    onChange={(newInclusions) => updateRentalForm({ inclusions: newInclusions })}
-                    isEntireHome={isEntireHome}
-                    effectiveOccupancyType={pricing.occupancyType}
-                    disabled={hasSubmittedApplication}
-                />
-            </div>
+            {!isUnitUnavailable && (
+                <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-lg">
+                    <h3 className="text-lg font-bold text-text mb-2 sm:mb-4">Customize your stay</h3>
+                    <Inclusions
+                        rentalDuration={rentalForm.rentalDuration}
+                        property={property}
+                        inclusions={rentalForm.inclusions}
+                        onChange={(newInclusions) => updateRentalForm({ inclusions: newInclusions })}
+                        isEntireHome={isEntireHome}
+                        effectiveOccupancyType={pricing.occupancyType}
+                        disabled={areRentalFieldsDisabled}
+                    />
+                </div>
+            )}
 
             <ProfileCompletionModal
-                isOpen={isProfileCompletionModalOpen}
+                isOpen={isProfileCompletionModalOpen && !isUnitUnavailable}
                 onClose={() => setIsProfileCompletionModalOpen(false)}
             />
 
             <ApplicationModal
                 key={`${selectedUnit?.id || "none"}-${application?.id || "none"}`}
-                isOpen={isApplicationModalOpen}
+                isOpen={isApplicationModalOpen && !isUnitUnavailable}
                 onClose={() => setIsApplicationModalOpen(false)}
                 property={property}
                 selectedUnit={selectedUnit}
@@ -328,7 +349,7 @@ export function PropertySidebar({
             />
 
             <EnquiryForm
-                isOpen={isEnquiryModalOpen}
+                isOpen={isEnquiryModalOpen && !isUnitUnavailable}
                 onClose={() => setIsEnquiryModalOpen(false)}
                 unitId={selectedUnit?.id}
             />
