@@ -62,6 +62,8 @@ export const ROOM_UNIT_FEATURES = [
     "Bed Side Table",
     "Lamp",
     "Chair",
+    "Couch",
+    "TV",
     "Desk",
     "Wardrobe",
     "Drawers",

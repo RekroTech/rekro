@@ -15,6 +15,8 @@ import {
 	Building2,
 	Check,
 	Lamp,
+	Sofa,
+	Tv,
 	Utensils,
 	Wind,
 } from "lucide-react";
@@ -30,6 +32,8 @@ const UNIT_FEATURE_ICON_MAP: Record<string, LucideIcon | SvgIcon> = {
 	"Bed Side Table": BedsideTableIcon,
 	Lamp: Lamp,
 	Chair: ChairIcon,
+	Couch: Sofa,
+	TV: Tv,
 	Desk: DeskIcon,
 	Wardrobe: WardrobeIcon,
 	Drawers: DrawersIcon,
