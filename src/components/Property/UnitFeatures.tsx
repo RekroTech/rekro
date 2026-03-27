@@ -29,6 +29,7 @@ const UNIT_FEATURE_ICON_MAP: Record<string, LucideIcon | SvgIcon> = {
 	"Single Bed": Bed,
 	"Double Bed": BedDouble,
 	"Queen Bed": BedDouble,
+	"King Bed": BedDouble,
 	"Bed Side Table": BedsideTableIcon,
 	Lamp: Lamp,
 	Chair: ChairIcon,

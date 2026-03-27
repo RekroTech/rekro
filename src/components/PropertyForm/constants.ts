@@ -59,6 +59,7 @@ export const ROOM_UNIT_FEATURES = [
     "Single Bed",
     "Double Bed",
     "Queen Bed",
+    "King Bed",
     "Bed Side Table",
     "Lamp",
     "Chair",
