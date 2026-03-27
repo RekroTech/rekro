@@ -9,7 +9,7 @@ export type UnitStatus = "active" | "leased" | "inactive";
 
 /**
  * Mirrors the LISTING_TYPES values — controls which price badges appear on a property card:
- * - "all"          → entire-home price + all room prices
+ * - "all"          → entire-home price, otherwise room prices if no entire-home unit exists
  * - "entire_home"  → entire-home price only
  * - "room"         → room prices only
  */

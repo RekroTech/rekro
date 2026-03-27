@@ -640,7 +640,7 @@ export function getPriceBadges(units: Unit[] | undefined, mode: ListingTab): Uni
             return rooms;
         case "all":
         default:
-            return [...(entireHome ? [entireHome] : []), ...rooms];
+            return entireHome ? [entireHome] : rooms;
     }
 }
 
