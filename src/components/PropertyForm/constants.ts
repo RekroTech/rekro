@@ -69,6 +69,7 @@ export const ROOM_UNIT_FEATURES = [
     "Wardrobe",
     "Drawers",
     "Air Conditioner",
+    "Heater",
     "Kitchenette",
     "Ensuite",
     "Balcony",
