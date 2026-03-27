@@ -32,8 +32,8 @@ const AMENITY_RENAMES: Record<string, string> = {
 
 // Direct mapping of predefined amenities to their icons
 const AMENITY_ICON_MAP: Record<string, LucideIcon | SvgIcon> = {
-    "Air Conditioning": Wind,
-    Heating: Flame,
+    "Air Conditioner": Wind,
+    Heater: Flame,
     "Wi-Fi": Wifi,
     Pool: Waves,
     Gym: Dumbbell,

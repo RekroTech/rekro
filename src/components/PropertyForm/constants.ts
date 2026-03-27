@@ -38,8 +38,8 @@ export const PARKING_OPTIONS = [
 ] as const;
 
 export const AMENITIES = [
-    "Air Conditioning",
-    "Heating",
+    "Air Conditioner",
+    "Heater",
     "Wi-Fi",
     "Pool",
     "Gym",
@@ -65,6 +65,7 @@ export const ROOM_UNIT_FEATURES = [
     "Desk",
     "Wardrobe",
     "Drawers",
+    "Air Conditioner",
     "Kitchenette",
     "Ensuite",
     "Balcony",

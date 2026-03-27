@@ -11,7 +11,6 @@ interface PropertyUnitSnapshot {
     entireHomeUnit: EffectiveStatusUnit | undefined;
     roomUnits: EffectiveStatusUnit[];
     hasRooms: boolean;
-    hasActiveUnit: boolean;
     hasActiveRoom: boolean;
     hasLeasedRoom: boolean;
     hasPublicRoomUnit: boolean;
@@ -34,7 +33,6 @@ function createPropertyUnitSnapshot(units: EffectiveStatusUnit[] | undefined): P
         entireHomeUnit,
         roomUnits,
         hasRooms: roomUnits.length > 0,
-        hasActiveUnit: safeUnits.some((unit) => unit.status === "active"),
         hasActiveRoom: roomUnits.some((unit) => unit.status === "active"),
         hasLeasedRoom: roomUnits.some((unit) => unit.status === "leased"),
         hasPublicRoomUnit: roomUnits.some((unit) => unit.status !== "inactive"),
@@ -57,9 +55,7 @@ function getPropertyStatuses(snapshot: PropertyUnitSnapshot): Set<UnitStatus> {
     }
 
     const canShowInActiveAdminTab =
-        snapshot.hasActiveUnit &&
-        snapshot.entireHomeUnit?.status !== "leased" &&
-        (!snapshot.hasRooms || snapshot.hasActiveRoom);
+        snapshot.hasActiveRoom && snapshot.entireHomeUnit?.status !== "leased";
 
     if (canShowInActiveAdminTab) {
         statuses.add("active");

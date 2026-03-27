@@ -16,6 +16,7 @@ import {
 	Check,
 	Lamp,
 	Utensils,
+	Wind,
 } from "lucide-react";
 
 interface UnitFeaturesProps {
@@ -32,6 +33,7 @@ const UNIT_FEATURE_ICON_MAP: Record<string, LucideIcon | SvgIcon> = {
 	Desk: DeskIcon,
 	Wardrobe: WardrobeIcon,
 	Drawers: DrawersIcon,
+	"Air Conditioner": Wind,
 	Kitchenette: Utensils,
 	Ensuite: Bath,
 	Balcony: Building2,
