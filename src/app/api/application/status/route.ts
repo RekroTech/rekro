@@ -9,8 +9,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, requireAuthForApi } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { getCurrentTimestamp } from "@/lib/utils";
+import { precheck } from "@/app/api/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -27,23 +28,9 @@ const VALID_STATUSES = ["draft", "submitted", "under_review", "approved", "rejec
  */
 export async function PATCH(request: NextRequest) {
     try {
-        // Check authentication
-        const user = await requireAuthForApi();
+        const check = await precheck(request, { auth: true, roles: ["admin"] });
+        if (!check.ok) return check.error;
         const supabase = await createClient();
-
-        // Verify user has admin role
-        const { data: userRole, error: roleError } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", user.id)
-            .single();
-
-        if (roleError || !userRole || userRole.role !== "admin") {
-            return NextResponse.json(
-                { error: "Unauthorized - Admin access required" },
-                { status: 403, headers: { "Cache-Control": "no-store" } }
-            );
-        }
 
         // Parse request body
         const body = await request.json();
@@ -113,13 +100,6 @@ export async function PATCH(request: NextRequest) {
     } catch (error) {
         console.error("Application status update error:", error);
 
-        // Handle authentication errors
-        if (error instanceof Error && error.message === "Unauthorized") {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401, headers: { "Cache-Control": "no-store" } }
-            );
-        }
 
         return NextResponse.json(
             { error: "Internal server error" },

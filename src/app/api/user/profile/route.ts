@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { createClient, requireAuthForApi } from "@/lib/supabase/server";
-import { errorResponse, successResponse } from "@/app/api/utils";
+import { createClient } from "@/lib/supabase/server";
+import { errorResponse, successResponse, precheck } from "@/app/api/utils";
 import type {
     Profile,
     ProfileUpdate,
@@ -13,9 +13,11 @@ import { toE164AndAuthDigits } from "@/lib/utils/phone";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
-        const authUser = await requireAuthForApi();
+        const check = await precheck(request, { auth: true });
+        if (!check.ok) return check.error;
+        const { user: authUser } = check;
         const supabase = await createClient();
 
         const { data: profileData, error: profileError } = await supabase
@@ -41,8 +43,9 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
     try {
-        // Get authenticated user with role (no extra DB query needed!)
-        const authUser = await requireAuthForApi();
+        const check = await precheck(req, { auth: true });
+        if (!check.ok) return check.error;
+        const { user: authUser } = check;
 
         const supabase = await createClient();
 
@@ -86,8 +89,12 @@ export async function PATCH(req: NextRequest) {
                 const {
                     data: { user: authUserData },
                 } = await supabase.auth.getUser();
-                const authPhone = (authUserData as any)?.phone ?? null;
-                const authPhoneConfirmedAt = (authUserData as any)?.phone_confirmed_at ?? null;
+                const authUserPhoneData = authUserData as {
+                    phone?: string | null;
+                    phone_confirmed_at?: string | null;
+                } | null;
+                const authPhone = authUserPhoneData?.phone ?? null;
+                const authPhoneConfirmedAt = authUserPhoneData?.phone_confirmed_at ?? null;
 
                 // Normalise to E.164 for storage and get digits-only form for auth comparison.
                 const { e164, authDigits } = toE164AndAuthDigits(usersUpdateData.phone!);
@@ -141,11 +148,6 @@ export async function PATCH(req: NextRequest) {
         return successResponse(updatedProfile);
     } catch (error) {
         console.error("Profile update error:", error);
-
-        // Handle authentication errors from requireAuthForApi
-        if (error instanceof Error && error.message === "Unauthorized") {
-            return errorResponse("Unauthorized", 401);
-        }
 
         return errorResponse("Internal server error", 500);
     }

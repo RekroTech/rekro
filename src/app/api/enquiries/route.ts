@@ -8,7 +8,7 @@
 
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse } from "@/app/api/utils";
+import { errorResponse, successResponse, precheck } from "@/app/api/utils";
 import { sendEnquiryConfirmation, sendEnquiryNotification, ADMIN_EMAIL } from "@/lib/email";
 import type { EnquiryInsert } from "@/types/db";
 import { EnquiryRequestSchema } from "@/lib/validators";
@@ -27,6 +27,9 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
     try {
+        const check = await precheck(request);
+        if (!check.ok) return check.error;
+
         const supabase = await createClient();
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin || "http://localhost:3000";
 
@@ -50,9 +53,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if user is authenticated.
-        // NOTE: Other routes use requireAuthForApi() which internally calls getSession() with
-        // React cache() — that only works in Server Components, not API routes. For optional
-        // auth (guests allowed), call auth.getUser() directly on the already-created client.
+        // For optional auth (guests allowed), call auth.getUser() directly on the
+        // already-created client.
         const { data: { user } } = await supabase.auth.getUser();
         const isAuthenticated = !!user;
 

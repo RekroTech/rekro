@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { createClient, requireAuthForApi } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { uploadPropertyFiles } from "@/lib/services";
 import type { UnitInsert } from "@/types/db";
-import { errorResponse, successResponse } from "@/app/api/utils";
+import { errorResponse, successResponse, precheck } from "@/app/api/utils";
 import { PropertyDataSchema, UnitDataSchema } from "@/lib/validators";
 import { z } from "zod";
 
@@ -12,8 +12,9 @@ import { z } from "zod";
  */
 export async function POST(request: NextRequest) {
     try {
-        // Get authenticated user with role (no extra DB query needed!)
-        const user = await requireAuthForApi();
+        const check = await precheck(request, { auth: true });
+        if (!check.ok) return check.error;
+        const { user } = check;
         const supabase = await createClient();
 
 

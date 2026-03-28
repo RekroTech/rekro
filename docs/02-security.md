@@ -1,6 +1,6 @@
 # Security Analysis — reKro
 
-> Audit date: March 2026 (updated) · Stack: Next.js 16 / React 19 / Supabase / Sentry
+> Audit date: March 28, 2026 · Stack: Next.js 16 / React 19 / Supabase / Sentry
 
 ---
 
@@ -13,200 +13,121 @@
 | MIME sniffing protection | ✅ `X-Content-Type-Options: nosniff` |
 | XSS header | ✅ `X-XSS-Protection: 1; mode=block` |
 | Referrer policy | ✅ `origin-when-cross-origin` |
-| API routes cache | ✅ `no-store, must-revalidate` on `/api/*` |
-| Auth: server-side validation | ✅ `requireAuthForApi()` validates JWT on every mutation |
-| Auth: middleware session refresh | ✅ `updateSession()` in middleware refreshes tokens on every request |
-| Input validation | ✅ Zod schemas on all API routes (`PropertyDataSchema`, `EnquiryRequestSchema`, etc.) |
-| Honeypot anti-spam | ✅ `website` field honeypot in enquiry form |
-| RBAC | ✅ 5-tier role hierarchy (`user → tenant → landlord → admin → super_admin`) |
-| OTP partial rate-limit | ⚠️ OTP route detects Supabase's own rate-limit error and returns 429, but no independent IP-based limiter |
-| Supabase RLS | ⚠️ Policies folder is empty — requires verification |
-| Content Security Policy | ❌ No CSP header defined |
-| Rate limiting | ❌ No independent rate limiting middleware on API routes |
-| Sentry PII | ⚠️ `sendDefaultPii: true` in all three Sentry configs — sends user data to Sentry |
-| Sentry DSN | ⚠️ DSN hardcoded in `sentry.server.config.ts`, `sentry.edge.config.ts`, and `instrumentation-client.ts` |
-| Secrets exposure | ⚠️ `NEXT_PUBLIC_SUPABASE_ANON_KEY` is intentionally public; ensure no service-role key is exposed |
+| Content Security Policy | ✅ `Content-Security-Policy` header configured in `next.config.ts` |
+| API route cache | ✅ `Cache-Control: no-store, must-revalidate` on `/api/*` |
+| CSRF protection for mutations | ✅ Implemented via `precheck()` (`Origin`/`Referer` validation for non-safe methods) |
+| Auth: server-side validation | ✅ `precheck({ auth: true })` uses `requireAuthForApi()` / `requireRole()` |
+| Auth: middleware session refresh scope | ⚠️ `updateSession()` runs only on matched protected routes in `src/proxy.ts`, not globally |
+| Input validation | ✅ Zod validation used on key mutation routes (e.g. enquiries, applications, phone verification) |
+| Honeypot anti-spam | ✅ `website` honeypot field in enquiries flow |
+| RBAC | ✅ Role checks enforced through `requireRole()` where required |
+| OTP partial rate-limit | ⚠️ OTP routes pass through Supabase rate-limit errors (429) but no independent app-side limiter |
+| Independent API rate limiting | ❌ No active IP/user limiter wired into API handlers (`checkRateLimit()` exists but is not used) |
+| Supabase RLS evidence | ⚠️ Partial evidence in SQL files; coverage is not fully verified for all tables |
+| Sentry PII | ✅ `sendDefaultPii: false` + `beforeSend` strips `email` and `ip_address` in all Sentry configs |
+| Sentry DSN in source | ✅ DSN now loaded from `NEXT_PUBLIC_SENTRY_DSN` (env-based) |
+| robots/sitemap | ✅ `src/app/robots.ts` and `src/app/sitemap.ts` are present |
+| Secrets exposure | ⚠️ `NEXT_PUBLIC_SUPABASE_ANON_KEY` is intentionally public; keep service-role keys server-only |
 
 ---
 
-## 2. Critical Issues
+## 2. Priority Issues (Current)
 
-### 2.1 No Content Security Policy (CSP)
+### 2.1 No independent rate limiting on sensitive endpoints
 
-**Risk:** HIGH — XSS attacks can execute arbitrary scripts.
+**Risk:** HIGH — unauthenticated or low-friction endpoints (`/api/auth/otp`, `/api/enquiries`) can still be abused before upstream limits effectively dampen bursts.
 
-**Fix:** Add a CSP header in `next.config.ts`:
-
-```ts
-{
-  key: "Content-Security-Policy",
-  value: [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://maps.googleapis.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://i.pravatar.cc",
-    "connect-src 'self' https://*.supabase.co https://o4510117376294912.ingest.us.sentry.io",
-    "font-src 'self' https://fonts.gstatic.com",
-    "frame-ancestors 'none'",
-  ].join("; "),
-}
-```
-
-Start with `Content-Security-Policy-Report-Only` to audit without breaking the app.
-
----
-
-### 2.2 No rate limiting on API routes
-
-**Risk:** HIGH — Unauthenticated `POST /api/enquiries` and `POST /api/auth/otp` can be
-abused to flood email inboxes or exhaust Supabase quotas.
-
-> **Note:** The OTP route (`/api/auth/otp`) currently detects Supabase's own server-side
-> rate-limit response and returns a `429` to the client, but this is a passive pass-through —
-> not an independent IP-based limiter. A determined attacker can still burst requests before
-> Supabase's own limits kick in.
+**Current state:**
+- `src/app/api/auth/otp/route.ts` and `src/app/api/user/phone-verification/send/route.ts` map Supabase rate-limit messages to `429`.
+- `checkRateLimit()` exists in `src/app/api/utils.ts` but is not wired into live handlers.
 
 **Fix options (pick one):**
-
-- **Upstash Rate Limit** (recommended for Vercel/edge): `@upstash/ratelimit` + `@upstash/redis`
-- **Vercel Rate Limiting** (no extra infra): native in Vercel dashboard
-- **next-rate-limit** package for self-hosted
-
-```ts
-// Example using @upstash/ratelimit
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "1 m"), // 10 requests per minute per IP
-});
-
-export async function POST(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
-  const { success } = await ratelimit.limit(ip);
-  if (!success) return errorResponse("Too many requests", 429);
-  // ...
-}
-```
+- `@upstash/ratelimit` + `@upstash/redis` (recommended on Vercel)
+- Vercel-native rate limiting
+- Edge middleware + durable store (Redis/KV)
 
 ---
 
-### 2.3 Row Level Security (RLS) policies not verified
+### 2.2 RLS posture is only partially evidenced in repo
 
-**Risk:** HIGH — Without confirmed RLS policies, any authenticated user could read or
-mutate any row directly via the Supabase client.
+**Risk:** HIGH — without consistent table-by-table RLS enforcement, direct client access could read/write rows outside intended tenancy boundaries.
+
+**Current evidence in codebase:**
+- `database/tables/enquiries.sql` explicitly enables RLS and defines an insert policy.
+- `database/tables/application_snapshot.sql` contains a policy definition.
+- `database/storage/property_storage.sql` defines storage policies.
+- `database/policies/` is currently empty.
 
 **Actions required:**
-1. Confirm RLS is enabled on all tables in the Supabase dashboard
-2. Add policy SQL files to `database/policies/`
-3. Minimum required policies:
-   - `properties`: Read = published only (or owner); Write = landlord/admin
-   - `users`: Read = own row; Write = own row
-   - `applications`: Read = own row or property owner; Write = own row
-   - `unit_likes`: Read/Write = own rows only
-   - `user_roles`: Read = own row; Write = admin only
+1. Export/commit canonical RLS policy SQL for all app tables.
+2. Confirm `ENABLE ROW LEVEL SECURITY` state table-by-table in Supabase.
+3. Add a policy matrix (table x action x role) and validate with integration tests.
 
 ---
 
-### 2.4 `sendDefaultPii: true` in Sentry
+### 2.3 Auth cookie/session refresh is not global
 
-**Risk:** MEDIUM — Email addresses, IP addresses, and session cookies are sent to Sentry.
-This may conflict with GDPR/Privacy Act obligations depending on your jurisdiction.
-All three Sentry config files are affected:
-- `sentry.server.config.ts`
-- `sentry.edge.config.ts`
-- `src/instrumentation-client.ts`
+**Risk:** MEDIUM — assumptions about global session refresh can drift from runtime behavior.
+
+**Current state:**
+- `src/proxy.ts` matcher covers only: `/dashboard/*`, `/settings/*`, `/account/*`, `/accommodations/*`.
+- Session refresh is therefore scoped, not every request.
 
 **Fix:**
-
-```ts
-// Apply to all three Sentry config files
-sendDefaultPii: false,
-// Capture user ID only (no email):
-beforeSend(event) {
-  if (event.user) {
-    delete event.user.email;
-    delete event.user.ip_address;
-  }
-  return event;
-},
-```
+- Either broaden matcher scope if global refresh is required,
+- or keep scope intentionally narrow and document it explicitly (recommended if performance-conscious).
 
 ---
 
-### 2.5 Sentry DSN exposed in source
+## 3. CSRF Coverage Snapshot
 
-**Risk:** LOW-MEDIUM — The Sentry DSN (`https://cc3d181...`) is hardcoded in all three
-committed source files. While a DSN is designed to be public for browser-side reporting,
-it allows anyone to submit fake events to your Sentry project.
+`precheck()` defaults CSRF mode to `auto`, which validates `Origin`/`Referer` for mutating methods (`POST`, `PUT`, `PATCH`, `DELETE`).
 
-**Fix:** Move DSN to an environment variable in all three files:
+Current API route scan indicates all mutating handlers in `src/app/api/**/route.ts` call `precheck(request, ...)`, including:
+- `/api/enquiries`
+- `/api/auth/otp`
+- `/api/user/phone-verification/*`
+- `/api/property` and `/api/property/[id]`
+- `/api/application/*`
 
-```ts
-dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-```
-
-Add to `.env.local` and your hosting provider's environment settings.
-
----
-
-### 2.6 Missing CSRF protection on state-changing API routes
-
-**Risk:** MEDIUM — Next.js App Router does not automatically add CSRF tokens.
-
-**Fix:** For `POST`/`PATCH`/`DELETE` API routes that accept `application/json`, verify
-the `Origin` or `Referer` header:
-
-```ts
-// src/app/api/utils.ts — add to all mutation handlers
-const origin = request.headers.get("origin");
-const allowed = process.env.NEXT_PUBLIC_APP_URL;
-if (origin && origin !== allowed) {
-  return errorResponse("Forbidden", 403);
-}
-```
-
-Alternatively, use a CSRF library like `oslo/csrf`.
+Residual risk: new routes can bypass CSRF if `precheck()` is not adopted consistently. Add lint/test guardrails to enforce usage.
 
 ---
 
-### 2.7 No `robots.txt` or `sitemap.xml`
+## 4. Auth Security Checklist
 
-**Risk:** LOW — Sensitive API routes and authenticated pages may be indexed by search
-engines or crawled by bots.
-
-**Fix:** Add `src/app/robots.ts` and `src/app/sitemap.ts` using Next.js 13+ metadata API.
-
----
-
-## 3. Auth Security Checklist
-
-- [x] OTP/magic link auth (no password storage)
-- [x] JWT validated server-side on every API mutation
-- [x] Session tokens refreshed via middleware on every request
-- [x] Role checked before property management actions
-- [x] OTP route passes through Supabase's own rate-limit 429 to the client
-- [ ] Add independent IP-based rate limiter (`@upstash/ratelimit`) on `/api/auth/otp` and `/api/enquiries`
-- [ ] Add `SameSite=Strict` cookie attribute verification in middleware
-- [ ] Implement token rotation alerts in Sentry
-- [ ] Add audit log table for admin actions
-- [ ] Implement account lockout after N failed OTP attempts
+- [x] OTP/magic-link auth (no password handling in app DB)
+- [x] Server-side auth checks on protected API mutations (`precheck({ auth: true })`)
+- [x] Role checks via `requireRole()` for admin operations
+- [x] CSRF origin/referer enforcement on mutating routes using `precheck()`
+- [x] OTP endpoints return `429` when Supabase reports rate limit
+- [ ] Add independent app-side rate limiting on `/api/auth/otp` and `/api/enquiries`
+- [ ] Verify cookie attributes (`HttpOnly`, `Secure`, `SameSite`) in production runtime
+- [ ] Add security regression tests for CSRF and unauthorized mutation attempts
+- [ ] Add audit logging for privileged/admin actions
 
 ---
 
-## 4. Dependency Security
+## 5. Dependency Security
 
-Run the following regularly:
+Run regularly:
 
 ```bash
 npm audit
 npx npm-check-updates -u --target minor
 ```
 
-Notable packages to monitor:
-- `@sentry/nextjs` — frequent security patches
-- `@supabase/ssr` — auth library, keep on latest
-- `next` — critical security patches released regularly
-- `zod` — keep on v4+ for improved type safety
+Priority packages to monitor:
+- `next`
+- `@supabase/ssr`
+- `@supabase/supabase-js`
+- `@sentry/nextjs`
+- `zod`
 
+---
+
+## 6. Recommended Next Security Sprint (Short)
+
+1. Implement independent rate limiting on `/api/auth/otp`, `/api/enquiries`, and phone verification routes.
+2. Produce and commit a full RLS policy pack with verification checklist.
+3. Add an automated route test that fails if mutating handlers skip `precheck()`.

@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { createClient, requireAuthForApi } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { uploadPropertyFiles } from "@/lib/services";
 import { isAdmin } from "@/lib/utils";
 import type { UnitInsert, PropertyInsert } from "@/types/db";
-import { errorResponse, successResponse } from "@/app/api/utils";
+import { errorResponse, successResponse, precheck } from "@/app/api/utils";
 import { PropertyDataSchema, UnitDataSchema } from "@/lib/validators";
 import { z } from "zod";
 
@@ -36,9 +36,9 @@ export async function PUT(
 ) {
     try {
         const { id: propertyId } = await params;
-
-        // Get authenticated user with role (no extra DB query needed!)
-        const user = await requireAuthForApi();
+        const check = await precheck(request, { auth: true });
+        if (!check.ok) return check.error;
+        const { user } = check;
         const supabase = await createClient();
 
         // Verify property exists and user has permission
@@ -248,14 +248,14 @@ export async function PUT(
  * Delete a property and all associated units
  */
 export async function DELETE(
-    _request: NextRequest,
+    request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { id: propertyId } = await params;
-
-        // Get authenticated user with role (no extra DB query needed!)
-        const user = await requireAuthForApi();
+        const check = await precheck(request, { auth: true });
+        if (!check.ok) return check.error;
+        const { user } = check;
 
         const supabase = await createClient();
 

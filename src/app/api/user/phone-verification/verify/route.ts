@@ -5,8 +5,8 @@
  */
 
 import { NextRequest } from "next/server";
-import { createClient, requireAuthForApi } from "@/lib/supabase/server";
-import { errorResponse, successResponse } from "@/app/api/utils";
+import { createClient } from "@/lib/supabase/server";
+import { errorResponse, successResponse, precheck } from "@/app/api/utils";
 import { PhoneVerifyOtpSchema } from "@/lib/validators";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,9 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
     try {
-        const authUser = await requireAuthForApi();
+        const check = await precheck(request, { auth: true });
+        if (!check.ok) return check.error;
+        const { user: authUser } = check;
         const supabase = await createClient();
 
         // Parse and validate request body
@@ -66,9 +68,6 @@ export async function POST(request: NextRequest) {
         return successResponse({ message: "Phone verified successfully", verified_at: now });
     } catch (error) {
         console.error("Phone verification verify error:", error);
-        if (error instanceof Error && error.message === "Unauthorized") {
-            return errorResponse("Unauthorized", 401);
-        }
         return errorResponse("Internal server error", 500);
     }
 }

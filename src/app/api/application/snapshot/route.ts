@@ -6,8 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, requireAuthForApi } from "@/lib/supabase/server";
-import { createApplicationSnapshot } from "@/app/api/utils";
+import { createClient } from "@/lib/supabase/server";
+import { createApplicationSnapshot, precheck } from "@/app/api/utils";
 
 
 export const dynamic = "force-dynamic";
@@ -22,9 +22,12 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
     try {
+        const check = await precheck(request, { auth: true });
+        if (!check.ok) return check.error;
+        const { user } = check;
+
         // Create a single client instance reused for all DB operations (ensures session is consistent for RLS)
         const supabase = await createClient();
-        const user = await requireAuthForApi();
 
         // Parse request body
         const body = await request.json();

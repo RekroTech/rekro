@@ -9,8 +9,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, requireAuthForApi } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { getCurrentTimestamp } from "@/lib/utils";
+import { precheck } from "@/app/api/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +27,9 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
     try {
-        // Check authentication
-        const user = await requireAuthForApi();
+        const check = await precheck(request, { auth: true });
+        if (!check.ok) return check.error;
+        const { user } = check;
         const supabase = await createClient();
 
         // Parse request body
@@ -105,13 +107,6 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Application withdrawal error:", error);
 
-        // Handle authentication errors
-        if (error instanceof Error && error.message === "Unauthorized") {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401, headers: { "Cache-Control": "no-store" } }
-            );
-        }
 
         return NextResponse.json(
             { error: "Internal server error" },

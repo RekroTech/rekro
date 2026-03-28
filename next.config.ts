@@ -92,6 +92,18 @@ const nextConfig: NextConfig = {
                         key: "Referrer-Policy",
                         value: "origin-when-cross-origin",
                     },
+                    {
+                        key: "Content-Security-Policy",
+                        value: [
+                            "default-src 'self'",
+                            "script-src 'self' 'unsafe-inline' https://maps.googleapis.com",
+                            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+                            "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://i.pravatar.cc",
+                            "connect-src 'self' https://*.supabase.co https://o4510117376294912.ingest.us.sentry.io",
+                            "font-src 'self' https://fonts.gstatic.com",
+                            "frame-ancestors 'none'",
+                        ].join("; "),
+                    },
                 ],
             },
             {

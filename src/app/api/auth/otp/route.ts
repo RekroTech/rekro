@@ -1,12 +1,15 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { processEmail } from "@/lib/utils";
-import { authErrorResponse, authSuccessResponse } from "@/app/api/utils";
+import { authErrorResponse, authSuccessResponse, precheck } from "@/app/api/utils";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
     try {
+        const check = await precheck(request);
+        if (!check.ok) return check.error;
+
         const body = await request.json();
         const email = typeof body.email === "string" ? body.email : "";
         const redirectTo = typeof body.redirectTo === "string" ? body.redirectTo : "/";

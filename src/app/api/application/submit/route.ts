@@ -9,8 +9,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, requireAuthForApi } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { getCurrentTimestamp } from "@/lib/utils/dateUtils";
+import { precheck } from "@/app/api/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +26,9 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
     try {
-        // Get authenticated user
-        const user = await requireAuthForApi();
+        const check = await precheck(request, { auth: true });
+        if (!check.ok) return check.error;
+        const { user } = check;
         const supabase = await createClient();
 
         // Parse request body
