@@ -89,24 +89,59 @@ export function useCreateProperty() {
             formData.append("propertyData", JSON.stringify(propertyData));
             formData.append("unitsData", JSON.stringify(unitsData));
 
-            // Append media files
-            mediaFiles.forEach((file) => {
-                if (file.type.startsWith("image/")) {
-                    formData.append("images", file);
-                }
-            });
-
-            const response = await fetch("/api/property", {
+            const createResponse = await fetch("/api/property", {
                 method: "POST",
                 body: formData,
             });
 
-            if (!response.ok) {
-                const error = await response.json();
+            if (!createResponse.ok) {
+                const error = await createResponse.json();
                 throw new Error(error.error || error.message || "Failed to create property");
             }
 
-            return response.json();
+            const createdProperty = await createResponse.json();
+
+            // Upload media in a separate request so property save is not blocked by storage I/O.
+            if (mediaFiles.length > 0) {
+                const mediaFormData = new FormData();
+                mediaFiles.forEach((file) => {
+                    if (file.type.startsWith("image/")) {
+                        mediaFormData.append("images", file);
+                    }
+                });
+
+                if (mediaFormData.getAll("images").length > 0) {
+                    void fetch(`/api/property/${createdProperty.id}/media`, {
+                        method: "POST",
+                        body: mediaFormData,
+                    })
+                        .then(async (response) => {
+                            if (!response.ok) {
+                                const error = await response.json().catch(() => ({}));
+                                throw new Error(
+                                    error.error || error.message || "Failed to upload property images"
+                                );
+                            }
+
+                            const result = await response.json();
+                            if (result?.property?.id) {
+                                queryClient.setQueryData(
+                                    propertyKeys.detail(result.property.id, false),
+                                    result.property
+                                );
+                                queryClient.invalidateQueries({ queryKey: propertyKeys.lists() });
+                            }
+                        })
+                        .catch((error) => {
+                            console.error(
+                                `Property ${createdProperty.id} created, but async media upload failed:` ,
+                                error
+                            );
+                        });
+                }
+            }
+
+            return createdProperty;
         },
         onSuccess: (newProperty) => {
             // Invalidate all property list queries
