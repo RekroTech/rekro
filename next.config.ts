@@ -142,6 +142,21 @@ export default withSentryConfig(nextConfig, {
   // side errors will fail.
   tunnelRoute: "/monitoring",
 
+  // --- Stack trace linking & release tracking ---
+  // Associates every build's source maps with the git commit that produced them.
+  // Requires: GitHub integration enabled in Sentry + SENTRY_AUTH_TOKEN in env.
+  // https://docs.sentry.io/product/integrations/source-code-mgmt/github/
+  release: {
+    // Automatically detect commits from the git repo at build time
+    setCommits: {
+      auto: true,
+    },
+    // Mark the Vercel environment (production / preview / development) on each release
+    deploy: {
+      env: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "production",
+    },
+  },
+
   webpack: {
     // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
     // See the following for more information:
