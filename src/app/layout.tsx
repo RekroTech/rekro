@@ -2,6 +2,8 @@ import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { clsx } from "clsx";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { RootProviders } from "@/components/providers";
 import AppShell from "./AppShell";
 
@@ -58,6 +60,8 @@ export default function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const isProduction = process.env.NODE_ENV === "production";
+
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
@@ -77,6 +81,8 @@ export default function RootLayout({
                 <RootProviders>
                     <AppShell>{children}</AppShell>
                 </RootProviders>
+                {isProduction && <Analytics />}
+                {isProduction && <SpeedInsights />}
             </body>
         </html>
     );

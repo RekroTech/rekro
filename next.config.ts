@@ -99,7 +99,7 @@ const nextConfig: NextConfig = {
                             "script-src 'self' 'unsafe-inline' https://maps.googleapis.com",
                             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                             "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://i.pravatar.cc",
-                            "connect-src 'self' https://*.supabase.co https://o4510117376294912.ingest.us.sentry.io",
+                            "connect-src 'self' https://*.supabase.co https://o4510117376294912.ingest.us.sentry.io https://vitals.vercel-insights.com",
                             "font-src 'self' https://fonts.gstatic.com",
                             "frame-ancestors 'none'",
                         ].join("; "),
