@@ -5,6 +5,7 @@ import { clsx } from "clsx";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { RootProviders } from "@/components/providers";
+import { env } from "@/env";
 import AppShell from "./AppShell";
 
 import "./globals.css";
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
     keywords: ["rental", "property", "housing", "real estate", "apartments"],
     authors: [{ name: "Rekro" }],
     creator: "Rekro",
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+    metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
     openGraph: {
         type: "website",
         locale: "en_US",
@@ -69,7 +70,7 @@ export default function RootLayout({
                 <link rel="preconnect" href="https://maps.gstatic.com" crossOrigin="anonymous" />
                 <link
                     rel="preconnect"
-                    href={process.env.NEXT_PUBLIC_SUPABASE_URL || ""}
+                    href={env.NEXT_PUBLIC_SUPABASE_URL}
                     crossOrigin="anonymous"
                 />
                 <title>reKro</title>
