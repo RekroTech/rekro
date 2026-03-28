@@ -3,12 +3,87 @@
  * Common utilities for API routes
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuthForApi, requireRole } from "@/lib/supabase/server";
+import type { SessionUser } from "@/types/auth.types";
+import type { AppRole } from "@/types/db";
 import { UserProfile } from "@/types/user.types";
 import { ApplicationType, OccupancyType } from "@/types/db";
 import { Inclusions } from "@/types/property.types";
 import { ApplicationSnapshot } from "@/types/application.types";
 import { getCurrentTimestamp } from "@/lib/utils";
+
+/**
+ * Higher-order function that wraps an API route handler with authentication.
+ * Automatically handles authentication errors and passes authenticated user to handler.
+ *
+ * @param handler - The API route handler that receives request and authenticated user
+ * @returns Wrapped handler with automatic auth checking and error handling
+ *
+ * @example
+ * export const GET = withAuth(async (request, user) => {
+ *     // user is guaranteed to be authenticated
+ *     return successResponse({ userId: user.id });
+ * });
+ */
+export function withAuth(
+    handler: (request: NextRequest, user: SessionUser) => Promise<NextResponse>
+) {
+    return async (request: NextRequest) => {
+        try {
+            const user = await requireAuthForApi();
+            return await handler(request, user);
+        } catch (error) {
+            if (error instanceof Error) {
+                if (error.message === "Unauthorized") {
+                    return errorResponse("Unauthorized", 401);
+                }
+                if (error.message === "Forbidden") {
+                    return errorResponse("Forbidden", 403);
+                }
+            }
+            console.error("API error:", error);
+            return errorResponse("Internal server error", 500);
+        }
+    };
+}
+
+/**
+ * Higher-order function that wraps an API route handler with role-based authentication.
+ * Automatically handles authentication and authorization errors.
+ *
+ * @param allowedRoles - One or more roles that are permitted to access this route
+ * @param handler - The API route handler that receives request and authenticated user
+ * @returns Wrapped handler with automatic auth and role checking
+ *
+ * @example
+ * export const POST = withRole(["landlord", "admin"], async (request, user) => {
+ *     // user is guaranteed to be authenticated with landlord or admin role
+ *     return successResponse({ message: "Property created" });
+ * });
+ */
+export function withRole(
+    allowedRoles: AppRole[],
+    handler: (request: NextRequest, user: SessionUser) => Promise<NextResponse>
+) {
+    return async (request: NextRequest) => {
+        try {
+            const user = await requireRole(...allowedRoles);
+            return await handler(request, user);
+        } catch (error) {
+            if (error instanceof Error) {
+                if (error.message === "Unauthorized") {
+                    return errorResponse("Unauthorized", 401);
+                }
+                if (error.message === "Forbidden") {
+                    return errorResponse("Forbidden", 403);
+                }
+            }
+            console.error("API error:", error);
+            return errorResponse("Internal server error", 500);
+        }
+    };
+}
 
 /**
  * Standard error response

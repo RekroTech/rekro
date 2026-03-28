@@ -1,6 +1,35 @@
 # Recommended Libraries — reKro
 
-> Audit date: March 2026 · These are concrete additions that solve real gaps in the current codebase.
+> Audit date: March 2026 (updated) · These are concrete additions that solve real gaps in the current codebase.
+
+---
+
+## Already Installed (for reference)
+
+These libraries are **already in `package.json`** — do not re-add them:
+
+| Package | Purpose |
+|---|---|
+| `@react-email/components` + `@react-email/render` | Email template system (preview with `npm run email:preview`) |
+| `@react-google-maps/api` | Map view (`PropertyMapView`) and Places Autocomplete search |
+| `@sentry/nextjs` | Error monitoring + tracing |
+| `@supabase/ssr` + `@supabase/supabase-js` | Database, auth, storage |
+| `@tanstack/react-query` | Server-state caching and async data |
+| `@tanstack/react-virtual` | Virtual scrolling for large lists |
+| `clsx` | Conditional class names |
+| `critters` | Critical CSS inlining |
+| `date-fns` | Date formatting (tree-shakeable; **do not add `moment.js`**) |
+| `embla-carousel-react` + `embla-carousel-autoplay` | Property image gallery carousel |
+| `focus-trap-react` | Modal focus management |
+| `jspdf` | PDF generation (already lazily imported via `await import("jspdf")`) |
+| `libphonenumber-js` | Phone number parsing + E.164 normalisation |
+| `lucide-react` | Icon library |
+| `next` `react` `react-dom` | Framework core |
+| `nuqs` | URL state management for filters and tabs |
+| `react-error-boundary` | Error boundary component |
+| `react-intersection-observer` | Infinite scroll trigger |
+| `resend` | Transactional email |
+| `zod` | Runtime input validation |
 
 ---
 
@@ -31,7 +60,7 @@ const ratelimit = new Ratelimit({
 
 ### 1.2 Bundle Analysis — `@next/bundle-analyzer`
 
-**Solves:** No visibility into bundle composition.
+**Solves:** No visibility into bundle composition. Install as a dev dependency.
 
 ```bash
 npm install --save-dev @next/bundle-analyzer
@@ -50,18 +79,38 @@ ANALYZE=true npm run build
 
 ---
 
-### 1.3 Form state management — `@conform-to/react` + `@conform-to/zod`
+### 1.3 Type-safe environment variables — `@t3-oss/env-nextjs`
 
-**Solves:** Forms currently manage their own state with `useState` + manual Zod parsing.
-Conform provides progressive-enhancement-friendly forms that work with Server Actions and
-re-use the existing Zod schemas.
+**Solves:** `process.env.NEXT_PUBLIC_SUPABASE_URL!` is used with non-null assertions
+throughout the codebase (`server.ts`, `middleware.ts`). Missing env vars cause silent
+runtime failures.
 
 ```bash
-npm install @conform-to/react @conform-to/zod
+npm install @t3-oss/env-nextjs
 ```
 
-**Why over react-hook-form:** Works with React 19 Server Actions natively; zero-
-dependency; built for progressive enhancement.
+```ts
+// src/env.ts
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
+
+export const env = createEnv({
+  server: {
+    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+    RESEND_API_KEY: z.string().min(1),
+  },
+  client: {
+    NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+    NEXT_PUBLIC_APP_URL: z.string().url(),
+    NEXT_PUBLIC_SENTRY_DSN: z.string().min(1),
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().min(1),
+  },
+  runtimeEnv: process.env,
+});
+```
+
+Build fails fast if any variable is missing — no surprises in production.
 
 ---
 
@@ -83,42 +132,10 @@ npm install inngest
 
 ---
 
-### 2.2 Type-safe environment variables — `@t3-oss/env-nextjs`
-
-**Solves:** `process.env.NEXT_PUBLIC_SUPABASE_URL!` used with non-null assertion throughout
-the codebase. Missing env vars cause silent runtime failures.
-
-```bash
-npm install @t3-oss/env-nextjs
-```
-
-```ts
-// src/env.ts
-import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
-
-export const env = createEnv({
-  server: {
-    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-    RESEND_API_KEY: z.string().min(1),
-  },
-  client: {
-    NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-    NEXT_PUBLIC_APP_URL: z.string().url(),
-  },
-  runtimeEnv: process.env,
-});
-```
-
-Build fails fast if any variable is missing — no surprises in production.
-
----
-
-### 2.3 Optimistic updates helper — already available in TanStack Query v5
+### 2.2 Optimistic updates — already available in TanStack Query v5
 
 **Solves:** Like/unlike actions and application status changes feel slow because they wait
-for the server. TanStack Query v5's `optimisticUpdate` pattern is already available.
+for the server.
 
 No new package needed — implement the pattern in existing hooks:
 
@@ -128,7 +145,6 @@ useMutation({
   onMutate: async (unitId) => {
     await queryClient.cancelQueries({ queryKey: propertyKeys.lists() });
     const previous = queryClient.getQueryData(propertyKeys.lists());
-    // Optimistically update the cache
     queryClient.setQueryData(propertyKeys.lists(), (old) => toggleLikeInCache(old, unitId));
     return { previous };
   },
@@ -140,7 +156,7 @@ useMutation({
 
 ---
 
-### 2.4 Accessible date picker — `react-aria` / `@internationalized/date`
+### 2.3 Accessible date picker — `react-aria` / `@internationalized/date`
 
 **Solves:** The application and inspection forms need date pickers. Plain `<input type="date">`
 is inconsistently styled and inaccessible across browsers.
@@ -154,27 +170,25 @@ integrate with TailwindCSS and match the existing design system approach.
 
 ---
 
-### 2.5 Schema-driven PDF generation — `@react-pdf/renderer`
+### 2.4 Analytics & Speed Insights — `@vercel/analytics` + `@vercel/speed-insights`
 
-**Solves:** `jspdf` (~400 KB) is a low-level imperative API. React-PDF allows writing
-PDF layouts as React components, which is more maintainable and produces smaller bundles
-when lazy-loaded.
+**Solves:** No user behaviour data or real-user performance metrics. Neither package is
+currently installed.
 
 ```bash
-npm install @react-pdf/renderer
+npm install @vercel/analytics @vercel/speed-insights
 ```
 
 ```tsx
-import { Document, Page, Text } from "@react-pdf/renderer";
+// src/app/layout.tsx — add inside RootLayout
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const ApplicationPDF = ({ application }) => (
-  <Document>
-    <Page><Text>{application.id}</Text></Page>
-  </Document>
-);
+<Analytics />
+<SpeedInsights />
 ```
 
-Lazy-load with `dynamic(() => import("./ApplicationPDF"), { ssr: false })`.
+Privacy-friendly, no cookie consent required for basic analytics.
 
 ---
 
@@ -204,7 +218,7 @@ See Scalability doc §3.5 for implementation.
 
 ---
 
-### 3.3 Feature flags — `@vercel/flags` or `growthbook`
+### 3.3 Feature flags — `@vercel/flags`
 
 **When:** Rolling out features to specific user segments (landlords only, beta users, etc.)
 
@@ -216,29 +230,7 @@ Integrates with Vercel's edge config for zero-latency flag evaluation.
 
 ---
 
-### 3.4 Analytics — `@vercel/analytics` + `@vercel/speed-insights`
-
-**When:** You need user behaviour data and real-user performance metrics.
-
-```bash
-npm install @vercel/analytics @vercel/speed-insights
-```
-
-```tsx
-// src/app/layout.tsx
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-
-// Add to RootLayout:
-<Analytics />
-<SpeedInsights />
-```
-
-Privacy-friendly, no cookie consent required for basic analytics.
-
----
-
-### 3.5 Testing — `vitest` + `@testing-library/react`
+### 3.4 Testing — `vitest` + `@testing-library/react`
 
 **When:** Immediately — Playwright covers E2E but there are no unit/component tests.
 
@@ -257,10 +249,10 @@ Configure alongside Playwright for a complete testing pyramid:
 
 | Library | Reason to avoid |
 |---|---|
-| `redux` / `zustand` / `jotai` | TanStack Query already handles server state; `useState` handles the rest. Adding a global store would be over-engineering. |
-| `react-hook-form` | Conform is lighter and works with Server Actions; RHF adds ~25 KB. |
-| `moment.js` | `date-fns` (already installed) is tree-shakeable and modern. |
-| `lodash` | Use native ES2022+ methods. Import specific functions only if absolutely needed. |
-| `axios` | `fetch` (native) is sufficient for the current API surface. |
-| `i18next` | Premature — add only when internationalisation is a confirmed requirement. |
-
+| `redux` / `zustand` / `jotai` | TanStack Query already handles server state; `useState` handles the rest |
+| `react-hook-form` | Existing forms use controlled state + Zod directly; RHF adds ~25 KB |
+| `moment.js` | `date-fns` (already installed) is tree-shakeable and modern |
+| `lodash` | Use native ES2022+ methods |
+| `axios` | `fetch` (native) is sufficient for the current API surface |
+| `i18next` | Premature — add `next-intl` only when internationalisation is a confirmed requirement |
+| `@react-pdf/renderer` | jsPDF is already lazily imported — sufficient for the current PDF use case |

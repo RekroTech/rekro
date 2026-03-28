@@ -1,36 +1,23 @@
 "use client";
 
-// React & Next.js
-import React, { useState } from "react";
+import React, { lazy, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
-
-// Components
 import { Header, Footer } from "@/components/layout";
 import { Loader } from "@/components/common";
-
-// Hooks & Context
-import { useRoles } from "@/lib/hooks/roles";
-import { useAuthModal } from "@/contexts";
 import { useAuthStateSync, useSessionUser } from "@/lib/hooks/auth";
+import { useRoles } from "@/lib/hooks/roles";
+import { useAuthModal, usePropertyFormModal } from "@/contexts";
 
-// Lazy-loaded components (reduce initial bundle by ~200KB)
+// Lazy-load modals to reduce initial bundle size
+const AuthModal = lazy(() =>
+    import("@/components/Auth/AuthModal").then((mod) => ({ default: mod.AuthModal }))
+);
+
 const PropertyForm = dynamic(
     () => import("@/components/PropertyForm").then((mod) => ({ default: mod.PropertyForm })),
     {
-        loading: () => (
-            <div className="flex items-center justify-center p-8">
-                <Loader size="md" />
-            </div>
-        ),
-        ssr: false,
-    }
-);
-
-const AuthModal = dynamic(
-    () => import("@/components/Auth").then((mod) => ({ default: mod.AuthModal })),
-    {
-        loading: () => null,
+        loading: () => <Loader size="md" />,
         ssr: false,
     }
 );
@@ -39,22 +26,30 @@ interface AppShellProps {
     children: React.ReactNode;
 }
 
+/**
+ * AppShell - Unified Layout & Modal Manager
+ *
+ * Single component handling:
+ * - Auth state sync & session check
+ * - Layout structure (header, main, footer)
+ * - Auth and PropertyForm modals
+ * - Loading state
+ *
+ * Simple and maintainable structure.
+ */
 export default function AppShell({ children }: AppShellProps) {
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const pathname = usePathname();
-
-    const { isAdmin } = useRoles();
-    const { isAuthModalOpen, closeAuthModal, redirectTo, authModalError } = useAuthModal();
-
-    // Check session on initial load
     const { isLoading: isSessionLoading, data: user } = useSessionUser();
+    const { isAdmin } = useRoles();
 
-    // Ensure we react to Supabase auth state changes (OAuth callback, sign out, token refresh)
-    // This hook keeps our session-dependent React Query caches in sync.
+    // Sync auth state with Supabase
     useAuthStateSync();
 
+    // Modal states
+    const { isAuthModalOpen, closeAuthModal, redirectTo, authModalError } = useAuthModal();
+    const { isOpen: isPropertyFormOpen, closeModal: closePropertyForm } = usePropertyFormModal();
 
-    // Show loading state while checking session on initial load
+    // Show loading state while checking session
     if (isSessionLoading) {
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-background">
@@ -65,12 +60,11 @@ export default function AppShell({ children }: AppShellProps) {
 
     return (
         <>
-            {/* Skip to main content link for keyboard users */}
             <a
                 href="#main-content"
                 onClick={(e) => {
                     e.preventDefault();
-                    const mainContent = document.getElementById('main-content');
+                    const mainContent = document.getElementById("main-content");
                     if (mainContent) {
                         mainContent.focus();
                         mainContent.scrollTop = 0;
@@ -81,7 +75,7 @@ export default function AppShell({ children }: AppShellProps) {
                 Skip to main content
             </a>
 
-            <Header onAddPropertyAction={() => setIsModalOpen(true)} />
+            <Header />
             <main
                 id="main-content"
                 role="main"
@@ -92,22 +86,23 @@ export default function AppShell({ children }: AppShellProps) {
             </main>
             {!user && <Footer />}
 
-            {/* Add Property Modal - only for admin */}
+            {/* Global Modals */}
+            <Suspense fallback={null}>
+                <AuthModal
+                    isOpen={isAuthModalOpen}
+                    onClose={closeAuthModal}
+                    redirectTo={redirectTo}
+                    initialError={authModalError}
+                />
+            </Suspense>
+
             {isAdmin && (
                 <PropertyForm
                     key={pathname}
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
+                    isOpen={isPropertyFormOpen}
+                    onClose={closePropertyForm}
                 />
             )}
-
-            {/* Global Auth Modal */}
-            <AuthModal
-                isOpen={isAuthModalOpen}
-                onClose={closeAuthModal}
-                redirectTo={redirectTo}
-                initialError={authModalError}
-            />
         </>
     );
 }

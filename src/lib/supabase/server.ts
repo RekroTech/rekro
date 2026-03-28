@@ -143,3 +143,28 @@ export async function requireAuthForApi(): Promise<SessionUser> {
     return user;
 }
 
+/**
+ * Require specific role(s) in API Routes.
+ * Throws error if user is not authenticated or doesn't have required role.
+ *
+ * @param allowedRoles - One or more roles that are permitted
+ * @returns SessionUser (guaranteed to be authenticated with required role)
+ * @throws Error if not authenticated or forbidden
+ *
+ * @example
+ * // In an API route - only landlords can create properties
+ * export async function POST(request: NextRequest) {
+ *     const user = await requireRole("landlord", "admin");
+ *     // ... handle request
+ * }
+ */
+export async function requireRole(...allowedRoles: AppRole[]): Promise<SessionUser> {
+    const user = await requireAuthForApi();
+
+    if (!allowedRoles.includes(user.role)) {
+        throw new Error("Forbidden");
+    }
+
+    return user;
+}
+

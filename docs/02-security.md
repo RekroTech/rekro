@@ -1,6 +1,6 @@
 # Security Analysis — reKro
 
-> Audit date: March 2026 · Stack: Next.js 16 / React 19 / Supabase / Sentry
+> Audit date: March 2026 (updated) · Stack: Next.js 16 / React 19 / Supabase / Sentry
 
 ---
 
@@ -19,10 +19,12 @@
 | Input validation | ✅ Zod schemas on all API routes (`PropertyDataSchema`, `EnquiryRequestSchema`, etc.) |
 | Honeypot anti-spam | ✅ `website` field honeypot in enquiry form |
 | RBAC | ✅ 5-tier role hierarchy (`user → tenant → landlord → admin → super_admin`) |
+| OTP partial rate-limit | ⚠️ OTP route detects Supabase's own rate-limit error and returns 429, but no independent IP-based limiter |
 | Supabase RLS | ⚠️ Policies folder is empty — requires verification |
 | Content Security Policy | ❌ No CSP header defined |
-| Rate limiting | ❌ No rate limiting on API routes |
-| Sentry PII | ⚠️ `sendDefaultPii: true` — sends user data to Sentry |
+| Rate limiting | ❌ No independent rate limiting middleware on API routes |
+| Sentry PII | ⚠️ `sendDefaultPii: true` in all three Sentry configs — sends user data to Sentry |
+| Sentry DSN | ⚠️ DSN hardcoded in `sentry.server.config.ts`, `sentry.edge.config.ts`, and `instrumentation-client.ts` |
 | Secrets exposure | ⚠️ `NEXT_PUBLIC_SUPABASE_ANON_KEY` is intentionally public; ensure no service-role key is exposed |
 
 ---
@@ -40,9 +42,9 @@
   key: "Content-Security-Policy",
   value: [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://maps.googleapis.com", // tighten after testing
+    "script-src 'self' 'unsafe-inline' https://maps.googleapis.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com",
+    "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://i.pravatar.cc",
     "connect-src 'self' https://*.supabase.co https://o4510117376294912.ingest.us.sentry.io",
     "font-src 'self' https://fonts.gstatic.com",
     "frame-ancestors 'none'",
@@ -56,8 +58,13 @@ Start with `Content-Security-Policy-Report-Only` to audit without breaking the a
 
 ### 2.2 No rate limiting on API routes
 
-**Risk:** HIGH — Unauthenticated POST `/api/enquiries` and POST `/api/auth/otp` can be
+**Risk:** HIGH — Unauthenticated `POST /api/enquiries` and `POST /api/auth/otp` can be
 abused to flood email inboxes or exhaust Supabase quotas.
+
+> **Note:** The OTP route (`/api/auth/otp`) currently detects Supabase's own server-side
+> rate-limit response and returns a `429` to the client, but this is a passive pass-through —
+> not an independent IP-based limiter. A determined attacker can still burst requests before
+> Supabase's own limits kick in.
 
 **Fix options (pick one):**
 
@@ -106,11 +113,15 @@ mutate any row directly via the Supabase client.
 
 **Risk:** MEDIUM — Email addresses, IP addresses, and session cookies are sent to Sentry.
 This may conflict with GDPR/Privacy Act obligations depending on your jurisdiction.
+All three Sentry config files are affected:
+- `sentry.server.config.ts`
+- `sentry.edge.config.ts`
+- `src/instrumentation-client.ts`
 
 **Fix:**
 
 ```ts
-// sentry.server.config.ts & sentry.edge.config.ts
+// Apply to all three Sentry config files
 sendDefaultPii: false,
 // Capture user ID only (no email):
 beforeSend(event) {
@@ -126,11 +137,11 @@ beforeSend(event) {
 
 ### 2.5 Sentry DSN exposed in source
 
-**Risk:** LOW-MEDIUM — The Sentry DSN (`https://cc3d181...`) is in committed source code.
-While a DSN is designed to be public for browser-side reporting, it allows anyone to
-submit fake events to your Sentry project.
+**Risk:** LOW-MEDIUM — The Sentry DSN (`https://cc3d181...`) is hardcoded in all three
+committed source files. While a DSN is designed to be public for browser-side reporting,
+it allows anyone to submit fake events to your Sentry project.
 
-**Fix:** Move DSN to an environment variable:
+**Fix:** Move DSN to an environment variable in all three files:
 
 ```ts
 dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -175,6 +186,8 @@ engines or crawled by bots.
 - [x] JWT validated server-side on every API mutation
 - [x] Session tokens refreshed via middleware on every request
 - [x] Role checked before property management actions
+- [x] OTP route passes through Supabase's own rate-limit 429 to the client
+- [ ] Add independent IP-based rate limiter (`@upstash/ratelimit`) on `/api/auth/otp` and `/api/enquiries`
 - [ ] Add `SameSite=Strict` cookie attribute verification in middleware
 - [ ] Implement token rotation alerts in Sentry
 - [ ] Add audit log table for admin actions

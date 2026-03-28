@@ -1,6 +1,6 @@
 # Scalability Analysis — reKro
 
-> Audit date: March 2026 · Stack: Next.js 16 / React 19 / Supabase / TanStack Query v5
+> Audit date: March 2026 (updated) · Stack: Next.js 16 / React 19 / Supabase / TanStack Query v5
 
 ---
 
@@ -10,18 +10,28 @@
 Browser (React 19)
     │
     ├── TanStack Query (client cache)
-    │       ├── Infinite scroll property listings
-    │       ├── Session user (5 min stale)
-    │       └── Property detail prefetch on hover
+    │       ├── Infinite scroll property listings (offset-based, limit 12)
+    │       ├── Session user (5 min stale, refetchOnMount: false)
+    │       ├── Property detail prefetch on hover
+    │       └── Application / unit / user profile queries
     │
     ├── Next.js 16 App Router (Edge + Node runtimes)
-    │       ├── /api/property       — POST (create), PATCH (update)
-    │       ├── /api/enquiries      — POST
-    │       ├── /api/application    — POST, PATCH
-    │       └── /api/auth/otp       — POST
+    │       ├── /api/auth/otp                      POST — magic-link trigger
+    │       ├── /api/auth/callback                 GET  — Supabase OAuth/OTP redirect
+    │       ├── /api/property                      POST — create property + units + images (multipart)
+    │       ├── /api/property/[id]                 PATCH / DELETE
+    │       ├── /api/application                   POST — upsert draft
+    │       ├── /api/application/submit            POST — submit for review
+    │       ├── /api/application/status            PATCH — approve / reject (admin+)
+    │       ├── /api/application/withdraw          POST — withdraw
+    │       ├── /api/application/snapshot          POST — save PDF snapshot
+    │       ├── /api/enquiries                     POST — guest + authenticated enquiry
+    │       ├── /api/user/profile                  GET / PATCH
+    │       ├── /api/user/phone-verification        POST
+    │       └── /api/voiceflow/properties/search   GET  — chatbot property search
     │
     └── Supabase (PostgreSQL + Auth + Storage + Realtime)
-            ├── Row Level Security (policies TBD)
+            ├── Row Level Security (policies TBD — folder empty)
             ├── PostGIS-ready geospatial indexes
             └── Storage (property images, documents)
 ```
@@ -34,11 +44,15 @@ Browser (React 19)
 |---|---|
 | **Stateless API routes** | Next.js API routes are serverless — auto-scales to demand |
 | **Supabase connection pooling** | `@supabase/ssr` uses the pooler by default on Supabase cloud |
-| **Pagination** | Properties use cursor-based infinite scroll (limit/offset) |
+| **Pagination** | Properties use `limit 12` per page with `IntersectionObserver` infinite scroll |
 | **Database indexes** | B-tree indexes on `user_id`, `property_id`, `status`, price, availability; GIN on JSONB |
-| **Image CDN** | Supabase Storage serves images via a CDN; Next.js Image further optimises them |
+| **Image CDN** | Supabase Storage serves images via a CDN; Next.js Image further optimises with AVIF/WebP |
 | **Client-side cache** | TanStack Query deduplicates in-flight requests; avoids redundant DB hits |
 | **Role hierarchy** | RBAC is table-driven — adding new roles requires only a DB enum change |
+| **Virtual scrolling** | `@tanstack/react-virtual` is installed for heavy list virtualization when needed |
+| **React `cache()`** | `getSession()` is memoised per server request — one DB call regardless of how many Server Components call it |
+| **jsPDF lazy-loaded** | PDF generation uses `await import("jspdf")` — not in the initial bundle |
+| **Map view** | `PropertyMapView` is only mounted when map tab is active — Google Maps SDK not loaded for grid view visitors |
 
 ---
 
@@ -70,13 +84,12 @@ if (cursor) {
 
 ### 3.2 Full-text search runs `ILIKE` on the database
 
-**Problem:** The `search` filter in `property.queries.ts` likely uses `ilike` or string
-matching. At scale this degrades to a full table scan.
+**Problem:** The `search` filter in `property.queries.ts` uses `ilike` string matching.
+At scale this degrades to a full table scan.
 
 **Fix:** Enable PostgreSQL full-text search (built into Supabase):
 
 ```sql
--- Add a generated tsvector column
 ALTER TABLE properties
 ADD COLUMN search_vector tsvector
 GENERATED ALWAYS AS (
@@ -93,11 +106,11 @@ For advanced search, consider **Supabase pgvector** or a dedicated search servic
 
 ---
 
-### 3.3 No background job / queue system
+### 3.3 Email sending is synchronous in API route handlers
 
-**Problem:** Email sending (via Resend) is done synchronously inside API route handlers.
-If Resend is slow or fails, the user waits or gets an error. Email failures also block the
-transaction success response.
+**Problem:** Email sending (via Resend) is `await`-ed directly inside `/api/enquiries`,
+`/api/application/submit`, and other route handlers. If Resend is slow or fails, the
+user waits or receives an error. Email failures also block the success response.
 
 **Fix:** Decouple email from the request cycle:
 
@@ -133,7 +146,6 @@ Recommended first step: move property list fetching to a Server Component with
 `revalidate = 60` (1-minute ISR):
 
 ```ts
-// Fetch on server, cache for 60 seconds
 export const revalidate = 60;
 ```
 
@@ -195,4 +207,3 @@ experience high latency.
 | 10 k – 100 k | Supabase Pro + read replica, Vercel Pro, Upstash Redis cache |
 | 100 k – 1 M | Supabase Enterprise or self-hosted Postgres, CDN for API responses, background job queue |
 | 1 M+ | Dedicated Postgres cluster, microservices for search/notifications, global edge deployment |
-

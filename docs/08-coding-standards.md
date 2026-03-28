@@ -1,6 +1,14 @@
 ﻿# Coding Standards — reKro
 > Read this before writing your first line of code.
-> Last updated: March 2026
+> Last updated: March 27, 2026
+
+**Recent updates:**
+- Updated library versions to match package.json (React 19.2.3, Next.js 16.1.5, TanStack Query 5.90.20, etc.)
+- Expanded component library reference with all 20+ common components
+- Fixed `useRoles()` API documentation to match actual implementation
+- Added contexts, config, and utils sections to architecture map
+- Clarified that ProfileCompletionContext and DocumentOperationsContext exist
+
 ---
 ## Table of Contents
 1. [Architecture Mental Model](#1-architecture-mental-model)
@@ -17,22 +25,28 @@
 12. [Git Conventions](#12-git-conventions)
 13. [Quick Reference — Do & Don''t](#13-quick-reference--do--dont)
 ---
-## 1. Architecture Mental Model
 ### Stack at a glance
+
 | Layer | Technology |
 |---|---|
 | Framework | Next.js 16.1.5 — App Router, RSC, Turbopack |
 | UI | React 19.2.3 + TypeScript 5 (strict) |
 | Styling | Tailwind CSS v4 + CSS-variable design tokens |
-| Database / Auth | Supabase — Postgres, RLS, Storage, SSR Auth |
-| Client data | TanStack Query v5 |
-| URL state | nuqs v2 |
-| Email | Resend |
-| Maps | Google Maps / Places API |
+| Database / Auth | Supabase — Postgres, RLS, Storage, SSR Auth (@supabase/ssr 0.8.0) |
+| Client data | TanStack Query v5.90.20 |
+| URL state | nuqs v2.8.9 |
+| Email | Resend v6.9.3 + @react-email/components 1.0.8 |
+| Maps | Google Maps / Places API (@react-google-maps/api v2.20.8) |
 | Chatbot | Voiceflow (`/api/voiceflow/properties/search`) |
-| PDF | jsPDF (`/api/application/snapshot`) |
-| Monitoring | Sentry |
-| Tests | Playwright |
+| PDF | jsPDF v4.2.0 (`/api/application/snapshot`) |
+| Monitoring | Sentry v10.40.0 |
+| Tests | Playwright v1.58.2 |
+| Validation | Zod v4.3.6 |
+| Icons | Lucide React v1.6.0 |
+| Date handling | date-fns v4.1.0 |
+| Phone validation | libphonenumber-js v1.12.38 |
+| Carousels | Embla Carousel v8.6.0 |
+| Error boundaries | react-error-boundary v6.1.1 |
 ### Route structure
 ```
 /                              Public listings (force-dynamic, "use client")
@@ -64,6 +78,9 @@ Shared validation      →  src/lib/validators/      Zod schemas
 Shared types           →  src/types/               TypeScript interfaces + db.ts
 UI primitives          →  src/components/common/
 Feature components     →  src/components/<Feature>/
+Global UI state        →  src/contexts/            AuthModal, Toast, ProfileCompletion, DocumentOps
+Config & constants     →  src/lib/config/          cache_config, pricing_config, resend_config
+Utils & helpers        →  src/lib/utils/           authorization, dateUtils, geospatial, etc.
 ```
 ---
 ## 2. TypeScript Standards
@@ -126,19 +143,34 @@ uses hooks, browser APIs, or event handlers.
 export function FilterPanel() { const [open, setOpen] = useState(false); ... }
 // ✅ No directive — pure render
 export function PropertyAddress({ address }: { address: Address }) { ... }
-```
 ### Use the design-system components from `common/` — do not reinvent
+
+All components are exported from `@/components/common` (see `src/components/common/index.ts`).
+
 | Need | Component |
 |---|---|
 | Button | `<Button variant="primary|secondary|ghost|danger">` |
 | Text input | `<Input label="…" error="…">` |
+| Select dropdown | `<Select options={…}>` |
+| Checkbox | `<Checkbox label="…">` |
+| Textarea | `<Textarea label="…">` |
+| File upload | `<Upload onUpload={…}>` |
+| Segmented control | `<SegmentedControl options={…}>` (for tabs/filters) |
 | Modal | `<Modal isOpen={…} onClose={…}>` |
-| Toast | `useToast()` → `showSuccess()` / `showError()` |
+| Dropdown menu | `<Dropdown items={…}>` |
+| Banner | `<Banner variant="info|warning|error">` |
+| Alert | `<Alert variant="info|success|warning|error">` |
+| Toast | `useToast()` → `showSuccess()` / `showError()` (from `@/contexts`) |
 | Image | `<Visual src={…} alt={…}>` (wraps Next.js Image) |
-| Role check | `<RoleGuard role="landlord">` |
+| Role check | `<RoleGuard role="landlord">` or `<PermissionGuard>` |
 | Loading | `<Loader size="sm|md|lg">` |
-| Skeleton | `<PropertyListSkeleton>` |
+| Skeleton | `<PropertyListSkeleton>`, `<PropertyCardSkeleton>`, `<ApplicationCardSkeleton>`, `<PropertyDetailSkeleton>` |
 | Map | `<MapView>` |
+| Address display | `<Address address={…}>` |
+| Logo | `<LogoIcon>`, `<LogoText>` |
+| Icons | `<Icon name="…">` (Lucide icons) |
+| Back button | `<BackButton>` |
+| Error boundary | `<ErrorBoundary>` (wraps react-error-boundary) |
 ### Lazy-load heavy components
 ```tsx
 // ✅
@@ -376,20 +408,25 @@ getSession()         // returns SessionUser | null (for optional auth)
 ### Use `useRoles()` in components — never compare roles manually
 ```tsx
 // ✅
-const { canManageProperties, hasRoleLevel, role } = useRoles();
+const { isAdmin, hasRoleLevel, role } = useRoles();
+if (hasRoleLevel("landlord")) { /* landlord or higher */ }
 // ❌
 const { data: user } = useSessionUser();
 if (user?.role === "landlord" || user?.role === "admin") { ... }
 ```
-Available from `useRoles()`:
+
 | Helper | Description |
 |---|---|
+| `user` | Current SessionUser object or null |
 | `role` | Current role string or null |
+| `roleLevel` | Numeric level (0 when signed out) |
 | `hasRole("landlord")` | Exact match |
 | `hasAnyRole(["landlord","admin"])` | Any of the listed roles |
 | `hasRoleLevel("landlord")` | landlord or higher privilege |
-| `canManageProperties` | Shorthand: landlord+ |
-| `canManageUsers` | Shorthand: admin+ |
+| `isAdmin` | Shorthand: admin role check |
+
+**Note:** For more granular checks, import helpers directly from `@/lib/utils/authorization`:
+- `isLandlordOrHigher()`, `isAdminOrHigher()`, `isTenant()`, `isLandlord()`, `isSuperAdmin()`
 ### Use `<RoleGuard>` for conditional rendering
 ```tsx
 // ✅

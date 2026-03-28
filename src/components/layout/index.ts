@@ -2,7 +2,7 @@
  * Layout Components Index
  *
  * Usage:
- * import { Header, QueryProvider } from "@/components/layout";
+ * import { Header, Footer } from "@/components/layout";
  */
 
 export { Header } from "./Header";

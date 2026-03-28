@@ -7,16 +7,13 @@ import { Button, Dropdown, Icon, LogoIcon, LogoText } from "@/components/common"
 import type { DropdownItem } from "@/components/common";
 import { useLogout } from "@/lib/hooks/auth";
 import { useRoles } from "@/lib/hooks/roles";
-import { useAuthModal } from "@/contexts";
+import { useAuthModal, usePropertyFormModal } from "@/contexts";
 
-interface HeaderProps {
-    onAddPropertyAction?: () => void;
-}
-
-export function Header({ onAddPropertyAction }: HeaderProps) {
+export function Header() {
     const { mutate: logout, isPending } = useLogout();
     const { isAdmin, user } = useRoles();
     const { openAuthModal } = useAuthModal();
+    const { openModal: openPropertyForm } = usePropertyFormModal();
 
     const authButtonClassName = "h-8 sm:h-9 min-w-[76px] sm:min-w-[96px] px-3 sm:px-4";
 
@@ -66,7 +63,7 @@ export function Header({ onAddPropertyAction }: HeaderProps) {
                         {isAdmin && (
                             <Button
                                 variant="primary"
-                                onClick={() => onAddPropertyAction?.()}
+                                onClick={() => openPropertyForm()}
                                 size="sm"
                                 pill
                             >

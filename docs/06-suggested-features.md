@@ -1,6 +1,7 @@
 # Suggested Features — reKro
 
-> Audit date: March 2026 · Prioritised by user value vs. implementation effort.
+> Audit date: March 27, 2026 (updated) · Prioritised by user value vs. implementation effort.
+> ✅ = already shipped in the current codebase
 
 ---
 
@@ -60,18 +61,20 @@ scheduling reduces back-and-forth messages.
 
 ---
 
-### 1.4 Tenant Profile Completeness Score
+### 1.4 Tenant Profile Completeness Score ⚠️ PARTIALLY IMPLEMENTED
 
 **What:** A visual indicator showing tenants how complete their application profile is
 (photo, bio, employment, references, ID verification).
 
+**Status:** ⚠️ `ProfileCompletionContext` exists and is used in `ProfileCard.tsx`. The infrastructure is in place, but the full UI with progress bars and completion nudges may need enhancement.
+
 **Why:** Landlords are more likely to accept applications from tenants with complete
 profiles. Nudging completeness increases conversion.
 
-**Implementation:**
-- `ProfileCompletionContext` already exists — extend it with a score calculator
-- Show progress bar in the profile page and dashboard
-- Show "Complete your profile" banner when score < 80%
+**Remaining work:**
+- Verify progress bar is visible in the profile page and dashboard
+- Add "Complete your profile" banner when score < 80% (if not present)
+- Add completion prompts in strategic locations (application flow, header)
 
 **Effort:** Low (1 day) · **Impact:** High
 
@@ -148,21 +151,21 @@ retention hook.
 
 ---
 
-### 2.4 Map View for Property Listings
+### 2.4 Map View for Property Listings ✅ SHIPPED
 
 **What:** Toggle between grid view and a map view showing all properties as pins.
-`@react-google-maps/api` is already installed.
 
-**Why:** Geographic search is how most renters think about their search. Map view is
-expected by users.
+**Status:** ✅ **FULLY IMPLEMENTED**. `PropertyMapView` and `PropertyMapCard` components are live.
+The home page (`page.tsx`) has a grid/map toggle button. Google Places Autocomplete drives
+the search input in both views. Selecting a place suggestion in map mode flies the camera
+to that location. `@react-google-maps/api` is the underlying library.
 
-**Implementation:**
-- Map component already scaffolded (`/src/lib/utils/googleMaps.ts`)
-- Cluster pins for density using `@googlemaps/markerclusterer`
-- Click pin → show property card popup
-- Sync map bounds with URL via nuqs
+**Future enhancements:**
+- Pin clustering with `@googlemaps/markerclusterer` for dense areas
+- Sync map bounds to URL via nuqs so map position is shareable
+- Custom map styles to match brand theme
 
-**Effort:** Medium (3–4 days) · **Impact:** High
+**Effort:** Complete · **Impact:** High
 
 ---
 

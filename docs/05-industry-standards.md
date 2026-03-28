@@ -1,6 +1,6 @@
 # Industry Standards & Best Practices — reKro
 
-> Audit date: March 2026 · Measured against Next.js 16, React 19, and modern PropTech standards.
+> Audit date: March 2026 (updated) · Measured against Next.js 16, React 19, and modern PropTech standards.
 
 ---
 
@@ -15,9 +15,10 @@
 - `SessionUser` type shared between server and client
 
 **Gaps:**
-- `as unknown as` casts in `auth.ts` when extracting `user_roles` — worth fixing with a
-  Supabase type join or a typed intermediate
-- No `strict: true` in `tsconfig.json` verification — confirm it's set
+- `as unknown as` casts in both `src/lib/supabase/server.ts` and `src/lib/hooks/auth.ts`
+  when extracting `user_roles` from the joined query result — worth fixing with a typed
+  intermediate or a Supabase RPC that returns a flat row
+- Confirm `"strict": true` is set in `tsconfig.json`
 
 ---
 
@@ -42,13 +43,19 @@ npm install --save-dev eslint-plugin-jsx-a11y eslint-plugin-security husky lint-
 
 - Clear separation: `components/common` (design system), feature components, layout
 - Co-located hooks in `components/Properties/hooks/`
-- Context providers cleanly separated (`AuthModalContext`, `ToastContext`, etc.)
+- Context providers cleanly separated:
+  - `AuthModalContext` — controls the global auth modal
+  - `ToastContext` — toast notification queue
+  - `ProfileCompletionContext` — wraps authenticated routes to track profile completeness
+  - `DocumentOperationsContext` — document upload/download state for the application flow
 - Barrel exports via `index.ts`
+- Two hooks directories exist with distinct purposes:
+  - `src/lib/hooks/` — TanStack Query hooks (data fetching, mutations)
+  - `src/hooks/` — non-data utility hooks (`useDebounce`, `useMediaQuery`, `usePlacesAutocomplete`, `useRequireAuth`, `useToast`)
 
 **Gaps:**
 - No Storybook or component documentation — onboarding new developers is harder
-- `PropertyCard.tsx` imports `PropertyForm` (edit modal) — this creates a tight coupling
-  between a display component and a mutation component
+- `PropertyCard.tsx` imports `PropertyForm` (edit modal) — tight coupling between a display component and a mutation component
 
 ---
 
@@ -106,17 +113,18 @@ npm install --save-dev eslint-plugin-jsx-a11y eslint-plugin-security husky lint-
 - `sr-only` for visually hidden headings
 - `focus-trap-react` for modal focus management
 - `aria-label` on search input
+- `PropertyList` emits a `role="status" aria-live="polite"` announcement when the property count changes ✅
 
 ### Gaps
 
 | Issue | WCAG level | Fix |
 |---|---|---|
-| No `aria-live` regions for toast notifications | AA | Add `role="status"` or `aria-live="polite"` to ToastProvider |
+| No `aria-live` regions for toast notifications | AA | Add `role="status"` or `aria-live="polite"` to `ToastProvider` |
 | No loading state announcements | AA | Add `aria-busy="true"` during data fetching |
-| Property card images may lack descriptive `alt` text | A | Audit `<Visual>` / `<Image>` usage |
+| Property card images may lack descriptive `alt` text | A | Audit `<Visual>` usage across `PropertyCard` and `PropertyMapCard` |
 | Colour contrast not audited | AA | Run Lighthouse accessibility audit |
-| No keyboard navigation in image gallery | A | Ensure `ImageGallery` is keyboard-accessible |
-| Missing `<label>` associations in some filters | A | Audit all form controls |
+| Image gallery (Embla Carousel) keyboard navigation | A | Verify arrow-key and focus behaviour in `ImageGallery` |
+| Missing `<label>` associations in some filters | A | Audit all form controls in `FilterDropdown` |
 
 ---
 

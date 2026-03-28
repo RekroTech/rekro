@@ -17,9 +17,6 @@ import { PropertyMapView } from "@/components/Properties/PropertyMapView";
 import { LISTING_TYPES, STATUS_TABS } from "@/components/PropertyForm";
 import { ListingTab, UnitStatus } from "@/types/property.types";
 
-// This page needs to be dynamic to show property listings
-export const dynamic = "force-dynamic";
-
 function HomePageContent() {
     const { isAdmin } = useRoles();
     const [status, setStatus] = useQueryState(

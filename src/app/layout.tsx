@@ -2,9 +2,7 @@ import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { clsx } from "clsx";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { QueryProvider, ErrorBoundary } from "@/components";
-import { AuthModalProvider, ToastProvider } from "@/contexts";
+import { RootProviders } from "@/components/providers";
 import AppShell from "./AppShell";
 
 import "./globals.css";
@@ -62,21 +60,23 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
+            <head>
+                <link rel="preconnect" href="https://maps.googleapis.com" />
+                <link rel="preconnect" href="https://maps.gstatic.com" crossOrigin="anonymous" />
+                <link
+                    rel="preconnect"
+                    href={process.env.NEXT_PUBLIC_SUPABASE_URL || ""}
+                    crossOrigin="anonymous"
+                />
+                <title>reKro</title>
+            </head>
             <body
                 className={clsx(geistSans.variable, geistMono.variable, "antialiased")}
                 suppressHydrationWarning
             >
-                <ErrorBoundary>
-                    <NuqsAdapter>
-                        <QueryProvider>
-                            <ToastProvider>
-                                <AuthModalProvider>
-                                    <AppShell>{children}</AppShell>
-                                </AuthModalProvider>
-                            </ToastProvider>
-                        </QueryProvider>
-                    </NuqsAdapter>
-                </ErrorBoundary>
+                <RootProviders>
+                    <AppShell>{children}</AppShell>
+                </RootProviders>
             </body>
         </html>
     );

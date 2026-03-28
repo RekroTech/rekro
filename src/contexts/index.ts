@@ -23,6 +23,11 @@ export { ProfileCompletionProvider, useProfileCompletion } from "./ProfileComple
 export { AuthModalProvider, useAuthModal } from "./AuthModalContext";
 
 // ============================================================================
+// Property Form Modal Context (Client-only)
+// ============================================================================
+export { PropertyFormModalProvider, usePropertyFormModal } from "./PropertyFormModalContext";
+
+// ============================================================================
 // Document Operations Context (Client-only)
 // ============================================================================
 export { DocumentOperationsProvider, useDocumentOperations } from "./DocumentOperationsContext";

@@ -1,36 +1,21 @@
-"use client";
-
-import React, { useEffect } from "react";
+import React from "react";
 import { redirect } from "next/navigation";
-import { useSessionUser } from "@/lib/hooks";
-import { ProfileCompletionProvider } from "@/contexts";
-import { Loader } from "@/components/common";
+import { getSession } from "@/lib/supabase/server";
 
-export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
-    const { data: user, isLoading } = useSessionUser();
+/**
+ * Authenticated Layout (Server Component)
+ *
+ * Guards all routes under /app/(authenticated) to require authentication.
+ * Redirects unauthenticated users to home page with auth modal open.
+ */
+export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+    // Server-side auth check
+    const user = await getSession();
 
-    useEffect(() => {
-        if (!isLoading && !user) {
-            // Redirect to home with auth modal trigger
-            redirect("/?auth=open");
-        }
-    }, [user, isLoading]);
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <Loader />
-            </div>
-        );
-    }
-
+    // Redirect to home if not authenticated
     if (!user) {
-        return null;
+        redirect("/?auth=open");
     }
 
-    return (
-        <ProfileCompletionProvider>
-            {children}
-        </ProfileCompletionProvider>
-    );
+    return children;
 }
