@@ -38,7 +38,12 @@ export async function GET(request: NextRequest) {
         const furnished = searchParams.get("furnished");
         const amenities = searchParams.get("amenities");
         const availableFrom = searchParams.get("availableFrom");
-        const limit = parseInt(searchParams.get("limit") || "5");
+
+        // Keep result size bounded to avoid expensive unbounded scans.
+        const requestedLimit = Number.parseInt(searchParams.get("limit") || "5", 10);
+        const limit = Number.isFinite(requestedLimit)
+            ? Math.min(Math.max(requestedLimit, 1), 20)
+            : 5;
 
         // Build the query
         const unitColumns = "id, listing_type, name, description, price, bond_amount, min_lease, max_lease, max_occupants, size_sqm, status, available_from, available_to";
@@ -233,24 +238,31 @@ export async function GET(request: NextRequest) {
             };
         });
 
-        return successResponse({
-            properties: formattedProperties,
-            count: formattedProperties.length,
-            searchParams: {
-                search,
-                location,
-                minPrice,
-                maxPrice,
-                bedrooms,
-                bathrooms,
-                propertyType,
-                listingType,
-                furnished,
-                amenities,
-                availableFrom,
-                limit,
+        return successResponse(
+            {
+                properties: formattedProperties,
+                count: formattedProperties.length,
+                searchParams: {
+                    search,
+                    location,
+                    minPrice,
+                    maxPrice,
+                    bedrooms,
+                    bathrooms,
+                    propertyType,
+                    listingType,
+                    furnished,
+                    amenities,
+                    availableFrom,
+                    limit,
+                }
+            },
+            200,
+            {
+                cacheControl: "public, s-maxage=60, stale-while-revalidate=300",
+                additionalHeaders: { "Vary": "Accept-Encoding" },
             }
-        });
+        );
 
     } catch (error) {
         const message = error instanceof Error ? error.message : "Internal server error";

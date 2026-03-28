@@ -167,9 +167,8 @@ export async function POST(request: NextRequest) {
                 const propertyUrl = new URL(`/property/${unit.property_id}?unit=${unit_id}`, baseUrl).toString();
 
                 if (shouldSendEmails) {
-                    // Send admin notification to admin@rekro.com.au
-                    try {
-                        await sendEnquiryNotification({
+                    const [notificationResult, confirmationResult] = await Promise.allSettled([
+                        sendEnquiryNotification({
                             enquiryId,
                             propertyTitle: property.title,
                             propertyAddress,
@@ -183,15 +182,8 @@ export async function POST(request: NextRequest) {
                                 : enquiryData.guest_phone ?? undefined,
                             recipientEmail: ADMIN_EMAIL,
                             isAuthenticated,
-                        });
-                        console.log("Enquiry notification sent to admin:", ADMIN_EMAIL);
-                    } catch (notificationError) {
-                        console.error("Error sending enquiry notification to admin:", notificationError);
-                    }
-
-                    // Send confirmation email to the enquirer
-                    try {
-                        await sendEnquiryConfirmation({
+                        }),
+                        sendEnquiryConfirmation({
                             enquiryId,
                             propertyTitle: property.title,
                             propertyAddress,
@@ -200,10 +192,19 @@ export async function POST(request: NextRequest) {
                             message,
                             recipientEmail: enquirerEmail,
                             recipientName: enquirerName,
-                        });
+                        }),
+                    ]);
+
+                    if (notificationResult.status === "fulfilled") {
+                        console.log("Enquiry notification sent to admin:", ADMIN_EMAIL);
+                    } else {
+                        console.error("Error sending enquiry notification to admin:", notificationResult.reason);
+                    }
+
+                    if (confirmationResult.status === "fulfilled") {
                         console.log("Enquiry confirmation sent to:", enquirerEmail);
-                    } catch (confirmationError) {
-                        console.error("Error sending enquiry confirmation:", confirmationError);
+                    } else {
+                        console.error("Error sending enquiry confirmation:", confirmationResult.reason);
                     }
                 }
             }

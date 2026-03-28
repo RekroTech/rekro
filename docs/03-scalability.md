@@ -192,8 +192,8 @@ experience high latency.
 - [x] GIN index on `address` JSONB
 - [x] Geospatial indexes (lat/lng composite, location GIN)
 - [ ] Full-text search index on `properties.title` + `description`
-- [ ] Composite index on `(is_published, created_at)` for the default listing query
-- [ ] Partial index on `units (status, available_from)` WHERE `status = 'active'`
+- [x] Composite index on `(is_published, created_at)` for the default listing query
+- [x] Partial index on `units (status, available_from)` WHERE `status = 'active'`
 - [ ] `pg_stat_statements` enabled in Supabase for slow query identification
 - [ ] Supabase connection pooling (PgBouncer) configured for > 50 concurrent users
 
