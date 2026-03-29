@@ -292,7 +292,7 @@ export function PropertySidebar({
                         onClick={() => setIsEnquiryModalOpen(true)}
                     >
                         <Icon icon={Mail} size={20} className="mr-2" />
-                        Enquire Now
+                        Send Enquiry
                     </Button>
 
                     <Button
@@ -304,7 +304,7 @@ export function PropertySidebar({
                         <Icon icon={FileText} size={20} className="mr-2" />
                         {hasSubmittedApplication
                             ? "View Application"
-                            : "Book Now"}
+                            : "Start Application"}
                     </Button>
                 </div>
 
