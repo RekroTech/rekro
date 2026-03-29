@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Property, Unit } from "@/types/db";
 import { Bed, Bath, Car, MapPin, Pencil } from "lucide-react";
@@ -58,7 +58,27 @@ export function PropertyCard({
     const addressText = address ? getLocalityString(address, false) : "Location not specified";
 
     const shouldShowBaseRent = isAdmin && Number.isFinite(price);
-    const priceBadges = shouldShowBaseRent ? [] : getPriceBadges(units, "all");
+    const primaryPriceBadges = useMemo(
+        () => (shouldShowBaseRent ? [] : getPriceBadges(units, "all")),
+        [shouldShowBaseRent, units]
+    );
+    const primaryBadge = primaryPriceBadges[0] ?? null;
+    const isEntireHomeBadge = primaryBadge?.listing_type === "entire_home";
+    const roomDetailUnits = useMemo(
+        () => (shouldShowBaseRent || isEntireHomeBadge ? [] : getPriceBadges(units, "room")),
+        [isEntireHomeBadge, shouldShowBaseRent, units]
+    );
+    const roomCount = roomDetailUnits.length;
+    const fromPrice = useMemo(() => {
+        if (!roomDetailUnits.length) return null;
+
+        const validPrices = roomDetailUnits
+            .map((unit) => unit.price)
+            .filter((unitPrice): unitPrice is number => Number.isFinite(unitPrice));
+
+        if (!validPrices.length) return null;
+        return Math.min(...validPrices);
+    }, [roomDetailUnits]);
 
     return (
         <>
@@ -71,7 +91,7 @@ export function PropertyCard({
                 {/* Property Image Gallery - Swipeable on mobile, simple Visual on desktop */}
                 <div className="relative w-full h-48 sm:h-64" onClick={(e) => {
                     // Prevent navigation when interacting with gallery controls
-                    if ((e.target as HTMLElement).closest('button')) {
+                    if ((e.target as HTMLElement).closest("button")) {
                         e.preventDefault();
                     }
                 }}>
@@ -118,23 +138,26 @@ export function PropertyCard({
                                 </p>
                             </div>
                         </div>
-                    ) : priceBadges.length > 0 && (
-                        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 flex flex-wrap gap-1.5 z-20 pointer-events-none max-w-[calc(100%-1rem)]">
-                            {priceBadges.map((unit, i) => {
-                                const roomNumber = priceBadges.slice(0, i + 1).filter(u => u.listing_type !== "entire_home").length;
-                                return (
-                                    <div key={unit.id} className="bg-card/90 backdrop-blur-sm px-2.5 py-1.5 rounded-[var(--radius-md)] shadow-md border border-border">
-                                        {unit.listing_type !== "entire_home" && (
-                                            <p className="text-[10px] font-normal text-text-muted leading-none mb-0.5">
-                                                {unit.name || `Room ${roomNumber}`}
-                                            </p>
-                                        )}
-                                        <p className="text-sm font-bold text-foreground leading-none">
-                                            ${unit.price} <span className="text-xs font-normal">/wk</span>
-                                        </p>
-                                    </div>
-                                );
-                            })}
+                    ) : isEntireHomeBadge && primaryBadge ? (
+                        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-20 pointer-events-none max-w-[calc(100%-1rem)]">
+                            <div className="bg-card/90 backdrop-blur-sm px-2.5 py-1.5 rounded-[var(--radius-md)] shadow-md border border-border">
+                                <p className="text-sm font-bold text-foreground leading-none">
+                                    ${primaryBadge.price} <span className="text-xs font-normal">/wk</span>
+                                </p>
+                            </div>
+                        </div>
+                    ) : fromPrice !== null && roomDetailUnits.length > 0 && (
+                        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-20 pointer-events-none max-w-[calc(100%-1rem)]">
+                            <div className="w-fit max-w-full bg-card/90 backdrop-blur-sm px-3 py-2 rounded-[var(--radius-md)] shadow-md border border-border text-left">
+                                <p className="text-sm font-bold text-foreground leading-none">
+                                    From ${fromPrice} <span className="text-xs font-normal">/wk</span>
+                                </p>
+                                {roomCount > 0 && (
+                                    <p className="text-[11px] text-text-muted mt-0.5 leading-none">
+                                        {roomCount} room{roomCount !== 1 ? "s" : ""} available
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     )}
                     {showEditButton && (
