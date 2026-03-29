@@ -227,6 +227,7 @@ export default function PropertyDetailPage() {
                                     features={selectedUnit.features}
                                     latitude={property.latitude}
                                     longitude={property.longitude}
+                                    isEntireHome={selectedUnit.listing_type === "entire_home"}
                                 />
                             </div>
                         </div>

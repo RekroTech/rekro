@@ -6,7 +6,7 @@ import { PropertyAmenities } from "./PropertyAmenities";
 import { UnitFeatures } from "./UnitFeatures";
 import { TravelTimeSummary } from "./TravelTimeSummary";
 
-type ContentTab = "about" | "amenities" | "features";
+type ContentTab = "about" | "amenities" | "features" | "nearby";
 
 interface PropertyTabsProps {
 	description: string | null;
@@ -14,6 +14,7 @@ interface PropertyTabsProps {
 	features: string[] | null;
 	latitude: number | null;
 	longitude: number | null;
+	isEntireHome?: boolean;
 }
 
 export function PropertyTabs({
@@ -22,6 +23,7 @@ export function PropertyTabs({
 	features,
 	latitude,
 	longitude,
+	isEntireHome = false,
 }: PropertyTabsProps) {
 	const [activeContentTab, setActiveContentTab] = useState<ContentTab>("about");
 	const [underlineStyle, setUnderlineStyle] = useState<{ width: number; left: number }>({
@@ -35,12 +37,18 @@ export function PropertyTabs({
 	const hasFeatures = Boolean(features && features.length > 0);
 
 	const contentTabs = useMemo(
-		() => [
-			{ id: "about" as const, label: "About" },
-			{ id: "amenities" as const, label: "Amenities" },
-			{ id: "features" as const, label: "Features" },
-		],
-		[]
+		() => {
+			const tabs: { id: ContentTab; label: string }[] = [
+				{ id: "about", label: "About" },
+				{ id: "nearby", label: "Nearby" },
+				{ id: "amenities", label: "Amenities" },
+			];
+			if (!isEntireHome) {
+				tabs.push({ id: "features", label: "Features" });
+			}
+			return tabs;
+		},
+		[isEntireHome]
 	);
 
 	const recalculateUnderline = useCallback(() => {
@@ -166,11 +174,6 @@ export function PropertyTabs({
 					<p className="text-sm sm:text-base text-text-muted leading-relaxed whitespace-pre-line">
 						{description || "No description available."}
 					</p>
-					{latitude != null && longitude != null && (
-						<div className="mt-4">
-							<TravelTimeSummary latitude={Number(latitude)} longitude={Number(longitude)} />
-						</div>
-					)}
 				</section>
 			)}
 
@@ -201,6 +204,22 @@ export function PropertyTabs({
 					) : (
 						<p className="text-sm sm:text-base text-text-muted">
 							No unit features listed yet.
+						</p>
+					)}
+				</section>
+			)}
+
+			{activeContentTab === "nearby" && (
+				<section
+					id="property-content-panel-nearby"
+					role="tabpanel"
+					aria-labelledby="property-content-tab-nearby"
+				>
+					{latitude != null && longitude != null ? (
+						<TravelTimeSummary latitude={Number(latitude)} longitude={Number(longitude)} />
+					) : (
+						<p className="text-sm sm:text-base text-text-muted">
+							Location data not available.
 						</p>
 					)}
 				</section>
