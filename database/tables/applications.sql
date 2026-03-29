@@ -38,3 +38,11 @@ create index IF not exists applications_by_property on public.applications using
 create index IF not exists applications_by_unit on public.applications using btree (unit_id) TABLESPACE pg_default;
 
 create index IF not exists applications_by_status on public.applications using btree (status) TABLESPACE pg_default;
+
+-- RLS
+alter table public.applications enable row level security;
+CREATE POLICY "Admin can update applications" ON public.applications FOR UPDATE TO public USING (has_role('admin'::app_role)) WITH CHECK (has_role('admin'::app_role));
+CREATE POLICY "Admin can view all applications" ON public.applications FOR SELECT TO public USING (has_role('admin'::app_role));
+CREATE POLICY "insert own" ON public.applications FOR INSERT TO authenticated WITH CHECK ((auth.uid() = user_id));
+CREATE POLICY "select own" ON public.applications FOR SELECT TO authenticated USING ((auth.uid() = user_id));
+CREATE POLICY "update own applications" ON public.applications FOR UPDATE TO authenticated USING ((auth.uid() = user_id)) WITH CHECK (((auth.uid() = user_id) AND ((status = 'draft'::application_status) OR (status = 'submitted'::application_status))));

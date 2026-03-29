@@ -46,3 +46,9 @@ create index IF not exists profiles_by_email on public.users using btree (email)
 create trigger update_users_updated_at BEFORE
 update on users for EACH row
 execute FUNCTION update_timestamp ();
+
+-- RLS
+alter table public.users enable row level security;
+CREATE POLICY "Admins can view all profiles" ON public.users FOR SELECT TO public USING (has_role('admin'::app_role));
+CREATE POLICY "authenticated can view all profiles" ON public.users FOR SELECT TO authenticated USING (true);
+CREATE POLICY "users can update own profile" ON public.users FOR UPDATE TO authenticated USING ((auth.uid() = id)) WITH CHECK ((auth.uid() = id));

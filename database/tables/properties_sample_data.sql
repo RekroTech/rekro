@@ -1,5 +1,4 @@
--- Sample data for properties table
--- Run this in your Supabase SQL editor to populate the database with sample properties
+-- non-MVP/deferred
 
 INSERT INTO public.properties (
   title,

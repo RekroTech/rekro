@@ -10,6 +10,9 @@ create table public.unit_shares (
   constraint property_shares_unit_id_fkey foreign KEY (unit_id) references units (id) on delete CASCADE
 ) TABLESPACE pg_default;
 
-create index IF not exists property_shares_by_unit on public.property_shares using btree (unit_id) TABLESPACE pg_default;
+create index IF not exists unit_shares_by_unit on public.unit_shares using btree (unit_id) TABLESPACE pg_default;
 
-create index IF not exists property_shares_by_shared_by on public.property_shares using btree (shared_by) TABLESPACE pg_default;
+create index IF not exists unit_shares_by_shared_by on public.unit_shares using btree (shared_by) TABLESPACE pg_default;
+
+alter table public.unit_shares enable row level security;
+alter table public.unit_shares force row level security;

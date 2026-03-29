@@ -1,3 +1,4 @@
+-- non-MVP/deferred
 create table public.unit_availability (
   id uuid not null default gen_random_uuid (),
   unit_id uuid not null,
@@ -13,3 +14,6 @@ create table public.unit_availability (
 create index IF not exists unit_availability_by_unit on public.unit_availability using btree (unit_id) TABLESPACE pg_default;
 
 create index IF not exists unit_availability_by_dates on public.unit_availability using btree (available_from, available_to) TABLESPACE pg_default;
+
+alter table public.unit_availability enable row level security;
+alter table public.unit_availability force row level security;

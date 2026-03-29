@@ -1,23 +1,24 @@
-# Production Readiness Checklist - reKro
+# Production Readiness Checklist — reKro
 
-> Audit date: March 28, 2026 (repository audit)
-> Status: **Not production-ready** - 2 P0 blockers remain
-> Scope: code and SQL files currently committed to this repo (not Supabase dashboard runtime state)
+> Audit date: March 29, 2026 (repository-backed)
+> Scope: repository evidence only — `src/`, `database/`, config files, and package manifest
+> Status: **Partially ready** — one clear P0 blocker remains in repo evidence
+
+---
 
 ## Executive snapshot
 
-- **Overall readiness: 67/100**
-- **P0 blockers:**
-  - `P0-1` RLS coverage is incomplete in version-controlled SQL
-  - `P0-2` No effective distributed rate limiting on public mutation endpoints
-- **Major improvements since previous audit:**
-  - CSP header now exists in `next.config.ts`
-  - Sentry DSN uses env var and production trace sampling is reduced to `0.1`
-  - `@t3-oss/env-nextjs` is installed and `src/env.ts` exists
-  - `robots.ts` and `sitemap.ts` now exist
-  - Home page no longer exports `force-dynamic`
-  - Authenticated layout is server-guarded via `redirect()`
-  - Vercel Analytics + Speed Insights are integrated in `src/app/layout.tsx`
+- **Overall readiness: 74 / 100**
+- **Remaining P0 blocker:**
+  - `P0-1` RLS coverage is not fully evidenced in version-controlled SQL
+- **Notable improvements already live:**
+  - CSP is configured in `next.config.ts`
+  - Sentry DSN is env-backed and production trace sampling is reduced
+  - `@t3-oss/env-nextjs` is installed and `src/env.ts` is active
+  - Vercel Analytics and Speed Insights are integrated
+  - Home page no longer uses `force-dynamic`
+  - Authenticated layout is guarded server-side via `getSession()` + `redirect()`
+  - App-side rate limiting exists for OTP, enquiries, and property creation
 
 ---
 
@@ -25,230 +26,177 @@
 
 | Category | Score | Status | Evidence |
 |---|---:|---|---|
-| Security | 6/10 | Partial | CSRF precheck + CSP present, but RLS/rate limiting gaps remain |
-| Performance | 7/10 | Good | Homepage no longer forced dynamic; analytics/speed insights enabled |
-| Reliability | 6/10 | Partial | Good guards, but error payload leakage and no load testing evidence |
-| Observability | 8/10 | Good | Sentry configured with env DSN and reduced prod tracing |
-| Testing | 3/10 | Weak | E2E only; no unit test suite detected |
-| Database | 4/10 | Weak | Most table SQL files do not include RLS enable/policies |
-| DevOps/CI | 6/10 | Partial | Build/test scripts present; pipeline state not fully verifiable from repo alone |
-| Accessibility | 6/10 | Partial | No dedicated accessibility audit artifacts in repo |
-| **Overall** | **67/100** | **Not ready** | Resolve P0 items before public launch |
+| Security | 7/10 | Good baseline | CSP, CSRF, app-side rate limiting on key public routes, Sentry PII stripping |
+| Performance | 8/10 | Good | Home shell not forced dynamic, conditional map loading, analytics/speed insights enabled |
+| Reliability | 7/10 | Partial | Better API helpers and auth guards, but uneven structured error handling remains |
+| Observability | 8/10 | Good | Sentry + reduced prod tracing + Vercel observability hooks |
+| Testing | 3/10 | Weak | Playwright smoke coverage only |
+| Database | 5/10 | Partial | Schema/index work exists, but RLS policy baseline is incomplete in git |
+| DevOps / CI | 5/10 | Partial | Scripts exist, but no repo-visible CI workflow |
+| Accessibility | 6/10 | Partial | Good baseline patterns, but no automated a11y test coverage |
+| **Overall** | **74/100** | **Not launch-clean yet** | Resolve RLS baseline and key P1 items |
 
 ---
 
-## Control-by-control status
+## P0 — Launch blocker
 
-### P0-1: Row Level Security documented and complete
+### P0-1: Canonical RLS baseline is incomplete in git
 
-**Status:** ❌ **BLOCKER - NOT COMPLETE IN REPO**
+**Status:** ❌ **BLOCKER**
+
+**Why this matters:** the app relies on Supabase and client-accessible data paths. If dashboard policies drift from the repo, access controls can silently regress.
 
 **Evidence from repo:**
 - `database/policies/` is empty
-- Only limited policy coverage found in committed SQL:
-  - `database/tables/enquiries.sql` includes `enable row level security` and one insert policy
-  - `database/tables/application_snapshot.sql` includes one insert policy, but no explicit `enable row level security`
-- Most table files under `database/tables/` have no committed RLS statements or policies
+- `database/tables/enquiries.sql` includes explicit RLS enablement + policy
+- `database/tables/application_snapshot.sql` contains policy content
+- many other table files under `database/tables/` do not show committed RLS policy definitions
 
-**Risk:** If dashboard policies diverge from repo, environment drift can expose data or break access in future deployments.
-
-**Required fix before launch:**
-1. Export and commit canonical RLS for all public tables.
-2. Add explicit `alter table ... enable row level security;` + least-privilege policies.
-3. Add a verification SQL script (or migration) and run it in staging and production.
+**Required before launch:**
+1. Export and commit canonical RLS policy SQL for all active public tables.
+2. Add explicit `ENABLE ROW LEVEL SECURITY` statements where needed.
+3. Quarantine deferred/non-MVP tables with deny-by-default policies or remove them.
+4. Add a verification script/migration that can be run in staging and production.
 
 ---
 
-### P0-2: Rate limiting on abuse-prone endpoints
+## P1 — High priority before public growth
 
-**Status:** ❌ **BLOCKER - NOT EFFECTIVE**
+### P1-1: Phone verification routes still lack app-side rate limiting
 
-**Evidence from repo:**
-- `@upstash/ratelimit` and `@upstash/redis` are installed (`package.json`)
-- In-memory helper exists in `src/app/api/utils.ts` as `checkRateLimit()`
-- No route calls `checkRateLimit()`; no Upstash-based limiter is wired into:
-  - `src/app/api/auth/otp/route.ts`
-  - `src/app/api/enquiries/route.ts`
-  - `src/app/api/property/route.ts`
-
-**Risk:** Unlimited OTP and enquiry submissions can cause spam, cost abuse, and degraded deliverability.
-
-**Required fix before launch:**
-1. Implement distributed rate limiting (Upstash Redis) on OTP and enquiry endpoints.
-2. Return `429` with clear retry guidance.
-3. Add tests for limit enforcement and reset windows.
-
----
-
-### P0-3: Content Security Policy
-
-**Status:** ✅ **IMPLEMENTED**
-
-**Evidence:** `next.config.ts` sets `Content-Security-Policy` plus HSTS, frame/options, and referrer policy.
-
-**Follow-up hardening (P1):** remove unnecessary `'unsafe-inline'` directives where possible and add reporting endpoint.
-
----
-
-### P0-4: Sentry DSN in env vars
-
-**Status:** ✅ **IMPLEMENTED**
+**Status:** ⚠️ **PARTIAL**
 
 **Evidence:**
-- `sentry.server.config.ts`: `dsn: process.env.NEXT_PUBLIC_SENTRY_DSN`
-- `sentry.edge.config.ts`: `dsn: process.env.NEXT_PUBLIC_SENTRY_DSN`
-- `src/instrumentation-client.ts`: `dsn: process.env.NEXT_PUBLIC_SENTRY_DSN`
+- `/api/auth/otp`, `/api/enquiries`, and `/api/property` call `checkRateLimit()`.
+- `/api/user/phone-verification/send` and `/api/user/phone-verification/verify` do not.
+
+**Action:** add the same limiter pattern to phone verification send/verify flows.
 
 ---
 
-### P0-5: Sentry trace sampling in production
-
-**Status:** ✅ **IMPLEMENTED**
-
-**Evidence:** All three Sentry configs use:
-
-```ts
-tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1
-```
-
----
-
-## P1 - High priority (before marketing launch)
-
-### P1-1: Type-safe env validation
+### P1-2: Env access is improved but not fully consistent
 
 **Status:** ⚠️ **PARTIAL**
 
 **Evidence:**
 - `src/env.ts` uses `@t3-oss/env-nextjs`
-- However, direct `process.env.*` access still exists in multiple files (for example: `src/lib/email/enquiries.tsx`, `src/hooks/usePlacesAutocomplete.ts`, `src/components/Properties/PropertyMapView.tsx`)
+- direct `process.env` reads still exist in several app modules and framework-specific files
 
-**Action:** migrate app-level env reads to `env` where feasible, keeping framework-required `process.env` usage only where necessary.
-
----
-
-### P1-2: Remove homepage `force-dynamic`
-
-**Status:** ✅ **IMPLEMENTED**
-
-**Evidence:** `src/app/page.tsx` has no `export const dynamic = "force-dynamic"`.
+**Action:** prefer `env` in app-level modules where framework constraints do not require raw `process.env`.
 
 ---
 
-### P1-3: Authenticated layout as Server Component guard
+### P1-3: CI pipeline is not visible in the repo
 
-**Status:** ✅ **IMPLEMENTED**
-
-**Evidence:** `src/app/(authenticated)/layout.tsx` is async server component and uses `redirect("/?auth=open")` when unauthenticated.
-
----
-
-### P1-4: CI pipeline
-
-**Status:** ⚠️ **PARTIAL / NOT FULLY VERIFIABLE FROM REPO**
-
-**Evidence:** repo has scripts for `build`, `lint`, `typecheck`, and Playwright tests in `package.json`.
-
-**Action:** ensure branch protection requires passing checks; if relying on Vercel-only checks, document that policy in `README.md`.
-
----
-
-### P1-5: `robots.txt` and `sitemap.xml`
-
-**Status:** ✅ **IMPLEMENTED**
+**Status:** ⚠️ **NOT FULLY VERIFIABLE**
 
 **Evidence:**
-- `src/app/robots.ts`
-- `src/app/sitemap.ts`
+- `package.json` includes `build`, `lint`, `typecheck`, and Playwright scripts
+- no `.github/` workflows were found in the workspace snapshot
+
+**Action:** commit CI workflows or document the external CI/deployment policy clearly.
 
 ---
 
-### P1-6: CSRF origin checks on mutations
+### P1-4: Structured/sanitized DB error handling is improved but uneven
 
-**Status:** ✅ **IMPLEMENTED (GOOD BASELINE)**
-
-**Evidence:** `src/app/api/utils.ts` `precheck()` enforces origin/referer checks for mutating methods by default; mutating routes call `precheck(...)`.
-
----
-
-### P1-7: Sanitize DB errors returned to clients
-
-**Status:** ❌ **NOT COMPLETE**
-
-**Evidence:** several API handlers still return raw DB error messages (examples in `src/app/api/property/route.ts`, `src/app/api/property/[id]/route.ts`, `src/app/api/application/route.ts`).
-
-**Action:** return generic messages to clients and log structured details server-side.
-
----
-
-### P1-8: Analytics and speed insights
-
-**Status:** ✅ **IMPLEMENTED**
+**Status:** ⚠️ **PARTIAL**
 
 **Evidence:**
-- packages in `package.json`: `@vercel/analytics`, `@vercel/speed-insights`
-- `src/app/layout.tsx` renders `<Analytics />` and `<SpeedInsights />` in production.
+- `dbErrorResponse()` and `logServerError()` exist in `src/app/api/utils.ts`
+- many routes use them correctly
+- some routes still use plain `errorResponse("Failed ...")` without the richer structured logging helper
+
+**Action:** normalize DB-failure handling across all route handlers.
 
 ---
 
-### P1-9: Unit tests for critical business logic
+### P1-5: Unit/component/API test coverage is still missing
 
 **Status:** ❌ **NOT IMPLEMENTED**
 
-**Evidence:** no `*.test.*`/`*.spec.*` files found in `src/`; existing suite is Playwright smoke tests in `e2e/`.
+**Evidence:**
+- Playwright smoke tests exist in `e2e/`
+- no first-party Vitest / component / route integration test suite is present
+
+**Action:** add unit tests for validators, auth helpers, and critical mutation flows first.
+
+---
+
+## Confirmed completed improvements
+
+### ✅ Authenticated layout is server-guarded
+
+**Evidence:** `src/app/(authenticated)/layout.tsx` uses `getSession()` and `redirect("/?auth=open")`.
+
+---
+
+### ✅ Home page is no longer forced dynamic
+
+**Evidence:** `src/app/page.tsx` does not export `dynamic = "force-dynamic"`.
+
+---
+
+### ✅ CSP is configured
+
+**Evidence:** `next.config.ts` sets `Content-Security-Policy` plus HSTS, frame/options, and referrer policy headers.
+
+---
+
+### ✅ Sentry DSN and production sampling are configured properly
+
+**Evidence:**
+- DSN comes from `NEXT_PUBLIC_SENTRY_DSN`
+- production sampling uses `process.env.NODE_ENV === "production" ? 0.1 : 1`
+
+---
+
+### ✅ Analytics and real-user monitoring hooks are integrated
+
+**Evidence:** `src/app/layout.tsx` renders `<Analytics />` and `<SpeedInsights />` in production.
+
+---
+
+### ✅ App-side rate limiting exists on the highest-risk public endpoints
+
+**Evidence:**
+- `src/app/api/auth/otp/route.ts`
+- `src/app/api/enquiries/route.ts`
+- `src/app/api/property/route.ts`
+
+all call `checkRateLimit()`.
 
 ---
 
 ## Current top risks (ordered)
 
-1. Missing committed RLS baseline for most tables (`P0-1`)
-2. No effective distributed rate limiting on public write endpoints (`P0-2`)
-3. Raw DB error details still exposed in some API responses (`P1-7`)
-4. Inconsistent env access pattern (`env` + direct `process.env`) (`P1-1`)
-5. No unit-test safety net for core business logic (`P1-9`)
+1. Missing committed RLS baseline for most active tables
+2. No repo-visible CI / deployment enforcement workflow
+3. No unit/component/API integration safety net
+4. Inconsistent use of structured DB error logging helpers
+5. Phone verification endpoints still rely on provider throttling only
 
 ---
 
 ## 14-day remediation plan
 
-### Week 1 (must-complete)
-
-1. **RLS baseline in git**
-   - Commit complete table-by-table RLS SQL to `database/policies/` or canonical migration files.
-   - Add explicit enable statements and policy tests.
-2. **Upstash rate limiting**
-   - Wire Redis-backed limits into OTP, enquiries, and property creation routes.
-   - Add response headers (`Retry-After`) and route-specific keys.
-3. **Error message sanitization**
-   - Replace client-facing DB messages with generic errors.
-   - Keep detailed server logs for incident debugging.
+### Week 1
+1. Commit the RLS baseline and verification SQL.
+2. Add app-side rate limiting to phone verification routes.
+3. Normalize DB error handling to `dbErrorResponse()` / `logServerError()` patterns.
 
 ### Week 2
-
-1. **Env consistency pass**
-   - Migrate high-traffic modules to `env` imports where possible.
-2. **Unit test baseline**
-   - Add Vitest + initial tests for authorization helpers and core validators.
-3. **CSP hardening**
-   - Reduce inline allowances and roll out report endpoint.
+1. Add a minimal Vitest suite for validators + auth helpers.
+2. Add/commit CI workflows for `lint`, `typecheck`, and `build`.
+3. Add one accessibility smoke test and one abuse/rate-limit regression test.
 
 ---
 
 ## Verification checklist before launch
 
-- [ ] RLS query output confirms `rowsecurity = true` on all public tables
-- [ ] Public mutation routes enforce distributed rate limits and return `429` when exceeded
-- [ ] No API route returns raw database engine messages to clients
-- [ ] Unit tests run in CI and pass
-- [ ] Full E2E smoke suite passes on staging
-- [ ] Rollback and incident response notes are documented
-
----
-
-## Useful references
-
-- OWASP Top 10: https://owasp.org/www-project-top-ten/
-- Supabase RLS guide: https://supabase.com/docs/guides/auth/row-level-security
-- Next.js caching docs: https://nextjs.org/docs/app/building-your-application/caching
-- Vercel deployment docs: https://vercel.com/docs/deployments/overview
-
+- [ ] RLS is committed and verifiably enabled for all active public tables
+- [ ] Deferred tables are quarantined or removed
+- [ ] Public and phone-verification mutation routes enforce the intended rate limits
+- [ ] Critical mutation routes use structured server logging with sanitized client messages
+- [ ] Unit tests and Playwright smoke tests pass in CI
+- [ ] Rollback / deployment / incident notes are documented

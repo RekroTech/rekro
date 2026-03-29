@@ -1,410 +1,255 @@
 # API Routes Best Practices — reKro
 
-> Analysis date: March 2026 · Stack: Next.js 16 App Router
+> Updated: March 29, 2026 · Based on the current `src/app/api/**/route.ts` implementation
 
 ---
 
-## Current Structure Analysis
+## 1. Current route-handler model
 
-### Your Current Setup
+The app already follows the correct high-level pattern for Next.js App Router APIs:
 
-```
-app/
-├── api/
-│   ├── application/
-│   │   ├── route.ts ✅ (requires auth)
-│   │   ├── submit/route.ts ✅ (requires auth)
-│   │   ├── snapshot/route.ts ✅ (requires auth)
-│   │   ├── status/route.ts ✅ (requires auth)
-│   │   └── withdraw/route.ts ✅ (requires auth)
-│   ├── auth/
-│   │   ├── callback/route.ts ⚪ (public)
-│   │   └── otp/route.ts ⚪ (public)
-│   ├── enquiries/route.ts ⚪ (optional auth - guests allowed)
-│   ├── property/
-│   │   ├── route.ts ✅ (requires auth)
-│   │   └── [id]/route.ts ✅ (requires auth)
-│   ├── user/
-│   │   ├── profile/route.ts ✅ (requires auth)
-│   │   └── phone-verification/
-│   │       ├── send/route.ts ✅ (requires auth)
-│   │       └── verify/route.ts ✅ (requires auth)
-│   ├── voiceflow/
-│   │   └── properties/search/route.ts ⚪ (public)
-│   └── sentry-example-api/route.ts ⚪ (public test endpoint)
-│
-└── (authenticated)/
-    └── layout.tsx (client-side auth guard)
-```
+- all HTTP handlers live under `src/app/api/**/route.ts`
+- page/layout auth and API auth are treated separately
+- mutating handlers use a shared preflight helper: `precheck()`
+- DB failures can be sanitized through `dbErrorResponse()`
+- abuse-prone endpoints can use `checkRateLimit()`
 
-**Current Auth Pattern:**
-Every protected route calls `requireAuthForApi()` which:
-1. Calls `getSession()` (cached with React `cache()`)
-2. Throws `Error("Unauthorized")` if no user
-3. Caught in try-catch and returns 401 response
+### Current route categories
+
+| Route type | Examples | Current pattern |
+|---|---|---|
+| Public | `/api/auth/callback`, `/api/voiceflow/properties/search` | No auth required |
+| Public mutation | `/api/auth/otp`, `/api/enquiries` | `precheck()` for CSRF + optional rate limiting |
+| Authenticated mutation | `/api/property`, `/api/application/*`, `/api/user/phone-verification/*` | `precheck(request, { auth: true })` |
+| Authenticated read/write | `/api/user/profile` | `precheck(request, { auth: true })` |
+| Role-restricted mutation | selected admin/owner flows | `precheck(..., { roles: [...] })` or explicit ownership checks |
 
 ---
 
-## Best Practice Recommendation
+## 2. Important architectural rule
 
-### ❌ **Do NOT move API routes to `app/(authenticated)/api`**
+### Do **not** try to protect API routes with page route groups/layouts
 
-**Why?**
+`src/app/(authenticated)/layout.tsx` is for page rendering only.
 
-1. **Route groups (`(authenticated)`) only affect pages, not API routes**
-   - Layout components wrap React component trees
-   - API routes are server endpoints that return Response objects
-   - They don't render within layouts—they're separate HTTP handlers
+It does **not** secure `src/app/api/**` handlers.
 
-2. **The `(authenticated)/layout.tsx` is a Client Component**
-   - Uses `useEffect` + `redirect()` which doesn't work for API routes
-   - API routes need synchronous auth checks before processing the request
+API routes must protect themselves explicitly.
 
-3. **Next.js Best Practice: API routes handle their own auth**
-   - Each API route should validate authentication independently
-   - This is explicit, testable, and follows the single responsibility principle
-
-4. **Different routes have different auth requirements**
-   ```typescript
-   // Some routes require auth
-   await requireAuthForApi();
-   
-   // Some routes are public
-   // (no auth check)
-   
-   // Some routes have optional auth
-   const { data: { user } } = await supabase.auth.getUser();
-   ```
+That is already the right architecture for this repo.
 
 ---
 
-## Your Current Implementation is ✅ CORRECT
+## 3. Standard handler shape in this codebase
 
-Your current approach is already following Next.js best practices:
+### 3.1 Public mutation with CSRF check
 
-### 1. Centralized Auth Helper
-
-```typescript
-// lib/supabase/server.ts
-export async function requireAuthForApi(): Promise<SessionUser> {
-    const user = await getSession();
-    if (!user) throw new Error("Unauthorized");
-    return user;
-}
-```
-
-### 2. Used Consistently Across Protected Routes
-
-```typescript
-// app/api/application/route.ts
+```ts
 export async function POST(request: NextRequest) {
-    try {
-        const user = await requireAuthForApi(); // ✅ Clear, explicit
-        // ... rest of handler
-    } catch (error) {
-        if (error instanceof Error && error.message === "Unauthorized") {
-            return errorResponse("Unauthorized", 401);
-        }
-        return errorResponse("Internal server error", 500);
-    }
+  const check = await precheck(request);
+  if (!check.ok) return check.error;
+
+  // validate input
+  // optional rate limiting
+  // business logic
+  return successResponse({ ok: true });
 }
 ```
 
-### 3. Public Routes Don't Call It
+### 3.2 Authenticated mutation
 
-```typescript
-// app/api/auth/callback/route.ts
-export async function GET(request: NextRequest) {
-    // ✅ No auth check - this is the callback that establishes auth
-    const code = requestUrl.searchParams.get("code");
-    const supabase = await createClient();
-    await supabase.auth.exchangeCodeForSession(code);
-    // ...
-}
-```
-
-### 4. Optional Auth Handled Separately
-
-```typescript
-// app/api/enquiries/route.ts
+```ts
 export async function POST(request: NextRequest) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const isAuthenticated = !!user;
-    
-    if (!isAuthenticated) {
-        // Handle as guest enquiry
-    } else {
-        // Handle as authenticated enquiry
-    }
+  const check = await precheck(request, { auth: true });
+  if (!check.ok) return check.error;
+
+  const { user } = check;
+  // business logic using authenticated user
+  return successResponse({ ok: true });
+}
+```
+
+### 3.3 Role-restricted mutation
+
+```ts
+export async function PATCH(request: NextRequest) {
+  const check = await precheck(request, { auth: true, roles: ["admin"] });
+  if (!check.ok) return check.error;
+
+  const { user } = check;
+  return successResponse({ ok: true, userId: user.id });
 }
 ```
 
 ---
 
-## Potential Improvements
+## 4. Use the shared API helpers that already exist
 
-While your current setup is correct, here are some optimizations:
+Current helpers in `src/app/api/utils.ts`:
 
-### 1. Create a Middleware Helper for Role-Based Auth
+- `precheck()`
+- `errorResponse()`
+- `successResponse()`
+- `dbErrorResponse()`
+- `logServerError()`
+- `checkRateLimit()`
+- `getRequestIp()`
 
-```typescript
-// lib/supabase/server.ts
+### Recommended usage order inside a handler
 
-/**
- * Require specific role(s) in API routes
- */
-export async function requireRole(
-    ...allowedRoles: AppRole[]
-): Promise<SessionUser> {
-    const user = await requireAuthForApi();
-    
-    if (!allowedRoles.includes(user.role)) {
-        throw new Error("Forbidden");
-    }
-    
-    return user;
-}
+1. `precheck()`
+2. parse request body / params
+3. validate with Zod
+4. apply rate limiting if endpoint is abuse-prone
+5. run business logic
+6. return `successResponse()`
+7. on DB failure, prefer `dbErrorResponse()`
+
+---
+
+## 5. Auth patterns used in this app
+
+### `precheck()` is the default
+
+Use `precheck()` for most route handlers because it centralizes:
+- CSRF checks
+- auth checks
+- role checks
+- normalized 401/403/500 error responses for auth failures
+
+### `requireAuthForApi()` / `requireRole()` are still valid
+
+Use them directly only when:
+- you are outside the normal route precheck flow, or
+- a helper function needs a guaranteed authenticated user
+
+### Optional auth remains manual
+
+For endpoints like enquiries, guests are allowed, so auth is checked manually on the Supabase client:
+
+```ts
+const supabase = await createClient();
+const { data: { user } } = await supabase.auth.getUser();
+const isAuthenticated = !!user;
 ```
 
-**Usage:**
-```typescript
-// app/api/property/route.ts
-export async function POST(request: NextRequest) {
-    try {
-        // Only landlords can create properties
-        const user = await requireRole("landlord", "admin");
-        // ...
-    } catch (error) {
-        if (error instanceof Error && error.message === "Forbidden") {
-            return errorResponse("Forbidden", 403);
-        }
-        // ...
-    }
-}
-```
+---
 
-### 2. Create Standard Error Handling Wrapper
+## 6. Rate limiting guidance
 
-```typescript
-// app/api/utils.ts
+The current repo already uses `checkRateLimit()` on:
+- `/api/auth/otp`
+- `/api/enquiries`
+- `/api/property`
 
-type ApiHandler = (
-    request: NextRequest,
-    user: SessionUser
-) => Promise<NextResponse>;
+### When to add it
 
-export function withAuth(handler: ApiHandler) {
-    return async (request: NextRequest) => {
-        try {
-            const user = await requireAuthForApi();
-            return await handler(request, user);
-        } catch (error) {
-            if (error instanceof Error) {
-                if (error.message === "Unauthorized") {
-                    return errorResponse("Unauthorized", 401);
-                }
-                if (error.message === "Forbidden") {
-                    return errorResponse("Forbidden", 403);
-                }
-            }
-            console.error("API error:", error);
-            return errorResponse("Internal server error", 500);
-        }
-    };
-}
-```
+Use `checkRateLimit()` on endpoints that are:
+- public and easy to spam
+- expensive to run
+- capable of triggering external side effects (emails, OTPs, uploads)
 
-**Usage:**
-```typescript
-// app/api/user/profile/route.ts
-export const GET = withAuth(async (request, user) => {
-    const supabase = await createClient();
-    
-    const { data, error } = await supabase
-        .from("users")
-        .select(`*, user_application_profile (*)`)
-        .eq("id", user.id) // ✅ user is guaranteed to exist
-        .single();
-    
-    if (error) return errorResponse("Failed to fetch profile", 500);
-    return successResponse(data);
-});
-```
+### Example
 
-### 3. Add Rate Limiting (Production Recommendation)
-
-For production, consider adding rate limiting to your API routes:
-
-```typescript
-// lib/rate-limit.ts
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-
-const ratelimit = new Ratelimit({
-    redis: Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(10, "10 s"),
+```ts
+const rateLimit = await checkRateLimit({
+  key: `otp:${email}:${ip}`,
+  maxRequests: 5,
+  windowSeconds: 600,
 });
 
-export async function checkRateLimit(
-    identifier: string
-): Promise<{ success: boolean }> {
-    const { success } = await ratelimit.limit(identifier);
-    return { success };
-}
-```
-
-**Usage:**
-```typescript
-export async function POST(request: NextRequest) {
-    const user = await requireAuthForApi();
-    
-    // Rate limit per user
-    const { success } = await checkRateLimit(user.id);
-    if (!success) {
-        return errorResponse("Too many requests", 429);
-    }
-    
-    // ... rest of handler
+if (!rateLimit.allowed) {
+  return errorResponse(
+    "Too many requests",
+    429,
+    undefined,
+    { additionalHeaders: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+  );
 }
 ```
 
 ---
 
-## Middleware vs Layout Auth
+## 7. Error-handling guidance
 
-| Aspect | API Routes (Current ✅) | Route Groups with Layout |
-|--------|-------------------------|--------------------------|
-| **Works for API routes** | ✅ Yes | ❌ No |
-| **Works for pages** | N/A | ✅ Yes |
-| **Explicit auth check** | ✅ Clear in code | ⚠️ Implicit |
-| **Different auth per route** | ✅ Easy | ❌ Difficult |
-| **Testability** | ✅ Isolated | ⚠️ Requires layout |
-| **Type safety** | ✅ User type guaranteed | ⚠️ Need null checks |
+### Prefer sanitized DB failures
 
----
-
-## Alternative: Next.js Middleware
-
-If you want centralized auth checking, use **middleware.ts** (not route groups):
-
-```typescript
-// middleware.ts
-import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-
-export async function middleware(request: NextRequest) {
-    const response = NextResponse.next();
-    
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get: (name) => request.cookies.get(name)?.value,
-                set: (name, value, options) => {
-                    response.cookies.set({ name, value, ...options });
-                },
-            },
-        }
-    );
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    // Protect API routes
-    if (request.nextUrl.pathname.startsWith("/api/application") && !user) {
-        return NextResponse.json(
-            { error: "Unauthorized" },
-            { status: 401 }
-        );
-    }
-    
-    return response;
-}
-
-export const config = {
-    matcher: [
-        "/api/application/:path*",
-        "/api/user/:path*",
-        "/api/property/:path*",
-    ],
-};
-```
-
-**Pros:**
-- Runs at the edge (faster)
-- Centralized auth logic
-- Can protect both pages and API routes
-
-**Cons:**
-- Less explicit than per-route checks
-- Harder to have route-specific auth logic
-- Can't access full database (edge runtime limitations)
-
-**For your app:** Stick with per-route auth checks. They're more flexible and maintainable.
-
----
-
-## Summary
-
-### ✅ Keep Your Current Structure
-
-```
-app/api/
-├── application/route.ts → requireAuthForApi()
-├── user/profile/route.ts → requireAuthForApi()
-├── enquiries/route.ts → optional auth
-└── auth/callback/route.ts → public
-```
-
-### ✅ Your Current Pattern is Best Practice
-
-```typescript
-export async function POST(request: NextRequest) {
-    try {
-        const user = await requireAuthForApi(); // ✅
-        // ... handle request
-    } catch (error) {
-        if (error instanceof Error && error.message === "Unauthorized") {
-            return errorResponse("Unauthorized", 401);
-        }
-        // ...
-    }
+```ts
+if (error) {
+  return dbErrorResponse("application submit", error, "Failed to submit application");
 }
 ```
 
-### ✅ Optional Enhancements
+This gives you:
+- structured server logging
+- consistent client-safe errors
+- less repetition
 
-1. Add `requireRole()` helper for role-based access
-2. Add `withAuth()` wrapper to reduce boilerplate
-3. Consider middleware for edge-level protection (production)
-4. Add rate limiting with Upstash or similar
+### Do not leak raw provider/database errors to clients
 
-### ❌ Do NOT Do This
+Bad:
 
-```typescript
-// ❌ WRONG - route groups don't affect API routes
-app/(authenticated)/api/user/profile/route.ts
+```ts
+return errorResponse(error.message, 500);
+```
 
-// ❌ WRONG - layouts don't wrap API routes
-export default function ApiLayout({ children }) {
-    // This never runs for API routes!
+Good:
+
+```ts
+return dbErrorResponse("profile fetch", error, "Failed to fetch profile");
+```
+
+---
+
+## 8. Input validation guidance
+
+Use Zod schemas from `@/lib/validators` for any non-trivial request input.
+
+Patterns already present in the repo:
+- `Schema.parse(...)` when you want throw-on-failure behavior inside a local try/catch
+- `Schema.safeParse(...)` when you want a branch-based result
+
+### Good example
+
+```ts
+const rawBody = await request.json();
+const parsed = EnquiryRequestSchema.safeParse(rawBody);
+if (!parsed.success) {
+  return errorResponse(`Validation error: ${parsed.error.message}`, 400);
 }
 ```
 
 ---
 
-## Checklist
+## 9. Ownership and authorization checks
 
-- [x] API routes have explicit auth checks with `requireAuthForApi()`
-- [x] Public routes (auth callback, Voiceflow) have no auth check
-- [x] Optional auth routes (enquiries) use `supabase.auth.getUser()`
-- [x] Auth helper uses React `cache()` to prevent duplicate DB queries
-- [ ] Consider adding `requireRole()` for role-based access control
-- [ ] Consider `withAuth()` wrapper to reduce try-catch boilerplate
-- [ ] Add rate limiting before production launch
+Role checks are not enough for every route.
+
+For entity-level mutations, continue verifying ownership explicitly.
+
+Example pattern already used in property routes:
+- authenticate the user
+- fetch the resource
+- confirm the user owns it or has elevated privileges
+- only then mutate it
 
 ---
 
-Your current implementation is **already following Next.js best practices**. Don't move anything—just consider the optional enhancements above for cleaner code.
+## 10. What not to document or build unless it exists
 
+Avoid introducing doc patterns that claim the repo already has these unless implemented:
+- `withAuth()` wrapper
+- `withRole()` wrapper
+- API protection through layout route groups
+- global middleware protection for all API routes
+
+Those may be future refactors, but they are **not** the current implementation.
+
+---
+
+## 11. Recommended next improvements
+
+1. Apply `dbErrorResponse()` more consistently across remaining route handlers.
+2. Add app-side rate limiting to phone verification send/verify routes.
+3. Add tests that fail when mutating routes skip `precheck()`.
+4. Standardize a richer error envelope only if you are ready to migrate consumers consistently.

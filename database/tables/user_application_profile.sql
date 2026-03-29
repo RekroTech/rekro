@@ -42,3 +42,10 @@ create table public.user_application_profile (
 create trigger update_user_application_profile_updated_at BEFORE
 update on user_application_profile for EACH row
 execute FUNCTION update_timestamp ();
+
+-- RLS
+alter table public.user_application_profile enable row level security;
+CREATE POLICY "Admins can view all application profiles" ON public.user_application_profile FOR SELECT TO public USING (has_role('admin'::app_role));
+CREATE POLICY "authenticated can view all application profiles" ON public.user_application_profile FOR SELECT TO authenticated USING (true);
+CREATE POLICY "users can insert own application profile" ON public.user_application_profile FOR INSERT TO authenticated WITH CHECK ((auth.uid() = user_id));
+CREATE POLICY "users can update own application profile" ON public.user_application_profile FOR UPDATE TO authenticated USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));

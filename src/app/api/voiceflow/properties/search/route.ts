@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse } from "@/app/api/utils";
+import { dbErrorResponse, errorResponse, successResponse } from "@/app/api/utils";
 import type { Address, Location as PropertyLocation, Property, Unit } from "@/types/db";
 
 /**
@@ -153,8 +153,7 @@ export async function GET(request: NextRequest) {
         const { data, error } = await query;
 
         if (error) {
-            console.error("Error searching properties:", error);
-            return errorResponse(error.message, 500);
+            return dbErrorResponse("voiceflow/properties/search query", error, "Failed to search properties");
         }
 
         // Process and deduplicate properties (inner join can create duplicates)
@@ -265,9 +264,8 @@ export async function GET(request: NextRequest) {
         );
 
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Internal server error";
         console.error("Error in GET /api/voiceflow/properties/search:", error);
-        return errorResponse(message, 500);
+        return errorResponse("Internal server error", 500);
     }
 }
 

@@ -1,9 +1,8 @@
 # reKro — Technical Documentation Index
 
-> Generated: March 2026 · Stack: Next.js 16 · React 19 · Supabase · TanStack Query v5
+> Generated: March 2026 (repository-aligned refresh) · Stack: Next.js 16 · React 19 · Supabase · TanStack Query v5
 
-This `docs/` folder contains a full technical audit of the reKro codebase across seven
-dimensions. Use this index to navigate to the area most relevant to your current work.
+This `docs/` folder contains the current technical audit and engineering guidance for the reKro codebase. The files below have been updated against the repository state in `src/`, `database/`, `next.config.ts`, and `package.json`.
 
 ---
 
@@ -11,69 +10,68 @@ dimensions. Use this index to navigate to the area most relevant to your current
 
 | # | File | Summary | Priority reads |
 |---|---|---|---|
-| 1 | [Performance](./01-performance.md) | Bundle size, caching, rendering strategy, Core Web Vitals targets | `force-dynamic` fix, auth layout SSR, jspdf lazy-load |
-| 2 | [Security](./02-security.md) | CSP, rate limiting, RLS, CSRF, Sentry PII, dependency audit | P0 blockers before any public traffic |
-| 3 | [Scalability](./03-scalability.md) | Pagination, full-text search, background jobs, Realtime, infra roadmap | Keyset pagination, email decoupling |
-| 4 | [Libraries](./04-libraries.md) | Recommended additions, what to avoid, priority-ordered | Upstash rate limit, env validation, Inngest |
-| 5 | [Industry Standards](./05-industry-standards.md) | TypeScript, testing, A11y, API design, CI/CD, observability | Testing pyramid, accessibility gaps |
-| 6 | [Suggested Features](./06-suggested-features.md) | 15 features prioritised by value vs. effort | Inspection scheduling, messaging, map view |
-| 7 | [Production Readiness](./07-production-readiness.md) | Scored checklist — P0/P1/P2 items to fix before launch | **Start here if preparing for launch** |
+| 1 | [Performance](./01-performance.md) | Rendering strategy, bundle size, caching, Core Web Vitals | Home page client shell, Suspense, conditional map loading |
+| 2 | [Security](./02-security.md) | CSP, CSRF, rate limiting, RLS posture, Sentry privacy | RLS evidence gap, rate-limit coverage, session refresh scope |
+| 3 | [Scalability](./03-scalability.md) | Query patterns, pagination, synchronous email, search, caching | Keyset pagination, FTS, background jobs |
+| 4 | [Libraries](./04-libraries.md) | What is already installed, what is still worth adding, what to avoid | Vitest, Inngest, accessibility tooling |
+| 5 | [Industry Standards](./05-industry-standards.md) | TypeScript, testing, accessibility, API design, CI/CD | Testing gap, CI visibility, accessibility follow-up |
+| 6 | [Suggested Features](./06-suggested-features.md) | Product opportunities ranked by value vs. effort | Inspection scheduling, saved searches, messaging |
+| 7 | [Production Readiness](./07-production-readiness.md) | Launch checklist with repo-backed scores and blockers | **Start here before launch** |
+| 8 | [Coding Standards](./08-coding-standards.md) | Repo-specific coding conventions and current architecture | Provider stack, `precheck()`, query hooks, env usage |
+| 9 | [API Routes Best Practices](./09-api-routes-best-practices.md) | Current route-handler patterns used in this app | `precheck()`, `dbErrorResponse()`, optional auth |
+| 10 | [API Routes Refactoring Example](./10-api-routes-refactoring-example.md) | Concrete before/after examples using the app’s real helpers | Refactor toward `precheck()` + sanitized DB errors |
 
 ---
 
-## Current Overall Score: 52 / 100 🔴
+## Current Overall Score: 74 / 100 🟡
 
 | Category | Score |
 |---|---|
-| Security | 5 / 10 |
-| Performance | 7 / 10 |
-| Reliability | 5 / 10 |
-| Observability | 6 / 10 |
+| Security | 7 / 10 |
+| Performance | 8 / 10 |
+| Reliability | 7 / 10 |
+| Observability | 8 / 10 |
 | Testing | 3 / 10 |
-| Database | 6 / 10 |
-| DevOps / CI | 4 / 10 |
+| Database | 5 / 10 |
+| DevOps / CI | 5 / 10 |
 | Accessibility | 6 / 10 |
 
 ---
 
 ## Quick-Start: What to Fix First
 
-### This week (P0 — launch blockers)
-1. Verify RLS is active on all Supabase tables → `02-security.md §2 / 07-production-readiness.md P0-1`
-2. Add rate limiting to `/api/auth/otp` and `/api/enquiries` → `04-libraries.md §1.1`
-3. Add Content Security Policy header → `02-security.md §2.1`
-4. Move Sentry DSN to environment variable → `02-security.md §2.5`
+### This week (remaining launch blockers / highest risk)
+1. Commit canonical RLS policies for all active tables and verify table-by-table coverage → `02-security.md §2.2` / `07-production-readiness.md P0-1`
+2. Add app-side rate limiting to phone verification send/verify routes as well, or explicitly accept Supabase-only throttling there → `02-security.md §2.1`
+3. Finish sanitizing DB failures in routes that still use raw `errorResponse("Failed ...")` without structured server logging → `07-production-readiness.md P1-4`
+4. Document actual CI / deployment policy since no `.github/` workflows are present in the repo → `05-industry-standards.md §5` / `07-production-readiness.md P1-3`
 
-### Next sprint (P1 — before marketing)
-5. Remove `force-dynamic` from `src/app/page.tsx` → `01-performance.md §2.2`
-6. Convert `(authenticated)/layout.tsx` to Server Component → `01-performance.md §2.1`
-7. Add GitHub Actions CI pipeline → `07-production-readiness.md P1-4`
-8. Add `@t3-oss/env-nextjs` for safe env var access → `04-libraries.md §2.2`
-9. Write unit tests for `authorization.ts` and all Zod validators → `05-industry-standards.md §2`
-10. Add `@vercel/analytics` + `@vercel/speed-insights` → `04-libraries.md §3.4`
+### Next sprint (stability / engineering quality)
+5. Add unit and component tests (Vitest + Testing Library) → `04-libraries.md §2.1` / `05-industry-standards.md §2`
+6. Run bundle analysis and trim unexpected large chunks → `01-performance.md §4` / `04-libraries.md §2.3`
+7. Harden CSP by reducing `'unsafe-inline'` where feasible and consider a report endpoint → `02-security.md §2.4`
+8. Reduce direct `process.env` access in app modules that can safely use `env` → `04-libraries.md §2.2` / `07-production-readiness.md P1-1`
 
-### Next quarter (P2 — before scaling)
-11. Keyset pagination for property listings → `03-scalability.md §3.1`
-12. Full-text search index on properties → `03-scalability.md §3.2`
-13. Decouple email with Inngest → `03-scalability.md §3.3`
-14. Build inspection scheduling UI → `06-suggested-features.md §1.3`
-15. Build map view for listings → `06-suggested-features.md §2.4`
+### Before scaling
+9. Replace offset pagination with keyset pagination for very large listing volumes → `03-scalability.md §3.1`
+10. Add PostgreSQL full-text search for listings → `03-scalability.md §3.2`
+11. Decouple email sending with a background job runner such as Inngest → `03-scalability.md §3.3`
+12. Build inspection scheduling UI on top of the existing `inspection_requests` table → `06-suggested-features.md §1.3`
 
 ---
 
 ## Stack Reference
 
-```
+```text
 Frontend:      Next.js 16.1.5 · React 19.2.3 · TypeScript 5
 Styling:       Tailwind CSS v4 · Geist font
 State:         TanStack Query v5 (server state) · nuqs (URL state)
-Auth:          Supabase Auth (magic link / OTP) · @supabase/ssr
-Database:      Supabase PostgreSQL · Row Level Security · JSONB
-Storage:       Supabase Storage (images, documents)
-Email:         Resend (transactional sending) · React Email (JSX templates, preview server on :3001)
-Maps:          @react-google-maps/api
-Monitoring:    Sentry (errors + tracing)
-Testing:       Playwright (E2E smoke tests)
+Auth:          Supabase Auth (magic link / OTP / phone verification) · @supabase/ssr
+Database:      Supabase PostgreSQL · Row Level Security (partially evidenced in repo) · JSONB
+Storage:       Supabase Storage (property images, documents)
+Email:         Resend · React Email (preview server on :3001)
+Maps:          @react-google-maps/api · Google Places Autocomplete
+Monitoring:    Sentry · Vercel Analytics · Vercel Speed Insights
+Testing:       Playwright smoke tests (no first-party unit/component test suite yet)
 Bundler:       Turbopack (Next.js 16 default)
 ```
-

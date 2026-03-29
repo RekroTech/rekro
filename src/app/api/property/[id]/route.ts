@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { uploadPropertyFiles } from "@/lib/services";
 import { isAdmin } from "@/lib/utils";
 import type { UnitInsert, PropertyInsert } from "@/types/db";
-import { errorResponse, successResponse, precheck } from "@/app/api/utils";
+import { dbErrorResponse, errorResponse, successResponse, precheck } from "@/app/api/utils";
 import { PropertyDataSchema, UnitDataSchema } from "@/lib/validators";
 import { z } from "zod";
 
@@ -134,8 +134,7 @@ export async function PUT(
                 .eq("property_id", propertyId); // Extra safety check
 
             if (deleteError) {
-                console.error("Error deleting units:", deleteError);
-                return errorResponse(deleteError.message, 500);
+                return dbErrorResponse("property/[id] delete-units", deleteError, "Failed to delete units");
             }
         }
 
@@ -157,8 +156,7 @@ export async function PUT(
                     .insert(unitsToInsert);
 
                 if (insertError) {
-                    console.error("Error inserting new units:", insertError);
-                    return errorResponse(insertError.message, 500);
+                    return dbErrorResponse("property/[id] insert-units", insertError, "Failed to create units");
                 }
             }
 
@@ -174,8 +172,7 @@ export async function PUT(
                     .upsert(unitsToUpdate);
 
                 if (upsertError) {
-                    console.error("Error updating units:", upsertError);
-                    return errorResponse(upsertError.message, 500);
+                    return dbErrorResponse("property/[id] upsert-units", upsertError, "Failed to update units");
                 }
             }
         }
@@ -189,9 +186,7 @@ export async function PUT(
                 const newImagePaths = uploadResults.map((result) => result.path);
                 imagePaths = [...imagePaths, ...newImagePaths];
             } catch (uploadError) {
-                const message = uploadError instanceof Error ? uploadError.message : "Upload failed";
-                console.error("Error uploading images:", uploadError);
-                return errorResponse(message, 500);
+                return dbErrorResponse("property/[id] upload-images", uploadError, "Failed to upload images");
             }
         }
 
@@ -214,8 +209,7 @@ export async function PUT(
             .single();
 
         if (updateError) {
-            console.error("Error updating property:", updateError);
-            return errorResponse(updateError.message, 500);
+            return dbErrorResponse("property/[id] update-property", updateError, "Failed to update property");
         }
 
         // Best-effort storage cleanup after a successful DB update.
@@ -237,9 +231,8 @@ export async function PUT(
 
         return successResponse(updatedProperty, 200);
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Internal server error";
         console.error("Error in PUT /api/property/[id]:", error);
-        return errorResponse(message, 500);
+        return errorResponse("Internal server error", 500);
     }
 }
 
@@ -282,14 +275,12 @@ export async function DELETE(
             .eq("id", propertyId);
 
         if (deleteError) {
-            console.error("Error deleting property:", deleteError);
-            return errorResponse(deleteError.message, 500);
+            return dbErrorResponse("property/[id] delete-property", deleteError, "Failed to delete property");
         }
 
         return successResponse({ message: "Property deleted successfully" }, 200);
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Internal server error";
         console.error("Error in DELETE /api/property/[id]:", error);
-        return errorResponse(message, 500);
+        return errorResponse("Internal server error", 500);
     }
 }

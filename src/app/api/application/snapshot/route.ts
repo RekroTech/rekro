@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createApplicationSnapshot, precheck } from "@/app/api/utils";
+import { createApplicationSnapshot, dbErrorResponse, precheck } from "@/app/api/utils";
 
 
 export const dynamic = "force-dynamic";
@@ -112,11 +112,7 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (snapshotError || !snapshot) {
-            console.error("Snapshot creation error:", snapshotError);
-            return NextResponse.json(
-                { error: snapshotError?.message || "Failed to create snapshot" },
-                { status: 500, headers: { "Cache-Control": "no-store" } }
-            );
+            return dbErrorResponse("application/snapshot insert", snapshotError, "Failed to create snapshot");
         }
 
         return NextResponse.json(

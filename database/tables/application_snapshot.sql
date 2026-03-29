@@ -21,3 +21,9 @@ with check (
   auth.uid() is not null
   and created_by = auth.uid()
 );
+
+
+-- RLS
+alter table public.application_snapshot enable row level security;
+CREATE POLICY "insert own snapshot" ON public.application_snapshot FOR INSERT TO authenticated WITH CHECK ((created_by = auth.uid()));
+CREATE POLICY "select own snapshots" ON public.application_snapshot FOR SELECT TO authenticated USING ((created_by = auth.uid()));

@@ -6,7 +6,7 @@
 
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse, precheck } from "@/app/api/utils";
+import { dbErrorResponse, errorResponse, successResponse, precheck } from "@/app/api/utils";
 import { PhoneVerifyOtpSchema } from "@/lib/validators";
 
 export const dynamic = "force-dynamic";
@@ -49,8 +49,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (verifyError) {
-            console.error("Phone OTP verify error:", verifyError.message);
-            return errorResponse(verifyError.message ?? "Invalid or expired OTP", 400);
+            return dbErrorResponse("phone-verification/verify otp", verifyError, "Invalid or expired OTP", 400);
         }
 
         // Stamp phone_verified_at and persist the verified phone number
@@ -61,7 +60,10 @@ export async function POST(request: NextRequest) {
             .eq("id", authUser.id);
 
         if (updateError) {
-            console.error("Failed to update phone_verified_at:", updateError.message);
+            console.error("Failed to update phone_verified_at:", {
+                message: updateError.message,
+                code: "code" in updateError ? updateError.code : undefined,
+            });
             return errorResponse("Phone verified but failed to save status", 500);
         }
 

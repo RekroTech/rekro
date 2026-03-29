@@ -1,3 +1,4 @@
+-- non-MVP/deferred
 create table public.payments (
   id uuid not null default gen_random_uuid (),
   user_id uuid not null,
@@ -16,3 +17,6 @@ create table public.payments (
 create index IF not exists payments_by_user on public.payments using btree (user_id) TABLESPACE pg_default;
 
 create index IF not exists payments_by_invoice on public.payments using btree (invoice_id) TABLESPACE pg_default;
+
+alter table public.payments enable row level security;
+alter table public.payments force row level security;

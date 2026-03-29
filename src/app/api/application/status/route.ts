@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentTimestamp } from "@/lib/utils";
-import { precheck } from "@/app/api/utils";
+import { dbErrorResponse, precheck } from "@/app/api/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -78,11 +78,7 @@ export async function PATCH(request: NextRequest) {
             .single();
 
         if (updateError) {
-            console.error("Application status update error:", updateError);
-            return NextResponse.json(
-                { error: updateError.message || "Failed to update application status" },
-                { status: 500, headers: { "Cache-Control": "no-store" } }
-            );
+            return dbErrorResponse("application/status update", updateError, "Failed to update application status");
         }
 
         return NextResponse.json(

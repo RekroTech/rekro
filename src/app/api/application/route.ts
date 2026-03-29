@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { precheck } from "@/app/api/utils";
+import { dbErrorResponse, precheck } from "@/app/api/utils";
 import { getCurrentTimestamp, parseInclusions } from "@/lib/utils";
 import { CreateApplicationRequestSchema } from "@/lib/validators";
 
@@ -135,16 +135,7 @@ export async function POST(request: NextRequest) {
             });
 
         if (applicationError) {
-            console.error("Application upsert error:", {
-                message: applicationError.message,
-                code: "code" in applicationError ? applicationError.code : undefined,
-                details: "details" in applicationError ? applicationError.details : undefined,
-                hint: "hint" in applicationError ? applicationError.hint : undefined,
-            });
-            return NextResponse.json(
-                { error: applicationError.message || "Failed to save application" },
-                { status: 500, headers: { "Cache-Control": "no-store" } }
-            );
+            return dbErrorResponse("application upsert", applicationError, "Failed to save application");
         }
 
         // Fetch the application after upsert (kept separate to isolate DB/RLS issues)

@@ -58,3 +58,5 @@ create policy "Public can insert enquiries" on public.enquiries for insert to an
 (auth.uid() is null and user_id is null) OR
 -- authenticated can only insert for themselves (or set null if you want)
 (auth.uid() is not null and (user_id is null or user_id = auth.uid())) );
+
+

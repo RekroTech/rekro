@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentTimestamp } from "@/lib/utils";
-import { precheck } from "@/app/api/utils";
+import { dbErrorResponse, precheck } from "@/app/api/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -85,11 +85,7 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (updateError) {
-            console.error("Application withdrawal error:", updateError);
-            return NextResponse.json(
-                { error: updateError.message || "Failed to withdraw application" },
-                { status: 500, headers: { "Cache-Control": "no-store" } }
-            );
+            return dbErrorResponse("application/withdraw update", updateError, "Failed to withdraw application");
         }
 
         return NextResponse.json(

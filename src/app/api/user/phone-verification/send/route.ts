@@ -6,7 +6,7 @@
 
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse, precheck } from "@/app/api/utils";
+import { errorResponse, logServerError, successResponse, precheck } from "@/app/api/utils";
 import { PhoneSendOtpSchema } from "@/lib/validators";
 
 export const dynamic = "force-dynamic";
@@ -50,11 +50,11 @@ export async function POST(request: NextRequest) {
                 otpError.message?.includes("request this after") ||
                 otpError.message?.includes("rate limit");
 
-            console.error("Phone OTP send error:", otpError.message);
+            logServerError("phone-verification/send otp", otpError, { isRateLimit });
             return errorResponse(
                 isRateLimit
                     ? "Too many requests. Please wait a moment and try again."
-                    : otpError.message ?? "Failed to send OTP",
+                    : "Failed to send OTP",
                 isRateLimit ? 429 : 400
             );
         }

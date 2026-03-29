@@ -1,3 +1,4 @@
+-- non-MVP/deferred
 create table public.landlords (
   id uuid not null default gen_random_uuid (),
   owner_user_id uuid null,
@@ -12,3 +13,6 @@ create table public.landlords (
 ) TABLESPACE pg_default;
 
 create index IF not exists landlords_by_owner on public.landlords using btree (owner_user_id) TABLESPACE pg_default;
+
+alter table public.landlords enable row level security;
+alter table public.landlords force row level security;

@@ -1,258 +1,171 @@
 # Recommended Libraries — reKro
 
-> Audit date: March 2026 (updated) · These are concrete additions that solve real gaps in the current codebase.
+> Audit date: March 29, 2026 · Repository-aligned recommendations only
 
 ---
 
-## Already Installed (for reference)
+## 1. Already Installed (do not re-add)
 
-These libraries are **already in `package.json`** — do not re-add them:
+These libraries are already present in `package.json`.
 
-| Package | Purpose |
+| Package | Current use |
 |---|---|
-| `@react-email/components` + `@react-email/render` | Email template system (preview with `npm run email:preview`) |
-| `@react-google-maps/api` | Map view (`PropertyMapView`) and Places Autocomplete search |
-| `@sentry/nextjs` | Error monitoring + tracing |
-| `@supabase/ssr` + `@supabase/supabase-js` | Database, auth, storage |
-| `@tanstack/react-query` | Server-state caching and async data |
-| `@tanstack/react-virtual` | Virtual scrolling for large lists |
-| `clsx` | Conditional class names |
-| `critters` | Critical CSS inlining |
-| `date-fns` | Date formatting (tree-shakeable; **do not add `moment.js`**) |
-| `embla-carousel-react` + `embla-carousel-autoplay` | Property image gallery carousel |
+| `@react-email/components` + `@react-email/render` | Transactional email templates |
+| `@react-google-maps/api` | Map view and Places Autocomplete |
+| `@sentry/nextjs` | Error monitoring and tracing |
+| `@supabase/ssr` + `@supabase/supabase-js` | Auth, database, storage |
+| `@t3-oss/env-nextjs` | Typed environment validation via `src/env.ts` |
+| `@tanstack/react-query` | Client-side async state and caching |
+| `@tanstack/react-virtual` | Large-list virtualization support |
+| `@upstash/ratelimit` + `@upstash/redis` | App-side rate limiting helper in `src/app/api/utils.ts` |
+| `@vercel/analytics` + `@vercel/speed-insights` | Production analytics / RUM hooks in `src/app/layout.tsx` |
+| `clsx` | Conditional class composition |
+| `critters` | CSS optimization support |
+| `date-fns` | Date formatting |
+| `embla-carousel-react` + `embla-carousel-autoplay` | Property gallery carousel |
 | `focus-trap-react` | Modal focus management |
-| `jspdf` | PDF generation (already lazily imported via `await import("jspdf")`) |
-| `libphonenumber-js` | Phone number parsing + E.164 normalisation |
-| `lucide-react` | Icon library |
-| `next` `react` `react-dom` | Framework core |
-| `nuqs` | URL state management for filters and tabs |
-| `react-error-boundary` | Error boundary component |
-| `react-intersection-observer` | Infinite scroll trigger |
-| `resend` | Transactional email |
-| `zod` | Runtime input validation |
+| `jspdf` | PDF generation, already lazy-loaded |
+| `libphonenumber-js` | Phone normalization / validation |
+| `lucide-react` | Icons |
+| `nuqs` | URL query state |
+| `react-error-boundary` | Error boundaries |
+| `react-intersection-observer` | Infinite-scroll trigger |
+| `resend` | Transactional email delivery |
+| `zod` | Runtime validation |
+| `@next/bundle-analyzer` (dev) | Installed, but not yet wired into `next.config.ts` |
 
 ---
 
-## Priority 1 — Address Immediately
+## 2. Best Additions for Current Gaps
 
-### 1.1 Rate Limiting — `@upstash/ratelimit` + `@upstash/redis`
+### 2.1 Unit + component testing — `vitest` + Testing Library
 
-**Solves:** No rate limiting on `/api/enquiries`, `/api/auth/otp`, `/api/property` (see Security doc §2.2)
-
-```bash
-npm install @upstash/ratelimit @upstash/redis
-```
-
-**Usage:**
-```ts
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "1 m"),
-});
-```
-
-**Pricing:** Free tier includes 10 k requests/day. No infrastructure to manage.
-
----
-
-### 1.2 Bundle Analysis — `@next/bundle-analyzer`
-
-**Solves:** No visibility into bundle composition. Install as a dev dependency.
-
-```bash
-npm install --save-dev @next/bundle-analyzer
-```
-
-```ts
-// next.config.ts
-import bundleAnalyzer from "@next/bundle-analyzer";
-const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "true" });
-export default withBundleAnalyzer(withSentryConfig(nextConfig, sentryConfig));
-```
-
-```bash
-ANALYZE=true npm run build
-```
-
----
-
-### 1.3 Type-safe environment variables — `@t3-oss/env-nextjs`
-
-**Solves:** `process.env.NEXT_PUBLIC_SUPABASE_URL!` is used with non-null assertions
-throughout the codebase (`server.ts`, `middleware.ts`). Missing env vars cause silent
-runtime failures.
-
-```bash
-npm install @t3-oss/env-nextjs
-```
-
-```ts
-// src/env.ts
-import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
-
-export const env = createEnv({
-  server: {
-    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-    RESEND_API_KEY: z.string().min(1),
-  },
-  client: {
-    NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-    NEXT_PUBLIC_APP_URL: z.string().url(),
-    NEXT_PUBLIC_SENTRY_DSN: z.string().min(1),
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().min(1),
-  },
-  runtimeEnv: process.env,
-});
-```
-
-Build fails fast if any variable is missing — no surprises in production.
-
----
-
-## Priority 2 — High Value, Low Risk
-
-### 2.1 Background jobs — `inngest`
-
-**Solves:** Email sending is synchronous in API handlers (see Scalability doc §3.3).
-
-```bash
-npm install inngest
-```
-
-**What it gives you:**
-- Durable function execution (auto-retries on failure)
-- Event-driven architecture (enquiry.created → send email → update DB)
-- Works with Next.js API routes and Vercel
-- Free tier: 50 k function runs/month
-
----
-
-### 2.2 Optimistic updates — already available in TanStack Query v5
-
-**Solves:** Like/unlike actions and application status changes feel slow because they wait
-for the server.
-
-No new package needed — implement the pattern in existing hooks:
-
-```ts
-useMutation({
-  mutationFn: toggleLike,
-  onMutate: async (unitId) => {
-    await queryClient.cancelQueries({ queryKey: propertyKeys.lists() });
-    const previous = queryClient.getQueryData(propertyKeys.lists());
-    queryClient.setQueryData(propertyKeys.lists(), (old) => toggleLikeInCache(old, unitId));
-    return { previous };
-  },
-  onError: (_err, _unitId, context) => {
-    queryClient.setQueryData(propertyKeys.lists(), context?.previous);
-  },
-});
-```
-
----
-
-### 2.3 Accessible date picker — `react-aria` / `@internationalized/date`
-
-**Solves:** The application and inspection forms need date pickers. Plain `<input type="date">`
-is inconsistently styled and inaccessible across browsers.
-
-```bash
-npm install react-aria @internationalized/date
-```
-
-**Why:** Adobe's React Aria provides fully accessible, unstyled date/time pickers that
-integrate with TailwindCSS and match the existing design system approach.
-
----
-
-### 2.4 Analytics & Speed Insights — `@vercel/analytics` + `@vercel/speed-insights`
-
-**Solves:** No user behaviour data or real-user performance metrics. Neither package is
-currently installed.
-
-```bash
-npm install @vercel/analytics @vercel/speed-insights
-```
-
-```tsx
-// src/app/layout.tsx — add inside RootLayout
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-
-<Analytics />
-<SpeedInsights />
-```
-
-Privacy-friendly, no cookie consent required for basic analytics.
-
----
-
-## Priority 3 — Future / Growth
-
-### 3.1 Search — `meilisearch` (self-hosted) or `@algolia/client-search`
-
-**When:** When the property database exceeds ~10 k listings and `ILIKE` queries degrade.
-
-**Meilisearch** (recommended):
-- Open source, can self-host on Fly.io for ~$5/month
-- Typo-tolerant, faceted search, geosearch
-- Official Supabase + Meilisearch sync pattern available
-
-```bash
-npm install meilisearch
-```
-
----
-
-### 3.2 Real-time notifications — Supabase Realtime (already bundled)
-
-**When:** User base grows and polling becomes noticeable.
-
-No new package needed — `@supabase/supabase-js` includes Realtime.
-See Scalability doc §3.5 for implementation.
-
----
-
-### 3.3 Feature flags — `@vercel/flags`
-
-**When:** Rolling out features to specific user segments (landlords only, beta users, etc.)
-
-```bash
-npm install @vercel/flags
-```
-
-Integrates with Vercel's edge config for zero-latency flag evaluation.
-
----
-
-### 3.4 Testing — `vitest` + `@testing-library/react`
-
-**When:** Immediately — Playwright covers E2E but there are no unit/component tests.
+**Why:** the biggest gap in the repo today is test coverage below the E2E level.
 
 ```bash
 npm install --save-dev vitest @vitejs/plugin-react @testing-library/react @testing-library/user-event
 ```
 
-Configure alongside Playwright for a complete testing pyramid:
-- Unit: Zod validators, authorization helpers, utility functions
-- Component: Form components, PropertyCard, AuthModal
-- E2E: Existing Playwright smoke tests
+**Use it for:**
+- Zod validators
+- authorization helpers
+- query-key factories and utility functions
+- component rendering / form behavior
 
 ---
 
-## What NOT to Add
+### 2.2 Accessibility automation — `@axe-core/playwright`
 
-| Library | Reason to avoid |
+**Why:** the app has a decent baseline, but there are no explicit accessibility smoke tests in the repo.
+
+```bash
+npm install --save-dev @axe-core/playwright
+```
+
+**Use it for:**
+- homepage smoke audit
+- auth modal audit
+- property detail page audit
+- form/control regressions in CI
+
+---
+
+### 2.3 Background jobs — `inngest`
+
+**Why:** email sending still happens inside request handlers such as `/api/enquiries`.
+
+```bash
+npm install inngest
+```
+
+**Good fit here:**
+- enquiry notification emails
+- future saved-search alerts
+- inspection reminders
+- application status notifications
+
+---
+
+### 2.4 Map clustering — `@googlemaps/markerclusterer`
+
+**Why:** map view is already shipped; clustering is the natural next step once listing density rises.
+
+```bash
+npm install @googlemaps/markerclusterer
+```
+
+**Use it for:**
+- dense city/suburb pin clusters
+- reduced marker overdraw
+- better mobile map usability
+
+---
+
+## 3. Useful Improvements Without New Libraries
+
+### 3.1 Finish using `env` where practical
+
+`@t3-oss/env-nextjs` is already installed and wired through `src/env.ts`.
+
+Remaining direct `process.env` reads still exist in places such as:
+- `src/lib/email/enquiries.tsx`
+- `src/hooks/usePlacesAutocomplete.ts`
+- `src/components/Properties/PropertyMapView.tsx`
+- `src/components/Property/TravelTimeSummary.tsx`
+
+No new package is needed — this is now a consistency cleanup task.
+
+---
+
+### 3.2 Wire up the installed bundle analyzer
+
+`@next/bundle-analyzer` is already installed as a dev dependency, but not yet connected in `next.config.ts`.
+
+No new install is needed. Just wire it into the existing Next config and run a build analysis.
+
+---
+
+### 3.3 Optimistic updates with TanStack Query v5
+
+No new package is needed.
+
+Best candidates in this app:
+- likes / unlike flows
+- profile updates
+- application status UI feedback
+
+---
+
+## 4. Lower-Priority / Future Additions
+
+### 4.1 Search service — Meilisearch or Algolia
+
+Only consider this after:
+1. PostgreSQL full-text search is implemented, and
+2. real search scale / relevance issues appear.
+
+---
+
+### 4.2 Feature flags — `@vercel/flags`
+
+Good fit when you begin rolling features out gradually (beta messaging, landlord-only tools, etc.).
+
+---
+
+### 4.3 Date/time primitives — `react-aria` / `@internationalized/date`
+
+Worth adding when inspection scheduling and more advanced calendar/time input UIs are built.
+
+---
+
+## 5. What NOT to Add Right Now
+
+| Library | Why to avoid it now |
 |---|---|
-| `redux` / `zustand` / `jotai` | TanStack Query already handles server state; `useState` handles the rest |
-| `react-hook-form` | Existing forms use controlled state + Zod directly; RHF adds ~25 KB |
-| `moment.js` | `date-fns` (already installed) is tree-shakeable and modern |
-| `lodash` | Use native ES2022+ methods |
-| `axios` | `fetch` (native) is sufficient for the current API surface |
-| `i18next` | Premature — add `next-intl` only when internationalisation is a confirmed requirement |
-| `@react-pdf/renderer` | jsPDF is already lazily imported — sufficient for the current PDF use case |
+| `redux`, `zustand`, `jotai` | Current state is already well split across TanStack Query, Context, and local state |
+| `axios` | Native `fetch` is sufficient for the app’s current API surface |
+| `react-hook-form` | Existing forms already work with controlled state + Zod; extra abstraction is not yet justified |
+| `moment` | `date-fns` is already installed and is the better modern choice |
+| `lodash` | Native modern JS covers the current use cases |
+| `@react-pdf/renderer` | `jspdf` already covers the current PDF requirement |
+| search SaaS immediately | Built-in PostgreSQL FTS should be the first upgrade path |

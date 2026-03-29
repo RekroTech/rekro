@@ -1,3 +1,4 @@
+-- non-MVP/deferred
 create table public.inspection_requests (
   id uuid not null default gen_random_uuid (),
   requested_by uuid not null,
@@ -21,3 +22,6 @@ create index IF not exists inspection_by_property on public.inspection_requests 
 create index IF not exists inspection_by_user on public.inspection_requests using btree (requested_by) TABLESPACE pg_default;
 
 create index IF not exists inspection_by_status on public.inspection_requests using btree (status) TABLESPACE pg_default;
+
+alter table public.inspection_requests enable row level security;
+alter table public.inspection_requests force row level security;

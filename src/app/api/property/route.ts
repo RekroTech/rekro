@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { uploadPropertyFiles } from "@/lib/services";
 import type { UnitInsert } from "@/types/db";
-import { errorResponse, successResponse, precheck } from "@/app/api/utils";
+import { checkRateLimit, errorResponse, getRequestIp, successResponse, precheck } from "@/app/api/utils";
 import { PropertyDataSchema, UnitDataSchema } from "@/lib/validators";
 import { z } from "zod";
 
@@ -16,6 +16,21 @@ export async function POST(request: NextRequest) {
         if (!check.ok) return check.error;
         const { user } = check;
         const supabase = await createClient();
+
+        const ip = getRequestIp(request);
+        const rateLimit = await checkRateLimit({
+            key: `property-create:${user.id}:${ip}`,
+            maxRequests: 20,
+            windowSeconds: 3600,
+        });
+        if (!rateLimit.allowed) {
+            return errorResponse(
+                "Too many property submissions. Please try again later.",
+                429,
+                undefined,
+                { additionalHeaders: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+            );
+        }
 
 
         // Parse multipart form data
@@ -68,7 +83,7 @@ export async function POST(request: NextRequest) {
 
         if (propertyError) {
             console.error("Error creating property:", propertyError);
-            return errorResponse(propertyError.message, 500);
+            return errorResponse("Failed to create property", 500);
         }
 
         // Step 2: Create units for this property
@@ -86,7 +101,7 @@ export async function POST(request: NextRequest) {
                 console.error("Error creating units:", unitsError);
                 // Rollback: delete the property
                 await supabase.from("properties").delete().eq("id", property.id);
-                return errorResponse(unitsError.message, 500);
+                return errorResponse("Failed to create property units", 500);
             }
         }
 
@@ -109,21 +124,19 @@ export async function POST(request: NextRequest) {
 
                 if (updateError) {
                     console.error("Error updating property with images:", updateError);
-                    return errorResponse(updateError.message, 500);
+                    return errorResponse("Failed to finalize property media", 500);
                 }
 
                 return successResponse(updatedProperty, 201);
             } catch (uploadError) {
-                const message = uploadError instanceof Error ? uploadError.message : "Upload failed";
                 console.error("Error uploading images:", uploadError);
-                return errorResponse(message, 500);
+                return errorResponse("Failed to upload images", 500);
             }
         }
 
         return successResponse(property, 201);
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Internal server error";
         console.error("Error in POST /api/property:", error);
-        return errorResponse(message, 500);
+        return errorResponse("Internal server error", 500);
     }
 }

@@ -1,93 +1,92 @@
 # Scalability Analysis — reKro
 
-> Audit date: March 2026 (updated) · Stack: Next.js 16 / React 19 / Supabase / TanStack Query v5
+> Audit date: March 29, 2026 · Stack: Next.js 16 / React 19 / Supabase / TanStack Query v5
 
 ---
 
 ## 1. Current Architecture Overview
 
-```
+```text
 Browser (React 19)
     │
     ├── TanStack Query (client cache)
-    │       ├── Infinite scroll property listings (offset-based, limit 12)
-    │       ├── Session user (5 min stale, refetchOnMount: false)
-    │       ├── Property detail prefetch on hover
-    │       └── Application / unit / user profile queries
+    │       ├── Infinite property listings (offset pagination, limit 12)
+    │       ├── Session user cache
+    │       ├── Profile / application / property detail queries
+    │       └── Prefetch-on-hover for property detail
     │
-    ├── Next.js 16 App Router (Edge + Node runtimes)
-    │       ├── /api/auth/otp                      POST — magic-link trigger
-    │       ├── /api/auth/callback                 GET  — Supabase OAuth/OTP redirect
-    │       ├── /api/property                      POST — create property + units + images (multipart)
-    │       ├── /api/property/[id]                 PATCH / DELETE
-    │       ├── /api/application                   POST — upsert draft
-    │       ├── /api/application/submit            POST — submit for review
-    │       ├── /api/application/status            PATCH — approve / reject (admin+)
-    │       ├── /api/application/withdraw          POST — withdraw
-    │       ├── /api/application/snapshot          POST — save PDF snapshot
-    │       ├── /api/enquiries                     POST — guest + authenticated enquiry
-    │       ├── /api/user/profile                  GET / PATCH
-    │       ├── /api/user/phone-verification        POST
-    │       └── /api/voiceflow/properties/search   GET  — chatbot property search
+    ├── Next.js 16 App Router
+    │       ├── /api/auth/otp                         POST
+    │       ├── /api/auth/callback                    GET
+    │       ├── /api/enquiries                        POST
+    │       ├── /api/property                         POST
+    │       ├── /api/property/[id]                    PATCH / DELETE
+    │       ├── /api/property/[id]/media              PATCH
+    │       ├── /api/application                      POST
+    │       ├── /api/application/submit               POST
+    │       ├── /api/application/status               PATCH
+    │       ├── /api/application/withdraw             POST
+    │       ├── /api/application/snapshot             POST
+    │       ├── /api/user/profile                     GET / PATCH
+    │       ├── /api/user/phone-verification/send     POST
+    │       ├── /api/user/phone-verification/verify   POST
+    │       └── /api/voiceflow/properties/search      GET
     │
-    └── Supabase (PostgreSQL + Auth + Storage + Realtime)
-            ├── Row Level Security (policies TBD — folder empty)
-            ├── PostGIS-ready geospatial indexes
-            └── Storage (property images, documents)
+    └── Supabase (PostgreSQL + Auth + Storage)
+            ├── Row Level Security (partially evidenced in repo)
+            ├── Storage buckets for property media
+            ├── JSONB-heavy schema for address / documents / amenities
+            └── Geospatial indexing support in `database/indexes/`
 ```
 
 ---
 
 ## 2. What Scales Well Today
 
-| Concern | Why it scales |
+| Concern | Why it scales reasonably well now |
 |---|---|
-| **Stateless API routes** | Next.js API routes are serverless — auto-scales to demand |
-| **Supabase connection pooling** | `@supabase/ssr` uses the pooler by default on Supabase cloud |
-| **Pagination** | Properties use `limit 12` per page with `IntersectionObserver` infinite scroll |
-| **Database indexes** | B-tree indexes on `user_id`, `property_id`, `status`, price, availability; GIN on JSONB |
-| **Image CDN** | Supabase Storage serves images via a CDN; Next.js Image further optimises with AVIF/WebP |
-| **Client-side cache** | TanStack Query deduplicates in-flight requests; avoids redundant DB hits |
-| **Role hierarchy** | RBAC is table-driven — adding new roles requires only a DB enum change |
-| **Virtual scrolling** | `@tanstack/react-virtual` is installed for heavy list virtualization when needed |
-| **React `cache()`** | `getSession()` is memoised per server request — one DB call regardless of how many Server Components call it |
-| **jsPDF lazy-loaded** | PDF generation uses `await import("jspdf")` — not in the initial bundle |
-| **Map view** | `PropertyMapView` is only mounted when map tab is active — Google Maps SDK not loaded for grid view visitors |
+| **Stateless route handlers** | Next.js route handlers remain horizontally scalable on serverless infrastructure |
+| **Client caching** | TanStack Query deduplicates requests and keeps hot data in memory |
+| **Infinite scroll** | Listing pages fetch only 12 records at a time |
+| **Database indexing** | Repo includes indexes for geospatial data and common relational filters |
+| **Bulk likes lookup** | `getBulkUnitLikes()` avoids per-card queries by batching with `.in()` |
+| **Per-request auth caching** | `getSession()` uses React `cache()` on the server |
+| **Conditional maps loading** | Maps UI mounts only in map view, avoiding default-page SDK cost |
+| **jsPDF lazy loading** | PDF generation code does not inflate the initial bundle |
+| **App-side abuse limits** | OTP, enquiry, and property create endpoints now have app-level rate limiting |
+| **CDN-friendly shell** | Home page no longer forces dynamic rendering for the top-level shell |
 
 ---
 
-## 3. Scalability Bottlenecks & Solutions
+## 3. Scalability Bottlenecks & Recommended Changes
 
-### 3.1 Offset-based pagination does not scale beyond ~100 k rows
+### 3.1 Offset pagination will degrade at large listing volumes
 
-**Problem:** `getProperties()` uses `.range(offset, offset + limit - 1)` which translates
-to `OFFSET n` in SQL. At large offsets PostgreSQL must scan and discard all prior rows.
+**Current state:** property listing queries still use offset/range-based pagination.
 
-**Fix:** Switch to keyset (cursor) pagination using `created_at` + `id`:
+**Why it matters:** PostgreSQL must scan and skip earlier rows for deep pages, which becomes increasingly expensive as listing count grows.
+
+**Recommended fix:** switch high-traffic public listings to keyset pagination using a stable sort such as `created_at DESC, id DESC`.
 
 ```ts
-// Cursor = { created_at: string, id: string } (base64-encoded)
+// Cursor example: { created_at, id }
 let query = supabase
   .from("properties")
   .select("*")
   .order("created_at", { ascending: false })
   .order("id", { ascending: false })
   .limit(limit);
-
-if (cursor) {
-  const { created_at, id } = decodeCursor(cursor);
-  query = query.or(`created_at.lt.${created_at},and(created_at.eq.${created_at},id.lt.${id})`);
-}
 ```
 
 ---
 
-### 3.2 Full-text search runs `ILIKE` on the database
+### 3.2 Search still relies on `ILIKE`-style filtering
 
-**Problem:** The `search` filter in `property.queries.ts` uses `ilike` string matching.
-At scale this degrades to a full table scan.
+**Current state:** listing search uses tokenized string matching / `ilike` patterns against title, description, and address fields.
 
-**Fix:** Enable PostgreSQL full-text search (built into Supabase):
+**Why it matters:** this works at MVP scale, but becomes expensive and harder to tune when listings grow significantly.
+
+**Recommended fix:** add PostgreSQL full-text search to `properties` (and possibly `units`) with a generated `tsvector` and GIN index.
 
 ```sql
 ALTER TABLE properties
@@ -99,111 +98,80 @@ GENERATED ALWAYS AS (
 CREATE INDEX properties_search_idx ON properties USING GIN(search_vector);
 ```
 
-Then query with `.textSearch('search_vector', query)`.
+---
 
-For advanced search, consider **Supabase pgvector** or a dedicated search service like
-**Algolia** or **Meilisearch**.
+### 3.3 Email sending is still synchronous in request handlers
+
+**Current state:** `/api/enquiries` sends emails in the request lifecycle. Similar patterns are used elsewhere for transactional notifications.
+
+**Why it matters:** slow email-provider responses increase request latency and can cause user-facing success paths to feel slower than necessary.
+
+**Recommended fix:** move notification work to background execution.
+
+Good fit options:
+- **Inngest** for durable background jobs on Vercel / Next.js
+- Supabase-triggered functions or webhooks
+- Trigger.dev if more workflow orchestration is needed
 
 ---
 
-### 3.3 Email sending is synchronous in API route handlers
+### 3.4 Realtime is not yet used for high-value live updates
 
-**Problem:** Email sending (via Resend) is `await`-ed directly inside `/api/enquiries`,
-`/api/application/submit`, and other route handlers. If Resend is slow or fails, the
-user waits or receives an error. Email failures also block the success response.
+**Current state:** application status changes and similar updates still rely on refetch / manual refresh patterns.
 
-**Fix:** Decouple email from the request cycle:
+**Why it matters:** users expect live updates for application workflows, messaging, and inspections.
 
-- **Supabase Edge Functions** triggered by database webhooks
-- **Inngest** (event-driven background jobs, works with Next.js)
-- **Trigger.dev** (type-safe background jobs)
-
-```ts
-// Instead of awaiting email in the route:
-await sendEnquiryNotification(enquiry);
-
-// Fire-and-forget or queue:
-await inngest.send({ name: "enquiry.created", data: { enquiryId } });
-```
+**Recommended fix:** adopt Supabase Realtime for:
+- application status updates
+- inspection slot booking changes
+- future messaging / notification features
 
 ---
 
-### 3.4 No read replica / caching layer for high-traffic reads
+### 3.5 Public reads still depend mostly on the primary database
 
-**Problem:** All reads hit the primary Supabase database. Property listings are public and
-could benefit from a caching layer.
+**Current state:** property list and property search paths are primarily backed by direct database reads plus client caching.
 
-**Fix options:**
+**Why it matters:** once traffic increases materially, public browse traffic can dominate the primary DB workload.
 
-| Option | Complexity | Latency reduction |
-|---|---|---|
-| Next.js `revalidate` on server fetches | Low | ~40% |
-| Vercel KV (Redis) cache for popular listings | Medium | ~70% |
-| Supabase read replicas (paid plan) | Low | ~50% |
-| Edge-side caching with `stale-while-revalidate` | Low | ~60% |
-
-Recommended first step: move property list fetching to a Server Component with
-`revalidate = 60` (1-minute ISR):
-
-```ts
-export const revalidate = 60;
-```
+**Recommended next step:** introduce one of the following in order of simplicity:
+1. short-lived server caching / `revalidate` for public list shells
+2. Redis/KV cache for popular listing queries
+3. Supabase read replicas when traffic justifies it
 
 ---
 
-### 3.5 Supabase Realtime not yet utilised
+### 3.6 No formal multi-region data strategy yet
 
-**Problem:** Listing status changes, application status updates, and new enquiries require
-a page refresh to see.
+**Current state:** the repo gives no evidence of multi-region database topology.
 
-**Fix:** Subscribe to Supabase Realtime channels for live updates:
+**Impact:** global CDN helps static assets and page shells, but DB latency remains region-bound.
 
-```ts
-const channel = supabase
-  .channel("application-updates")
-  .on("postgres_changes", {
-    event: "UPDATE",
-    schema: "public",
-    table: "applications",
-    filter: `user_id=eq.${userId}`,
-  }, (payload) => {
-    queryClient.invalidateQueries({ queryKey: ["applications"] });
-  })
-  .subscribe();
-```
-
----
-
-### 3.6 No multi-region strategy
-
-**Problem:** Supabase project is in a single region. Users far from the database will
-experience high latency.
-
-**Fix (future):**
-1. Deploy Next.js to Vercel Edge Network (global CDN already active)
-2. Use Supabase read replicas for geographically distributed reads
-3. Store static assets (images) in a CDN with multiple PoPs (Supabase Storage does this)
+**Future path:**
+- keep static content and assets edge-friendly
+- add read replicas for geographically distant audiences
+- evaluate search/cache offload before full multi-region database complexity
 
 ---
 
 ## 4. Database Scalability Checklist
 
-- [x] B-tree indexes on all foreign keys and frequently filtered columns
-- [x] GIN index on `address` JSONB
-- [x] Geospatial indexes (lat/lng composite, location GIN)
-- [ ] Full-text search index on `properties.title` + `description`
-- [x] Composite index on `(is_published, created_at)` for the default listing query
-- [x] Partial index on `units (status, available_from)` WHERE `status = 'active'`
-- [ ] `pg_stat_statements` enabled in Supabase for slow query identification
-- [ ] Supabase connection pooling (PgBouncer) configured for > 50 concurrent users
+- [x] API surface is mostly stateless and serverless-friendly
+- [x] Query layer avoids obvious N+1 problems in property listings
+- [x] Geospatial/index SQL exists in `database/indexes/`
+- [ ] Replace offset pagination with keyset pagination for very large datasets
+- [ ] Add PostgreSQL full-text search indexes for listing search
+- [ ] Move transactional email out of the request path
+- [ ] Add slow-query observability (`pg_stat_statements` or equivalent runtime monitoring)
+- [ ] Document/verify connection-pooling posture in deployed Supabase environment
 
 ---
 
-## 5. Infrastructure Scaling Roadmap
+## 5. Scaling Roadmap
 
-| Users (MAU) | Recommended infra |
+| Stage | What to prioritize |
 |---|---|
-| 0 – 10 k | Current setup (Supabase free/pro + Vercel hobby/pro) |
-| 10 k – 100 k | Supabase Pro + read replica, Vercel Pro, Upstash Redis cache |
-| 100 k – 1 M | Supabase Enterprise or self-hosted Postgres, CDN for API responses, background job queue |
-| 1 M+ | Dedicated Postgres cluster, microservices for search/notifications, global edge deployment |
+| 0 → 10k MAU | Current stack is fine; finish RLS baseline, tests, and background email |
+| 10k → 100k MAU | Add Redis/KV caching, FTS, better observability, and background jobs |
+| 100k → 1M MAU | Read replicas, more aggressive query optimization, live updates, dedicated search |
+| 1M+ | Split search/notification concerns into dedicated services if needed |

@@ -4,6 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import { requireAuthForApi, requireRole } from "@/lib/supabase/server";
 import type { SessionUser } from "@/types/auth.types";
 import type { AppRole } from "@/types/db";
@@ -12,6 +14,7 @@ import { ApplicationType, OccupancyType } from "@/types/db";
 import { Inclusions } from "@/types/property.types";
 import { ApplicationSnapshot } from "@/types/application.types";
 import { getCurrentTimestamp } from "@/lib/utils";
+import { env } from "@/env";
 
 // ─── CSRF ────────────────────────────────────────────────────────────────────
 
@@ -140,12 +143,65 @@ export async function precheck(
 export function errorResponse(
     message: string,
     status: number = 500,
-    additionalData?: Record<string, unknown>
+    additionalData?: Record<string, unknown>,
+    options?: { additionalHeaders?: Record<string, string> }
 ) {
     return NextResponse.json(
         { error: message, ...additionalData },
-        { status, headers: { "Cache-Control": "no-store" } }
+        {
+            status,
+            headers: {
+                "Cache-Control": "no-store",
+                ...options?.additionalHeaders,
+            },
+        }
     );
+}
+
+type DbErrorLike = {
+    message?: string;
+    code?: string;
+    details?: string;
+    hint?: string;
+    status?: number;
+};
+
+function toDbErrorLike(error: unknown): DbErrorLike {
+    if (!error || typeof error !== "object") return {};
+    const source = error as Record<string, unknown>;
+    return {
+        message: typeof source.message === "string" ? source.message : undefined,
+        code: typeof source.code === "string" ? source.code : undefined,
+        details: typeof source.details === "string" ? source.details : undefined,
+        hint: typeof source.hint === "string" ? source.hint : undefined,
+        status: typeof source.status === "number" ? source.status : undefined,
+    };
+}
+
+export function logServerError(
+    context: string,
+    error: unknown,
+    metadata?: Record<string, unknown>,
+) {
+    const normalized = toDbErrorLike(error);
+    console.error(`[${context}]`, {
+        ...metadata,
+        message: normalized.message,
+        code: normalized.code,
+        details: normalized.details,
+        hint: normalized.hint,
+        status: normalized.status,
+    });
+}
+
+export function dbErrorResponse(
+    context: string,
+    error: unknown,
+    clientMessage = "Unable to complete this request",
+    status = 500,
+) {
+    logServerError(context, error);
+    return errorResponse(clientMessage, status);
 }
 
 /**
@@ -190,25 +246,90 @@ export function validateRequiredFields<T extends Record<string, unknown>>(
 // ─── Rate Limiting (in-memory) ───────────────────────────────────────────────
 
 const requestCounts = new Map<string, { count: number; resetAt: number }>();
+const rateLimiterCache = new Map<string, Ratelimit>();
 
-export function checkRateLimit(
-    identifier: string,
+const redis = env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        url: env.UPSTASH_REDIS_REST_URL,
+        token: env.UPSTASH_REDIS_REST_TOKEN,
+    })
+    : null;
+
+type RateLimitOptions = {
+    key: string;
+    maxRequests: number;
+    windowSeconds: number;
+};
+
+export type RateLimitResult = {
+    allowed: boolean;
+    remaining: number;
+    resetAt: number;
+    retryAfterSeconds: number;
+};
+
+export function getRequestIp(request: NextRequest): string {
+    const raw = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    return raw.split(",")[0]?.trim() || "unknown";
+}
+
+function checkInMemoryRateLimit(
+    key: string,
     maxRequests = 10,
-    windowMs = 60_000
-): { allowed: boolean; remaining: number; resetAt: number } {
+    windowMs = 60_000,
+): RateLimitResult {
     const now = Date.now();
-    const record = requestCounts.get(identifier);
+    const record = requestCounts.get(key);
 
     if (!record || now > record.resetAt) {
         const resetAt = now + windowMs;
-        requestCounts.set(identifier, { count: 1, resetAt });
-        return { allowed: true, remaining: maxRequests - 1, resetAt };
+        requestCounts.set(key, { count: 1, resetAt });
+        return {
+            allowed: true,
+            remaining: maxRequests - 1,
+            resetAt,
+            retryAfterSeconds: Math.max(1, Math.ceil((resetAt - now) / 1000)),
+        };
     }
     if (record.count >= maxRequests) {
-        return { allowed: false, remaining: 0, resetAt: record.resetAt };
+        return {
+            allowed: false,
+            remaining: 0,
+            resetAt: record.resetAt,
+            retryAfterSeconds: Math.max(1, Math.ceil((record.resetAt - now) / 1000)),
+        };
     }
     record.count++;
-    return { allowed: true, remaining: maxRequests - record.count, resetAt: record.resetAt };
+    return {
+        allowed: true,
+        remaining: maxRequests - record.count,
+        resetAt: record.resetAt,
+        retryAfterSeconds: Math.max(1, Math.ceil((record.resetAt - now) / 1000)),
+    };
+}
+
+export async function checkRateLimit({ key, maxRequests = 10, windowSeconds = 60 }: RateLimitOptions): Promise<RateLimitResult> {
+    if (!redis) {
+        return checkInMemoryRateLimit(key, maxRequests, windowSeconds * 1000);
+    }
+
+    const limiterKey = `${maxRequests}:${windowSeconds}`;
+    const limiter = rateLimiterCache.get(limiterKey) ?? new Ratelimit({
+        redis,
+        limiter: Ratelimit.fixedWindow(maxRequests, `${windowSeconds} s`),
+        prefix: "rekro:ratelimit",
+    });
+    rateLimiterCache.set(limiterKey, limiter);
+
+    const result = await limiter.limit(key);
+    const resetAt = result.reset;
+
+    return {
+        allowed: result.success,
+        remaining: result.remaining,
+        resetAt,
+        retryAfterSeconds: Math.max(1, Math.ceil((resetAt - Date.now()) / 1000)),
+    };
 }
 
 setInterval(() => {

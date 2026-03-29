@@ -23,6 +23,8 @@
 | **React `cache()`** | `getSession()` is wrapped in React's `cache()` — one DB call per server request |
 | **LCP image priority** | `PropertyList` passes `priority={index === 0}` to the first `PropertyCard` ✅ |
 | **jsPDF lazy-loaded** | `pdfGenerator.ts` uses `await import("jspdf")` — excluded from initial bundle ✅ |
+| **Conditional map loading** | `PropertyMapView` only rendered when `viewMode === "map"` — Maps SDK never loads in default grid view ✅ |
+| **Suspense boundary** | `HomePageContent` wrapped in `<Suspense fallback={<PropertyListSkeleton />}>` in `HomePage` ✅ |
 
 ---
 
@@ -38,14 +40,14 @@ This caused a flash of blank content before the redirect fired.
 
 ```tsx
 // src/app/(authenticated)/layout.tsx  — SERVER component
+import React from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/supabase/server";
-import { AuthenticatedClientWrapper } from "./AuthenticatedClientWrapper";
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const user = await getSession();
   if (!user) redirect("/?auth=open");
-  return <AuthenticatedClientWrapper>{children}</AuthenticatedClientWrapper>;
+  return children;
 }
 ```
 
@@ -53,37 +55,41 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
 
 ---
 
-### 2.2 `force-dynamic` on the home page ⚠️ Still open
+### ~~2.2 `force-dynamic` on the home page~~ ✅ RESOLVED
 
-**Problem:** `export const dynamic = "force-dynamic"` in `src/app/page.tsx` disables all
-caching for the page, meaning every visitor hits the origin server for every request.
+**Problem:** `export const dynamic = "force-dynamic"` in `src/app/page.tsx` disabled all
+caching for the page, meaning every visitor hit the origin server for every request.
 
-**Fix:** Move property fetching to a Server Component with `revalidate`, or use React
-Query on the client (which is already in place) and remove the `force-dynamic` directive.
-Client components that fetch their own data do not need the parent page to be dynamic.
-
-```tsx
-// Remove this line from page.tsx:
-// export const dynamic = "force-dynamic";
-```
+**Fix:** `page.tsx` is now a `"use client"` component. The `force-dynamic` directive has been
+removed entirely. Property data is fetched client-side by TanStack Query, so the page shell
+is not server-rendered dynamically and can be statically served at the CDN edge.
 
 **Impact:** Allows the page shell to be statically cached at the CDN edge, reducing TTFB
-for every visitor.
+for every visitor. ✅
 
 ---
 
-### 2.3 Missing `Suspense` boundaries around async data ⚠️ Still open
+### ~~2.3 Missing `Suspense` boundaries around async data~~ ✅ RESOLVED
 
-**Problem:** Slow data-fetching components block the entire page render rather than
-streaming in progressively.
+**Problem:** Heavy client components blocked the initial render while hooks such as
+`useQueryState` (nuqs) resolved.
 
-**Fix:** Wrap `PropertyList` and other heavy components in `<Suspense>`.
+**Fix:** `HomePageContent` is wrapped in a top-level `<Suspense>` boundary inside
+`HomePage`, using `<PropertyListSkeleton>` as the fallback. TanStack Query handles
+per-component loading states within `PropertyList` itself.
 
 ```tsx
-<Suspense fallback={<PropertyListSkeleton />}>
-  <PropertyList {...filters} />
-</Suspense>
+export default function HomePage() {
+  return (
+    <Suspense fallback={<PropertyListSkeleton count={12} />}>
+      <HomePageContent />
+    </Suspense>
+  );
+}
 ```
+
+**Impact:** Prevents blank-screen flash on initial load; skeleton is shown immediately
+while client hooks and query params are resolved. ✅
 
 ---
 
@@ -104,30 +110,40 @@ generated on the application snapshot page.
 
 ---
 
-### 2.6 Sentry `tracesSampleRate: 1` in production ⚠️ Still open
+### ~~2.6 Sentry `tracesSampleRate: 1` in production~~ ✅ RESOLVED
 
-**Problem:** Sampling 100 % of traces adds ~15–30 ms of overhead per request in
-production and generates significant Sentry bill volume. All three Sentry config files
-(`instrumentation-client.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`) still
-have `tracesSampleRate: 1`.
+**Problem:** Sampling 100 % of traces was adding ~15–30 ms of overhead per request in
+production and generating significant Sentry bill volume.
 
-**Fix:**
+**Fix applied** across all three Sentry config files (`instrumentation-client.ts`,
+`sentry.server.config.ts`, `sentry.edge.config.ts`):
 
 ```ts
 tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1,
 ```
 
+**Impact:** 90 % reduction in trace volume in production; negligible overhead per request. ✅
+
 ---
 
-### 2.7 Google Maps API loaded globally ⚠️ Still open
+### ~~2.7 Google Maps API loaded globally~~ ✅ RESOLVED
 
-**Problem:** `@react-google-maps/api` loads the Maps JS SDK for every page, even pages
-that contain no map. The `PropertyMapView` component (now used on the home page map
-toggle) should only load the SDK when the map tab is active.
+**Problem:** `@react-google-maps/api` was loading the Maps JS SDK for every page, even
+pages that contain no map.
 
-**Fix:** The `<LoadScript>` provider is already scoped inside `PropertyMapView`. Ensure
-`PropertyMapView` itself is conditionally rendered (only when `viewMode === "map"`) so
-that the SDK is never loaded in the default grid view.
+**Fix:** `PropertyMapView` is conditionally rendered in `page.tsx` only when
+`viewMode === "map"`:
+
+```tsx
+{viewMode === "grid" ? (
+  <PropertyList {...filters} />
+) : (
+  <PropertyMapView {...filters} />
+)}
+```
+
+**Impact:** Maps SDK is never fetched in the default grid view — zero wasted bytes for the
+majority of visitors who never switch to map mode. ✅
 
 ---
 
@@ -138,7 +154,7 @@ that the SDK is never loaded in the default grid view.
 | LCP | < 2.5 s | First `PropertyCard` image is eager-loaded via `priority={true}` ✅ |
 | INP | < 200 ms | React Compiler + `useTransition` already in place |
 | CLS | < 0.1 | Reserve image dimensions with aspect-ratio CSS |
-| TTFB | < 600 ms | Remove `force-dynamic`; use ISR/edge caching |
+| TTFB | < 600 ms | `force-dynamic` removed; static shell served from CDN edge ✅ |
 | Bundle (initial JS) | < 150 KB gzip | Audit with `@next/bundle-analyzer` |
 
 ---
@@ -150,10 +166,11 @@ that the SDK is never loaded in the default grid view.
 - [ ] Add `fetchpriority="high"` to the hero image
 - [x] Remove `force-dynamic` from `src/app/page.tsx` — **done** ✅
 - [x] Convert `(authenticated)/layout.tsx` to a Server Component — **done** ✅
-- [ ] Add `<Suspense>` wrappers around `PropertyList` and heavy async components
-- [ ] Set `loading="lazy"` on below-fold property card images (Next.js Image does this by default below the fold)
+- [x] Add `<Suspense>` wrapper around `HomePageContent` with `PropertyListSkeleton` fallback — **done** ✅
+- [x] Set `loading="lazy"` on below-fold property card images (Next.js Image does this by default below the fold)
 - [x] Replace `Math.random()` toast IDs with `crypto.randomUUID()` — **done** ✅
 - [ ] Enable `ppr: "incremental"` (Partial Prerendering) once stable in Next.js 16
 - [x] Add `<link rel="preconnect">` for Supabase and Google Maps domains in `layout.tsx` — **done** ✅
 - [ ] Run `npx @next/bundle-analyzer` and address any unexpected large chunks
 - [x] Lower `tracesSampleRate` to `0.1` in production across all three Sentry configs — **done** ✅
+- [x] Conditionally render `PropertyMapView` only when map view is active — **done** ✅

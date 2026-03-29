@@ -8,7 +8,7 @@
 
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { errorResponse, successResponse, precheck } from "@/app/api/utils";
+import { checkRateLimit, errorResponse, getRequestIp, successResponse, precheck } from "@/app/api/utils";
 import { sendEnquiryConfirmation, sendEnquiryNotification, ADMIN_EMAIL } from "@/lib/email";
 import type { EnquiryInsert } from "@/types/db";
 import { EnquiryRequestSchema } from "@/lib/validators";
@@ -58,6 +58,23 @@ export async function POST(request: NextRequest) {
         const { data: { user } } = await supabase.auth.getUser();
         const isAuthenticated = !!user;
 
+        const ip = getRequestIp(request);
+        const guestIdentity = guest_email?.trim().toLowerCase() || "unknown";
+        const identityKey = isAuthenticated ? `user:${user!.id}` : `guest:${guestIdentity}:${ip}`;
+        const rateLimit = await checkRateLimit({
+            key: `enquiry:${identityKey}`,
+            maxRequests: 10,
+            windowSeconds: 600,
+        });
+        if (!rateLimit.allowed) {
+            return errorResponse(
+                "Too many enquiry submissions. Please try again later.",
+                429,
+                undefined,
+                { additionalHeaders: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+            );
+        }
+
         // If guest, validate guest fields (Zod already did basic validation)
         if (!isAuthenticated) {
             if (!guest_email || !guest_email.trim()) {
@@ -82,8 +99,7 @@ export async function POST(request: NextRequest) {
 
         // Get client IP and user agent for tracking
         // x-forwarded-for can be a comma-separated list; take only the first (client) IP
-        const rawIp = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null;
-        const ip = rawIp ? (rawIp.split(",")[0]?.trim() ?? null) : null;
+        const trackedIp = ip === "unknown" ? null : ip;
         const userAgent = request.headers.get("user-agent") || null;
 
         // Prepare enquiry data
@@ -91,7 +107,7 @@ export async function POST(request: NextRequest) {
             unit_id,
             message: message.trim(),
             user_id: isAuthenticated ? user.id : null,
-            ip,
+            ip: trackedIp,
             user_agent: userAgent,
         };
 

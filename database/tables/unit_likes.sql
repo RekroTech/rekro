@@ -9,3 +9,9 @@ create table public.unit_likes (
 ) TABLESPACE pg_default;
 
 create index IF not exists property_likes_by_unit on public.unit_likes using btree (unit_id) TABLESPACE pg_default;
+
+-- RLS
+alter table public.unit_likes enable row level security;
+CREATE POLICY "Public can view property likes" ON public.unit_likes FOR SELECT TO public USING (true);
+CREATE POLICY "Users can like as themselves" ON public.unit_likes FOR INSERT TO public WITH CHECK ((auth.uid() = user_id));
+CREATE POLICY "Users can unlike their own" ON public.unit_likes FOR DELETE TO public USING ((auth.uid() = user_id));

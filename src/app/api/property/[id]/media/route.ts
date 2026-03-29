@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { uploadPropertyFiles } from "@/lib/services";
 import { isAdmin } from "@/lib/utils";
-import { errorResponse, successResponse, precheck } from "@/app/api/utils";
+import { dbErrorResponse, errorResponse, successResponse, precheck } from "@/app/api/utils";
 
 /**
  * POST /api/property/[id]/media
@@ -59,8 +59,7 @@ export async function POST(
             .single();
 
         if (updateError) {
-            console.error("Error updating property images:", updateError);
-            return errorResponse(updateError.message, 500);
+            return dbErrorResponse("property/[id]/media update-images", updateError, "Failed to update property images");
         }
 
         return successResponse(
@@ -74,9 +73,8 @@ export async function POST(
             200
         );
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Internal server error";
         console.error("Error in POST /api/property/[id]/media:", error);
-        return errorResponse(message, 500);
+        return errorResponse("Internal server error", 500);
     }
 }
 
