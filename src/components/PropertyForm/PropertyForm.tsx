@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { Globe, EyeOff, Trash2 } from "lucide-react";
 import type { PropertyInsert, UnitInsert } from "@/types/db";
 import type { AddPropertyModalProps } from "../Property/types";
-import { Button, Modal, Loader } from "@/components/common";
-import { useCreateProperty, useUpdateProperty, useProperty } from "@/lib/hooks/property";
+import { Button, Modal, Loader, SegmentedControl } from "@/components/common";
+import { useCreateProperty, useUpdateProperty, useProperty, useDeleteProperty } from "@/lib/hooks/property";
 import { calculateRoomRents, calculateEntireHomeRent } from "@/lib/utils/pricing";
 import { usePropertyForm, useMediaFiles } from "./hooks";
 import { BasicInformationSection } from "./sections/BasicInformationSection";
@@ -18,8 +19,11 @@ const DEFAULT_UNIT_STATUS = "active";
 
 export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddPropertyModalProps) {
     const [error, setError] = useState<string | null>(null);
+    const [isPublished, setIsPublished] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const createProperty = useCreateProperty();
     const updateProperty = useUpdateProperty();
+    const deleteProperty = useDeleteProperty();
     const isEditMode = !!propertyId;
     const {
         data: property,
@@ -54,6 +58,14 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
         handleRemoveUploadedFile,
         resetMedia,
     } = useMediaFiles(property);
+
+    // Sync publish state when property loads in edit mode
+    useEffect(() => {
+        if (property) {
+            setIsPublished(property.is_published ?? false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [property?.id, property?.is_published]);
 
     // Track if we should auto-calculate room prices (only when user changes base price)
     const shouldAutoCalculate = useRef(false);
@@ -177,12 +189,27 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
             location,
             latitude: formData.latitude ?? null,
             longitude: formData.longitude ?? null,
+            is_published: isPublished,
         };
     };
 
     const handleClose = () => {
         setError(null);
+        if (!isEditMode) setIsPublished(false);
         onClose();
+    };
+
+    const handleDelete = async () => {
+        if (!property) return;
+        try {
+            await deleteProperty.mutateAsync(property.id);
+            setShowDeleteConfirm(false);
+            if (onSuccess) onSuccess();
+            onClose();
+        } catch (err) {
+            setShowDeleteConfirm(false);
+            setError(err instanceof Error ? err.message : "Failed to delete property");
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -311,6 +338,25 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
                     </div>
                 )}
 
+                {/* Listing Visibility */}
+                <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-subtle px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4">
+                    <div className="min-w-0">
+                        <p className="text-sm font-semibold text-text">Listing Visibility</p>
+                    </div>
+                    <div className="w-full sm:w-auto">
+                        <SegmentedControl
+                            options={[
+                                { value: false, label: "Hidden", icon: EyeOff },
+                                { value: true, label: "Published", icon: Globe },
+                            ]}
+                            value={isPublished}
+                            onChange={(v) => setIsPublished(v as boolean)}
+                            ariaLabel="Listing visibility"
+                            size="sm"
+                        />
+                    </div>
+                </div>
+
                 {/* Basic Information */}
                 <BasicInformationSection formData={formData} updateFormData={setFormData} />
 
@@ -343,7 +389,23 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
                 />
 
                 {/* Form Actions */}
-                <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:justify-end">
+                <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    {/* Delete — edit mode only */}
+                    {isEditMode ? (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            disabled={deleteProperty.isPending || isPropertyLoading}
+                            className="w-full border !border-danger-600 !text-danger-600 hover:!bg-danger-50 hover:!text-danger-600 active:!bg-danger-100 focus:!shadow-none focus-visible:!shadow-none sm:w-auto"
+                        >
+                            <Trash2 size={15} className="mr-1.5" strokeWidth={2} />
+                            Delete listing
+                        </Button>
+                    ) : (
+                        <span />
+                    )}
+
                     <Button
                         type="submit"
                         variant="primary"
@@ -354,10 +416,35 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
                         }
                         className="w-full sm:w-auto"
                     >
-                        {updateProperty.isPending || createProperty.isPending ? "Saving" : "Save"}
+                        {updateProperty.isPending || createProperty.isPending ? "Saving…" : "Save"}
                     </Button>
                 </div>
             </form>
+
+            {/* Delete confirmation modal */}
+            <Modal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                title="Delete this listing?"
+                size="sm"
+                primaryButton={{
+                    label: deleteProperty.isPending ? "Deleting…" : "Delete permanently",
+                    onClick: handleDelete,
+                    variant: "danger",
+                    isLoading: deleteProperty.isPending,
+                }}
+                secondaryButton={{
+                    label: "Keep listing",
+                    onClick: () => setShowDeleteConfirm(false),
+                    variant: "secondary",
+                }}
+                fullWidthButtons
+            >
+                <p className="text-sm text-text-muted">
+                    This will permanently remove the listing, all its units, and any uploaded
+                    images. <span className="font-semibold text-text">This cannot be undone.</span>
+                </p>
+            </Modal>
 
             {isEditMode && isPropertyLoading && (
                 <div className="mt-3 rounded-md border border-border bg-card p-3">

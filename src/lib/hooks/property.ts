@@ -226,3 +226,34 @@ export function useUpdateProperty() {
         },
     });
 }
+
+/**
+ * Hook to hard-delete a property and all its units/storage
+ */
+export function useDeleteProperty() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (propertyId: string) => {
+            const response = await fetch(`/api/property/${propertyId}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || "Failed to delete property");
+            }
+
+            return response.json();
+        },
+        onSuccess: (_, propertyId) => {
+            queryClient.removeQueries({ queryKey: propertyKeys.detail(propertyId, false) });
+            queryClient.removeQueries({ queryKey: propertyKeys.detail(propertyId, true) });
+            queryClient.invalidateQueries({ queryKey: propertyKeys.lists() });
+        },
+        onError: (error) => {
+            console.error("Failed to delete property:", error);
+        },
+    });
+}
+

@@ -255,7 +255,7 @@ export async function DELETE(
         // Verify property exists and user has permission
         const { data: existingProperty, error: fetchError } = await supabase
             .from("properties")
-            .select("id, created_by")
+            .select("id, created_by, images")
             .eq("id", propertyId)
             .single();
 
@@ -276,6 +276,25 @@ export async function DELETE(
 
         if (deleteError) {
             return dbErrorResponse("property/[id] delete-property", deleteError, "Failed to delete property");
+        }
+
+        // Best-effort: clean up storage images after DB deletion
+        const images = Array.isArray(existingProperty.images) ? existingProperty.images : [];
+        if (images.length > 0) {
+            const storagePaths = images
+                .map((img: string) => toStoragePath(img, propertyId))
+                .filter((p): p is string => !!p);
+
+            if (storagePaths.length > 0) {
+                const { error: storageError } = await supabase
+                    .storage
+                    .from(STORAGE_BUCKET)
+                    .remove(storagePaths);
+
+                if (storageError) {
+                    console.error("property/[id] delete-storage: Failed to clean up images:", storageError);
+                }
+            }
         }
 
         return successResponse({ message: "Property deleted successfully" }, 200);

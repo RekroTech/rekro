@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from "react";
 import type { Unit } from "@/types/db";
 import type { Property } from "@/types/property.types";
 import { useAuthModal, useProfileCompletion } from "@/contexts";
-import { useApplication, useSessionUser } from "@/lib/hooks";
+import { useApplication, useSessionUser, useRoles } from "@/lib/hooks";
 import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
 import { Info, Circle, Mail, FileText } from "lucide-react";
 import { clsx } from "clsx";
@@ -39,6 +39,7 @@ export function PropertySidebar({
 }: PropertySidebarProps) {
     // Authentication and user data
     const { data: user } = useSessionUser();
+    const { isAdmin } = useRoles();
     const { openAuthModal } = useAuthModal();
     const isAuthenticated = !!user;
     const streetAddress = property.address?.street || getLocalityString(property.address);
@@ -142,6 +143,19 @@ export function PropertySidebar({
 
     return (
         <div className="space-y-4">
+            {isAdmin && (
+                <div className="bg-card border border-warning-500/40 rounded-lg p-4 sm:p-6 shadow-lg">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-warning-600 mb-2">
+                        Base Rent
+                    </p>
+                    <p className="text-3xl font-bold text-warning-600">
+                        ${pricing.baseRent.toFixed(2)}
+                        <span className="text-base font-normal text-text-muted">/week</span>
+                    </p>
+                    <p className="text-sm text-text-muted mt-1">Bond: ${pricing.bond.toFixed(2)}</p>
+                </div>
+            )}
+
             <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-lg">
                 <div className="mb-6">
                     <div className="flex items-start justify-between gap-4">
