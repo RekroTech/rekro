@@ -6,6 +6,7 @@ import { Modal, Icon } from "@/components/common";
 import { formatDateShort, formatRentalDuration } from "@/lib/utils";
 import type { ApplicationWithDetails } from "./types";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
+import { getApplicationPropertyTitle } from "./utils";
 import { DefinitionItem, DefinitionList } from "@/components/ApplicationReview/components";
 import { Eye, LucideIcon, User, FileText, Calendar, Check, Mail, Phone } from "lucide-react";
 
@@ -27,6 +28,7 @@ export function ApplicationDetailsModal({
     } | null>(null);
     const applicant = application.applicant;
     const profile = applicant?.user_application_profile;
+    const propertyTitle = getApplicationPropertyTitle(application.properties);
 
     // Document labels mapping
     const documentLabels: Record<string, string> = {
@@ -48,7 +50,7 @@ export function ApplicationDetailsModal({
             <Modal
                 isOpen={isOpen}
                 onClose={onClose}
-                title={application.properties.title}
+                title={propertyTitle}
                 size="xl"
                 secondaryButton={{
                     label: "Close",

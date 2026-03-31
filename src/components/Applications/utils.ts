@@ -8,6 +8,19 @@ import { FileText, Info, CheckCircle, AlertCircle, X } from "lucide-react";
 import { ApplicationWithDetails } from "@/components/Applications/types";
 import { generateApplicationPDF } from "@/lib/utils";
 
+export function getApplicationPropertyTitle(
+    property: ApplicationWithDetails["properties"]
+): string {
+    const street = property.address?.street?.trim();
+    const suburbOrCity = property.address?.suburb?.trim() || property.location?.city?.trim();
+
+    if (street && suburbOrCity) {
+        return `${street}, ${suburbOrCity}`;
+    }
+
+    return street || suburbOrCity || "Property";
+}
+
 /**
  * Get Tailwind classes for application status badges
  * @param status - Application status
@@ -68,6 +81,7 @@ export function canWithdraw(status: string): boolean {
 export async function downloadApplication(application: ApplicationWithDetails): Promise<void> {
     const property = application.properties;
     const unit = application.units;
+    const propertyTitle = getApplicationPropertyTitle(property);
 
     if (!property || !unit) return;
 
@@ -84,7 +98,7 @@ export async function downloadApplication(application: ApplicationWithDetails): 
         total_rent: application.total_rent,
         message: application.message,
         property: {
-            title: property.title,
+            title: propertyTitle,
             location: {
                 city: property.location.city,
                 state: property.location.state,

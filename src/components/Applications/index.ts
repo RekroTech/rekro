@@ -28,5 +28,11 @@ export type { ApplicationWithDetails, GroupedApplication } from "./types";
 // ============================================================================
 // Applications Utilities
 // ============================================================================
-export { getStatusColor, getStatusIcon, canWithdraw, downloadApplication } from "./utils";
+export {
+	getStatusColor,
+	getStatusIcon,
+	canWithdraw,
+	downloadApplication,
+	getApplicationPropertyTitle,
+} from "./utils";
 

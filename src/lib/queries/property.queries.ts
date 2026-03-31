@@ -434,12 +434,13 @@ export async function getProperties(
         const tokens = buildSearchTokens(search);
 
         const fields = [
-            "title",
             "description",
             "address->>street",
             "address->>city",
             "address->>state",
             "address->>suburb",
+            "address->>postcode",
+            "units.name",
         ];
 
         const conditions = tokens.flatMap((token) => fields.map((f) => `${f}.ilike."%${token}%"`));

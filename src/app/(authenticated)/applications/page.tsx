@@ -7,6 +7,7 @@ import { Button, Icon, BackButton } from "@/components/common";
 import {
     ApplicationCard,
     AdminApplicationCard,
+    getApplicationPropertyTitle,
 } from "@/components/Applications";
 import type { ApplicationWithDetails, GroupedApplication } from "@/components/Applications";
 import { useApplications, useAdminApplications, useRoles } from "@/lib/hooks";
@@ -116,6 +117,7 @@ export default function ApplicationsPage() {
                             const property = group.property;
                             const applications = group.applications;
                             const image = property.images?.[0];
+                            const propertyTitle = getApplicationPropertyTitle(property);
 
                             return (
                                 <div key={property.id} className="" data-testid="applications-property-group">
@@ -126,7 +128,7 @@ export default function ApplicationsPage() {
                                             {image ? (
                                                 <Image
                                                     src={image}
-                                                    alt={property.title}
+                                                    alt={propertyTitle}
                                                     fill
                                                     className="object-cover"
                                                     sizes="(max-width: 1024px) 100vw, 320px"
@@ -148,7 +150,7 @@ export default function ApplicationsPage() {
                                             <div className="bg-card flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-3 p-4 sm:p-6 sm:pb-4 rounded-b-[var(--radius-card-lg)] lg:rounded-r-[var(--radius-card-lg)] lg:rounded-bl-none border border-border shadow-[var(--shadow-card)]">
                                                 <div className="flex-1 min-w-0">
                                                     <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-text mb-1.5">
-                                                        {property.title}
+                                                        {propertyTitle}
                                                     </h3>
                                                     <div className="flex items-center gap-2 text-xs sm:text-sm text-text-muted">
                                                         <Icon

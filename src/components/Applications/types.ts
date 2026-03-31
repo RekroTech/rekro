@@ -13,7 +13,6 @@ export interface ApplicationWithDetails {
     message: string | null;
     properties: {
         id: string;
-        title: string;
         address: Address;
         images: string[] | null;
         location: Location;
