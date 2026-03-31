@@ -15,6 +15,7 @@ interface PropertyUnitSnapshot {
     hasLeasedRoom: boolean;
     hasPublicRoomUnit: boolean;
     unitStatuses: Set<UnitStatus>;
+    isPublished: boolean;
 }
 
 interface PropertyPublicVisibility {
@@ -23,7 +24,7 @@ interface PropertyPublicVisibility {
     isRoomVisible: boolean;
 }
 
-function createPropertyUnitSnapshot(units: EffectiveStatusUnit[] | undefined): PropertyUnitSnapshot {
+function createPropertyUnitSnapshot(units: EffectiveStatusUnit[] | undefined, isPublished: boolean = true): PropertyUnitSnapshot {
     const safeUnits = units ?? [];
     const entireHomeUnit = safeUnits.find((unit) => unit.listing_type === "entire_home");
     const roomUnits = safeUnits.filter((unit) => unit.listing_type === "room");
@@ -37,11 +38,13 @@ function createPropertyUnitSnapshot(units: EffectiveStatusUnit[] | undefined): P
         hasLeasedRoom: roomUnits.some((unit) => unit.status === "leased"),
         hasPublicRoomUnit: roomUnits.some((unit) => unit.status !== "inactive"),
         unitStatuses: new Set<UnitStatus>(safeUnits.map((unit) => unit.status)),
+        isPublished,
     };
 }
 
 /**
  * Admin tabs are driven by unit statuses, with explicit exceptions for the active tab.
+ * Unpublished properties are also considered "inactive".
  */
 function getPropertyStatuses(snapshot: PropertyUnitSnapshot): Set<UnitStatus> {
     const statuses = new Set<UnitStatus>();
@@ -50,7 +53,7 @@ function getPropertyStatuses(snapshot: PropertyUnitSnapshot): Set<UnitStatus> {
         statuses.add("leased");
     }
 
-    if (snapshot.unitStatuses.has("inactive")) {
+    if (snapshot.unitStatuses.has("inactive") || !snapshot.isPublished) {
         statuses.add("inactive");
     }
 
@@ -481,7 +484,7 @@ export async function getProperties(
 
     const allPropertyUnits = await getPropertyUnitsByPropertyIds(properties.map((prop) => prop.id));
     const propertySnapshotsByPropertyId = new Map(
-        properties.map((prop) => [prop.id, createPropertyUnitSnapshot(allPropertyUnits.get(prop.id))])
+        properties.map((prop) => [prop.id, createPropertyUnitSnapshot(allPropertyUnits.get(prop.id), prop.is_published)])
     );
     const propertyStatusesByPropertyId = new Map(
         properties.map((prop) => [
@@ -586,7 +589,7 @@ export async function getPropertyById(id: string, isAdmin = false, userId?: stri
         throw new Error(error.message);
     }
 
-    const propertySnapshot = createPropertyUnitSnapshot(property.units);
+    const propertySnapshot = createPropertyUnitSnapshot(property.units, property.is_published);
 
     if (!isAdmin && !getPublicVisibility(propertySnapshot).isVisible) {
         throw new Error("Property not found");
