@@ -1,9 +1,11 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+const isDevelopment = process.env.NODE_ENV === "development";
+
 const nextConfig: NextConfig = {
     /* React Compiler (experimental) */
-    reactCompiler: true,
+    reactCompiler: !isDevelopment,
 
     /* Image Optimization */
     images: {
@@ -39,7 +41,7 @@ const nextConfig: NextConfig = {
             bodySizeLimit: "2mb",
         },
         // Optimize CSS
-        optimizeCss: true,
+        optimizeCss: !isDevelopment,
         // Enable PPR (Partial Prerendering) when ready
         // ppr: "incremental",
     },
@@ -53,7 +55,7 @@ const nextConfig: NextConfig = {
     /* Logging */
     logging: {
         fetches: {
-            fullUrl: true,
+            fullUrl: !isDevelopment,
         },
     },
 
@@ -119,7 +121,7 @@ const nextConfig: NextConfig = {
     },
 };
 
-export default withSentryConfig(nextConfig, {
+const sentryOptions = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
@@ -149,7 +151,7 @@ export default withSentryConfig(nextConfig, {
   release: {
     // Automatically detect commits from the git repo at build time
     setCommits: {
-      auto: true,
+      auto: true as const,
     },
     // Mark the Vercel environment (production / preview / development) on each release
     deploy: {
@@ -170,4 +172,8 @@ export default withSentryConfig(nextConfig, {
       removeDebugLogging: true,
     },
   },
-});
+};
+
+const config = isDevelopment ? nextConfig : withSentryConfig(nextConfig, sentryOptions);
+
+export default config;

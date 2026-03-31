@@ -249,27 +249,72 @@ function buildSearchTokens(search: string): string[] {
 }
 
 /**
- * Bulk fetch likes for multiple units efficiently
+ * Bulk fetch likes data for multiple units efficiently
+ * Returns both user's liked status and total like counts in a single query
  */
-async function getBulkUnitLikes(unitIds: string[], userId: string): Promise<Set<string>> {
-    if (!unitIds.length || !userId) {
-        return new Set();
+async function getBulkUnitLikesData(
+    unitIds: string[],
+    userId?: string
+): Promise<Map<string, { isLiked: boolean; likesCount: number }>> {
+    if (!unitIds.length) {
+        return new Map();
     }
 
     const supabase = createClient();
+    const resultMap = new Map<string, { isLiked: boolean; likesCount: number }>();
 
-    const { data: likes, error } = await supabase
-        .from("unit_likes")
-        .select("unit_id")
-        .eq("user_id", userId)
-        .in("unit_id", unitIds);
+    // Initialize all units with default values
+    unitIds.forEach((id) => {
+        resultMap.set(id, { isLiked: false, likesCount: 0 });
+    });
 
-    if (error) {
-        console.error("Error fetching bulk unit likes:", error);
-        return new Set();
+    // Fetch user's likes if userId provided
+    if (userId) {
+        const { data: userLikes, error: userLikesError } = await supabase
+            .from("unit_likes")
+            .select("unit_id")
+            .eq("user_id", userId)
+            .in("unit_id", unitIds);
+
+        if (userLikesError) {
+            console.error("Error fetching user's unit likes:", userLikesError);
+        } else {
+            userLikes?.forEach((like) => {
+                const existing = resultMap.get(like.unit_id);
+                if (existing) {
+                    existing.isLiked = true;
+                }
+            });
+        }
     }
 
-    return new Set(likes?.map((like) => like.unit_id) || []);
+    // Fetch like counts for all units
+    // Note: This requires a count query or aggregation from unit_likes table
+    // For efficiency, we'll do this in a batch with a custom query
+    const { data: likeCounts, error: countsError } = await supabase
+        .from("unit_likes")
+        .select("unit_id")
+        .in("unit_id", unitIds);
+
+    if (countsError) {
+        console.error("Error fetching unit like counts:", countsError);
+    } else {
+        // Count occurrences of each unit_id
+        const countMap = new Map<string, number>();
+        likeCounts?.forEach((like) => {
+            countMap.set(like.unit_id, (countMap.get(like.unit_id) || 0) + 1);
+        });
+
+        // Update result map with counts
+        countMap.forEach((count, unitId) => {
+            const existing = resultMap.get(unitId);
+            if (existing) {
+                existing.likesCount = count;
+            }
+        });
+    }
+
+    return resultMap;
 }
 
 /**
@@ -478,22 +523,27 @@ export async function getProperties(
         units: sortUnits(prop.units),
     }));
 
-    // Bulk fetch likes if userId is provided
+    // Bulk fetch likes data (both isLiked and likesCount) if userId is provided
     if (userId && properties.length > 0) {
         const allUnitIds = properties.flatMap(
             (prop) => prop.units?.map((unit: Unit) => unit.id) || []
         );
+        const uniqueUnitIds = [...new Set(allUnitIds)];
 
-        if (allUnitIds.length > 0) {
-            const likedUnitIds = await getBulkUnitLikes(allUnitIds, userId);
+        if (uniqueUnitIds.length > 0) {
+            const likesData = await getBulkUnitLikesData(uniqueUnitIds, userId);
 
             properties = properties.map((prop) => ({
                 ...prop,
                 units:
-                    prop.units?.map((unit: Unit) => ({
-                        ...unit,
-                        isLiked: likedUnitIds.has(unit.id),
-                    })) || [],
+                    prop.units?.map((unit: Unit) => {
+                        const unitLikesData = likesData.get(unit.id) ?? { isLiked: false, likesCount: 0 };
+                        return {
+                            ...unit,
+                            isLiked: unitLikesData.isLiked,
+                            likesCount: unitLikesData.likesCount,
+                        };
+                    }) || [],
             }));
         }
     }
@@ -512,7 +562,7 @@ export async function getProperties(
 /**
  * Get a single property by ID
  */
-export async function getPropertyById(id: string, isAdmin = false): Promise<Property> {
+export async function getPropertyById(id: string, isAdmin = false, userId?: string): Promise<Property> {
     const supabase = createClient();
 
     const query = supabase
@@ -542,15 +592,31 @@ export async function getPropertyById(id: string, isAdmin = false): Promise<Prop
         throw new Error("Property not found");
     }
 
+    let units: Property["units"] = property.units ?? [];
+
     if (!isAdmin) {
-        return {
-            ...property,
-            units: sortUnits(shapePublicUnits(property.units, propertySnapshot)),
-        };
+        units = sortUnits(shapePublicUnits(units, propertySnapshot));
+    } else {
+        units = sortUnits(units);
+    }
+
+    // Fetch likes data if userId provided
+    if (userId && units.length > 0) {
+        const unitIds = units.map((unit) => unit.id);
+        const likesData = await getBulkUnitLikesData(unitIds, userId);
+
+        units = units.map((unit) => {
+            const unitLikesData = likesData.get(unit.id) ?? { isLiked: false, likesCount: 0 };
+            return {
+                ...unit,
+                isLiked: unitLikesData.isLiked,
+                likesCount: unitLikesData.likesCount,
+            };
+        });
     }
 
     return {
         ...property,
-        units: sortUnits(property.units),
+        units,
     };
 }

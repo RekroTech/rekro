@@ -1,8 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { useSessionUser } from "@/lib/hooks/auth";
 import type { UnitShareInsert } from "@/types/db";
+import type { GetPropertiesResponse } from "@/types/property.types";
 import { CACHE_STRATEGIES } from "@/lib/config/cache_config";
+import { propertyKeys } from "@/lib/hooks/property";
 
 // ============================================================================
 // Query Keys
@@ -13,8 +15,6 @@ export const unitKeys = {
     byProperty: (propertyId: string) => [...unitKeys.all, propertyId] as const,
     likes: (unitId: string) => ["unit-likes", unitId] as const,
     likeCount: (unitId: string) => ["unit-like-count", unitId] as const,
-    bulkLikeCounts: (unitIds: string[]) =>
-        ["unit-like-counts", unitIds.sort().join(",")] as const,
     shares: (unitId: string) => ["unit-shares", unitId] as const,
     shareCount: (unitId: string) => ["unit-share-count", unitId] as const,
 };
@@ -58,6 +58,62 @@ async function toggleUnitLike(
 
         return true;
     }
+}
+
+function patchLikeInPropertyLists(
+    oldData: InfiniteData<GetPropertiesResponse> | undefined,
+    unitId: string,
+    nextLiked: boolean
+) {
+    if (!oldData) return oldData;
+
+    return {
+        ...oldData,
+        pages: oldData.pages.map((page) => ({
+            ...page,
+            data: page.data.map((property) => ({
+                ...property,
+                units: property.units?.map((unit) => {
+                    if (unit.id !== unitId) return unit;
+                    const currentCount = unit.likesCount ?? 0;
+                    const nextCount = nextLiked
+                        ? currentCount + 1
+                        : Math.max(0, currentCount - 1);
+
+                    return {
+                        ...unit,
+                        isLiked: nextLiked,
+                        likesCount: nextCount,
+                    };
+                }),
+            })),
+        })),
+    };
+}
+
+function patchLikeInPropertyDetail<T extends { units?: Array<{ id: string; isLiked?: boolean; likesCount?: number }> }>(
+    oldData: T | undefined,
+    unitId: string,
+    nextLiked: boolean
+) {
+    if (!oldData?.units) return oldData;
+
+    return {
+        ...oldData,
+        units: oldData.units.map((unit) => {
+            if (unit.id !== unitId) return unit;
+            const currentCount = unit.likesCount ?? 0;
+            const nextCount = nextLiked
+                ? currentCount + 1
+                : Math.max(0, currentCount - 1);
+
+            return {
+                ...unit,
+                isLiked: nextLiked,
+                likesCount: nextCount,
+            };
+        }),
+    } as T;
 }
 
 
@@ -176,9 +232,66 @@ export function useToggleUnitLike() {
             }
             return toggleUnitLike(unitId, sessionUser.id, isLiked);
         },
-        onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: unitKeys.likes(variables.unitId) });
-            queryClient.invalidateQueries({ queryKey: unitKeys.likeCount(variables.unitId) });
+        onMutate: async ({ unitId, isLiked }) => {
+            const nextLiked = !isLiked;
+            const previousLiked = queryClient.getQueryData<boolean>(unitKeys.likes(unitId));
+            const previousLikeCount = queryClient.getQueryData<number>(unitKeys.likeCount(unitId));
+
+            queryClient.setQueryData(unitKeys.likes(unitId), nextLiked);
+
+            if (typeof previousLikeCount === "number") {
+                queryClient.setQueryData(
+                    unitKeys.likeCount(unitId),
+                    nextLiked ? previousLikeCount + 1 : Math.max(0, previousLikeCount - 1)
+                );
+            }
+
+            queryClient.setQueriesData(
+                { queryKey: propertyKeys.lists() },
+                (oldData: InfiniteData<GetPropertiesResponse> | undefined) =>
+                    patchLikeInPropertyLists(oldData, unitId, nextLiked)
+            );
+
+            queryClient.setQueriesData(
+                { queryKey: propertyKeys.details() },
+                (
+                    oldData:
+                        | { units?: Array<{ id: string; isLiked?: boolean; likesCount?: number }> }
+                        | undefined
+                ) => patchLikeInPropertyDetail(oldData, unitId, nextLiked)
+            );
+
+            return {
+                unitId,
+                previousLiked,
+                previousLikeCount,
+                previousLists: queryClient.getQueriesData({ queryKey: propertyKeys.lists() }),
+                previousDetails: queryClient.getQueriesData({ queryKey: propertyKeys.details() }),
+            };
+        },
+        onError: (_error, _variables, context) => {
+            if (!context) return;
+
+            if (context.previousLiked !== undefined) {
+                queryClient.setQueryData(unitKeys.likes(context.unitId), context.previousLiked);
+            }
+
+            if (typeof context.previousLikeCount === "number") {
+                queryClient.setQueryData(unitKeys.likeCount(context.unitId), context.previousLikeCount);
+            }
+
+            context.previousLists.forEach(([queryKey, data]) => {
+                queryClient.setQueryData(queryKey, data);
+            });
+
+            context.previousDetails.forEach(([queryKey, data]) => {
+                queryClient.setQueryData(queryKey, data);
+            });
+        },
+        onSettled: (_data, _error, variables) => {
+            // Keep single-unit hooks fresh without triggering broad list refetches.
+            void queryClient.invalidateQueries({ queryKey: unitKeys.likes(variables.unitId) });
+            void queryClient.invalidateQueries({ queryKey: unitKeys.likeCount(variables.unitId) });
         },
     });
 }

@@ -117,7 +117,6 @@ export function useApplications() {
                     *,
                     properties!inner (
                         id,
-                        title,
                         address,
                         images,
                         location
@@ -170,7 +169,6 @@ export function useAdminApplications(filters?: {
                     *,
                     properties!inner (
                         id,
-                        title,
                         address,
                         images,
                         location

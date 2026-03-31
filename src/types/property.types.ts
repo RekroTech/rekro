@@ -23,10 +23,19 @@ export interface Inclusion {
 export type Inclusions = Partial<Record<InclusionType, Inclusion>>;
 
 /**
+ * Unit extended with like-related data (optional fields)
+ * Used when userId is provided to getProperties()
+ */
+export interface UnitWithLikes extends Unit {
+    isLiked?: boolean;
+    likesCount?: number;
+}
+
+/**
  * Property with detailed units (includes availability and likes)
  */
 export interface Property extends BaseProperty {
-    units: Unit[];
+    units: UnitWithLikes[];
 }
 
 export interface GetPropertiesParams {

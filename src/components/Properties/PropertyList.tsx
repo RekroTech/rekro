@@ -42,11 +42,10 @@ export function PropertyList({
 }: PropertyListProps = {}) {
     const normalizedListingType = listingType && listingType !== "all" ? listingType : undefined;
 
-    const { data: sessionUser, isLoading: sessionUserLoading } = useSessionUser({
-        enabled: likedOnly,
-    });
+    const { data: sessionUser, isLoading: sessionUserLoading } = useSessionUser();
 
-    const userId = likedOnly ? sessionUser?.id : undefined;
+    // Pass userId when available so unit likes are hydrated in one bulk property query.
+    const userId = sessionUser?.id;
     const canFetch = !likedOnly || (!!userId && !sessionUserLoading);
 
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =

@@ -41,11 +41,11 @@ export function useProperties(
 }
 
 export function useProperty(id: string) {
-    const { isAdmin } = useRoles();
+    const {user, isAdmin } = useRoles();
 
     return useQuery<Property>({
         queryKey: propertyKeys.detail(id, isAdmin),
-        queryFn: () => getPropertyById(id, isAdmin),
+        queryFn: () => getPropertyById(id, isAdmin, user?.id),
         enabled: !!id,
         ...CACHE_STRATEGIES.STATIC,
     });

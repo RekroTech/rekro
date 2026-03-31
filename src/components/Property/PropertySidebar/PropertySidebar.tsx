@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import type { Unit } from "@/types/db";
-import type { Property } from "@/types/property.types";
+import type { UnitWithLikes, Property } from "@/types/property.types";
 import { useAuthModal, useProfileCompletion } from "@/contexts";
 import { useApplication, useSessionUser, useRoles } from "@/lib/hooks";
 import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
@@ -25,7 +24,7 @@ import { ProfileCompletionModal } from "./ProfileCompletionModal";
 import { Tooltip } from "@/components/common/Tooltip";
 
 interface PropertySidebarProps {
-    selectedUnit: Unit;
+    selectedUnit: UnitWithLikes;
     property: Property;
     onUnitOccupancyChange?: (unitId: string, occupancy: number) => void;
     dynamicPricing?: Record<string, number>;
@@ -197,6 +196,8 @@ export function PropertySidebar({
                             <UnitLikeButton
                                 unitId={selectedUnit.id}
                                 propertyId={property.id}
+                                isLiked={selectedUnit.isLiked ?? false}
+                                likesCount={selectedUnit.likesCount ?? 0}
                                 isEntireHome={isEntireHome}
                             />
                         </div>

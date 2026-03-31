@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { Property, Unit } from "@/types/db";
+import type { Property, UnitWithLikes } from "@/types/property.types";
 import { Bed, Bath, Car, MapPin, Pencil } from "lucide-react";
 import { Icon, Visual } from "@/components/common";
 import { getPropertyFileUrl } from "@/lib/services";
@@ -15,7 +15,7 @@ import { UnitLikeButton } from "../Property/PropertySidebar/UnitLikeButton";
 import { ShareDropdown } from "@/components/Property";
 
 interface PropertyCardProps {
-    property: Property & { units?: Unit[] };
+    property: Property & { units?: UnitWithLikes[] };
     showEditButton?: boolean;
     /** Pass true for the first card above the fold so the LCP image is eagerly loaded. */
     priority?: boolean;
@@ -123,7 +123,12 @@ export function PropertyCard({
                             className="absolute top-2 right-2 sm:top-3 sm:right-3 flex items-center gap-1 z-20"
                             onClick={(e) => e.preventDefault()}
                         >
-                            <UnitLikeButton unitId={firstUnit.id} propertyId={id} />
+                            <UnitLikeButton
+                                unitId={firstUnit.id}
+                                propertyId={id}
+                                isLiked={firstUnit.isLiked ?? false}
+                                likesCount={firstUnit.likesCount ?? 0}
+                            />
                             <ShareDropdown propertyAddress={streetAddress} unitId={firstUnit.id} propertyId={id} />
                         </div>
                     )}
