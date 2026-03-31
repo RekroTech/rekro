@@ -331,7 +331,7 @@ export async function getProperties(
     const {
         limit = 12,
         offset = 0,
-        isPublished = true,
+        isPublished = undefined,
         isAdmin = false,
         userId,
         likedOnly = false,
@@ -392,8 +392,11 @@ export async function getProperties(
     }
 
     // Apply filters
+    // For non-admin queries, default to published only if not explicitly set
     if (isPublished !== undefined) {
         query = query.eq("is_published", isPublished);
+    } else if (!isAdmin) {
+        query = query.eq("is_published", true);
     }
 
     if (propertyType) {
