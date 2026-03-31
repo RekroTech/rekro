@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { Filter, Grid3X3, Map, Search, X } from "lucide-react";
 import { useQueryState, parseAsStringLiteral } from "nuqs";
 import clsx from "clsx";
@@ -13,9 +14,20 @@ import { useEmailVerification, VerificationErrorModal } from "@/components/Auth"
 import { usePropertyFilters } from "@/components/Properties";
 import { FilterDropdown } from "@/components/Properties/FilterDropdown";
 import type { FilterValues } from "@/components/Properties/FilterDropdown";
-import { PropertyMapView } from "@/components/Properties/PropertyMapView";
 import { LISTING_TYPES, STATUS_TABS } from "@/components/PropertyForm";
 import { ListingTab, UnitStatus } from "@/types/property.types";
+
+const LazyPropertyMapView = dynamic(
+    () => import("@/components/Properties/PropertyMapView").then((mod) => ({ default: mod.PropertyMapView })),
+    {
+        loading: () => (
+            <div className="flex h-[60vh] items-center justify-center">
+                <Loader size="md" text="Loading map..." />
+            </div>
+        ),
+        ssr: false,
+    }
+);
 
 function HomePageContent() {
     const { isAdmin } = useRoles();
@@ -286,7 +298,7 @@ function HomePageContent() {
                         showEditButton={isAdmin}
                     />
                 ) : (
-                    <PropertyMapView
+                    <LazyPropertyMapView
                         search={debouncedSearchQuery}
                         directFlyTo={mapDirectFlyTo}
                         propertyType={propertyType}
