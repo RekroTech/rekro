@@ -4,7 +4,6 @@ import React, { lazy, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Header, Footer } from "@/components/layout";
-import { Loader } from "@/components/common";
 import { useAuthStateSync, useSessionUser } from "@/lib/hooks/auth";
 import { useRoles } from "@/lib/hooks/roles";
 import { useAuthModal, usePropertyFormModal } from "@/contexts";
@@ -17,7 +16,7 @@ const AuthModal = lazy(() =>
 const PropertyForm = dynamic(
     () => import("@/components/PropertyForm").then((mod) => ({ default: mod.PropertyForm })),
     {
-        loading: () => <Loader size="md" />,
+        loading: () => null,
         ssr: false,
     }
 );
@@ -39,7 +38,7 @@ interface AppShellProps {
  */
 export default function AppShell({ children }: AppShellProps) {
     const pathname = usePathname();
-    const { isLoading: isSessionLoading, data: user } = useSessionUser();
+    const { data: user } = useSessionUser();
     const { isAdmin } = useRoles();
 
     // Sync auth state with Supabase
@@ -49,14 +48,6 @@ export default function AppShell({ children }: AppShellProps) {
     const { isAuthModalOpen, closeAuthModal, redirectTo, authModalError } = useAuthModal();
     const { isOpen: isPropertyFormOpen, closeModal: closePropertyForm } = usePropertyFormModal();
 
-    // Show loading state while checking session
-    if (isSessionLoading) {
-        return (
-            <div className="fixed inset-0 flex items-center justify-center bg-background">
-                <Loader size="md" text="Loading..." />
-            </div>
-        );
-    }
 
     return (
         <>

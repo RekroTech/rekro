@@ -59,7 +59,7 @@ export function Visual({
 
     showBadge = true,
 
-    unoptimizedRemote = true,
+    unoptimizedRemote = false,
 }: PropertyMediaProps) {
     const [errored, setErrored] = useState(false);
 

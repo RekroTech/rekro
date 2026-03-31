@@ -39,13 +39,14 @@ function HomePageContent() {
     const [isPending, startTransition] = useTransition();
     const [showFilterDropdown, setShowFilterDropdown] = useState(false);
     const [mapDirectFlyTo, setMapDirectFlyTo] = useState<{ lat: number; lng: number } | null>(null);
+    const [isSearchInteracted, setIsSearchInteracted] = useState(false);
     const filterAnchorRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     // Attach Google Places Autocomplete to the search input in both grid and map views
     usePlacesAutocomplete({
         inputRef: searchInputRef,
-        enabled: true,
+        enabled: isSearchInteracted || viewMode === "map",
         onValueChange: (val) => handleSearchChange(val),
         onPlaceSelect: (place: PlaceSelection) => {
             handleSearchChange(place.description);
@@ -154,6 +155,7 @@ function HomePageContent() {
                                 // Clear stored coords when user types freely
                                 if (mapDirectFlyTo) setMapDirectFlyTo(null);
                             }}
+                            onFocus={() => setIsSearchInteracted(true)}
                             size="sm"
                             leftIcon={<Icon icon={Search} size={16} />}
                             rightIcon={

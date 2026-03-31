@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Bath, Bed, Car, X } from "lucide-react";
 import type { Property, Unit } from "@/types/db";
 import { Icon, Visual } from "@/components/common";
-import { getPropertyFileUrl } from "@/lib/services";
+import { getPropertyFileUrlWithTransform } from "@/lib/services";
 import { getLocalityString } from "@/lib/utils";
 import { usePrefetchProperty } from "@/lib/hooks/property";
 
@@ -23,7 +23,7 @@ export function PropertyMapCard({ property, onClose }: PropertyMapCardProps) {
 
     const imageUrl =
         images && images.length > 0 && images[0]
-            ? getPropertyFileUrl(images[0], id)
+            ? getPropertyFileUrlWithTransform(images[0], { width: 360, quality: 70 }, id)
             : "/window.svg";
 
     const addressText = address ? getLocalityString(address) : "Location not specified";
@@ -54,6 +54,7 @@ export function PropertyMapCard({ property, onClose }: PropertyMapCardProps) {
                     src={imageUrl}
                     alt={address.street}
                     fill
+                    sizes="130px"
                     objectFit="cover"
                     className="transition-transform duration-300 hover:scale-105"
                 />

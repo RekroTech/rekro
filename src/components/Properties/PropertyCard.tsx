@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Property, UnitWithLikes } from "@/types/property.types";
 import { Bed, Bath, Car, MapPin, Pencil } from "lucide-react";
 import { Icon, Visual } from "@/components/common";
-import { getPropertyFileUrl } from "@/lib/services";
+import { getPropertyFileUrlWithTransform } from "@/lib/services";
 import { getLocalityString, getPriceBadges } from "@/lib/utils";
 import { useRoles } from "@/lib/hooks";
 import { usePrefetchProperty } from "@/lib/hooks/property";
@@ -50,9 +50,15 @@ export function PropertyCard({
         units?.find((unit) => unit.status === "active") ?? (units && units.length > 0 ? units[0] : null);
 
     // Process all images for gallery
-    const imageUrls = images && images.length > 0
-        ? images.map(img => getPropertyFileUrl(img, id))
-        : ["/window.svg"];
+    const imageUrls = useMemo(
+        () =>
+            images && images.length > 0
+                ? images.map((img) =>
+                    getPropertyFileUrlWithTransform(img, { width: 1200, quality: 72 }, id)
+                )
+                : ["/window.svg"],
+        [images, id]
+    );
 
     // Format address to show only locality (suburb/city + state), street is shown above
     const addressText = address ? getLocalityString(address, false) : "Location not specified";
@@ -111,6 +117,7 @@ export function PropertyCard({
                             src={imageUrls[0] || "/window.svg"}
                             alt={streetAddress}
                             fill
+                            sizes="(max-width: 1024px) 50vw, 33vw"
                             className="group-hover:scale-105 transition-transform duration-300"
                             priority={priority}
                         />

@@ -7,6 +7,12 @@ export interface UploadFileResult {
     path: string;
 }
 
+export interface PropertyImageTransformOptions {
+    width?: number;
+    height?: number;
+    quality?: number;
+}
+
 const STORAGE_BUCKET = "rekro-s3";
 
 /**
@@ -104,9 +110,36 @@ export async function uploadPropertyFiles(
  * @param propertyId - Required when pathOrUrl is just a filename
  */
 export function getPropertyFileUrl(pathOrUrl: string, propertyId?: string): string {
+    return getPropertyFileUrlWithOptions(pathOrUrl, propertyId);
+}
+
+function getPropertyFileUrlWithOptions(
+    pathOrUrl: string,
+    propertyId?: string,
+    options?: PropertyImageTransformOptions
+): string {
+    const hasTransform =
+        typeof options?.width === "number" ||
+        typeof options?.height === "number" ||
+        typeof options?.quality === "number";
+
     // If it's already a full URL, return it as-is (for backward compatibility)
     if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
-        return pathOrUrl;
+        if (!hasTransform) {
+            return pathOrUrl;
+        }
+
+        const url = new URL(pathOrUrl);
+        if (typeof options?.width === "number") {
+            url.searchParams.set("width", String(options.width));
+        }
+        if (typeof options?.height === "number") {
+            url.searchParams.set("height", String(options.height));
+        }
+        if (typeof options?.quality === "number") {
+            url.searchParams.set("quality", String(options.quality));
+        }
+        return url.toString();
     }
 
     // If it's a full path starting with "property/", use it as-is
@@ -121,8 +154,24 @@ export function getPropertyFileUrl(pathOrUrl: string, propertyId?: string): stri
     const supabase = createClient();
     const {
         data: { publicUrl },
-    } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fullPath);
+    } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fullPath, {
+        transform: hasTransform
+            ? {
+                width: options?.width,
+                height: options?.height,
+                quality: options?.quality,
+            }
+            : undefined,
+    });
     return publicUrl;
+}
+
+export function getPropertyFileUrlWithTransform(
+    pathOrUrl: string,
+    options?: PropertyImageTransformOptions,
+    propertyId?: string
+): string {
+    return getPropertyFileUrlWithOptions(pathOrUrl, propertyId, options);
 }
 
 /**
