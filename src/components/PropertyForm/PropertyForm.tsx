@@ -344,13 +344,13 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
                         <p className="text-sm font-semibold text-text">Listing Visibility</p>
                     </div>
                     <div className="w-full sm:w-auto">
-                        <SegmentedControl
+                        <SegmentedControl<boolean>
                             options={[
                                 { value: false, label: "Hidden", icon: EyeOff },
                                 { value: true, label: "Published", icon: Globe },
                             ]}
                             value={isPublished}
-                            onChange={(v) => setIsPublished(v as boolean)}
+                            onChange={setIsPublished}
                             ariaLabel="Listing visibility"
                             size="sm"
                         />

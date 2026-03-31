@@ -145,7 +145,6 @@ const mockUnit = {
 
 const mockProperty = {
   id: MOCK_PROPERTY_ID,
-  title: 'Test Sharehaus Melbourne',
   description: 'A well-located share house in Fitzroy.',
   property_type: 'house',
   bedrooms: 3,
@@ -191,6 +190,34 @@ export async function mockProperties(page: Page) {
       contentType: 'application/json',
       headers: { 'content-range': '0-0/1' },
       body: JSON.stringify([mockProperty]),
+    });
+  });
+
+  // Stub the units table — getPropertyUnitsByPropertyIds fetches from here to
+  // build the visibility snapshot.  Without this mock the snapshot has 0 units,
+  // shapePublicUnits returns [] and every property is filtered out.
+  await page.route('**/rest/v1/units**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([{
+        id: MOCK_UNIT_ID,
+        property_id: MOCK_PROPERTY_ID,
+        listing_type: 'room',
+        name: 'Room A',
+        description: 'A cosy private room.',
+        price: 350,
+        bond_amount: 700,
+        bills_included: false,
+        min_lease: 3,
+        max_lease: 12,
+        max_occupants: 1,
+        size_sqm: 14,
+        status: 'active',
+        available_from: '2026-03-01',
+        available_to: null,
+        features: null,
+      }]),
     });
   });
 

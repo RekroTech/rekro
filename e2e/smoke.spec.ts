@@ -118,14 +118,16 @@ test('enquiry form: unauthenticated user sees login prompt when attempting to bo
   await page.evaluate(() => window.scrollBy(0, 500));
   await page.waitForTimeout(400);
 
-  // The CTA for a guest should read "Login to Book".
-  const bookBtn = page.getByRole('button', { name: /book now/i }).first();
+  // The primary CTA button on the property sidebar.
+  // For unauthenticated users the label reads "Start Application".
+  const bookBtn = page.getByRole('button', { name: /start application|send enquiry/i }).first();
   await expect(bookBtn).toBeVisible({ timeout: 10_000 });
 
   await bookBtn.click();
   await page.waitForTimeout(1_200);
 
-  // After clicking, either an email input (auth modal) or auth param in the URL.
+  // After clicking "Start Application" as a guest, openAuthModal() fires which
+  // either opens an email-input modal or redirects to a login URL.
   const hasEmailInput = await page.locator('input[type="email"]').isVisible({ timeout: 5_000 }).catch(() => false);
   const hasAuthInUrl  = page.url().includes('auth=open') || page.url().includes('/login');
 
