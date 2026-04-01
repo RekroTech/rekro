@@ -57,10 +57,11 @@ function getPropertyStatuses(snapshot: PropertyUnitSnapshot): Set<UnitStatus> {
         statuses.add("inactive");
     }
 
+    // A property should show in the active admin tab if it's published and has at least one active unit
+    const hasActiveEntireHome = snapshot.entireHomeUnit?.status === "active";
     const canShowInActiveAdminTab =
         snapshot.isPublished &&
-        snapshot.hasActiveRoom &&
-        snapshot.entireHomeUnit?.status !== "leased";
+        (snapshot.hasActiveRoom || hasActiveEntireHome);
 
     if (canShowInActiveAdminTab) {
         statuses.add("active");
