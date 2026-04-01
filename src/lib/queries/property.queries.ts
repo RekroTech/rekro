@@ -44,7 +44,7 @@ function createPropertyUnitSnapshot(units: EffectiveStatusUnit[] | undefined, is
 
 /**
  * Admin tabs are driven by unit statuses, with explicit exceptions for the active tab.
- * Unpublished properties are also considered "inactive".
+ * Unpublished properties are classified as inactive only.
  */
 function getPropertyStatuses(snapshot: PropertyUnitSnapshot): Set<UnitStatus> {
     const statuses = new Set<UnitStatus>();
@@ -58,7 +58,9 @@ function getPropertyStatuses(snapshot: PropertyUnitSnapshot): Set<UnitStatus> {
     }
 
     const canShowInActiveAdminTab =
-        snapshot.hasActiveRoom && snapshot.entireHomeUnit?.status !== "leased";
+        snapshot.isPublished &&
+        snapshot.hasActiveRoom &&
+        snapshot.entireHomeUnit?.status !== "leased";
 
     if (canShowInActiveAdminTab) {
         statuses.add("active");

@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from "react";
 import type { UnitWithLikes, Property } from "@/types/property.types";
 import { useAuthModal, useProfileCompletion } from "@/contexts";
 import { useApplication, useSessionUser, useRoles } from "@/lib/hooks";
-import { Button, Icon, Input, Select, SegmentedControl } from "@/components/common";
+import { Button, Icon, DatePicker, Select, SegmentedControl } from "@/components/common";
 import { Info, Circle, Mail, FileText } from "lucide-react";
 import { clsx } from "clsx";
 import {
@@ -239,12 +239,11 @@ export function PropertySidebar({
                     <div className="mt-6 space-y-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="min-w-0">
-                                <Input
-                                    type="date"
+                                <DatePicker
                                     id="startDate"
                                     label="Preferred Start Date"
                                     value={rentalForm.moveInDate}
-                                    onChange={(e) => updateRentalForm({ moveInDate: e.target.value })}
+                                    onChange={(value) => updateRentalForm({ moveInDate: value })}
                                     min={getMinStartDate(selectedUnit.available_from)}
                                     max={getMaxStartDate(
                                         selectedUnit.available_from,

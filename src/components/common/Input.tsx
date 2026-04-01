@@ -102,9 +102,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                             prefix && "pl-8",
                             rightIcon && !isDateLike && "pr-20",
                             // Date/time inputs have an internal picker icon/button (esp. iOS Safari).
-                            // Reserve space for it and prevent the control from expanding.
+                            // Reserve space for it without clipping the native browser affordance.
                             isDateLike &&
-                                "appearance-none min-w-0 box-border pr-12 overflow-hidden [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-date-and-time-value]:overflow-hidden [&::-webkit-date-and-time-value]:text-ellipsis",
+                                "min-w-0 box-border pr-10 [&::-webkit-date-and-time-value]:overflow-hidden [&::-webkit-date-and-time-value]:text-ellipsis [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:dark:invert",
                             // Hide the native browser clear button on search inputs (we render our own)
                             props.type === "search" &&
                                 "[&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",

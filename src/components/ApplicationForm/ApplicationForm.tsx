@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, SegmentedControl, Select, Textarea } from "@/components/common";
+import { Input, DatePicker, SegmentedControl, Select, Textarea } from "@/components/common";
 import type { Property } from "@/types/property.types";
 import type { Unit } from "@/types/db";
 import type { RentalFormData } from "@/components/Property";
@@ -30,14 +30,12 @@ export function ApplicationForm({
             <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <Input
+                        <DatePicker
                             label="Move In Date"
-                            type="date"
                             value={rentalForm.moveInDate}
-                            onChange={(e) => updateRentalForm({ moveInDate: e.target.value })}
+                            onChange={(value) => updateRentalForm({ moveInDate: value })}
                             min={getMinStartDate(selectedUnit.available_from)}
                             max={getMaxStartDate(selectedUnit.available_from, selectedUnit.available_to)}
-                            required
                         />
                     </div>
 

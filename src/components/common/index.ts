@@ -18,6 +18,7 @@ export { Checkbox } from "./Checkbox";
 export { Textarea } from "./Textarea";
 export { Upload, UploadPresets } from "./Upload";
 export { SegmentedControl } from "./SegmentedControl";
+export { DatePicker } from "./DatePicker";
 
 // ============================================================================
 // Layout Components

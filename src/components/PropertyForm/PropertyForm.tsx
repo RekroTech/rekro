@@ -19,7 +19,7 @@ const DEFAULT_UNIT_STATUS = "active";
 
 export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddPropertyModalProps) {
     const [error, setError] = useState<string | null>(null);
-    const [isPublished, setIsPublished] = useState(false);
+    const [isPublished, setIsPublished] = useState<boolean | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const createProperty = useCreateProperty();
     const updateProperty = useUpdateProperty();
@@ -59,13 +59,19 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
         resetMedia,
     } = useMediaFiles(property);
 
-    // Sync publish state when property loads in edit mode
+    // Reset publish draft whenever the modal mode changes.
     useEffect(() => {
-        if (property) {
-            setIsPublished(property.is_published ?? false);
+        setIsPublished(isEditMode ? null : false);
+    }, [isEditMode, propertyId, isOpen]);
+
+    // Hydrate the publish draft once edit data is available without overwriting user changes.
+    useEffect(() => {
+        if (!isOpen || !isEditMode || !property || property.id !== propertyId) {
+            return;
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [property?.id, property?.is_published]);
+
+        setIsPublished((current) => current ?? (property.is_published ?? false));
+    }, [isOpen, isEditMode, propertyId, property]);
 
     // Track if we should auto-calculate room prices (only when user changes base price)
     const shouldAutoCalculate = useRef(false);
@@ -161,6 +167,10 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
         setFormData({ price });
     };
 
+    const resolvedIsPublished =
+        isPublished ??
+        (isEditMode && property?.id === propertyId ? (property.is_published ?? false) : null);
+
     const buildPropertyPayload = () => {
         const street = formData.address_street.trim() || formData.address_full.trim();
         const city = formData.address_city.trim();
@@ -189,13 +199,13 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
             location,
             latitude: formData.latitude ?? null,
             longitude: formData.longitude ?? null,
-            is_published: isPublished,
+            is_published: resolvedIsPublished ?? false,
         };
     };
 
     const handleClose = () => {
         setError(null);
-        if (!isEditMode) setIsPublished(false);
+        setIsPublished(isEditMode ? null : false);
         onClose();
     };
 
@@ -349,10 +359,11 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
                                 { value: false, label: "Hidden", icon: EyeOff },
                                 { value: true, label: "Published", icon: Globe },
                             ]}
-                            value={isPublished}
+                            value={resolvedIsPublished}
                             onChange={setIsPublished}
                             ariaLabel="Listing visibility"
                             size="sm"
+                            disabled={isEditMode && resolvedIsPublished === null}
                         />
                     </div>
                 </div>
