@@ -353,7 +353,7 @@ export function PropertySidebar({
             />
 
             <ApplicationModal
-                key={`${selectedUnit?.id || "none"}-${application?.id || "none"}`}
+                key={selectedUnit?.id || "none"}
                 isOpen={isApplicationModalOpen && !isUnitUnavailable}
                 onClose={() => setIsApplicationModalOpen(false)}
                 property={property}
