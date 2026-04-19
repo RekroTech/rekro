@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { clsx } from "clsx";
-import { User, CheckCircle, X, Mail } from "lucide-react";
+import { User, CheckCircle, X, Mail, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import { Icon, Button } from "@/components/common";
 import { formatDateShort, formatDistanceToNow, formatRentalDuration } from "@/lib/utils";
@@ -21,6 +21,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
     const { mutateAsync: updateStatus } = useUpdateApplicationStatus();
     const { showSuccess, showError } = useToast();
     const unit = application.units;
+    const previousStatus = application.status;
 
     const handleStatusChange = async (newStatus: string) => {
         setIsUpdatingStatus(true);
@@ -29,9 +30,17 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                 applicationId: application.id,
                 status: newStatus,
             });
-            showSuccess(
-                `Application ${newStatus === "approved" ? "approved" : "rejected"} successfully`
-            );
+            const successMessageByStatus: Record<string, string> = {
+                approved: "Application approved successfully",
+                rejected: "Application rejected successfully",
+                under_review:
+                    previousStatus === "approved"
+                        ? "Approval undone. Application moved to review"
+                        : previousStatus === "rejected"
+                          ? "Rejection undone. Application moved to review"
+                          : "Application moved to review",
+            };
+            showSuccess(successMessageByStatus[newStatus] || "Application status updated successfully");
         } catch (error) {
             console.error("Error updating status:", error);
             showError("Failed to update application status");
@@ -57,12 +66,17 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
     };
 
     const canTakeAction = !["approved", "rejected", "withdrawn"].includes(application.status);
+    const canUndoApprove = application.status === "approved";
+    const canUndoReject = application.status === "rejected";
+    const canUndoDecision = canUndoApprove || canUndoReject;
+    const undoLabel = canUndoApprove ? "Undo Approve" : "Undo Reject";
+    const statusLabel = application.status.replace(/_/g, " ");
 
     return (
         <>
             <div
                 onClick={handleCardClick}
-                className="bg-card rounded-[var(--radius-card)] overflow-hidden border border-border hover:border-primary-500/30 hover:shadow-[var(--shadow-lift)] transition-all duration-200 cursor-pointer p-3 sm:p-0"
+                className="bg-card rounded-card overflow-hidden border border-border hover:border-primary-500/30 hover:shadow-lift transition-all duration-200 cursor-pointer p-3 sm:p-0"
                 data-testid="application-card"
             >
                 {/* Mobile & Tablet Layout */}
@@ -70,7 +84,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                     {/* Top Row: Image on left, Name/Email and Unit info stacked on right */}
                     <div className="flex gap-3">
                         {/* Applicant Photo */}
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                             {application.applicant?.image_url ? (
                                 <div className="relative w-24 h-24 rounded-lg overflow-hidden">
                                     <Image
@@ -112,13 +126,33 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                         </a>
                                     )}
                                    </div>
-                                    {application.status === "under_review" && (
-                                        <div className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex-shrink-0 h-fit self-start">
-                                            <span className="text-xs font-normal text-blue-700 dark:text-blue-300 leading-tight">
-                                                Review
-                                            </span>
-                                        </div>
-                                    )}
+                                    <div
+                                        className={clsx(
+                                            "px-2 py-0.5 rounded-full border shrink-0 h-fit self-start",
+                                            application.status === "approved"
+                                                ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                                                : application.status === "rejected"
+                                                  ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                                                  : application.status === "under_review"
+                                                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                                                    : "bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-700"
+                                        )}
+                                    >
+                                        <span
+                                            className={clsx(
+                                                "text-xs font-medium capitalize leading-tight",
+                                                application.status === "approved"
+                                                    ? "text-green-700 dark:text-green-300"
+                                                    : application.status === "rejected"
+                                                      ? "text-red-700 dark:text-red-300"
+                                                      : application.status === "under_review"
+                                                        ? "text-blue-700 dark:text-blue-300"
+                                                        : "text-gray-700 dark:text-gray-300"
+                                            )}
+                                        >
+                                            {statusLabel}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -173,7 +207,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                     </div>
 
                     {/* Action Buttons */}
-                    {canTakeAction ? (
+                    {canTakeAction && (
                         <div className="grid grid-cols-2 gap-2" onClick={(e) => e.stopPropagation()}>
                             <Button
                                 onClick={(e) => {
@@ -202,40 +236,22 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                 <span className="text-sm">Reject</span>
                             </Button>
                         </div>
-                    ) : (
-                        <div
-                            className={clsx(
-                                "flex items-center justify-center gap-2 px-4 py-2 rounded-lg",
-                                application.status === "approved"
-                                    ? "bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700"
-                                    : application.status === "rejected"
-                                      ? "bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700"
-                                      : "bg-gray-100 dark:bg-gray-900/30 border border-gray-300 dark:border-gray-700"
-                            )}
-                        >
-                            <Icon
-                                icon={application.status === "approved" ? CheckCircle : X}
-                                size={16}
-                                className={clsx(
-                                    application.status === "approved"
-                                        ? "text-green-600 dark:text-green-400"
-                                        : application.status === "rejected"
-                                          ? "text-red-600 dark:text-red-400"
-                                          : "text-gray-600 dark:text-gray-400"
-                                )}
-                            />
-                            <span
-                                className={clsx(
-                                    "text-sm font-medium capitalize",
-                                    application.status === "approved"
-                                        ? "text-green-700 dark:text-green-300"
-                                        : application.status === "rejected"
-                                          ? "text-red-700 dark:text-red-300"
-                                          : "text-gray-700 dark:text-gray-300"
-                                )}
+                    )}
+                    {canUndoDecision && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <Button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStatusChange("under_review");
+                                }}
+                                disabled={isUpdatingStatus}
+                                variant="secondary"
+                                size="sm"
+                                className="w-full"
                             >
-                                {application.status}
-                            </span>
+                                <Icon icon={RotateCcw} size={16} className="mr-1" />
+                                <span className="text-sm">{undoLabel}</span>
+                            </Button>
                         </div>
                     )}
                 </div>
@@ -243,7 +259,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                 {/* Desktop Layout */}
                 <div className="hidden sm:flex">
                     {/* Left: Applicant Photo */}
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                         {application.applicant?.image_url ? (
                             <div className="relative w-32 h-32 md:w-48 md:h-48">
                                 <Image
@@ -277,13 +293,33 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                         <h3 className="text-lg md:text-xl font-bold text-text truncate">
                                             {application.applicant?.full_name || "N/A"}
                                         </h3>
-                                        {application.status === "under_review" && (
-                                            <div className="px-3 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                                                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">
-                                                    Review Initiated
-                                                </span>
-                                            </div>
-                                        )}
+                                        <div
+                                            className={clsx(
+                                                "px-3 rounded-full border",
+                                                application.status === "approved"
+                                                    ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                                                    : application.status === "rejected"
+                                                      ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                                                      : application.status === "under_review"
+                                                        ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                                                        : "bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-700"
+                                            )}
+                                        >
+                                            <span
+                                                className={clsx(
+                                                    "text-xs font-semibold capitalize",
+                                                    application.status === "approved"
+                                                        ? "text-green-700 dark:text-green-300"
+                                                        : application.status === "rejected"
+                                                          ? "text-red-700 dark:text-red-300"
+                                                          : application.status === "under_review"
+                                                            ? "text-blue-700 dark:text-blue-300"
+                                                            : "text-gray-700 dark:text-gray-300"
+                                                )}
+                                            >
+                                                {statusLabel}
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-text-muted">
                                         {application.applicant?.email && (
@@ -292,7 +328,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                                 className="text-primary-600 hover:text-primary-700 transition-colors flex items-center gap-1 truncate"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
-                                                <Icon icon={Mail} size={16} className="flex-shrink-0" />
+                                                <Icon icon={Mail} size={16} className="shrink-0" />
                                                 <span className="truncate">
                                                     {application.applicant.email}
                                                 </span>
@@ -327,7 +363,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                             </div>
 
                             {/* Column 2: Unit Name, Rent, Proposed Rent */}
-                            <div className="text-right flex-shrink-0">
+                            <div className="text-right shrink-0">
                                 <h4 className="text-base font-semibold text-text truncate">{unit.name}</h4>
                                 <p className="text-xl font-bold text-primary-600">
                                     ${application.total_rent}
@@ -364,7 +400,7 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                             </div>
 
                             {/* Right: Action Buttons or Status */}
-                            {canTakeAction ? (
+                            {canTakeAction && (
                                 <div
                                     className="flex items-center gap-2"
                                     onClick={(e) => e.stopPropagation()}
@@ -395,42 +431,21 @@ export function AdminApplicationCard({ application }: AdminApplicationCardProps)
                                         <span>Reject</span>
                                     </Button>
                                 </div>
-                            ) : (
-                                <div
-                                    className={clsx(
-                                        "flex items-center gap-2 px-4 py-2 rounded-md",
-                                        application.status === "approved"
-                                            ? "bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700"
-                                            : application.status === "rejected"
-                                              ? "bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700"
-                                              : "bg-gray-100 dark:bg-gray-900/30 border border-gray-300 dark:border-gray-700"
-                                    )}
-                                >
-                                    <Icon
-                                        icon={
-                                            application.status === "approved" ? CheckCircle : X
-                                        }
-                                        size={20}
-                                        className={clsx(
-                                            application.status === "approved"
-                                                ? "text-green-600 dark:text-green-400"
-                                                : application.status === "rejected"
-                                                  ? "text-red-600 dark:text-red-400"
-                                                  : "text-gray-600 dark:text-gray-400"
-                                        )}
-                                    />
-                                    <span
-                                        className={clsx(
-                                            "font-medium capitalize",
-                                            application.status === "approved"
-                                                ? "text-green-700 dark:text-green-300"
-                                                : application.status === "rejected"
-                                                  ? "text-red-700 dark:text-red-300"
-                                                  : "text-gray-700 dark:text-gray-300"
-                                        )}
+                            )}
+                            {canUndoDecision && (
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <Button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleStatusChange("under_review");
+                                        }}
+                                        disabled={isUpdatingStatus}
+                                        variant="secondary"
+                                        size="sm"
                                     >
-                                        {application.status}
-                                    </span>
+                                        <Icon icon={RotateCcw} size={16} className="mr-1.5" />
+                                        <span>{undoLabel}</span>
+                                    </Button>
                                 </div>
                             )}
                         </div>

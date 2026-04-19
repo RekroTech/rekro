@@ -142,16 +142,16 @@ export function PropertySidebar({
 
     return (
         <div className="space-y-4">
-            {isAdmin && (
+            {isAdmin && property.price !== null && property.price !== undefined && (
                 <div className="bg-card border border-warning-500/40 rounded-lg p-4 sm:p-6 shadow-lg">
                     <p className="text-xs font-semibold uppercase tracking-wide text-warning-600 mb-2">
                         Base Rent
                     </p>
                     <p className="text-3xl font-bold text-warning-600">
-                        ${pricing.baseRent.toFixed(2)}
+                        ${property.price.toFixed(2)}
                         <span className="text-base font-normal text-text-muted">/week</span>
                     </p>
-                    <p className="text-sm text-text-muted mt-1">Bond: ${pricing.bond.toFixed(2)}</p>
+                    <p className="text-sm text-text-muted mt-1">Bond: ${(property.price * 4).toFixed(2)}</p>
                 </div>
             )}
 
