@@ -12,6 +12,7 @@ import {
 import type { ApplicationWithDetails, GroupedApplication } from "@/components/Applications";
 import { useApplications, useAdminApplications, useRoles } from "@/lib/hooks";
 import { ApplicationCardSkeleton } from "@/components/common/Skeleton";
+import { getPropertyFileUrlWithTransform } from "@/lib/services";
 
 
 export default function ApplicationsPage() {
@@ -87,7 +88,7 @@ export default function ApplicationsPage() {
                 <BackButton className="mb-4 sm:mb-6" />
                 {groupedApplications.length === 0 ? (
                     <div
-                        className="bg-card rounded-[var(--radius-card-lg)] shadow-[var(--shadow-card)] border border-border p-8 sm:p-12 text-center"
+                        className="bg-card rounded-card-lg shadow-card border border-border p-8 sm:p-12 text-center"
                         data-testid="applications-empty"
                     >
                         <div className="max-w-md mx-auto">
@@ -116,7 +117,13 @@ export default function ApplicationsPage() {
                         {groupedApplications.map((group) => {
                             const property = group.property;
                             const applications = group.applications;
-                            const image = property.images?.[0];
+                            const imageUrl = property.images?.[0]
+                                ? getPropertyFileUrlWithTransform(
+                                    property.images[0],
+                                    { width: 1200, quality: 72 },
+                                    property.id
+                                  )
+                                : null;
                             const propertyTitle = getApplicationPropertyTitle(property);
 
                             return (
@@ -124,10 +131,10 @@ export default function ApplicationsPage() {
                                     {/* Property Header */}
                                     <div className="flex flex-col lg:flex-row lg:items-start">
                                         {/* Property Image */}
-                                        <div className="rounded-t-[var(--radius-card-lg)] lg:rounded-l-[var(--radius-card-lg)] lg:rounded-tr-none relative w-full lg:w-72 xl:w-80 h-48 sm:h-56 lg:h-64 flex-shrink-0 shadow-[var(--shadow-card)] overflow-hidden">
-                                            {image ? (
+                                        <div className="rounded-t-card-lg lg:rounded-l-card-lg lg:rounded-tr-none relative w-full lg:w-72 xl:w-80 h-48 sm:h-56 lg:h-64 shrink-0 shadow-card overflow-hidden">
+                                            {imageUrl ? (
                                                 <Image
-                                                    src={image}
+                                                    src={imageUrl}
                                                     alt={propertyTitle}
                                                     fill
                                                     className="object-cover"
@@ -147,7 +154,7 @@ export default function ApplicationsPage() {
                                         {/* Property Info & Applications */}
                                         <div className="flex-1">
                                             {/* Property Header */}
-                                            <div className="bg-card flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-3 p-4 sm:p-6 sm:pb-4 rounded-b-[var(--radius-card-lg)] lg:rounded-r-[var(--radius-card-lg)] lg:rounded-bl-none border border-border shadow-[var(--shadow-card)]">
+                                            <div className="bg-card flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-3 p-4 sm:p-6 sm:pb-4 rounded-b-card-lg lg:rounded-r-card-lg lg:rounded-bl-none border border-border shadow-card">
                                                 <div className="flex-1 min-w-0">
                                                     <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-text mb-1.5">
                                                         {propertyTitle}
@@ -156,7 +163,7 @@ export default function ApplicationsPage() {
                                                         <Icon
                                                             icon={MapPin}
                                                             size={16}
-                                                            className="flex-shrink-0"
+                                                            className="shrink-0"
                                                         />
                                                         <span className="truncate">
                                                             {property.location.city},{" "}
@@ -170,7 +177,7 @@ export default function ApplicationsPage() {
                                                     onClick={() =>
                                                         (window.location.href = `/property/${property.id}`)
                                                     }
-                                                    className="border border-border flex-shrink-0 w-full sm:w-auto justify-center"
+                                                    className="border border-border shrink-0 w-full sm:w-auto justify-center"
                                                 >
                                                     <Icon icon={Eye} size={16} className="mr-2" />
                                                     View Property
