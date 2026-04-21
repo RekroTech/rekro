@@ -22,6 +22,68 @@ export interface ProfileFormState {
     documents: Documents;
 }
 
+export type ProfileSectionId =
+    | "personal-details"
+    | "visa-details"
+    | "income-details"
+    | "documents"
+    | "location-preferences";
+
+function getResidencyDocuments(documents: Documents): ResidencyFormState["documents"] {
+    return {
+        passport: documents.passport,
+        visa: documents.visa,
+    };
+}
+
+function getIncomeDocuments(documents: Documents): IncomeDetailsFormState["documents"] {
+    return {
+        payslips: documents.payslips,
+        bankStatement: documents.bankStatement,
+        employmentLetter: documents.employmentLetter,
+        studentId: documents.studentId,
+        coe: documents.coe,
+        proofOfFunds: documents.proofOfFunds,
+    };
+}
+
+function getAdditionalDocuments(documents: Documents): AdditionalDocumentsFormState {
+    return {
+        drivingLicense: documents.drivingLicense,
+        referenceLetter: documents.referenceLetter,
+        guarantorLetter: documents.guarantorLetter,
+    };
+}
+
+function buildCanonicalDocuments(
+    state: Pick<ProfileFormState, "residency" | "incomeDetails" | "additionalDocuments">
+): Documents {
+    return {
+        ...state.residency.documents,
+        ...state.incomeDetails.documents,
+        ...state.additionalDocuments,
+    } as Documents;
+}
+
+function deepEqual(a: unknown, b: unknown): boolean {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (typeof a !== typeof b) return false;
+
+    if (typeof a === "object" && typeof b === "object") {
+        const keysA = Object.keys(a as Record<string, unknown>);
+        const keysB = Object.keys(b as Record<string, unknown>);
+
+        if (keysA.length !== keysB.length) return false;
+
+        return keysA.every((key) =>
+            deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])
+        );
+    }
+
+    return false;
+}
+
 /**
  * Deep comparison utility for detecting changes
  * Handles nested objects and null/undefined values
@@ -29,37 +91,13 @@ export interface ProfileFormState {
 function hasChanges(current: ProfileFormState, original: ProfileFormState | undefined): boolean {
     if (!original) return false;
 
-    // Helper to compare two values deeply
-    const deepEqual = (a: unknown, b: unknown): boolean => {
-        if (a === b) return true;
-        if (a == null || b == null) return false;
-        if (typeof a !== typeof b) return false;
-
-        if (typeof a === 'object' && typeof b === 'object') {
-            const keysA = Object.keys(a as Record<string, unknown>);
-            const keysB = Object.keys(b as Record<string, unknown>);
-
-            if (keysA.length !== keysB.length) return false;
-
-            return keysA.every(key =>
-                deepEqual(
-                    (a as Record<string, unknown>)[key],
-                    (b as Record<string, unknown>)[key]
-                )
-            );
-        }
-
-        return false;
-    };
-
     // Compare each section - if any section is NOT equal, we have changes
     return (
         !deepEqual(current.personalDetails, original.personalDetails) ||
         !deepEqual(current.residency, original.residency) ||
         !deepEqual(current.incomeDetails, original.incomeDetails) ||
         !deepEqual(current.rentalPreferences, original.rentalPreferences) ||
-        !deepEqual(current.additionalDocuments, original.additionalDocuments) ||
-        !deepEqual(current.documents, original.documents)
+        !deepEqual(current.additionalDocuments, original.additionalDocuments)
     );
 }
 
@@ -114,8 +152,8 @@ function createInitialState(): ProfileFormState {
             destination_location: null,
             max_budget_per_week: null,
             preferred_locality: null,
-            has_pets: null,
-            smoker: null,
+            has_pets: false,
+            smoker: false,
         },
         additionalDocuments: {},
         documents: {} as Documents,
@@ -130,25 +168,9 @@ function hydrateFromUser(user: UserProfile): ProfileFormState {
     const allDocs = (app?.documents as Documents) ?? ({} as Documents);
 
     // Split documents by section
-    const residencyDocs = {
-        passport: allDocs.passport,
-        visa: allDocs.visa,
-    };
-
-    const incomeDocs = {
-        payslips: allDocs.payslips,
-        bankStatement: allDocs.bankStatement,
-        employmentLetter: allDocs.employmentLetter,
-        studentId: allDocs.studentId,
-        coe: allDocs.coe,
-        proofOfFunds: allDocs.proofOfFunds,
-    };
-
-    const otherDocs = {
-        drivingLicense: allDocs.drivingLicense,
-        referenceLetter: allDocs.referenceLetter,
-        guarantorLetter: allDocs.guarantorLetter,
-    };
+    const residencyDocs = getResidencyDocuments(allDocs);
+    const incomeDocs = getIncomeDocuments(allDocs);
+    const otherDocs = getAdditionalDocuments(allDocs);
 
     return {
         personalDetails: {
@@ -184,8 +206,8 @@ function hydrateFromUser(user: UserProfile): ProfileFormState {
             destination_location: null,
             max_budget_per_week: app?.max_budget_per_week ?? null,
             preferred_locality: app?.preferred_locality ?? null,
-            has_pets: app?.has_pets ?? null,
-            smoker: app?.smoker ?? null,
+            has_pets: app?.has_pets ?? false,
+            smoker: app?.smoker ?? false,
         },
         additionalDocuments: otherDocs,
         documents: allDocs,
@@ -206,30 +228,66 @@ function profileFormReducer(
                 personalDetails: { ...state.personalDetails, ...action.payload },
             };
         case "SET_RESIDENCY":
-            return {
-                ...state,
-                residency: { ...state.residency, ...action.payload },
-            };
+            {
+                const nextState = {
+                    ...state,
+                    residency: { ...state.residency, ...action.payload },
+                };
+
+                return {
+                    ...nextState,
+                    documents: buildCanonicalDocuments(nextState),
+                };
+            }
         case "SET_INCOME_DETAILS":
-            return {
-                ...state,
-                incomeDetails: { ...state.incomeDetails, ...action.payload },
-            };
+            {
+                const nextState = {
+                    ...state,
+                    incomeDetails: { ...state.incomeDetails, ...action.payload },
+                };
+
+                return {
+                    ...nextState,
+                    documents: buildCanonicalDocuments(nextState),
+                };
+            }
         case "SET_RENTAL_PREFERENCES":
             return {
                 ...state,
                 rentalPreferences: { ...state.rentalPreferences, ...action.payload },
             };
         case "SET_ADDITIONAL_DOCUMENTS":
-            return {
-                ...state,
-                additionalDocuments: { ...state.additionalDocuments, ...action.payload },
-            };
+            {
+                const nextState = {
+                    ...state,
+                    additionalDocuments: { ...state.additionalDocuments, ...action.payload },
+                };
+
+                return {
+                    ...nextState,
+                    documents: buildCanonicalDocuments(nextState),
+                };
+            }
         case "SET_DOCUMENTS":
-            return {
-                ...state,
-                documents: action.payload,
-            };
+            {
+                const nextState = {
+                    ...state,
+                    residency: {
+                        ...state.residency,
+                        documents: getResidencyDocuments(action.payload),
+                    },
+                    incomeDetails: {
+                        ...state.incomeDetails,
+                        documents: getIncomeDocuments(action.payload),
+                    },
+                    additionalDocuments: getAdditionalDocuments(action.payload),
+                };
+
+                return {
+                    ...nextState,
+                    documents: buildCanonicalDocuments(nextState),
+                };
+            }
         case "HYDRATE_FROM_USER":
             return hydrateFromUser(action.payload);
         case "RESET":
@@ -356,6 +414,32 @@ export function useProfileForm(user: UserProfile | null | undefined) {
         return hasChanges(state, originalState);
     }, [state, originalState]);
 
+    const dirtySectionIds = useMemo<ProfileSectionId[]>(() => {
+        if (!originalState) return [];
+
+        const ids: ProfileSectionId[] = [];
+
+        if (!deepEqual(state.personalDetails, originalState.personalDetails)) {
+            ids.push("personal-details");
+        }
+        if (!deepEqual(state.residency, originalState.residency)) {
+            ids.push("visa-details");
+        }
+        if (!deepEqual(state.incomeDetails, originalState.incomeDetails)) {
+            ids.push("income-details");
+        }
+        if (
+            !deepEqual(state.additionalDocuments, originalState.additionalDocuments)
+        ) {
+            ids.push("documents");
+        }
+        if (!deepEqual(state.rentalPreferences, originalState.rentalPreferences)) {
+            ids.push("location-preferences");
+        }
+
+        return ids;
+    }, [state, originalState]);
+
     return {
         state,
         updatePersonalDetails,
@@ -368,5 +452,6 @@ export function useProfileForm(user: UserProfile | null | undefined) {
         resetToBaseline,
         commitBaseline,
         hasChanges: hasFormChanges,
+        dirtySectionIds,
     };
 }

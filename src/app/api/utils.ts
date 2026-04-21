@@ -8,14 +8,12 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { requireAuthForApi, requireRole } from "@/lib/supabase/server";
 import type { SessionUser } from "@/types/auth.types";
-import type { AppRole } from "@/types/db";
+import type { AppRole, ProfileUpdate, OccupancyType, ApplicationType } from "@/types/db";
 import { UserProfile } from "@/types/user.types";
-import { ApplicationType, OccupancyType } from "@/types/db";
 import { Inclusions } from "@/types/property.types";
 import { ApplicationSnapshot } from "@/types/application.types";
-import { getCurrentTimestamp } from "@/lib/utils";
+import { getCurrentTimestamp, toE164AndAuthDigits } from "@/lib/utils";
 import { env } from "@/env";
-
 // ─── CSRF ────────────────────────────────────────────────────────────────────
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -395,11 +393,29 @@ export function createApplicationSnapshot(
         rental: {
             preferredLocality: user.user_application_profile?.preferred_locality || null,
             maxBudgetPerWeek: user.user_application_profile?.max_budget_per_week || null,
-            hasPets: user.user_application_profile?.has_pets || null,
-            smoker: user.user_application_profile?.smoker || null,
+            hasPets: user.user_application_profile?.has_pets ?? null,
+            smoker: user.user_application_profile?.smoker ?? null,
             emergencyContactName: user.user_application_profile?.emergency_contact_name || null,
             emergencyContactPhone: user.user_application_profile?.emergency_contact_phone || null,
         },
         documents: user.user_application_profile?.documents || {},
     };
+}
+
+/**
+ * Normalise the phone field to E.164 and set phone_verified_at:
+ * - Matches auth.users.phone + confirmed → restore verified timestamp
+ * - Otherwise → null (unverified)
+ */
+export function resolvePhoneUpdate(
+    data: ProfileUpdate,
+    authUser: { phone?: string | null; phone_confirmed_at?: string | null } | null,
+): ProfileUpdate {
+    if (!data.phone) return { ...data, phone_verified_at: null };
+    const { e164, authDigits } = toE164AndAuthDigits(data.phone);
+    const authDigitsNorm = authUser?.phone ? toE164AndAuthDigits(authUser.phone).authDigits : null;
+    const verified = authDigits === authDigitsNorm && !!authUser?.phone_confirmed_at
+        ? authUser.phone_confirmed_at
+        : null;
+    return { ...data, phone: e164, phone_verified_at: verified };
 }

@@ -144,7 +144,7 @@ export { generateApplicationPDF } from './pdfGenerator';
 // ============================================================================
 // Phone Utilities (Client & Server Safe)
 // ============================================================================
-export { toE164, normalisePhone, validateAUPhone } from './phone';
+export { toE164, normalisePhone, validateAUPhone, toE164AndAuthDigits, isPhoneConflictError, PHONE_CONFLICT_MESSAGE } from './phone';
 
 // ============================================================================
 // Pricing Utilities (Client & Server Safe)

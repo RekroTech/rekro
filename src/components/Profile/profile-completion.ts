@@ -128,6 +128,7 @@ export function calculateAdditionalDocumentsCompletion(uploadedDocs: Documents):
 
 /**
  * Rental preferences completion is based on the fields present in `RentalPreferencesSection`.
+ * This section is optional overall, similar to Additional Documents.
  * We treat pets/smoker as optional (you can legitimately be false).
  * Only checks the fields that are actually editable in the UI.
  */
@@ -200,7 +201,7 @@ export function getProfileSections(
       icon: "map",
       completed: rental === 100,
       completionPercentage: rental,
-      required: true,
+      required: false,
     },
   ];
 }
@@ -245,9 +246,8 @@ export function calculateProfileCompletion(
   // Badge 3: Rent Pass - all required sections complete (ready to apply for rentals)
   const visaComplete = sections.find((s) => s.id === "visa-details")?.completed;
   const incomeComplete = sections.find((s) => s.id === "income-details")?.completed;
-  const rentalComplete = sections.find((s) => s.id === "location-preferences")?.completed;
 
-  if (visaComplete && incomeComplete && personalComplete && rentalComplete) {
+  if (visaComplete && incomeComplete && personalComplete) {
     unlockedBadges.push("Rent Pass Acquired");
   }
 

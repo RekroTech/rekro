@@ -9,9 +9,9 @@ import type {
     UserApplicationProfileUpdate,
 } from "@/types/db";
 import { ApplicationProfileUpdateSchema, ProfileUpdateSchema } from "@/lib/validators";
-import { toE164AndAuthDigits } from "@/lib/utils/phone";
+import { resolvePhoneUpdate } from "@/app/api/utils";
+import { isPhoneConflictError, PHONE_CONFLICT_MESSAGE } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
     try {
@@ -81,30 +81,9 @@ export async function PATCH(req: NextRequest) {
         }
 
         if (Object.keys(usersUpdateData).length > 0) {
-            // When the phone number is being updated, set phone_verified_at correctly:
-            //   - If the new phone matches auth.users.phone, restore phone_verified_at
-            //     from auth.phone_confirmed_at → shows as verified.
-            //   - Otherwise clear it → new unverified number.
             if ("phone" in usersUpdateData) {
-                const {
-                    data: { user: authUserData },
-                } = await supabase.auth.getUser();
-                const authUserPhoneData = authUserData as {
-                    phone?: string | null;
-                    phone_confirmed_at?: string | null;
-                } | null;
-                const authPhone = authUserPhoneData?.phone ?? null;
-                const authPhoneConfirmedAt = authUserPhoneData?.phone_confirmed_at ?? null;
-
-                // Normalise to E.164 for storage and get digits-only form for auth comparison.
-                const { e164, authDigits } = toE164AndAuthDigits(usersUpdateData.phone!);
-                usersUpdateData.phone = e164;
-
-                if (authDigits === authPhone && authPhoneConfirmedAt) {
-                    usersUpdateData.phone_verified_at = authPhoneConfirmedAt;
-                } else {
-                    usersUpdateData.phone_verified_at = null;
-                }
+                const { data: { user: authMeta } } = await supabase.auth.getUser();
+                usersUpdateData = resolvePhoneUpdate(usersUpdateData, authMeta);
             }
 
             const { error: updateError } = await supabase
@@ -114,6 +93,9 @@ export async function PATCH(req: NextRequest) {
 
             if (updateError) {
                 console.error("Users table update error:", updateError);
+                if (isPhoneConflictError(updateError)) {
+                    return errorResponse(PHONE_CONFLICT_MESSAGE, 409);
+                }
                 return errorResponse("Failed to update profile", 500);
             }
         }

@@ -8,6 +8,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { dbErrorResponse, errorResponse, successResponse, precheck } from "@/app/api/utils";
 import { PhoneVerifyOtpSchema } from "@/lib/validators";
+import { isPhoneConflictError, PHONE_CONFLICT_MESSAGE } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,9 @@ export async function POST(request: NextRequest) {
                 message: updateError.message,
                 code: "code" in updateError ? updateError.code : undefined,
             });
+            if (isPhoneConflictError(updateError)) {
+                return errorResponse(PHONE_CONFLICT_MESSAGE, 409);
+            }
             return errorResponse("Phone verified but failed to save status", 500);
         }
 

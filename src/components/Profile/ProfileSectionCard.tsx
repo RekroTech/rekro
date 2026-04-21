@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import { clsx } from "clsx";
-import { ChevronDown, ChevronUp, CheckCircle2, DollarSign, FileText, Map, MapPin, Upload, User } from "lucide-react";
+import { ChevronDown, ChevronUp, CheckCircle2, DollarSign, FileText, Loader2, Map, MapPin, Upload, User } from "lucide-react";
 import { Icon } from "@/components/common";
 
 const SECTION_ICON_MAP = {
@@ -26,6 +26,7 @@ interface ProfileSectionCardProps {
     isExpanded?: boolean;
     onToggle?: () => void;
     showCompletion?: boolean;
+    isSaving?: boolean;
     children: ReactNode;
 }
 
@@ -42,6 +43,7 @@ export function ProfileSectionCard({
     isExpanded = true,
     onToggle,
     showCompletion = true,
+    isSaving = false,
     children,
 }: ProfileSectionCardProps) {
     const statusColor = completed
@@ -83,8 +85,16 @@ export function ProfileSectionCard({
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Completion Badge */}
-                    {showCompletion && (
+                    {/* Saving Loader - Always visible when saving, independent of showCompletion */}
+                    {isSaving && (
+                        <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                            <Icon icon={Loader2} size={20} className="animate-spin" />
+                            <span className="text-sm font-medium">Saving...</span>
+                        </div>
+                    )}
+
+                    {/* Completion Badge - Only visible when not saving and showCompletion is true */}
+                    {!isSaving && showCompletion && (
                         <div className="flex items-center gap-2">
                             {completed ? (
                                 <div className="flex items-center gap-1 text-green-600 dark:text-green-400">

@@ -65,7 +65,10 @@ export {
     useProfileImage,
     useProfileSave,
     useAutosave,
+    usePhoneVerificationFlow,
 } from "./hooks";
+
+export type { PhoneVerificationViewmodel } from "./hooks";
 
 // ============================================================================
 // Profile Completion Utils (Server & Client Safe)

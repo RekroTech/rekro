@@ -69,8 +69,14 @@ export function useProfileSave(options?: UseProfileSaveOptions) {
     const saveProfileAsync = useCallback(
         async (formState: ProfileFormState) => {
             const payload = transformToUpdatePayload(formState);
-            await updateProfileAsync(payload);
-            options?.onSuccess?.("Profile updated successfully!");
+            try {
+                await updateProfileAsync(payload);
+                options?.onSuccess?.("Profile updated successfully!");
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Failed to update profile";
+                options?.onError?.(message);
+                throw error;
+            }
         },
         [updateProfileAsync, options]
     );
@@ -103,18 +109,24 @@ export function useProfileSave(options?: UseProfileSaveOptions) {
     const savePersonalDetailsOnlyAsync = useCallback(
         async (formState: ProfileFormState) => {
             const { personalDetails } = formState;
-            await updateProfileAsync({
-                full_name: personalDetails.full_name.trim() || null,
-                username: personalDetails.username.trim() || null,
-                phone: personalDetails.phone.trim() || null,
-                bio: personalDetails.bio.trim() || null,
-                occupation: personalDetails.occupation.trim() || null,
-                date_of_birth: personalDetails.date_of_birth || null,
-                gender: personalDetails.gender || undefined,
-                preferred_contact_method: personalDetails.preferred_contact_method,
-                native_language: personalDetails.native_language.trim() || null,
-            });
-            options?.onSuccess?.("Personal details updated successfully!");
+            try {
+                await updateProfileAsync({
+                    full_name: personalDetails.full_name.trim() || null,
+                    username: personalDetails.username.trim() || null,
+                    phone: personalDetails.phone.trim() || null,
+                    bio: personalDetails.bio.trim() || null,
+                    occupation: personalDetails.occupation.trim() || null,
+                    date_of_birth: personalDetails.date_of_birth || null,
+                    gender: personalDetails.gender || undefined,
+                    preferred_contact_method: personalDetails.preferred_contact_method,
+                    native_language: personalDetails.native_language.trim() || null,
+                });
+                options?.onSuccess?.("Personal details updated successfully!");
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Failed to update profile";
+                options?.onError?.(message);
+                throw error;
+            }
         },
         [updateProfileAsync, options]
     );

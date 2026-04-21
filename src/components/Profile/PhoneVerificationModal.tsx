@@ -13,7 +13,7 @@ interface PhoneVerificationModalProps {
     phone: string;
     onClose: () => void;
     /** Called when the phone number is successfully verified */
-    onVerified: (verifiedAt: string) => void;
+    onVerified: (payload: { phone: string; verifiedAt: string }) => void;
 }
 
 type Step = "send" | "verify";
@@ -150,7 +150,10 @@ export function PhoneVerificationModal({
                 setTimeout(() => inputRefs.current[0]?.focus(), 50);
                 return;
             }
-            onVerified(data.verified_at ?? new Date().toISOString());
+            onVerified({
+                phone,
+                verifiedAt: data.verified_at ?? new Date().toISOString(),
+            });
         } catch {
             showError("Network error. Please check your connection and try again.");
         } finally {
@@ -267,7 +270,7 @@ export function PhoneVerificationModal({
                                     onKeyDown={(e) => handleOtpKeyDown(i, e)}
                                     fullWidth={false}
                                     className={[
-                                        "!w-11 !h-14 text-center !text-2xl !font-bold !px-0",
+                                        "w-11! h-14! text-center text-2xl! font-bold! px-0!",
                                         digit ? "border-primary-400 bg-primary-500/5" : "",
                                     ].join(" ")}
                                     aria-label={`Digit ${i + 1}`}
