@@ -14,6 +14,10 @@ export function BasicInformationSection({
 }: BasicInformationSectionProps) {
     const handleAddressSelect = useCallback(
         (addressComponents: {
+            formatted_address?: string;
+            subpremise?: string;
+            premise?: string;
+            floor?: string;
             street_number?: string;
             route?: string;
             locality?: string;
@@ -22,20 +26,32 @@ export function BasicInformationSection({
             country?: string;
             coordinates?: { lat: number; lng: number };
         }) => {
-            // Construct full street address
-            const streetAddress = [addressComponents.street_number, addressComponents.route]
+            const formattedAddress = addressComponents.formatted_address?.trim() || "";
+
+            const streetFromFormattedAddress = formattedAddress.split(",")[0]?.trim() || "";
+            const streetNumberAndRoute = [addressComponents.street_number, addressComponents.route]
                 .filter(Boolean)
                 .join(" ");
+            const unitAndStreet = addressComponents.subpremise
+                ? [addressComponents.subpremise, streetNumberAndRoute].filter(Boolean).join("/")
+                : streetNumberAndRoute;
+            const fallbackStreetAddress = [
+                addressComponents.floor,
+                addressComponents.premise,
+                unitAndStreet,
+            ]
+                .filter(Boolean)
+                .join(", ");
+            const streetAddress = streetFromFormattedAddress || fallbackStreetAddress;
 
             const city = addressComponents.locality || "";
             const state = addressComponents.administrative_area_level_1 || "";
             const postcode = addressComponents.postal_code || "";
             const country = addressComponents.country || "Australia";
 
-            // Construct full formatted address for display
-            const fullAddress = [streetAddress, city, state, postcode, country]
-                .filter(Boolean)
-                .join(", ");
+            const fullAddress =
+                formattedAddress ||
+                [streetAddress, city, state, postcode, country].filter(Boolean).join(", ");
 
             updateFormData({
                 address_full: fullAddress,

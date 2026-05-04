@@ -48,11 +48,12 @@ export function ImageGallery({
 
     return (
         <>
-            <div className="bg-gray-100 rounded-lg overflow-hidden mb-2 sm:mb-4 group relative aspect-video touch-manipulation">
+            <div className="rounded-lg overflow-hidden mb-2 sm:mb-4 group relative aspect-video touch-manipulation">
                 <Visual
                     src={images[selectedIndex]}
                     alt={`${title} - Image ${selectedIndex + 1}`}
                     fill
+                    objectFit="contain"
                     sizes="(max-width: 1024px) 100vw, 66vw"
                     priority
                     showBadge={false}

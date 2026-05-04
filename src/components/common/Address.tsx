@@ -5,6 +5,10 @@ import { clsx } from "clsx";
 import { loadGoogleMapsScript } from "@/lib/utils/googleMaps";
 
 interface AddressComponents {
+    formatted_address?: string;
+    subpremise?: string;
+    premise?: string;
+    floor?: string;
     street_number?: string;
     route?: string;
     locality?: string;
@@ -50,30 +54,48 @@ export function Address({
     useEffect(() => { onAddressSelectRef.current = onAddressSelect; }, [onAddressSelect]);
 
     const parsePlace = useCallback((place: google.maps.places.PlaceResult) => {
-        const addressComponents: AddressComponents = {};
+        const addressComponents: AddressComponents = {
+            formatted_address: place.formatted_address || "",
+        };
 
         if (place.address_components) {
             place.address_components.forEach((component) => {
-                const type = component.types?.[0];
-                switch (type) {
-                    case "street_number":
-                        addressComponents.street_number = component.long_name || "";
-                        break;
-                    case "route":
-                        addressComponents.route = component.long_name || "";
-                        break;
-                    case "locality":
-                        addressComponents.locality = component.long_name || "";
-                        break;
-                    case "administrative_area_level_1":
-                        addressComponents.administrative_area_level_1 = component.short_name || "";
-                        break;
-                    case "postal_code":
-                        addressComponents.postal_code = component.long_name || "";
-                        break;
-                    case "country":
-                        addressComponents.country = component.long_name || "";
-                        break;
+                const types = component.types || [];
+
+                if (types.includes("subpremise")) {
+                    addressComponents.subpremise = component.long_name || "";
+                }
+
+                if (types.includes("premise")) {
+                    addressComponents.premise = component.long_name || "";
+                }
+
+                if (types.includes("floor")) {
+                    addressComponents.floor = component.long_name || "";
+                }
+
+                if (types.includes("street_number")) {
+                    addressComponents.street_number = component.long_name || "";
+                }
+
+                if (types.includes("route")) {
+                    addressComponents.route = component.long_name || "";
+                }
+
+                if (types.includes("locality")) {
+                    addressComponents.locality = component.long_name || "";
+                }
+
+                if (types.includes("administrative_area_level_1")) {
+                    addressComponents.administrative_area_level_1 = component.short_name || "";
+                }
+
+                if (types.includes("postal_code")) {
+                    addressComponents.postal_code = component.long_name || "";
+                }
+
+                if (types.includes("country")) {
+                    addressComponents.country = component.long_name || "";
                 }
             });
         }
