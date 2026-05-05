@@ -148,7 +148,6 @@ export function Address({
         const autocomplete = new google.maps.places.Autocomplete(input, {
             componentRestrictions: { country: ["au"] },
             fields: ["address_components", "formatted_address", "geometry"],
-            types: ["address"],
         });
 
         autocompleteRef.current = autocomplete;
