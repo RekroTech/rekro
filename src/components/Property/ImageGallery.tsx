@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { clsx } from "clsx";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Icon, Visual } from "@/components/common";
+import { ChevronLeft, ChevronRight, Expand } from "lucide-react";
+import { Button, Icon, Visual } from "@/components/common";
+import type { GalleryItem } from "@/types/property.types";
 
 interface ImageGalleryProps {
-    images: string[];
+    items: GalleryItem[];
     title?: string;
     thumbnailsPerPage?: number;
 }
 
 export function ImageGallery({
-    images,
+    items,
     title = "Property",
     thumbnailsPerPage = 8,
 }: ImageGalleryProps) {
@@ -18,11 +19,11 @@ export function ImageGallery({
     const [thumbnailStartIndex, setThumbnailStartIndex] = useState(0);
 
     const handlePrevious = () => {
-        setSelectedIndex(selectedIndex === 0 ? images.length - 1 : selectedIndex - 1);
+        setSelectedIndex(selectedIndex === 0 ? items.length - 1 : selectedIndex - 1);
     };
 
     const handleNext = () => {
-        setSelectedIndex(selectedIndex === images.length - 1 ? 0 : selectedIndex + 1);
+        setSelectedIndex(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1);
     };
 
     const handleThumbnailPrevious = () => {
@@ -31,43 +32,74 @@ export function ImageGallery({
 
     const handleThumbnailNext = () => {
         setThumbnailStartIndex((prev) =>
-            Math.min(images.length - thumbnailsPerPage, prev + thumbnailsPerPage)
+            Math.min(items.length - thumbnailsPerPage, prev + thumbnailsPerPage)
         );
     };
 
-    // Safety check for empty images array
-    if (!images.length || !images[selectedIndex]) {
+    const handleOpenPreviewInNewTab = (src: string) => {
+        window.open(src, "_blank", "noopener,noreferrer");
+    };
+
+    // Safety check for empty media array
+    if (!items.length || !items[selectedIndex]) {
         return null;
     }
 
-    const isPlaceholder = images[0] === "/window.svg";
-    const showPreviousThumbs = images.length > thumbnailsPerPage && thumbnailStartIndex > 0;
+    const selectedItem = items[selectedIndex];
+    const isPlaceholderOnly =
+        items.length === 1 && items[0]?.kind === "image" && items[0].src === "/window.svg";
+    const showPreviousThumbs = items.length > thumbnailsPerPage && thumbnailStartIndex > 0;
     const showNextThumbs =
-        images.length > thumbnailsPerPage &&
-        thumbnailStartIndex + thumbnailsPerPage < images.length;
+        items.length > thumbnailsPerPage &&
+        thumbnailStartIndex + thumbnailsPerPage < items.length;
+
+    const getIFrameThumbnailSrc = (src: string) => (src.includes("?") ? `${src}&view=360` : `${src}?view=360`);
 
     return (
         <>
             <div className="rounded-lg overflow-hidden mb-2 sm:mb-4 group relative aspect-video touch-manipulation">
-                <Visual
-                    src={images[selectedIndex]}
-                    alt={`${title} - Image ${selectedIndex + 1}`}
-                    fill
-                    objectFit="contain"
-                    sizes="(max-width: 1024px) 100vw, 66vw"
-                    priority
-                    showBadge={false}
-                />
+                {selectedItem.kind === "iframe" ? (
+                    <iframe
+                        src={selectedItem.src}
+                        title={`${title} - 360 preview`}
+                        className="absolute inset-0 h-full w-full border-0"
+                        allowFullScreen
+                    />
+                ) : (
+                    <Visual
+                        src={selectedItem.src}
+                        alt={`${title} - Image ${selectedIndex + 1}`}
+                        fill
+                        objectFit="contain"
+                        sizes="(max-width: 1024px) 100vw, 66vw"
+                        priority
+                        showBadge={false}
+                    />
+                )}
+
+                {selectedItem.kind === "iframe" && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        pill
+                        onClick={() => handleOpenPreviewInNewTab(selectedItem.src)}
+                        className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-20 !bg-black/60 hover:!bg-black/70 !text-white !p-2 !min-h-0 shadow-lg active:scale-95"
+                        aria-label="Open 360 preview in new tab"
+                        title="Open 360 preview in new tab"
+                    >
+                        <Icon icon={Expand} size={{ base: 16, sm: 18 }} />
+                    </Button>
+                )}
 
                 {/* Image Counter */}
-                {images.length > 1 && (
+                {items.length > 1 && (
                     <div className="absolute top-2 sm:top-4 right-2 sm:right-4 bg-black/60 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-medium backdrop-blur-sm">
-                        {selectedIndex + 1} / {images.length}
+                        {selectedIndex + 1} / {items.length}
                     </div>
                 )}
 
                 {/* Navigation Arrows - Always visible on mobile, hidden on hover for desktop */}
-                {images.length > 1 && (
+                {items.length > 1 && (
                     <>
                         <button
                             onClick={handlePrevious}
@@ -89,7 +121,7 @@ export function ImageGallery({
             </div>
 
             {/* Image Thumbnails */}
-            {images.length > 1 && !isPlaceholder && (
+            {items.length > 1 && !isPlaceholderOnly && (
                 <div className="relative flex items-center gap-2">
                     {showPreviousThumbs && (
                         <button
@@ -109,15 +141,19 @@ export function ImageGallery({
                             "sm:grid sm:grid-cols-6 md:grid-cols-8 sm:gap-2 sm:overflow-x-visible sm:whitespace-normal sm:py-0"
                         )}
                     >
-                        {images
+                        {items
                             .slice(thumbnailStartIndex, thumbnailStartIndex + thumbnailsPerPage)
-                            .map((img, relativeIndex) => {
+                            .map((item, relativeIndex) => {
                                 const index = thumbnailStartIndex + relativeIndex;
                                 const isSelected = selectedIndex === index;
+                                const thumbnailSrc =
+                                    item.kind === "iframe"
+                                        ? getIFrameThumbnailSrc(item.thumbnailSrc)
+                                        : item.src;
 
                                 return (
                                     <button
-                                        key={`${img}-${index}`}
+                                        key={`${item.kind}-${item.src}-${index}`}
                                         type="button"
                                         onClick={() => setSelectedIndex(index)}
                                         className={clsx(
@@ -126,12 +162,20 @@ export function ImageGallery({
                                                 ? "border-primary-500"
                                                 : "border-border hover:border-text-muted"
                                         )}
-                                        aria-label={`Select image ${index + 1}`}
+                                        aria-label={
+                                            item.kind === "iframe"
+                                                ? "Select 360 preview"
+                                                : `Select image ${index + 1}`
+                                        }
                                         aria-current={isSelected ? "true" : "false"}
                                     >
                                         <Visual
-                                            src={img}
-                                            alt={`${title} thumbnail ${index + 1}`}
+                                            src={thumbnailSrc}
+                                            alt={
+                                                item.kind === "iframe"
+                                                    ? `${title} 360 thumbnail`
+                                                    : `${title} thumbnail ${index + 1}`
+                                            }
                                             fill
                                             sizes="(max-width: 640px) 80px, (max-width: 768px) 100px, 120px"
                                             loading="lazy"

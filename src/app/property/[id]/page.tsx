@@ -18,6 +18,7 @@ import {
     DiscoverabilityPrompt,
     PropertyErrorBoundary,
 } from "@/components/Property";
+import type { GalleryItem } from "@/types/property.types";
 import { updateRoomRentsOnOccupancySelection } from "@/lib/utils/pricing";
 
 export default function PropertyDetailPage() {
@@ -162,11 +163,28 @@ export default function PropertyDetailPage() {
     const units = property.units;
     const selectedUnit = units.find((unit) => unit.id === selectedUnitId) ?? units[0]!;
 
-    // Convert storage paths to URLs
-    const propertyMedia =
+    // Convert storage paths to URLs and prepend the optional 360 preview.
+    const imageMedia =
         property.images && property.images.length > 0
-            ? getPropertyFileUrls(property.images, propertyId)
-            : ["/window.svg"];
+            ? getPropertyFileUrls(property.images, propertyId).map(
+                  (src): GalleryItem => ({ kind: "image", src })
+              )
+            : [];
+
+    const previewMedia: GalleryItem[] = property.preview_url
+        ? [
+              {
+                  kind: "iframe",
+                  src: property.preview_url,
+                  thumbnailSrc: imageMedia[0]?.src ?? "/window.svg",
+              },
+          ]
+        : [];
+
+    const propertyMedia: GalleryItem[] =
+        previewMedia.length > 0 || imageMedia.length > 0
+            ? [...previewMedia, ...imageMedia]
+            : [{ kind: "image", src: "/window.svg" }];
 
     return (
         <PropertyErrorBoundary>
@@ -184,12 +202,12 @@ export default function PropertyDetailPage() {
                         <div className="lg:col-span-2 min-w-0">
                             {/* Mobile Image Gallery - Embla Carousel */}
                             <div className="md:hidden aspect-video rounded-lg overflow-hidden mb-2 sm:mb-4">
-                                <ImageGalleryMobile images={propertyMedia} />
+                                <ImageGalleryMobile items={propertyMedia} />
                             </div>
 
                             {/* Desktop Image Gallery */}
                             <div className="hidden md:block">
-                                <ImageGallery images={propertyMedia} />
+                                <ImageGallery items={propertyMedia} />
                             </div>
 
                             {/* Units Section */}

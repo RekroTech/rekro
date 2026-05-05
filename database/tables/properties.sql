@@ -14,7 +14,7 @@ create table public.properties (
   furnished boolean null default false,
   amenities text[] null,
   images text[] null,
-  video_url text null,
+  preview_url text null,
   is_published boolean null default false,
   created_at timestamp with time zone null default now(),
   updated_at timestamp with time zone null default now(),

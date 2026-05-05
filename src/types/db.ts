@@ -215,6 +215,7 @@ export interface Database {
                     amenities: string[] | null;
                     images: string[] | null;
                     video_url: string | null;
+                    preview_url: string | null;
                     is_published: boolean;
                     price: number;
                     created_at: string;
@@ -238,6 +239,7 @@ export interface Database {
                     amenities?: string[] | null;
                     images?: string[] | null;
                     video_url?: string | null;
+                    preview_url?: string | null;
                     is_published?: boolean;
                     price?: number;
                     created_at?: string;
@@ -260,6 +262,7 @@ export interface Database {
                     amenities?: string[] | null;
                     images?: string[] | null;
                     video_url?: string | null;
+                    preview_url?: string | null;
                     is_published?: boolean;
                     price?: number;
                     updated_at?: string;

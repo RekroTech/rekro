@@ -2,14 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { Property, UnitWithLikes } from "@/types/property.types";
+import type { GalleryItem, Property, UnitWithLikes } from "@/types/property.types";
 import { Bed, Bath, Car, MapPin, Pencil } from "lucide-react";
 import { Icon, Visual } from "@/components/common";
 import { getPropertyFileUrlWithTransform } from "@/lib/services";
 import { getLocalityString, getPriceBadges } from "@/lib/utils";
 import { useRoles } from "@/lib/hooks";
 import { usePrefetchProperty } from "@/lib/hooks/property";
-import { ImageGallery } from "../Property/ImageGalleryMobile";
+import { ImageGalleryMobile } from "../Property";
 import { PropertyForm } from "../PropertyForm";
 import { UnitLikeButton } from "../Property/PropertySidebar/UnitLikeButton";
 import { ShareDropdown } from "@/components/Property";
@@ -50,13 +50,14 @@ export function PropertyCard({
         units?.find((unit) => unit.status === "active") ?? (units && units.length > 0 ? units[0] : null);
 
     // Process all images for gallery
-    const imageUrls = useMemo(
+    const galleryItems = useMemo<GalleryItem[]>(
         () =>
             images && images.length > 0
-                ? images.map((img) =>
-                    getPropertyFileUrlWithTransform(img, { width: 1200, quality: 72 }, id)
-                )
-                : ["/window.svg"],
+                ? images.map((img) => ({
+                      kind: "image" as const,
+                      src: getPropertyFileUrlWithTransform(img, { width: 1200, quality: 72 }, id),
+                  }))
+                : [{ kind: "image", src: "/window.svg" }],
         [images, id]
     );
 
@@ -103,8 +104,8 @@ export function PropertyCard({
                 }}>
                     {/* Mobile: ImageGallery with Embla */}
                     <div className="md:hidden h-full">
-                        <ImageGallery
-                            images={imageUrls}
+                        <ImageGalleryMobile
+                            items={galleryItems}
                             title={streetAddress}
                             hideIndicators
                             priority={priority}
@@ -114,7 +115,7 @@ export function PropertyCard({
                     {/* Desktop: Simple Visual */}
                     <div className="hidden md:block h-full">
                         <Visual
-                            src={imageUrls[0] || "/window.svg"}
+                            src={galleryItems[0]?.src || "/window.svg"}
                             alt={streetAddress}
                             fill
                             sizes="(max-width: 1024px) 50vw, 33vw"

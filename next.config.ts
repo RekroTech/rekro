@@ -103,6 +103,7 @@ const nextConfig: NextConfig = {
                             "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://i.pravatar.cc https://maps.googleapis.com https://maps.gstatic.com",
                             "connect-src 'self' https://*.supabase.co https://o4510117376294912.ingest.us.sentry.io https://vitals.vercel-insights.com https://maps.googleapis.com https://maps.gstatic.com",
                             "font-src 'self' https://fonts.gstatic.com https://maps.gstatic.com",
+                             "frame-src 'self' https:",
                             "frame-ancestors 'none'",
                         ].join("; "),
                     },

@@ -3,12 +3,14 @@ import Image from "next/image";
 import { Property } from "@/types/db";
 import { getPropertyFileUrl } from "@/lib/services/storage.service";
 import { Plus, X } from "lucide-react";
-import { Icon } from "@/components/common";
+import { Icon, Input } from "@/components/common";
 
 interface MediaSectionProps {
     mediaFiles: File[];
     existingImages: string[];
     property?: Property;
+    previewUrl: string;
+    onPreviewUrlChange: (url: string) => void;
     onAddFiles: (files: File[]) => void;
     onReorderExistingImage: (fromIndex: number, toIndex: number) => void;
     onReorderUploadedFile: (fromIndex: number, toIndex: number) => void;
@@ -24,6 +26,8 @@ export function MediaSection({
     mediaFiles,
     existingImages,
     property,
+    previewUrl,
+    onPreviewUrlChange,
     onAddFiles,
     onReorderExistingImage,
     onReorderUploadedFile,
@@ -81,6 +85,18 @@ export function MediaSection({
                         Add Photos
                     </div>
                 </label>
+            </div>
+
+            {/* Preview URL */}
+            <div className="mb-3">
+                <Input
+                    type="url"
+                    label="Preview URL"
+                    size="sm"
+                    value={previewUrl}
+                    onChange={(e) => onPreviewUrlChange(e.target.value)}
+                    placeholder="https://example.com/preview"
+                />
             </div>
 
             {/* Media Grid - Shows both existing and new files */}

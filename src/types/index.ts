@@ -33,6 +33,7 @@ export type {
 // ============================================================================
 export type {
     Property,
+    GalleryItem,
     GetPropertiesParams,
     GetPropertiesResponse,
     Inclusions,

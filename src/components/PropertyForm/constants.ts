@@ -93,6 +93,7 @@ export const DEFAULT_FORM_DATA = {
     price: "",
     latitude: undefined,
     longitude: undefined,
+    preview_url: "",
 };
 
 export const DEFAULT_UNIT_DATA = {

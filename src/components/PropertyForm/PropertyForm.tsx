@@ -200,6 +200,7 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
             latitude: formData.latitude ?? null,
             longitude: formData.longitude ?? null,
             is_published: resolvedIsPublished ?? false,
+            preview_url: formData.preview_url.trim() || null,
         };
     };
 
@@ -392,6 +393,8 @@ export function PropertyForm({ isOpen, onClose, onSuccess, propertyId }: AddProp
                     mediaFiles={mediaFiles}
                     existingImages={existingImages}
                     property={property}
+                    previewUrl={formData.preview_url}
+                    onPreviewUrlChange={(url) => setFormData({ preview_url: url })}
                     onAddFiles={addMediaFiles}
                     onReorderExistingImage={moveExistingImage}
                     onReorderUploadedFile={moveUploadedFile}

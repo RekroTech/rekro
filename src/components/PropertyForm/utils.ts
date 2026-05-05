@@ -21,5 +21,6 @@ export function getInitialFormData(property?: Property): PropertyFormData {
         price: property.price?.toString() || "",
         latitude: property.latitude ?? undefined,
         longitude: property.longitude ?? undefined,
+        preview_url: property.preview_url ?? "",
     };
 }

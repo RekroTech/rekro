@@ -19,6 +19,7 @@ export interface PropertyFormData {
     address_country: string;
     latitude?: number;
     longitude?: number;
+    preview_url: string;
 }
 
 export interface UnitFormData {

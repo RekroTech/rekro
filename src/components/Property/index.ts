@@ -12,7 +12,7 @@
 export { PropertyHeader } from "./PropertyHeader";
 export { UnitsSelector } from "./UnitsSelector";
 export { ImageGallery } from "./ImageGallery";
-export { ImageGallery as ImageGalleryMobile } from "./ImageGalleryMobile";
+export { ImageGalleryMobile } from "./ImageGalleryMobile";
 export { PropertyAmenities } from "./PropertyAmenities";
 export { UnitFeatures } from "./UnitFeatures";
 export { PropertyTabs } from "./PropertyTabs";

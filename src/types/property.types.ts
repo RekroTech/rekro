@@ -7,6 +7,17 @@ export type InclusionType = "furniture" | "bills" | "cleaning" | "carpark" | "st
 
 export type UnitStatus = "active" | "leased" | "inactive";
 
+export type GalleryItem =
+    | {
+          kind: "image";
+          src: string;
+      }
+    | {
+          kind: "iframe";
+          src: string;
+          thumbnailSrc: string;
+      };
+
 /**
  * Mirrors the LISTING_TYPES values — controls which price badges appear on a property card:
  * - "all"          → entire-home price, otherwise room prices if no entire-home unit exists
