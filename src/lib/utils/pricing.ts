@@ -338,7 +338,10 @@ export function calculatePricing(params: {
             : 0;
 
     const billsSelected = isInclusionSelected(rentalForm.inclusions, "bills");
-    const bills = !isRoomListing && billsSelected ? getBillsCostPerWeek(property.bedrooms) : 0;
+    const bills =
+        !isRoomListing && !property.bills_included && billsSelected
+            ? getBillsCostPerWeek(property.bedrooms)
+            : 0;
 
     const cleaningSelected = isInclusionSelected(rentalForm.inclusions, "cleaning");
     const cleaning = cleaningSelected

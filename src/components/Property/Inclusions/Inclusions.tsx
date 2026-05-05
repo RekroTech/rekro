@@ -43,6 +43,7 @@ export function Inclusions({
         : getRoomFurnitureCost(property.units || [], FURNITURE_COST);
 
     const furnitureWeekly = furnitureTotal / (rentalDuration * 4.33);
+    const showBillsAsIncluded = !isEntireHome || property.bills_included;
 
     return (
         <div className="space-y-2 sm:space-y-3">
@@ -77,7 +78,7 @@ export function Inclusions({
                 />
             ) : null}
 
-            {!isEntireHome ? (
+            {showBillsAsIncluded ? (
                 <InclusionCard
                     title="Bills included"
                     description="Electricity, gas, water, and internet are included in the rent."
