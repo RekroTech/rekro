@@ -1,4 +1,8 @@
 import { createClient } from "@/lib/supabase/client";
+import {
+    buildPropertySearchTokenGroups,
+    matchesPropertySearch,
+} from "@/lib/utils/propertySearch";
 import type { GetPropertiesParams, GetPropertiesResponse, Property } from "@/types/property.types";
 import type { Unit, UnitStatus } from "@/types/db";
 
@@ -200,62 +204,6 @@ async function getPropertyUnitsByPropertyIds(
  * - Complex mutations: Use API routes
  */
 
-/** Full-name ↔ abbreviation map for Australian states/territories. */
-const AU_STATE_ALIASES: Record<string, string> = {
-    victoria: "VIC",
-    vic: "Victoria",
-    "new south wales": "NSW",
-    nsw: "New South Wales",
-    queensland: "QLD",
-    qld: "Queensland",
-    "south australia": "SA",
-    sa: "South Australia",
-    "western australia": "WA",
-    wa: "Western Australia",
-    tasmania: "TAS",
-    tas: "Tasmania",
-    "northern territory": "NT",
-    nt: "Northern Territory",
-    "australian capital territory": "ACT",
-    act: "Australian Capital Territory",
-};
-
-/**
- * Tokenise a search string and expand Australian state names / abbreviations
- * so "Victoria" also matches rows where state = "VIC" (and vice-versa).
- */
-function buildSearchTokens(search: string): string[] {
-    const tokens = new Set<string>();
-
-    // Word-level tokens (handles most cases)
-    search
-        .trim()
-        .split(/[\s,]+/)
-        .map((t) => t.replace(/"/g, "").trim())
-        .filter((t) => t.length >= 3)
-        .forEach((t) => tokens.add(t));
-
-    // Comma-phrase tokens — catches multi-word states like "New South Wales"
-    search
-        .trim()
-        .split(/,\s*/)
-        .forEach((part) => {
-            const p = part.trim().replace(/"/g, "");
-            if (p.length >= 3) {
-                const alias = AU_STATE_ALIASES[p.toLowerCase()];
-                if (alias) tokens.add(alias);
-            }
-        });
-
-    // Single-token state expansion (e.g. "Victoria" → "VIC", "NSW" → "New South Wales")
-    [...tokens].forEach((t) => {
-        const alias = AU_STATE_ALIASES[t.toLowerCase()];
-        if (alias) tokens.add(alias);
-    });
-
-    return [...tokens].slice(0, 15);
-}
-
 /**
  * Bulk fetch likes data for multiple units efficiently
  * Returns both user's liked status and total like counts in a single query
@@ -332,6 +280,7 @@ async function getBulkUnitLikesData(
 export async function getProperties(
     params: GetPropertiesParams = {}
 ): Promise<GetPropertiesResponse> {
+    const MAX_SEARCH_CANDIDATES = 500;
     const supabase = createClient();
     const {
         limit = 12,
@@ -365,6 +314,13 @@ export async function getProperties(
     const selectQuery = needsInnerJoin
         ? `*, units!inner(${unitColumns})`
         : `*, units(${unitColumns})`;
+    const searchTokenGroups = search?.trim()
+        ? buildPropertySearchTokenGroups(search)
+        : [];
+    const hasSearch = searchTokenGroups.length > 0;
+    const searchFetchSize = hasSearch
+        ? Math.min(Math.max(offset + (limit * 10), 150), MAX_SEARCH_CANDIDATES)
+        : limit;
 
     let query = supabase
         .from("properties")
@@ -434,28 +390,12 @@ export async function getProperties(
         query = query.lte("units.price", maxPrice);
     }
 
-    if (search && search.trim() !== "") {
-        // Tokenise + expand state names/abbreviations so "Victoria" matches "VIC" etc.
-        const tokens = buildSearchTokens(search);
+    const rangeStart = hasSearch ? 0 : offset;
+    const rangeEnd = hasSearch
+        ? searchFetchSize - 1
+        : offset + limit - 1;
 
-        const fields = [
-            "description",
-            "address->>street",
-            "address->>city",
-            "address->>state",
-            "address->>suburb",
-            "address->>postcode",
-            "units.name",
-        ];
-
-        const conditions = tokens.flatMap((token) => fields.map((f) => `${f}.ilike."%${token}%"`));
-
-        if (conditions.length > 0) {
-            query = query.or(conditions.join(","));
-        }
-    }
-
-    const { data, error, count } = await query.range(offset, offset + limit - 1);
+    const { data, error, count } = await query.range(rangeStart, rangeEnd);
 
     if (error) {
         console.error("Error fetching properties:", error);
@@ -529,11 +469,21 @@ export async function getProperties(
             .filter((prop) => prop.units.length > 0);
     }
 
+    if (hasSearch) {
+        properties = properties.filter((prop) => matchesPropertySearch(prop, searchTokenGroups));
+    }
+
     // Sort units: entire_home first, then rooms by name
     properties = properties.map((prop) => ({
         ...prop,
         units: sortUnits(prop.units),
     }));
+
+    const total = hasSearch ? properties.length : (count ?? 0);
+
+    if (hasSearch) {
+        properties = properties.slice(offset, offset + limit);
+    }
 
     // Bulk fetch likes data (both isLiked and likesCount) if userId is provided
     if (userId && properties.length > 0) {
@@ -560,7 +510,6 @@ export async function getProperties(
         }
     }
 
-    const total = count ?? 0;
     const nextOffset = offset + limit;
     const hasMore = nextOffset < total;
 

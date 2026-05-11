@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { dbErrorResponse, errorResponse, successResponse } from "@/app/api/utils";
+import { buildPropertySearchTokenGroups, matchesPropertySearch } from "@/lib/utils/propertySearch";
 import type { Address, Location as PropertyLocation, Property, Unit } from "@/types/db";
 
 /**
@@ -44,6 +45,16 @@ export async function GET(request: NextRequest) {
         const limit = Number.isFinite(requestedLimit)
             ? Math.min(Math.max(requestedLimit, 1), 20)
             : 5;
+        const searchTokenGroups = search?.trim()
+            ? buildPropertySearchTokenGroups(search, 12)
+            : [];
+        const locationTokenGroups = location?.trim()
+            ? buildPropertySearchTokenGroups(location, 8)
+            : [];
+        const hasTextSearch = searchTokenGroups.length > 0 || locationTokenGroups.length > 0;
+        const candidateLimit = hasTextSearch
+            ? Math.min(Math.max(limit * 20, 100), 300)
+            : limit;
 
         // Build the query
         const unitColumns = "id, listing_type, name, description, price, bond_amount, min_lease, max_lease, max_occupants, size_sqm, status, available_from, available_to";
@@ -54,52 +65,9 @@ export async function GET(request: NextRequest) {
             .eq("is_published", true)
             .eq("units.status", "active")
             .order("created_at", { ascending: false })
-            .limit(limit);
+            .limit(candidateLimit);
 
         // Apply filters only if parameters are provided
-        if (search && search.trim() !== "") {
-            // Tokenise so a full Places address ("100 Castlereagh St, Liverpool NSW 2170, Australia")
-            // matches individual fields like suburb="Liverpool" or state="NSW".
-            const tokens = [
-                ...new Set(
-                    search.trim()
-                        .split(/[\s,]+/)
-                        .map(t => t.replace(/"/g, "").trim())
-                        .filter(t => t.length >= 3)
-                ),
-            ].slice(0, 12);
-
-            const searchFields = [
-                "title", "description",
-                "address->>street", "address->>city",
-                "address->>state", "address->>suburb",
-            ];
-            const conditions = tokens.flatMap(token =>
-                searchFields.map(f => `${f}.ilike."%${token}%"`)
-            );
-            if (conditions.length > 0) query = query.or(conditions.join(","));
-        }
-
-        if (location && location.trim() !== "") {
-            const tokens = [
-                ...new Set(
-                    location.trim()
-                        .split(/[\s,]+/)
-                        .map(t => t.replace(/"/g, "").trim())
-                        .filter(t => t.length >= 3)
-                ),
-            ].slice(0, 8);
-
-            const locationFields = [
-                "address->>city", "address->>suburb", "address->>state",
-                "location->>city", "location->>state",
-            ];
-            const conditions = tokens.flatMap(token =>
-                locationFields.map(f => `${f}.ilike."%${token}%"`)
-            );
-            if (conditions.length > 0) query = query.or(conditions.join(","));
-        }
-
         if (propertyType) {
             query = query.eq("property_type", propertyType);
         }
@@ -175,9 +143,13 @@ export async function GET(request: NextRequest) {
         });
 
         const properties = Array.from(propertyMap.values());
+        const filteredProperties = properties
+            .filter((property) => matchesPropertySearch(property, searchTokenGroups))
+            .filter((property) => matchesPropertySearch(property, locationTokenGroups, "location"))
+            .slice(0, limit);
 
         // Format response for Voiceflow
-        const formattedProperties = properties.map(property => {
+        const formattedProperties = filteredProperties.map(property => {
             const address = property.address as Address | null;
             const location = property.location as PropertyLocation | null;
 
