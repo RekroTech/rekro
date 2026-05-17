@@ -4,6 +4,7 @@ import { useState, useTransition, useRef, useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { Filter, Grid3X3, Map, Search, X } from "lucide-react";
 import { useQueryState, parseAsStringLiteral } from "nuqs";
+import { useSearchParams, useRouter } from "next/navigation";
 import clsx from "clsx";
 import { PropertyList } from "@/components/Properties/PropertyList";
 import { Icon, Input, Banner, PropertyListSkeleton, Loader } from "@/components/common";
@@ -31,6 +32,26 @@ const LazyPropertyMapView = dynamic(
 
 function HomePageContent() {
     const { isAdmin } = useRoles();
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    // Deep-link support: ?address=Liverpool NSW 2170 → populates search bar
+    // exactly as if the user typed/selected it manually.
+    useEffect(() => {
+        const addressParam = searchParams.get("address");
+        if (addressParam) {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete("address");
+            // Only set search if not already present in the URL
+            if (!params.has("search")) {
+                params.set("search", addressParam);
+            }
+            const newUrl = params.toString() ? `/?${params.toString()}` : "/";
+            router.replace(newUrl, { scroll: false });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // intentionally run once on mount
+
     const [status, setStatus] = useQueryState(
         "status",
         parseAsStringLiteral(["active", "leased", "inactive"] as const).withDefault("active")
@@ -193,10 +214,10 @@ function HomePageContent() {
                                     : "border-border bg-card text-foreground hover:bg-surface-muted active:bg-surface-muted"
                             )}
                         >
-                            <Icon icon={Filter} size={16} className="flex-shrink-0" />
+                            <Icon icon={Filter} size={16} className="shrink-0" />
                             <span className="hidden sm:inline">Filters</span>
                             {activeFilterCount > 0 && (
-                                <span className="flex items-center justify-center h-4.5 min-w-[1.125rem] rounded-full bg-primary-600 px-1 text-[10px] font-bold text-white leading-none">
+                                <span className="flex items-center justify-center h-4.5 min-w-4.5 rounded-full bg-primary-600 px-1 text-[10px] font-bold text-white leading-none">
                                     {activeFilterCount}
                                 </span>
                             )}
@@ -212,7 +233,7 @@ function HomePageContent() {
                             aria-label={viewMode === "grid" ? "Switch to map view" : "Switch to grid view"}
                             className="flex items-center gap-1.5 h-10 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground hover:bg-surface-muted active:bg-surface-muted transition-colors touch-manipulation"
                         >
-                            <Icon icon={viewMode === "grid" ? Map : Grid3X3} size={16} className="flex-shrink-0" />
+                            <Icon icon={viewMode === "grid" ? Map : Grid3X3} size={16} className="shrink-0" />
                             <span className="hidden sm:inline">{viewMode === "grid" ? "Map" : "Grid"}</span>
                         </button>
 
